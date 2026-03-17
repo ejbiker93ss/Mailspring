@@ -157,7 +157,7 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
       event.key === 'ContextMenu' ||
       event.key === 'PrintScreen' ||
       event.key === 'Pause' ||
-      (event.key.startsWith('F') && event.key.length > 1 && !isNaN(Number(event.key.slice(1))));
+      /^F\d+$/.test(event.key);
 
     if (!isNavigationOrModifierKey) {
       // When the user types, disable spellcheck to avoid performance issues.
