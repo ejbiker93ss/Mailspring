@@ -134,23 +134,50 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
   };
 
   onKeyDown = (event, editor: Editor, next: () => void) => {
-    // When the user types, disable spellcheck to avoid performance issues.
-    // After they stop typing for 800ms, re-enable it.
-    //
-    // IMPORTANT: We use requestAnimationFrame to defer the setState call because
-    // changing the spellCheck attribute on a contenteditable element synchronously
-    // during a key event can cause Chromium to lose focus or interfere with event
-    // processing, resulting in "swallowed" keystrokes (especially Enter and Backspace).
-    // By deferring to the next frame, we ensure the key event is fully processed
-    // before React re-renders and changes the spellCheck attribute.
-    if (!this.state.isTyping) {
-      requestAnimationFrame(() => {
-        if (this._mounted && !this.state.isTyping) {
-          this.setState({ isTyping: true });
-        }
-      });
+    // Navigation and non-character keys should not toggle spellcheck state.
+    // When isTyping flips from false to true, the resulting re-render (which changes
+    // the spellCheck attribute on the contenteditable) can cause Chromium to reset
+    // the cursor position, making keys like Home/End require two presses.
+    const isNavigationOrModifierKey =
+      event.key.startsWith('Arrow') ||
+      event.key === 'Home' ||
+      event.key === 'End' ||
+      event.key === 'PageUp' ||
+      event.key === 'PageDown' ||
+      event.key === 'Shift' ||
+      event.key === 'Control' ||
+      event.key === 'Alt' ||
+      event.key === 'Meta' ||
+      event.key === 'Escape' ||
+      event.key === 'Tab' ||
+      event.key === 'CapsLock' ||
+      event.key === 'NumLock' ||
+      event.key === 'ScrollLock' ||
+      event.key === 'Insert' ||
+      event.key === 'ContextMenu' ||
+      event.key === 'PrintScreen' ||
+      event.key === 'Pause' ||
+      (event.key.startsWith('F') && event.key.length > 1 && !isNaN(Number(event.key.slice(1))));
+
+    if (!isNavigationOrModifierKey) {
+      // When the user types, disable spellcheck to avoid performance issues.
+      // After they stop typing for 800ms, re-enable it.
+      //
+      // IMPORTANT: We use requestAnimationFrame to defer the setState call because
+      // changing the spellCheck attribute on a contenteditable element synchronously
+      // during a key event can cause Chromium to lose focus or interfere with event
+      // processing, resulting in "swallowed" keystrokes (especially Enter and Backspace).
+      // By deferring to the next frame, we ensure the key event is fully processed
+      // before React re-renders and changes the spellCheck attribute.
+      if (!this.state.isTyping) {
+        requestAnimationFrame(() => {
+          if (this._mounted && !this.state.isTyping) {
+            this.setState({ isTyping: true });
+          }
+        });
+      }
+      this._onDoneTyping();
     }
-    this._onDoneTyping();
     return next();
   };
 
