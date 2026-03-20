@@ -14,8 +14,6 @@
     "@bengotow/slate-edit-list": "github:bengotow/slate-edit-list#b868e108",
     "@electron/remote": "^2.1.2",
     "@testing-library/react": "^12.1.5",
-    "@types/react": "^16.9.0",
-    "@types/react-dom": "^16.9.0",
     "app-module-path": "^2.2.0",
     "better-sqlite3": "^12.8.0",
     "cheerio": "^1.1.2",
@@ -82,5 +80,9 @@
   },
   "optionalDependencies": {
     "windows-focus-assist": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^16.14.69",
+    "@types/react-dom": "^16.9.25"
   }
 }
