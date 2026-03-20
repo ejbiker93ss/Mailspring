@@ -308,7 +308,7 @@ class DatabaseStore extends MailspringStore {
           const msgPrefix = msec > 100 ? 'DatabaseStore: query took more than 100ms - ' : '';
           if (query.startsWith(`SELECT `) && DEBUG_QUERY_PLANS) {
             const plan = this._db.prepare(`EXPLAIN QUERY PLAN ${query}`).all(values);
-            const planString = `${plan.map(row => row.detail).join('\n')} for ${query}`;
+            const planString = `${plan.map((row: any) => row.detail).join('\n')} for ${query}`;
             const quiet = ['ThreadCounts', 'ThreadSearch', 'ContactSearch', 'COVERING INDEX'];
 
             if (!quiet.find(str => planString.includes(str))) {
