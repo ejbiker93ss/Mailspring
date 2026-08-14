@@ -82,8 +82,10 @@ export default class Application extends EventEmitter {
     });
 
     try {
-      const mailsync = new MailsyncProcess(options);
-      await mailsync.migrate();
+      if (!specMode) {
+        const mailsync = new MailsyncProcess(options);
+        await mailsync.migrate();
+      }
     } catch (err) {
       let message = null;
       let buttons = [localized('Quit')];
