@@ -178,7 +178,16 @@ export default class MailAssistant extends React.Component<Record<string, never>
 
   _openSettings = () => Actions.switchPreferencesTab('AI Assistant');
 
-  _newChat = () => {
+  _toggleHistory = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    this.setState((state) => ({
+      historyOpen: !state.historyOpen,
+      conversations: loadMailAssistantConversations(),
+    }));
+  };
+
+  _newChat = (event?: React.SyntheticEvent) => {
+    event?.stopPropagation();
     this._sendGeneration += 1;
     this._abortController?.abort();
     saveMailAssistantDraft('');
@@ -585,6 +594,11 @@ export default class MailAssistant extends React.Component<Record<string, never>
         {action.status === 'running' && <span>{localized('Working…')}</span>}
         {action.status === 'done' && <span>{localized('Done')}</span>}
         {action.status === 'cancelled' && <span>{localized('Cancelled')}</span>}
+        {action.status === 'error' && (
+          <button className="btn btn-emphasis" onClick={() => this._executeAction(action)}>
+            {localized('Retry')}
+          </button>
+        )}
       </div>
     );
   }
@@ -603,7 +617,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
             className="mail-assistant-header-button"
             title={localized('Chat history')}
             aria-label={localized('Chat history')}
-            onClick={() => this.setState((state) => ({ historyOpen: !state.historyOpen }))}
+            onClick={this._toggleHistory}
           >
             ◷
           </button>

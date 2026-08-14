@@ -27,6 +27,29 @@ const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
   { id: 'Activity', label: 'Activity' },
 ];
 
+// Electron's title-bar overlay accepts hex colors, while getComputedStyle()
+// returns theme colors as rgb()/rgba(). Passing the computed value through
+// unchanged makes Electron reject the update and retain the black bootstrap
+// fallback from the BrowserWindow constructor.
+const electronHexColor = (color: string): string | null => {
+  if (/^#[\da-f]{6}([\da-f]{2})?$/i.test(color)) return color;
+  const match = color.match(
+    /^rgba?\(\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)(?:\s*[,/]\s*(\d+(?:\.\d+)?%?))?\s*\)$/i
+  );
+  if (!match) return null;
+
+  const channel = (value: string) =>
+    Math.max(0, Math.min(255, Math.round(Number(value))))
+      .toString(16)
+      .padStart(2, '0');
+  const rgb = `${channel(match[1])}${channel(match[2])}${channel(match[3])}`;
+  if (!match[4]) return `#${rgb}`;
+  const alphaValue = match[4].endsWith('%')
+    ? (Number(match[4].slice(0, -1)) / 100) * 255
+    : Number(match[4]) * 255;
+  return `#${rgb}${channel(String(alphaValue))}`;
+};
+
 /**
  * The app tab strip doubles as the draggable Windows title bar. Home tabs map
  * to root sheets; conversation tabs retain the Thread model so switching away
@@ -71,9 +94,12 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     window.requestAnimationFrame(() => {
       if (!this.titleBar.current) return;
       const style = window.getComputedStyle(this.titleBar.current);
+      const color = electronHexColor(style.backgroundColor);
+      const symbolColor = electronHexColor(style.color);
+      if (!color || !symbolColor) return;
       AppEnv.getCurrentWindow().setTitleBarOverlay({
-        color: style.backgroundColor,
-        symbolColor: style.color,
+        color,
+        symbolColor,
         height: 40,
       });
     });
@@ -167,6 +193,11 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       direction: 'down',
       fallbackDirection: 'right',
     });
+  };
+
+  _showNativeApplicationMenu = () => {
+    const { applicationMenu } = require('@electron/remote').getGlobal('application');
+    applicationMenu.menu.popup({});
   };
 
   _composeNewMessage = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -282,6 +313,15 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
         </div>
 
         <div className="app-titlebar-drag-space" />
+        <button
+          type="button"
+          className="app-titlebar-menu"
+          onClick={this._showNativeApplicationMenu}
+          aria-label={localized('Application menu')}
+          title={localized('Application menu')}
+        >
+          <span className="app-titlebar-menu-icon" aria-hidden="true" />
+        </button>
       </header>
     );
   }

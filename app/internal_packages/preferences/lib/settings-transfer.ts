@@ -30,21 +30,55 @@ const categoriesForAccount = (accountId: string): any[] =>
 
 const folderPath = (folder: any) => folder.path || folder.displayName;
 
+type FavoriteFolderRef = { accountId: string; folderId: string };
+
+const favoriteRefsFromSettings = (settings: any): FavoriteFolderRef[] => {
+  const saved = settings?.core?.workspace?.favoriteFolders;
+  if (Array.isArray(saved)) {
+    return saved.filter(
+      (favorite) =>
+        isPlainObject(favorite) &&
+        typeof favorite.accountId === 'string' &&
+        typeof favorite.folderId === 'string'
+    );
+  }
+  const legacy = settings?.core?.workspace?.favoriteFoldersByAccount;
+  if (!isPlainObject(legacy)) return [];
+  return Object.keys(legacy).reduce((refs: FavoriteFolderRef[], accountId) => {
+    (Array.isArray(legacy[accountId]) ? legacy[accountId] : []).forEach((folderId) => {
+      if (typeof folderId === 'string') refs.push({ accountId, folderId });
+    });
+    return refs;
+  }, []);
+};
+
 export const createSettingsBundle = (rawSettings: any) => {
   const settings = sanitizedSettings(rawSettings);
-  const favorites = settings?.core?.workspace?.favoriteFoldersByAccount || {};
+  const configuredFavorites = favoriteRefsFromSettings(settings);
   const folderOrder = settings?.core?.workspace?.sidebarFolderOrderByAccount || {};
   const accountOrder = settings?.core?.workspace?.sidebarAccountOrder || [];
   const collapsedAccounts = settings?.core?.workspace?.sidebarCollapsedAccountIds || [];
   const kanban = settings?.['mail-kanban']?.lanesByAccount || {};
   const accountsById = new Map(AccountStore.accounts().map((account) => [account.id, account]));
+  const hasExplicitFavorites =
+    Array.isArray(settings?.core?.workspace?.favoriteFolders) ||
+    Object.keys(settings?.core?.workspace?.favoriteFoldersByAccount || {}).length > 0;
+  const effectiveFavorites = hasExplicitFavorites
+    ? configuredFavorites
+    : AccountStore.accounts().reduce((favorites: FavoriteFolderRef[], account) => {
+        categoriesForAccount(account.id)
+          .filter((folder) => folder.role === 'inbox')
+          .forEach((folder) => favorites.push({ accountId: account.id, folderId: folder.id }));
+        return favorites;
+      }, []);
 
   const folderPreferences = AccountStore.accounts().map((account) => {
     const folders = categoriesForAccount(account.id);
     const byId = new Map<string, any>(folders.map((folder) => [folder.id, folder]));
-    const favoriteIds = Object.prototype.hasOwnProperty.call(favorites, account.id)
-      ? favorites[account.id]
-      : folders.filter((folder) => folder.role === 'inbox').map((folder) => folder.id);
+    const accountFavorites = effectiveFavorites.filter(
+      (favorite) => favorite.accountId === account.id
+    );
+    const favoriteIds = accountFavorites.map((favorite) => favorite.folderId);
     return {
       accountEmail: account.emailAddress,
       favorites: favoriteIds
@@ -73,6 +107,17 @@ export const createSettingsBundle = (rawSettings: any) => {
       collapsedAccounts: collapsedAccounts
         .map((id) => accountsById.get(id)?.emailAddress)
         .filter(Boolean),
+      favoriteOrder: effectiveFavorites
+        .map((favorite) => {
+          const account = accountsById.get(favorite.accountId);
+          const folder = categoriesForAccount(favorite.accountId).find(
+            (category) => category.id === favorite.folderId
+          );
+          return account && folder
+            ? { accountEmail: account.emailAddress, folderPath: folderPath(folder) }
+            : null;
+        })
+        .filter(Boolean),
     },
   };
 };
@@ -89,10 +134,11 @@ const mergeObjects = (base: any, incoming: any): any => {
 const applyPortableFolderPreferences = (
   settings: any,
   folderPreferences: any[],
-  sidebarPreferences?: any
+  sidebarPreferences?: any,
+  currentSettings?: any
 ) => {
   if (!Array.isArray(folderPreferences)) return settings;
-  const favorites = { ...(settings?.core?.workspace?.favoriteFoldersByAccount || {}) };
+  let favoriteRefs = favoriteRefsFromSettings(currentSettings);
   const folderOrder = { ...(settings?.core?.workspace?.sidebarFolderOrderByAccount || {}) };
   const kanban = { ...(settings?.['mail-kanban']?.lanesByAccount || {}) };
 
@@ -106,9 +152,11 @@ const applyPortableFolderPreferences = (
     if (!account) return;
     const folders = categoriesForAccount(account.id);
     const byPath = new Map<string, any>(folders.map((folder) => [folderPath(folder), folder]));
-    favorites[account.id] = (Array.isArray(entry.favorites) ? entry.favorites : [])
+    const importedFolderIds = (Array.isArray(entry.favorites) ? entry.favorites : [])
       .map((path) => byPath.get(path)?.id)
       .filter(Boolean);
+    favoriteRefs = favoriteRefs.filter((favorite) => favorite.accountId !== account.id);
+    importedFolderIds.forEach((folderId) => favoriteRefs.push({ accountId: account.id, folderId }));
     kanban[account.id] = (Array.isArray(entry.kanban) ? entry.kanban : [])
       .map((path, index) => byPath.get(path)?.id)
       .filter(Boolean)
@@ -131,7 +179,8 @@ const applyPortableFolderPreferences = (
   const next = mergeObjects({}, settings);
   next.core = next.core || {};
   next.core.workspace = next.core.workspace || {};
-  next.core.workspace.favoriteFoldersByAccount = favorites;
+  next.core.workspace.favoriteFolders = favoriteRefs;
+  delete next.core.workspace.favoriteFoldersByAccount;
   next.core.workspace.sidebarFolderOrderByAccount = folderOrder;
   if (isPlainObject(sidebarPreferences)) {
     const accountByEmail = new Map(
@@ -148,6 +197,38 @@ const applyPortableFolderPreferences = (
     next.core.workspace.sidebarCollapsedAccountIds = resolveAccountEmails(
       sidebarPreferences.collapsedAccounts
     );
+    if (Array.isArray(sidebarPreferences.favoriteOrder)) {
+      const orderedKeys = sidebarPreferences.favoriteOrder
+        .map((entry) => {
+          if (!isPlainObject(entry)) return null;
+          const accountId = accountByEmail.get(
+            String(entry.accountEmail || '').toLocaleLowerCase()
+          );
+          if (!accountId) return null;
+          const folder = categoriesForAccount(accountId).find(
+            (category) => folderPath(category) === entry.folderPath
+          );
+          return folder ? `${accountId}\0${folder.id}` : null;
+        })
+        .filter(Boolean);
+      const rank = new Map<string, number>();
+      orderedKeys.forEach((key, index) => {
+        if (typeof key === 'string') rank.set(key, index);
+      });
+      const rankForFavorite = (favorite: FavoriteFolderRef) => {
+        const value = rank.get(`${favorite.accountId}\0${favorite.folderId}`);
+        return value === undefined ? Number.MAX_SAFE_INTEGER : value;
+      };
+      favoriteRefs = favoriteRefs
+        .map((favorite, originalIndex) => ({ favorite, originalIndex }))
+        .sort((left, right) => {
+          const leftRank = rankForFavorite(left.favorite);
+          const rightRank = rankForFavorite(right.favorite);
+          return leftRank - rightRank || left.originalIndex - right.originalIndex;
+        })
+        .map(({ favorite }) => favorite);
+      next.core.workspace.favoriteFolders = favoriteRefs;
+    }
   }
   next['mail-kanban'] = next['mail-kanban'] || {};
   next['mail-kanban'].lanesByAccount = kanban;
@@ -165,6 +246,7 @@ export const settingsFromBundle = (bundle: any, currentSettings: any) => {
   return applyPortableFolderPreferences(
     mergeObjects(currentSettings, imported),
     bundle.folderPreferences,
-    bundle.sidebarPreferences
+    bundle.sidebarPreferences,
+    currentSettings
   );
 };

@@ -12,8 +12,6 @@ import {
 import { InjectedComponentSet, RetinaImg } from 'mailspring-component-kit';
 
 import EmailFrame from './email-frame';
-import QuotedTextSummary from './quoted-text-summary';
-import { QUOTED_SUMMARIES_CONFIG_KEY } from './preferences-mail-assistant';
 import { BrowserWindow } from '@electron/remote';
 
 const TransparentPixel =
@@ -22,11 +20,16 @@ const TransparentPixel =
 const SpinnerImg =
   '<img alt="spinner.gif" src="mailspring://message-list/assets/spinner.gif" style="-webkit-user-drag: none;">';
 
-class ConditionalQuotedTextControl extends React.Component<{ body: string; onClick?: () => void }> {
+class ConditionalQuotedTextControl extends React.Component<{
+  body: string;
+  onClick?: () => void;
+  controlRef?: (el: HTMLAnchorElement) => void;
+  anchoredTop: number | null;
+}> {
   static displayName = 'ConditionalQuotedTextControl';
 
-  shouldComponentUpdate(nextProps: { body: string; onClick?: () => void }) {
-    return this.props.body !== nextProps.body;
+  shouldComponentUpdate(nextProps: { body: string; anchoredTop: number | null }) {
+    return this.props.body !== nextProps.body || this.props.anchoredTop !== nextProps.anchoredTop;
   }
 
   render() {
@@ -34,7 +37,16 @@ class ConditionalQuotedTextControl extends React.Component<{ body: string; onCli
       return null;
     }
     return (
-      <a className="quoted-text-control" onClick={this.props.onClick}>
+      <a
+        className={`quoted-text-control${this.props.anchoredTop === null ? '' : ' anchored'}`}
+        onClick={this.props.onClick}
+        ref={this.props.controlRef}
+        style={
+          this.props.anchoredTop === null
+            ? undefined
+            : { position: 'absolute', top: this.props.anchoredTop, left: 0, zIndex: 2 }
+        }
+      >
         <span className="dots">&bull;&bull;&bull;</span>
       </a>
     );
@@ -50,6 +62,7 @@ interface MessageItemBodyState {
   processedBody: string;
   clipped: boolean;
   showQuotedText: boolean;
+  quotedTextControlTop: number | null;
 }
 
 export default class MessageItemBody extends React.Component<
@@ -60,6 +73,7 @@ export default class MessageItemBody extends React.Component<
 
   _mounted = false;
   _unsub: () => void;
+  _quotedTextControlEl: HTMLElement;
 
   constructor(props: MessageItemBodyProps, context: object) {
     super(props, context);
@@ -70,6 +84,7 @@ export default class MessageItemBody extends React.Component<
       showQuotedText: props.message.isForwarded(),
       processedBody: cached ? cached.body : null,
       clipped: cached ? cached.clipped : false,
+      quotedTextControlTop: null,
     };
   }
 
@@ -102,8 +117,11 @@ export default class MessageItemBody extends React.Component<
   _onBodyProcessed = ({ body, clipped }) => this.setState({ processedBody: body, clipped });
 
   _onToggleQuotedText = () => {
+    const showQuotedText = !this.state.showQuotedText;
     this.setState({
-      showQuotedText: !this.state.showQuotedText,
+      showQuotedText,
+      quotedTextControlTop:
+        showQuotedText && this._quotedTextControlEl ? this._quotedTextControlEl.offsetTop : null,
     });
   };
 
@@ -192,9 +210,6 @@ export default class MessageItemBody extends React.Component<
 
   render() {
     const body = this.props.message.body || '';
-    const quoteText = QuotedHTMLTransformer.hasQuotedHTML(body)
-      ? QuotedHTMLTransformer.extractQuotedText(body)
-      : '';
     return (
       <span>
         <InjectedComponentSet
@@ -203,11 +218,17 @@ export default class MessageItemBody extends React.Component<
           direction="column"
           style={{ width: '100%' }}
         />
-        {this._renderBody()}
-        <ConditionalQuotedTextControl body={body} onClick={this._onToggleQuotedText} />
-        {quoteText && AppEnv.config.get(QUOTED_SUMMARIES_CONFIG_KEY) !== false && (
-          <QuotedTextSummary message={this.props.message} quoteText={quoteText} />
-        )}
+        <div className="message-body-with-quoted-text-control">
+          {this._renderBody()}
+          <ConditionalQuotedTextControl
+            body={body}
+            onClick={this._onToggleQuotedText}
+            anchoredTop={this.state.quotedTextControlTop}
+            controlRef={(el) => {
+              this._quotedTextControlEl = el;
+            }}
+          />
+        </div>
         {this.state.clipped && <a onClick={this._onShowClipped}>[Message Clipped - Show All]</a>}
       </span>
     );

@@ -14,7 +14,12 @@ import {
   localized,
 } from 'mailspring-exports';
 
-import SidebarItem, { createCategory, favoriteFolderIdsForAccount } from './sidebar-item';
+import SidebarItem, {
+  configuredFavoriteFolders,
+  createCategory,
+  favoriteFolderRefKey,
+  reorderFavoriteFolders,
+} from './sidebar-item';
 import * as SidebarActions from './sidebar-actions';
 import { ISidebarSection, ISidebarItem } from './types';
 import {
@@ -51,7 +56,8 @@ const readSidebarDrag = (event: any) => {
 const makeFoldersReorderable = (
   items: ISidebarItem[],
   accountId: string,
-  parentId = 'root'
+  parentId = 'root',
+  reordering = false
 ): ISidebarItem[] => {
   const siblingIds = items.map((item) => item.id);
   return items.map((item) => {
@@ -59,8 +65,10 @@ const makeFoldersReorderable = (
     const originalShouldAcceptDrop = item.shouldAcceptDrop;
     return {
       ...item,
-      draggable: true,
-      children: makeFoldersReorderable(item.children || [], accountId, item.id),
+      draggable: reordering,
+      reordering,
+      onToggleReorder: () => SidebarActions.setReordering(!reordering),
+      children: makeFoldersReorderable(item.children || [], accountId, item.id, reordering),
       onDragStart(_draggedItem, event) {
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData(
@@ -113,7 +121,7 @@ class SidebarSection {
     };
   }
 
-  static standardSectionForAccount(account: Account): ISidebarSection {
+  static standardSectionForAccount(account: Account, reordering = false): ISidebarSection {
     if (!account) {
       throw new Error('standardSectionForAccount: You must pass an account.');
     }
@@ -149,49 +157,75 @@ class SidebarSection {
 
     return {
       title: account.label,
-      items: makeFoldersReorderable(sortSidebarItems(items, account.id), account.id),
+      items: makeFoldersReorderable(
+        sortSidebarItems(items, account.id),
+        account.id,
+        'root',
+        reordering
+      ),
     };
   }
 
-  static favoritesSectionForAccounts(accounts: Account[]): ISidebarSection {
+  static favoritesSectionForAccounts(accounts: Account[], reordering = false): ISidebarSection {
     const items: ISidebarItem[] = [];
-    const inboxes = [];
-    const otherFavorites: Array<{ account: Account; category: any }> = [];
+    const accountsById = new Map(accounts.map((account) => [account.id, account]));
+    const foldersByAccount = new Map(
+      accounts.map((account) => [
+        account.id,
+        new Map(CategoryStore.categories(account.id).map((category) => [category.id, category])),
+      ])
+    );
 
-    accounts.forEach((account) => {
-      const categories = CategoryStore.categories(account.id);
-      const byId = new Map(categories.map((category) => [category.id, category]));
-      favoriteFolderIdsForAccount(account.id).forEach((id) => {
-        const category: any = byId.get(id);
-        if (!category) return;
-        if (category.role === 'inbox') inboxes.push(category);
-        else otherFavorites.push({ account, category });
+    configuredFavoriteFolders().forEach((favorite) => {
+      const account = accountsById.get(favorite.accountId);
+      const category: any = foldersByAccount.get(favorite.accountId)?.get(favorite.folderId);
+      if (!account || !category) return;
+      const item = SidebarItem.forCategories([category], {
+        id: `favorite-${account.id}-${category.id}`,
+        name:
+          accounts.length > 1 ? `${category.displayName} - ${account.label}` : category.displayName,
+        editable: false,
+        deletable: false,
+        exportable: false,
       });
-    });
-
-    if (inboxes.length > 0) {
-      items.push(
-        SidebarItem.forCategories(inboxes, {
-          name: localized('Inbox'),
-          editable: false,
-          deletable: false,
-          exportable: false,
-        })
-      );
-    }
-
-    otherFavorites.forEach(({ account, category }) => {
-      items.push(
-        SidebarItem.forCategories([category], {
-          name:
-            accounts.length > 1
-              ? `${category.displayName} - ${account.label}`
-              : category.displayName,
-          editable: false,
-          deletable: false,
-          exportable: false,
-        })
-      );
+      items.push({
+        ...item,
+        draggable: reordering,
+        reordering,
+        onToggleReorder: () => SidebarActions.setReordering(!reordering),
+        onDragStart(_draggedItem, event) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData(
+            SIDEBAR_REORDER_DRAG_TYPE,
+            JSON.stringify({ kind: 'favorite', ...favorite })
+          );
+        },
+        shouldAcceptDrop(targetItem, event) {
+          if (event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) {
+            const payload = readSidebarDrag(event);
+            return (
+              payload?.kind === 'favorite' &&
+              favoriteFolderRefKey(payload) !== favoriteFolderRefKey(favorite)
+            );
+          }
+          return item.shouldAcceptDrop(targetItem, event);
+        },
+        onDrop(targetItem, event) {
+          if (event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) {
+            const payload = readSidebarDrag(event);
+            if (payload?.kind === 'favorite') {
+              const bounds = event.currentTarget.getBoundingClientRect();
+              reorderFavoriteFolders(
+                payload,
+                favorite,
+                event.clientY > bounds.top + bounds.height / 2
+              );
+            }
+            return;
+          }
+          item.onDrop(targetItem, event);
+        },
+      });
     });
 
     return {
@@ -201,7 +235,7 @@ class SidebarSection {
     };
   }
 
-  static standardSectionForAccounts(accounts?: Account[]): ISidebarSection {
+  static standardSectionForAccounts(accounts?: Account[], reordering = false): ISidebarSection {
     let children;
     if (!accounts || accounts.length === 0) {
       return this.empty(localized('All Accounts'));
@@ -210,7 +244,7 @@ class SidebarSection {
       return this.empty(localized('All Accounts'));
     }
     if (accounts.length === 1) {
-      return this.standardSectionForAccount(accounts[0]);
+      return this.standardSectionForAccount(accounts[0], reordering);
     }
 
     const standardNames = ['inbox', 'important', 'sent', ['archive', 'all'], 'spam', 'trash'];
@@ -294,7 +328,13 @@ class SidebarSection {
       title,
       collapsible,
       accountSection,
-    }: { title?: string; collapsible?: boolean; accountSection?: boolean } = {}
+      reordering,
+    }: {
+      title?: string;
+      collapsible?: boolean;
+      accountSection?: boolean;
+      reordering?: boolean;
+    } = {}
   ): ISidebarSection {
     let onCollapseToggled;
     if (!account) {
@@ -363,7 +403,12 @@ class SidebarSection {
     return {
       title,
       iconName,
-      items: makeFoldersReorderable(sortSidebarItems(items, account.id), account.id),
+      items: makeFoldersReorderable(
+        sortSidebarItems(items, account.id),
+        account.id,
+        'root',
+        reordering
+      ),
       accountId: account.id,
       collapsed,
       titleColor,
@@ -374,12 +419,13 @@ class SidebarSection {
     };
   }
 
-  static completeSectionForAccount(account: Account): ISidebarSection {
-    const standard = this.standardSectionForAccount(account);
+  static completeSectionForAccount(account: Account, reordering = false): ISidebarSection {
+    const standard = this.standardSectionForAccount(account, reordering);
     const user = this.forUserCategories(account, {
       title: account.label,
       collapsible: true,
       accountSection: true,
+      reordering,
     });
 
     return {
@@ -388,7 +434,9 @@ class SidebarSection {
       iconName: 'folder.png',
       items: makeFoldersReorderable(
         sortSidebarItems([...standard.items, ...user.items], account.id),
-        account.id
+        account.id,
+        'root',
+        reordering
       ),
     };
   }

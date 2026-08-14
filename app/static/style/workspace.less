@@ -310,6 +310,38 @@ mailspring-workspace {
   min-width: 12px;
 }
 
+.app-titlebar-menu {
+  -webkit-app-region: no-drag;
+  width: 46px;
+  height: 40px;
+  flex: 0 0 46px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid fade(@border-color-divider, 55%);
+  color: @text-color;
+  background: transparent;
+
+  &:hover,
+  &:focus-visible {
+    background: @list-hover-bg;
+    outline: none;
+  }
+}
+
+.app-titlebar-menu-icon {
+  width: 15px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow:
+    0 -5px 0 currentColor,
+    0 5px 0 currentColor;
+}
+
 .app-window-controls {
   -webkit-app-region: no-drag;
   display: flex;
@@ -882,6 +914,20 @@ body.platform-win32 {
 // On the Windows main window, the mail toolbar begins over the mail columns
 // instead of reserving an empty row above the folder sidebar.
 body.platform-win32.window-type-default {
+  // AppTabs is now the only Windows drag surface. The legacy sheet toolbar
+  // can overlap column headers, and marking it draggable makes Windows consume
+  // clicks intended for controls such as AI history and New Chat.
+  .sheet-toolbar,
+  .sheet-toolbar .item-spacer {
+    -webkit-app-region: no-drag;
+  }
+
+  // Windows exposes the application menu in AppTabs beside the native window
+  // controls. Suppress the legacy copy injected into the mail toolbar.
+  .sheet-toolbar .toolbar-menu-control {
+    display: none !important;
+  }
+
   .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads']) {
     position: absolute;
     top: 40px;
@@ -919,19 +965,27 @@ body.platform-win32.window-type-default {
     display: none !important;
   }
 
-  // The assistant column has no toolbar controls. Do not render an empty
-  // toolbar cell or reserve the matching spacer above Ask Mailspring.
+  // The assistant and calendar columns have no toolbar controls. Do not render
+  // empty cells or reserve blank space above either panel.
   .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
     .sheet-toolbar-container
     .toolbar-MessageListSidebar,
   .sheet-toolbar:has(.sheet-toolbar-container[data-id='Thread'])
     .sheet-toolbar-container
-    .toolbar-MessageListSidebar {
+    .toolbar-MessageListSidebar,
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
+    .sheet-toolbar-container
+    .toolbar-CalendarSidebar,
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Thread'])
+    .sheet-toolbar-container
+    .toolbar-CalendarSidebar {
     display: none !important;
   }
 
   .sheet[data-id='Threads'] .column-MessageListSidebar:has(.mail-assistant),
-  .sheet[data-id='Thread'] .column-MessageListSidebar:has(.mail-assistant) {
+  .sheet[data-id='Thread'] .column-MessageListSidebar:has(.mail-assistant),
+  .sheet[data-id='Threads'] .column-CalendarSidebar:has(.mail-calendar-sidebar),
+  .sheet[data-id='Thread'] .column-CalendarSidebar:has(.mail-calendar-sidebar) {
     padding-top: 0;
   }
 

@@ -30,7 +30,9 @@ export interface IOutlineViewItem {
   onExportMbox?: (...args: any[]) => any;
   onCreateChild?: (...args: any[]) => any;
   onToggleFavorite?: (...args: any[]) => any;
+  onToggleReorder?: (...args: any[]) => any;
   favorite?: boolean;
+  reordering?: boolean;
   draggable?: boolean;
   onDragStart?: (...args: any[]) => any;
   onDragEnd?: (...args: any[]) => any;

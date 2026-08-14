@@ -1,6 +1,10 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
+.message-body-with-quoted-text-control {
+  position: relative;
+}
+
 .quoted-text-control {
   color: @text-color-very-subtle;
   display: inline-block;
@@ -11,6 +15,11 @@
   font-weight: @font-weight-semi-bold;
   font-size: 10.5px;
   margin: 5px 0 3px 0;
+
+  &.anchored {
+    margin: 0;
+    background: @background-primary;
+  }
 
   &:hover {
     cursor: pointer;

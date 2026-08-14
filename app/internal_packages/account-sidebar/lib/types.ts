@@ -17,6 +17,7 @@ export interface ISidebarItem {
   onExportMbox?: () => void;
   onCreateChild?: (item, childName: string) => void;
   onToggleFavorite?: (item) => void;
+  onToggleReorder?: (item) => void;
   onCollapseToggled: () => void;
   onDrop: (item, event) => void;
   shouldAcceptDrop: (item, event) => void;
@@ -27,6 +28,7 @@ export interface ISidebarItem {
   exportable?: boolean;
   deleted?: boolean;
   favorite?: boolean;
+  reordering?: boolean;
   draggable?: boolean;
   onDragStart?: (item, event) => void;
   onDragEnd?: (item, event) => void;

@@ -30,8 +30,10 @@ import { AttachmentsArea } from './attachments-area';
 import { QuotedTextControl } from './quoted-text-control';
 import Fields from './fields';
 import RecentFilesPopover from './recent-files-popover';
+import QuotedTextSummary from '../../message-list/lib/quoted-text-summary';
+import { QUOTED_SUMMARIES_CONFIG_KEY } from '../../message-list/lib/preferences-mail-assistant';
 
-const { hasBlockquote, hasNonTrailingBlockquote, hideQuotedTextByDefault } =
+const { hasBlockquote, hasNonTrailingBlockquote, hideQuotedTextByDefault, quotedTextFromValue } =
   ComposerSupport.BaseBlockPlugins;
 
 interface ComposerViewProps {
@@ -151,6 +153,7 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     const restrictWidth = AppEnv.config.get('core.reading.restrictMaxWidth');
     const { quotedTextHidden, quotedTextPresent } = this.state;
     const { draft, session } = this.props;
+    const quoteText = !draft.plaintext ? quotedTextFromValue(draft.bodyEditorState) : '';
 
     return (
       <div className={`composer-centered ${restrictWidth && 'restrict-width'}`}>
@@ -198,16 +201,30 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                     session.changes.add({ bodyEditorState: change.value }, { skipSaving });
                   }}
                 />
-                <QuotedTextControl
-                  quotedTextHidden={quotedTextHidden}
-                  quotedTextPresent={quotedTextPresent}
-                  onUnhide={() => this.setState({ quotedTextHidden: false })}
-                  onRemove={() => {
-                    this.setState({ quotedTextHidden: false }, () =>
-                      this.editor.current.removeQuotedText()
-                    );
-                  }}
-                />
+                <div className="composer-quoted-actions">
+                  <QuotedTextControl
+                    quotedTextHidden={quotedTextHidden}
+                    quotedTextPresent={quotedTextPresent}
+                    onUnhide={() => this.setState({ quotedTextHidden: false })}
+                    onRemove={() => {
+                      this.setState({ quotedTextHidden: false }, () =>
+                        this.editor.current.removeQuotedText()
+                      );
+                    }}
+                  />
+                  {quotedTextHidden &&
+                    quoteText &&
+                    AppEnv.config.get(QUOTED_SUMMARIES_CONFIG_KEY) !== false && (
+                      <QuotedTextSummary
+                        composer
+                        message={draft}
+                        quoteText={quoteText}
+                        onInsert={(summary) =>
+                          (this.editor.current as ComposerEditor).insertAISummary(summary)
+                        }
+                      />
+                    )}
+                </div>
               </>
             )}
 

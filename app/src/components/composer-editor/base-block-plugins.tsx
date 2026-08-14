@@ -357,6 +357,27 @@ export function removeQuotedText(editor: Editor) {
   }
 }
 
+export function quotedTextFromValue(value: Value) {
+  if (!value || !value.document) return '';
+  return allNodesInBFSOrder(value)
+    .filter(isQuoteNode)
+    .filter(
+      (node) => !value.document.getAncestors(node.key).some((ancestor) => isQuoteNode(ancestor))
+    )
+    .map((node) =>
+      node
+        .getTexts()
+        .toArray()
+        .map((text) => text.text)
+        .join('')
+    )
+    .join('\n\n')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function hideQuotedTextByDefault(draft: MessageWithEditorState) {
   if (draft.isForwarded()) {
     return false;

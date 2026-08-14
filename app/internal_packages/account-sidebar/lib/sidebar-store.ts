@@ -41,6 +41,7 @@ class SidebarStore extends MailspringStore {
     User: [],
   };
   configSubscription: Disposable;
+  _reordering = false;
 
   constructor() {
     super();
@@ -73,6 +74,7 @@ class SidebarStore extends MailspringStore {
   _registerListeners() {
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
+    this.listenTo(SidebarActions.setReordering, this._onSetReordering);
     this.listenTo(AccountStore, this._onAccountsChanged);
     this.listenTo(FocusedPerspectiveStore, this._onFocusedPerspectiveChanged);
     this.listenTo(WorkspaceStore, this._updateSections);
@@ -97,6 +99,12 @@ class SidebarStore extends MailspringStore {
       AppEnv.savedState.sidebarKeysCollapsed[itemKey] = collapsed;
       this._updateSections();
     }
+  };
+
+  _onSetReordering = (reordering: boolean) => {
+    if (this._reordering === reordering) return;
+    this._reordering = reordering;
+    this._updateSections();
   };
 
   _onSetCollapsedByName = (itemName: string, collapsed: boolean) => {
@@ -168,20 +176,28 @@ class SidebarStore extends MailspringStore {
     const multiAccount = accounts.length > 1;
     const organization = AppEnv.config.get('core.workspace.sidebarOrganization') || 'folders';
 
-    this._sections[Sections.Standard] = SidebarSection.favoritesSectionForAccounts(accounts);
+    this._sections[Sections.Standard] = SidebarSection.favoritesSectionForAccounts(
+      accounts,
+      this._reordering
+    );
 
     if (organization === 'accounts') {
       this._sections[Sections.User] = accounts.map((account) => {
-        const section = SidebarSection.completeSectionForAccount(account);
+        const section = SidebarSection.completeSectionForAccount(account, this._reordering);
         return this._makeAccountSectionReorderable(section, account, accounts);
       });
     } else {
-      const groupedFolders = SidebarSection.standardSectionForAccounts(accounts);
+      const groupedFolders = SidebarSection.standardSectionForAccounts(accounts, this._reordering);
       groupedFolders.title = localized('Mailboxes');
       groupedFolders.iconName = 'folder.png';
 
       const customFolders = accounts.map((acc) => {
-        const opts: { title?: string; collapsible?: boolean; accountSection?: boolean } = {};
+        const opts: {
+          title?: string;
+          collapsible?: boolean;
+          accountSection?: boolean;
+          reordering?: boolean;
+        } = { reordering: this._reordering };
         if (multiAccount) {
           opts.title = acc.label;
           opts.collapsible = true;
@@ -202,7 +218,7 @@ class SidebarStore extends MailspringStore {
   ): ISidebarSection => ({
     ...section,
     accountId: account.id,
-    reorderable: accounts.length > 1,
+    reorderable: accounts.length > 1 && this._reordering,
     onSectionDragStart(event) {
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData(

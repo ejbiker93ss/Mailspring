@@ -13,6 +13,8 @@ import {
 interface Props {
   message: Message;
   quoteText: string;
+  composer?: boolean;
+  onInsert?: (summary: string) => void;
 }
 
 interface State {
@@ -21,6 +23,7 @@ interface State {
   error: string;
   loading: boolean;
   open: boolean;
+  inserted: boolean;
   summary: string | null;
 }
 
@@ -32,6 +35,7 @@ function scopeFor(message: Message): AiSummaryScope | null {
 export default class QuotedTextSummary extends React.Component<Props, State> {
   static displayName = 'QuotedTextSummary';
   private _abort?: AbortController;
+  private _mounted = false;
 
   state: State = {
     available: false,
@@ -39,10 +43,12 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
     error: '',
     loading: false,
     open: false,
+    inserted: false,
     summary: null,
   };
 
   componentDidMount() {
+    this._mounted = true;
     this._peek();
   }
 
@@ -51,24 +57,39 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._abort) this._abort.abort();
   }
 
   _peek = async () => {
+    const quoteText = this.props.quoteText;
     const scope = scopeFor(this.props.message);
     const apiKey = await getMailAssistantAPIKey();
+    if (!this._mounted || quoteText !== this.props.quoteText) return;
     if (!scope || !apiKey) {
       this.setState({ available: false, summary: null, open: false });
       return;
     }
-    const result = getAiSummaryStore().getQuotedSummary(scope, this.props.quoteText);
+    let result = null;
+    try {
+      result = getAiSummaryStore().getQuotedSummary(scope, this.props.quoteText);
+    } catch (error) {
+      AppEnv.reportError(error);
+    }
     this.setState({
       available: true,
       cached: !!result,
       error: '',
-      open: !!result,
+      inserted: false,
+      open: !!result && !this.props.composer,
       summary: result ? result.summary : null,
     });
+  };
+
+  _insert = (summary: string) => {
+    if (!summary || !this.props.onInsert) return;
+    this.props.onInsert(summary);
+    this.setState({ inserted: true, open: false });
   };
 
   _generate = async (force = false) => {
@@ -76,9 +97,19 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
     const apiKey = await getMailAssistantAPIKey();
     if (!scope || !apiKey) return;
     if (!force) {
-      const cached = getAiSummaryStore().getQuotedSummary(scope, this.props.quoteText);
+      let cached = null;
+      try {
+        cached = getAiSummaryStore().getQuotedSummary(scope, this.props.quoteText);
+      } catch (error) {
+        AppEnv.reportError(error);
+      }
       if (cached) {
-        this.setState({ cached: true, open: true, summary: cached.summary });
+        if (this.props.composer) this._insert(cached.summary);
+        this.setState({
+          cached: true,
+          open: !this.props.composer,
+          summary: cached.summary,
+        });
         return;
       }
     }
@@ -90,6 +121,7 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
         model: AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra',
         quoteText: this.props.quoteText,
         subject: this.props.message.subject,
+        contextMessages: [this.props.message],
         redactPersonalInfo: AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false,
         inputCap: AppEnv.config.get(SUMMARY_INPUT_CAP_CONFIG_KEY) || 120000,
         signal: this._abort.signal,
@@ -99,9 +131,17 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
       } catch (error) {
         AppEnv.reportError(error);
       }
-      this.setState({ cached: false, loading: false, open: true, summary });
+      if (this._mounted) {
+        if (this.props.composer) this._insert(summary);
+        this.setState({
+          cached: false,
+          loading: false,
+          open: !this.props.composer,
+          summary,
+        });
+      }
     } catch (error) {
-      if (!this._abort.signal.aborted) {
+      if (this._mounted && !this._abort.signal.aborted) {
         this.setState({ loading: false, error: error.message || String(error) });
       }
     }
@@ -109,6 +149,38 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
 
   render() {
     if (!this.state.available) return null;
+    if (this.props.composer) {
+      return (
+        <button
+          type="button"
+          className="btn btn-toolbar composer-ai-summary-action"
+          disabled={this.state.loading || this.state.inserted}
+          title={localized('Insert an AI summary of the quoted history into this reply')}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onMouseUp={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (this.state.summary && this.props.onInsert) this._insert(this.state.summary);
+            else this._generate();
+          }}
+        >
+          {this.state.loading
+            ? localized('Summarizing...')
+            : this.state.inserted
+              ? localized('Summary added')
+              : this.state.summary
+                ? localized('Add summary to reply')
+                : localized('Summarize')}
+        </button>
+      );
+    }
     return (
       <div className="ai-quoted-summary">
         {!this.state.summary && (

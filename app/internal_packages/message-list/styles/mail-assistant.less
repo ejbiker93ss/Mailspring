@@ -14,6 +14,9 @@
 }
 
 .mail-assistant-header {
+  -webkit-app-region: no-drag;
+  position: relative;
+  z-index: 30;
   min-height: 49px;
   padding: 0 14px;
   display: flex;
@@ -51,6 +54,10 @@
 }
 
 .mail-assistant-header-button {
+  -webkit-app-region: no-drag;
+  position: relative;
+  z-index: 1;
+  flex: none;
   width: 27px;
   height: 27px;
   padding: 0;
@@ -60,6 +67,8 @@
   background: transparent;
   font-size: 18px;
   line-height: 27px;
+  cursor: pointer;
+  pointer-events: auto;
 
   &:hover,
   &:focus-visible {

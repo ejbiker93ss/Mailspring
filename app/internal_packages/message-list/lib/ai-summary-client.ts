@@ -71,6 +71,7 @@ export async function generateQuotedSummary(options: {
   model: string;
   quoteText: string;
   subject?: string;
+  contextMessages?: Message[];
   redactPersonalInfo: boolean;
   inputCap: number;
   signal?: AbortSignal;
@@ -79,11 +80,7 @@ export async function generateQuotedSummary(options: {
     options.quoteText
   }`;
   if (options.redactPersonalInfo) {
-    userMessage = redactText(userMessage, {
-      aliasesByEmail: new Map(),
-      emailsByAlias: new Map(),
-      names: [],
-    });
+    userMessage = redactText(userMessage, buildAliasMap(options.contextMessages || []));
   }
   return summarizeMailText({
     apiKey: options.apiKey,

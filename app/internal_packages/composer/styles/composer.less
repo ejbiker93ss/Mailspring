@@ -632,6 +632,29 @@ body.platform-win32 {
         display: block;
       }
     }
+
+    .composer-quoted-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      margin: 0 22px 8px;
+      cursor: default;
+
+      .quoted-text-control {
+        flex: 0 0 auto;
+        margin: 0;
+      }
+
+      .composer-ai-summary-action {
+        min-height: 22px;
+        margin: 0;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: @font-size-smaller;
+        line-height: 16px;
+      }
+    }
   }
 
   .composer-footer-region {

@@ -177,7 +177,8 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
       this.props.item.onExport != null ||
       this.props.item.onExportMbox != null ||
       this.props.item.onCreateChild != null ||
-      this.props.item.onToggleFavorite != null
+      this.props.item.onToggleFavorite != null ||
+      this.props.item.onToggleReorder != null
     );
   };
 
@@ -317,6 +318,15 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
         new MenuItem({
           label: item.favorite ? localized(`Remove from Favorites`) : localized(`Add to Favorites`),
           click: () => this._runCallback('onToggleFavorite'),
+        })
+      );
+    }
+
+    if (this.props.item.onToggleReorder) {
+      menu.append(
+        new MenuItem({
+          label: item.reordering ? localized(`Finish Reordering`) : localized(`Reorder Folders`),
+          click: () => this._runCallback('onToggleReorder'),
         })
       );
     }

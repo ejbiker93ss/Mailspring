@@ -3,6 +3,8 @@ import os from 'os';
 import path from 'path';
 import { Contact, Message } from 'mailspring-exports';
 import { buildThreadSummaryTranscript } from '../lib/ai-summary-client';
+import { ComposerSupport } from 'mailspring-component-kit';
+import { convertFromHTML } from '../../../src/components/composer-editor/conversion';
 import {
   AiSummaryStore,
   normalizeSummaryText,
@@ -75,5 +77,17 @@ describe('AISummaries', () => {
     expect(transcript).not.toContain('alice@example.com');
     expect(transcript).not.toContain('Alice Example');
     expect(transcript.length).toBeLessThan(41000);
+  });
+
+  it('extracts only the quoted history from a reply composer', () => {
+    const value = convertFromHTML(
+      '<p>My reply</p><blockquote><p>First quoted line</p><blockquote>Nested quote</blockquote></blockquote>'
+    );
+    const quoteText = ComposerSupport.BaseBlockPlugins.quotedTextFromValue(value);
+
+    expect(quoteText).toContain('First quoted line');
+    expect(quoteText).toContain('Nested quote');
+    expect(quoteText).not.toContain('My reply');
+    expect(quoteText.match(/Nested quote/g).length).toBe(1);
   });
 });

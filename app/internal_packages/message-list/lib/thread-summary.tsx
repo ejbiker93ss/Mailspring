@@ -34,6 +34,7 @@ function scopeFor(messages: Message[]): AiSummaryScope | null {
 export default class ThreadSummary extends React.Component<Props, State> {
   static displayName = 'ThreadSummary';
   private _abort?: AbortController;
+  private _mounted = false;
 
   state: State = {
     error: '',
@@ -45,6 +46,7 @@ export default class ThreadSummary extends React.Component<Props, State> {
   };
 
   componentDidMount() {
+    this._mounted = true;
     this._restore();
   }
 
@@ -53,6 +55,7 @@ export default class ThreadSummary extends React.Component<Props, State> {
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._abort) this._abort.abort();
   }
 
@@ -65,13 +68,22 @@ export default class ThreadSummary extends React.Component<Props, State> {
 
   _restore = async () => {
     if (this._abort) this._abort.abort();
+    const threadId = this.props.thread.id;
     const scope = scopeFor(this.props.messages);
     let result: StoredThreadSummary | null = null;
-    if (scope) result = getAiSummaryStore().getThreadSummary(scope, this.props.thread.id);
+    if (scope) {
+      try {
+        result = getAiSummaryStore().getThreadSummary(scope, this.props.thread.id);
+      } catch (error) {
+        AppEnv.reportError(error);
+      }
+    }
     const savedOpen = localStorage.getItem(this._storageKey());
+    const hasAPIKey = !!(await getMailAssistantAPIKey());
+    if (!this._mounted || threadId !== this.props.thread.id) return;
     this.setState({
       error: '',
-      hasAPIKey: !!(await getMailAssistantAPIKey()),
+      hasAPIKey,
       loading: false,
       open: savedOpen === null ? true : savedOpen === 'true',
       restored: true,
@@ -113,10 +125,12 @@ export default class ThreadSummary extends React.Component<Props, State> {
       } catch (error) {
         AppEnv.reportError(error);
       }
-      this._setOpen(true);
-      this.setState({ loading: false, result });
+      if (this._mounted) {
+        this._setOpen(true);
+        this.setState({ loading: false, result });
+      }
     } catch (error) {
-      if (!this._abort.signal.aborted) {
+      if (this._mounted && !this._abort.signal.aborted) {
         this.setState({ loading: false, error: error.message || String(error) });
       }
     }

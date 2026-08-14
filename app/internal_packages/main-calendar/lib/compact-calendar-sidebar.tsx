@@ -7,6 +7,8 @@ import { calcEventColors } from './core/calendar-helpers';
 
 type SidebarMode = 'day' | 'agenda';
 
+const AGENDA_MONTHS_IN_VIEW = 6;
+
 interface CompactCalendarSidebarState {
   selectedDate: Moment;
   events: EventOccurrence[];
@@ -87,11 +89,14 @@ export class CompactCalendarSidebar extends React.Component<
     if (this.clockInterval) window.clearInterval(this.clockInterval);
   }
 
-  private subscribeToDate(date: Moment) {
+  private subscribeToDate(date: Moment, mode: SidebarMode = this.state.mode) {
     this.eventSubscription?.dispose();
     try {
       const startUnix = date.clone().startOf('day').unix();
-      const endUnix = date.clone().endOf('day').unix();
+      const endUnix =
+        mode === 'agenda'
+          ? date.clone().add(AGENDA_MONTHS_IN_VIEW, 'months').endOf('day').unix()
+          : date.clone().endOf('day').unix();
       const disabledCalendars = AppEnv.config.get('mailspring.disabledCalendars') || [];
       this.dataSource.buildObservable({ startUnix, endUnix, disabledCalendars });
       this.eventSubscription = this.dataSource.subscribe(({ events }) => {
@@ -114,6 +119,13 @@ export class CompactCalendarSidebar extends React.Component<
     window.requestAnimationFrame(this.scrollToRelevantTime);
   };
 
+  private selectMode = (mode: SidebarMode) => {
+    this.setState({ mode }, () => {
+      this.subscribeToDate(this.state.selectedDate, mode);
+      if (mode === 'day') window.requestAnimationFrame(this.scrollToRelevantTime);
+    });
+  };
+
   private scrollToRelevantTime = () => {
     if (!this.hoursScroll) return;
     const hour = this.state.selectedDate.isSame(moment(), 'day') ? moment().hours() : 8;
@@ -133,37 +145,63 @@ export class CompactCalendarSidebar extends React.Component<
   };
 
   private renderAgenda() {
-    const { events } = this.state;
+    const { events, selectedDate } = this.state;
     if (!events.length) {
       return (
         <div className="compact-calendar-empty">
           <Icon name="calendar" />
-          <span>{localized('No events')}</span>
-          <small>{localized('Your day is wide open.')}</small>
+          <span>{localized('No upcoming events')}</span>
+          <small>{localized('Nothing scheduled in the next six months.')}</small>
         </div>
       );
     }
+
+    const eventsByDay = events.reduce(
+      (groups, event) => {
+        const day = moment.unix(Math.max(event.start, selectedDate.unix())).startOf('day');
+        const key = day.format('YYYY-MM-DD');
+        const group = groups.find((candidate) => candidate.key === key);
+        if (group) {
+          group.events.push(event);
+        } else {
+          groups.push({ key, day, events: [event] });
+        }
+        return groups;
+      },
+      [] as Array<{ key: string; day: Moment; events: EventOccurrence[] }>
+    );
+
     return (
       <div className="compact-calendar-agenda">
-        {events.map((event) => (
-          <button
-            key={event.id}
-            type="button"
-            className="compact-agenda-event"
-            onClick={() => this.openCalendar(event)}
-          >
-            <span
-              className="compact-event-dot"
-              style={{ backgroundColor: calcEventColors(event.calendarId).band }}
-            />
-            <span className="compact-agenda-time">
-              {event.isAllDay ? localized('All day') : moment.unix(event.start).format('LT')}
-            </span>
-            <span className="compact-agenda-copy">
-              <strong>{event.title || localized('Untitled event')}</strong>
-              {event.location && <small>{event.location}</small>}
-            </span>
-          </button>
+        {eventsByDay.map(({ key, day, events: dayEvents }) => (
+          <section className="compact-agenda-day" key={key}>
+            <div className="compact-agenda-day-heading">
+              <strong>
+                {day.isSame(moment(), 'day') ? localized('Today') : day.format('dddd')}
+              </strong>
+              <span>{day.format('MMMM D, YYYY')}</span>
+            </div>
+            {dayEvents.map((event) => (
+              <button
+                key={event.id}
+                type="button"
+                className="compact-agenda-event"
+                onClick={() => this.openCalendar(event)}
+              >
+                <span
+                  className="compact-event-dot"
+                  style={{ backgroundColor: calcEventColors(event.calendarId).band }}
+                />
+                <span className="compact-agenda-time">
+                  {event.isAllDay ? localized('All day') : moment.unix(event.start).format('LT')}
+                </span>
+                <span className="compact-agenda-copy">
+                  <strong>{event.title || localized('Untitled event')}</strong>
+                  {event.location && <small>{event.location}</small>}
+                </span>
+              </button>
+            ))}
+          </section>
         ))}
       </div>
     );
@@ -214,14 +252,16 @@ export class CompactCalendarSidebar extends React.Component<
                 24,
                 Math.min(minutesInView - startMinutes, eventEnd.diff(eventStart, 'minutes'))
               );
+              const eventHeight = Math.max(28, (duration / 60) * hourHeight);
+              const isShortEvent = eventHeight < 38;
               return (
                 <button
                   key={event.id}
                   type="button"
-                  className="compact-timed-event"
+                  className={`compact-timed-event${isShortEvent ? ' is-short' : ''}`}
                   style={{
                     top: (startMinutes / 60) * hourHeight,
-                    height: Math.max(22, (duration / 60) * hourHeight),
+                    height: eventHeight,
                     borderLeftColor: colors.band,
                     backgroundColor: colors.background,
                     color: colors.text,
@@ -307,7 +347,7 @@ export class CompactCalendarSidebar extends React.Component<
             role="tab"
             aria-selected={mode === 'day'}
             className={mode === 'day' ? 'active' : ''}
-            onClick={() => this.setState({ mode: 'day' })}
+            onClick={() => this.selectMode('day')}
           >
             {localized('Day')}
           </button>
@@ -316,7 +356,7 @@ export class CompactCalendarSidebar extends React.Component<
             role="tab"
             aria-selected={mode === 'agenda'}
             className={mode === 'agenda' ? 'active' : ''}
-            onClick={() => this.setState({ mode: 'agenda' })}
+            onClick={() => this.selectMode('agenda')}
           >
             {localized('Agenda')}
           </button>
