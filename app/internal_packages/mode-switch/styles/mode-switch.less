@@ -1,4 +1,71 @@
 @import 'ui-variables';
+@import '../../main-calendar/styles/main-calendar.less';
+
+.mail-sidebar-toggle-group {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  order: 500;
+  box-sizing: border-box;
+  width: 68px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid @border-color-divider;
+  border-radius: 9px;
+  background: fade(@background-secondary, 72%);
+  box-shadow: inset 0 1px 0 fade(@text-color, 4%);
+
+  .sheet-toolbar & {
+    order: 500;
+  }
+
+  > .sidebar-visibility-button {
+    display: flex;
+    box-sizing: border-box;
+    width: 31px;
+    min-width: 31px;
+    height: 24px;
+    min-height: 24px;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center;
+    justify-content: center;
+    border: 0 !important;
+    border-radius: 7px !important;
+    background: transparent !important;
+    color: @text-color-subtle;
+    box-shadow: none !important;
+    line-height: 1 !important;
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: @background-primary !important;
+      color: @accent-primary;
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.22),
+        inset 0 0 0 1px fade(@text-color, 5%) !important;
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: @text-color;
+    }
+  }
+
+  &.compact {
+    width: 58px;
+    height: 27px;
+    padding: 1px;
+    flex: none;
+
+    > .sidebar-visibility-button {
+      width: 27px;
+      min-width: 27px;
+      height: 23px;
+      min-height: 23px;
+    }
+  }
+}
 
 .btn-toolbar.mode-toggle {
   z-index: 1000;
@@ -8,4 +75,87 @@
   img.content-mask {
     background-color: @component-active-color;
   }
+}
+
+.mail-sidebar-ai-toggle-icon {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.3px;
+}
+
+.calendar-sidebar-toggle-icon {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 16px;
+  height: 15px;
+  border: 1.7px solid currentColor;
+  border-radius: 3px;
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    right: 0;
+    left: 0;
+    height: 1.5px;
+    background: currentColor;
+  }
+
+  &:after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 3px;
+    width: 1.5px;
+    height: 5px;
+    border-radius: 1px;
+    background: currentColor;
+    box-shadow: 7px 0 0 currentColor;
+  }
+
+  > span {
+    position: absolute;
+    top: 7px;
+    left: 4px;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 5px 0 0 currentColor;
+  }
+}
+
+.column-MessageListSidebar,
+.column-CalendarSidebar {
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 6px 3px 6px 6px;
+  background: @background-secondary;
+}
+
+.column-CalendarSidebar {
+  padding-left: 3px;
+  padding-right: 6px;
+}
+
+// Sidebar columns do not have toolbar actions of their own. Some legacy
+// themes paint their empty toolbar regions as dark input-like rectangles.
+// Keep populated regions intact because global controls may move into them.
+.sheet-toolbar .toolbar-MessageListSidebar:not(:has(.item-container > :not(.item-spacer))),
+.sheet-toolbar .toolbar-CalendarSidebar:not(:has(.item-container > :not(.item-spacer))) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sheet-toolbar
+  .toolbar-MessageListSidebar:not(:has(.item-container > :not(.item-spacer)))
+  .item-container,
+.sheet-toolbar
+  .toolbar-CalendarSidebar:not(:has(.item-container > :not(.item-spacer)))
+  .item-container {
+  background: transparent !important;
 }

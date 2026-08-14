@@ -21,6 +21,29 @@ const looksLikeTrackingPixel = (img) => {
 class QuotedHTMLTransformer {
   annotationClass = 'mailspring-quoted-text-segment';
 
+  extractQuotedText(html: string) {
+    const doc = this._parseHTML(html || '');
+    this._removeImagesStrippedByAnotherClient(doc);
+    this._removeTrailingFootersAndWhitespace(doc);
+    const matches = this._findQuoteElements(doc);
+    const matchSet = new Set(matches);
+    return matches
+      .filter((element) => {
+        let parent = element.parentElement;
+        while (parent) {
+          if (matchSet.has(parent)) return false;
+          parent = parent.parentElement;
+        }
+        return true;
+      })
+      .map((element) => element.textContent || '')
+      .join('\n\n')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   hasQuotedHTML(html: string) {
     const doc = this._parseHTML(html);
     this._removeImagesStrippedByAnotherClient(doc);

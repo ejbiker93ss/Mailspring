@@ -59,7 +59,7 @@ class AccountIMAPSettingsForm extends React.Component<AccountIMAPSettingsFormPro
   };
 
   componentDidMount() {
-    ipcRenderer.send('resize-window', { width: 900, height: 660 });
+    ipcRenderer.send('resize-window', { width: 1180, height: 660 });
   }
 
   renderPortDropdown(protocol) {
@@ -235,7 +235,7 @@ class AccountIMAPSettingsForm extends React.Component<AccountIMAPSettingsFormPro
 
   render() {
     return (
-      <div className="twocol">
+      <div className="twocol threecol">
         <div className="col">
           <div className="col-heading">{localized('Incoming Mail')} (IMAP):</div>
           {this.renderFieldsForType('imap')}
@@ -243,6 +243,26 @@ class AccountIMAPSettingsForm extends React.Component<AccountIMAPSettingsFormPro
         <div className="col">
           <div className="col-heading">{localized('Outgoing Mail')} (SMTP):</div>
           {this.renderFieldsForType('smtp')}
+        </div>
+        <div className="col">
+          <div className="col-heading">{localized('Calendar')} (CalDAV):</div>
+          <p>
+            {localized(
+              'Optional. Leave blank to discover calendar settings automatically. These credentials default to your IMAP username and password.'
+            )}
+          </p>
+          <FormField field="settings.caldav_host" title={localized('Server URL')} {...this.props} />
+          <FormField
+            field="settings.caldav_username"
+            title={localized('Username')}
+            {...this.props}
+          />
+          <FormField
+            field="settings.caldav_password"
+            title={localized('Password')}
+            type="password"
+            {...this.props}
+          />
         </div>
       </div>
     );

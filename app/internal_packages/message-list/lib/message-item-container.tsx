@@ -1,6 +1,13 @@
 import classNames from 'classnames';
 import React from 'react';
-import { Utils, DraftStore, ComponentRegistry, Thread, Message } from 'mailspring-exports';
+import {
+  Utils,
+  DraftStore,
+  ComponentRegistry,
+  AccountStore,
+  Thread,
+  Message,
+} from 'mailspring-exports';
 
 import MessageItem from './message-item';
 
@@ -62,12 +69,19 @@ export default class MessageItemContainer extends React.Component<
   };
 
   _classNames() {
+    const { message } = this.props;
+    const from = message.from && message.from[0];
+    const senderAccount = from && from.email ? AccountStore.accountForEmail(from.email) : null;
+    const sentByMe = message.draft || !!(senderAccount && senderAccount.id === message.accountId);
+
     return classNames({
-      draft: this.props.message.draft,
-      unread: this.props.message.unread,
+      draft: message.draft,
+      unread: message.unread,
       collapsed: this.props.collapsed,
       'message-item-wrap': true,
       'before-reply-area': this.props.isBeforeReplyArea,
+      'sent-by-me': sentByMe,
+      'received-from-others': !sentByMe,
     });
   }
 

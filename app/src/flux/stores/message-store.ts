@@ -6,6 +6,7 @@ import DatabaseStore from './database-store';
 import { TaskFactory } from '../tasks/task-factory';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import FocusedContentStore from './focused-content-store';
+import WorkspaceStore from './workspace-store';
 import * as ExtensionRegistry from '../../registries/extension-registry';
 import electron from 'electron';
 import { MessageViewExtension } from 'mailspring-exports';
@@ -105,6 +106,7 @@ class _MessageStore extends MailspringStore {
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     this.listenTo(Actions.toggleMessageIdExpanded, this._onToggleMessageIdExpanded);
     this.listenTo(Actions.toggleAllMessagesExpanded, this._onToggleAllMessagesExpanded);
+    this.listenTo(Actions.showAllMessagesExpanded, this._onShowAllMessagesExpanded);
     this.listenTo(Actions.toggleHiddenMessages, this._onToggleHiddenMessages);
     this.listenTo(Actions.popoutThread, this._onPopoutThread);
     return this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
@@ -190,7 +192,7 @@ class _MessageStore extends MailspringStore {
     this._thread = focused;
     this._items = [];
     this._itemsLoading = true;
-    this._showingHiddenItems = false;
+    this._showingHiddenItems = WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Conversation;
     this._itemsExpanded = {};
     this.trigger();
 
@@ -240,6 +242,12 @@ class _MessageStore extends MailspringStore {
       // Do not collapse the latest message, i.e. the last one
       this._items.slice(0, -1).forEach((i) => this._collapseItem(i));
     }
+    this.trigger();
+  }
+
+  _onShowAllMessagesExpanded() {
+    this._showingHiddenItems = true;
+    this._items.forEach((item) => this._expandItem(item));
     this.trigger();
   }
 
@@ -327,6 +335,10 @@ class _MessageStore extends MailspringStore {
   // Expand all unread messages, all drafts, and the last message
   _expandItemsToDefault() {
     const visibleItems = this.items();
+    if (WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Conversation) {
+      visibleItems.forEach((item) => this._expandItem(item));
+      return;
+    }
     let lastDraftIdx = -1;
 
     visibleItems.forEach((item, idx) => {

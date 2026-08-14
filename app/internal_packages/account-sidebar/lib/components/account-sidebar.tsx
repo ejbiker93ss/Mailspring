@@ -51,7 +51,7 @@ export default class AccountSidebar extends React.Component<
 
   _getStateFromStores = () => {
     return {
-      accounts: AccountStore.accounts(),
+      accounts: SidebarStore.accounts(),
       sidebarAccountIds: SidebarStore.sidebarAccountIds(),
       userSections: SidebarStore.userSections(),
       standardSection: SidebarStore.standardSection(),

@@ -55,6 +55,7 @@ lazyLoadWithGetter(`isRTL`, () => require('../intl').isRTL);
 
 // Actions
 lazyLoad(`Actions`, 'flux/actions');
+lazyLoad(`RecentFiles`, 'services/recent-files');
 
 // API Endpoints
 lazyLoad(`MailspringAPIRequest`, 'flux/mailspring-api-request');
@@ -122,6 +123,7 @@ lazyLoadAndRegisterTask(`SyncbackContactTask`, 'syncback-contact-task');
 lazyLoadAndRegisterTask(`DestroyContactGroupTask`, 'destroy-contactgroup-task');
 lazyLoadAndRegisterTask(`SyncbackContactGroupTask`, 'syncback-contactgroup-task');
 lazyLoadAndRegisterTask(`ChangeContactGroupMembershipTask`, 'change-contactgroup-membership-task');
+lazyLoadAndRegisterTask(`CrossAccountMoveFolderTask`, 'cross-account-move-folder-task');
 
 // Stores
 // These need to be required immediately since some Stores are
@@ -155,6 +157,7 @@ load(`MessageBodyProcessor`, 'flux/stores/message-body-processor');
 load(`FocusedContactsStore`, 'flux/stores/focused-contacts-store');
 load(`FolderSyncProgressStore`, 'flux/stores/folder-sync-progress-store');
 load(`FocusedPerspectiveStore`, 'flux/stores/focused-perspective-store');
+load(`CrossAccountTransferStore`, 'flux/stores/cross-account-transfer-store');
 load(`SearchableComponentStore`, 'flux/stores/searchable-component-store');
 
 lazyLoad(`ServiceRegistry`, `registries/service-registry`);

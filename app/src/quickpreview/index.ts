@@ -2,6 +2,7 @@ import { execFile } from 'child_process';
 import path from 'path';
 import { File } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
+import { ensureHeicPreview, isHeicExtension, isHeicFilePath } from './heic-preview';
 
 // Generate token via IPC to ensure it's stored in the main process
 async function generatePreviewToken(previewPath: string): Promise<string> {
@@ -39,9 +40,10 @@ const captureQueue = [];
 const filesRoot = __dirname.replace('app.asar', 'app.asar.unpacked');
 
 const FileSizeLimit = 5 * 1024 * 1024;
+const HeicFileSizeLimit = 25 * 1000 * 1000;
 const ThumbnailWidth = 320 * (11 / 8.5);
 const QuicklookIsAvailable = process.platform === 'darwin';
-const PDFJSRoot = path.join(filesRoot, 'pdfjs-4.3.136');
+const ImageExtensions = ['avif', 'bmp', 'gif', 'ico', 'jpeg', 'jpg', 'png', 'svg', 'webp'];
 
 const QuicklookBlacklist = [
   'jpg',
@@ -205,14 +207,30 @@ const PreviewWindowMenuTemplate: Electron.MenuItemConstructorOptions[] = [
 ];
 
 export function canPossiblyPreviewExtension(file: File) {
+  const extension = file.displayExtension();
+  if (isHeicExtension(extension)) {
+    return file.size <= HeicFileSizeLimit;
+  }
   if (file.size > FileSizeLimit) {
     return false;
   }
-  return !!strategyForPreviewing(file.displayExtension());
+  return !!strategyForPreviewing(extension);
 }
 
-export function displayQuickPreviewWindow(filePath: string) {
-  const isPDF = filePath.endsWith('.pdf');
+export async function displayQuickPreviewWindow(filePath: string) {
+  const originalFilePath = filePath;
+  const extension = path.extname(originalFilePath).slice(1).toLowerCase();
+  if (isHeicExtension(extension)) {
+    try {
+      filePath = await ensureHeicPreview(originalFilePath, `${originalFilePath}.preview.png`);
+    } catch (error) {
+      console.error('Quickpreview failed to decode HEIC attachment:', error);
+      AppEnv.showErrorDialog('This HEIC image could not be decoded.');
+      return;
+    }
+  }
+  const isPDF = extension === 'pdf';
+  const isImage = isHeicExtension(extension) || ImageExtensions.includes(extension);
   const strategy = strategyForPreviewing(path.extname(filePath));
 
   if (strategy === 'quicklook') {
@@ -256,7 +274,7 @@ export function displayQuickPreviewWindow(filePath: string) {
   } else {
     quickPreviewWindow.show();
   }
-  quickPreviewWindow.setTitle(path.basename(filePath));
+  quickPreviewWindow.setTitle(path.basename(originalFilePath));
 
   const onLoadError = (err: Error) => {
     if (!err?.message?.includes('ERR_ABORTED')) {
@@ -266,10 +284,12 @@ export function displayQuickPreviewWindow(filePath: string) {
 
   if (isPDF) {
     quickPreviewWindow
-      .loadFile(path.join(PDFJSRoot, 'web/viewer.html'), {
-        search: `file=${encodeURIComponent(`file://${filePath}`)}`,
+      .loadFile(path.join(filesRoot, 'renderer.html'), {
+        search: JSON.stringify({ mode: 'display', filePath, strategy: 'pdfjs' }),
       })
       .catch(onLoadError);
+  } else if (isImage) {
+    quickPreviewWindow.loadFile(filePath).catch(onLoadError);
   } else {
     quickPreviewWindow
       .loadFile(path.join(filesRoot, 'renderer.html'), {
@@ -288,6 +308,15 @@ export async function generatePreview({
   filePath: string;
   previewPath: string;
 }) {
+  if (isHeicExtension(file.displayExtension()) || isHeicFilePath(filePath)) {
+    try {
+      await ensureHeicPreview(filePath, previewPath, { maxDimension: Math.ceil(ThumbnailWidth) });
+      return true;
+    } catch (error) {
+      console.error('Thumbnail generation failed to decode HEIC attachment:', error);
+      return false;
+    }
+  }
   const strategy = strategyForPreviewing(file.displayExtension());
 
   if (strategy === 'quicklook') {

@@ -22,15 +22,30 @@
       flex: 1;
     }
     border-bottom: 1px solid @border-color-divider;
-    .btn.btn-icon {
+    .mini-month-nav {
+      appearance: none;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: @text-color-subtle;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      width: 28px;
       height: 27px;
       margin-top: -1px;
       margin-right: 0;
+      padding: 0;
+
+      &:hover,
+      &:focus-visible {
+        color: @text-color;
+        background: fade(@text-color, 8%);
+        outline: none;
+      }
+
       &:active {
-        background: transparent;
+        background: fade(@text-color, 12%);
       }
     }
   }

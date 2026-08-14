@@ -86,9 +86,9 @@ class PreferencesTabsBar extends React.Component<PreferencesTabBarProps> {
     const currentIdx = tabs.findIndex((t) => t.tabId === selection.tabId);
 
     let nextIdx: number | null = null;
-    if (e.key === 'ArrowRight') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       nextIdx = (currentIdx + 1) % tabs.length;
-    } else if (e.key === 'ArrowLeft') {
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       nextIdx = (currentIdx - 1 + tabs.length) % tabs.length;
     } else if (e.key === 'Home') {
       nextIdx = 0;
@@ -119,6 +119,7 @@ class PreferencesTabsBar extends React.Component<PreferencesTabBarProps> {
           ref={this._listRef}
           className="preferences-tabs"
           role="tablist"
+          aria-orientation="vertical"
           aria-label={localized('Preferences tabs')}
           onKeyDown={this._onKeyDown}
         >

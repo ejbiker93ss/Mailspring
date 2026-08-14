@@ -213,7 +213,13 @@ export class MailsyncProcess extends EventEmitter {
     if (!text) return text;
     let out = text;
 
-    const SENSITIVE_JSON_KEYS = ['refresh_token', 'access_token', 'imap_password', 'smtp_password'];
+    const SENSITIVE_JSON_KEYS = [
+      'refresh_token',
+      'access_token',
+      'imap_password',
+      'smtp_password',
+      'caldav_password',
+    ];
     for (const key of SENSITIVE_JSON_KEYS) {
       // Match "key":"<anything-but-unescaped-quote>" allowing escaped quotes inside.
       const re = new RegExp(`("${key}"\\s*:\\s*")(?:\\\\.|[^"\\\\])+(")`, 'g');
@@ -225,6 +231,7 @@ export class MailsyncProcess extends EventEmitter {
       cachedSettings.refresh_token,
       cachedSettings.imap_password,
       cachedSettings.smtp_password,
+      cachedSettings.caldav_password,
     ].filter((v): v is string => typeof v === 'string' && v.length > 0);
 
     for (const v of cachedValues) {

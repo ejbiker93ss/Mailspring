@@ -205,6 +205,10 @@ export const updateContainerFolderDefault = create(
   */
 export const selectRootSheet = create('selectRootSheet', ActionScopeWindow);
 
+// Explicitly open a mail thread in the app-level tab strip. Normal thread
+// focus continues to use the current Mail workspace.
+export const openThreadInTab = create('openThreadInTab', ActionScopeWindow);
+
 /*
   Public: Toggle whether a particular column is visible. Call this action
   with one of the Sheet location constants:
@@ -306,6 +310,10 @@ export const toggleHiddenMessages = create('toggleHiddenMessages', ActionScopeWi
   ```
   */
 export const toggleAllMessagesExpanded = create('toggleAllMessagesExpanded', ActionScopeWindow);
+
+// Used by conversation tabs, which intentionally show every message in the
+// thread (including Trash / Spam members) with every body expanded.
+export const showAllMessagesExpanded = create('showAllMessagesExpanded', ActionScopeWindow);
 
 /*
   Public: Print the currently selected thread.

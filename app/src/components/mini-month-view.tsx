@@ -1,6 +1,7 @@
 import React from 'react';
 import moment, { Moment } from 'moment';
 import classnames from 'classnames';
+import { localized } from 'mailspring-exports';
 
 interface MiniMonthViewProps {
   value: Moment;
@@ -96,7 +97,12 @@ export class MiniMonthView extends React.Component<MiniMonthViewProps, MiniMonth
     return (
       <div className="mini-month-view">
         <div className="header">
-          <div className="btn btn-icon" onClick={() => onChangeMonth(-1)}>
+          <button
+            type="button"
+            className="mini-month-nav"
+            onClick={() => onChangeMonth(-1)}
+            aria-label={localized('Previous month')}
+          >
             <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
               <path
                 d="M7 1L2 6l5 5"
@@ -106,9 +112,14 @@ export class MiniMonthView extends React.Component<MiniMonthViewProps, MiniMonth
                 strokeLinejoin="round"
               />
             </svg>
-          </div>
+          </button>
           <span className="month-title">{month.format('MMMM YYYY')}</span>
-          <div className="btn btn-icon" onClick={() => onChangeMonth(1)}>
+          <button
+            type="button"
+            className="mini-month-nav"
+            onClick={() => onChangeMonth(1)}
+            aria-label={localized('Next month')}
+          >
             <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
               <path
                 d="M1 1l5 5-5 5"
@@ -118,7 +129,7 @@ export class MiniMonthView extends React.Component<MiniMonthViewProps, MiniMonth
                 strokeLinejoin="round"
               />
             </svg>
-          </div>
+          </button>
         </div>
         <div className="legend">
           {[0, 1, 2, 3, 4, 5, 6].map((i) => (

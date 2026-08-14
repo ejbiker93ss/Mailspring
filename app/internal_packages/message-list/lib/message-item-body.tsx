@@ -12,6 +12,8 @@ import {
 import { InjectedComponentSet, RetinaImg } from 'mailspring-component-kit';
 
 import EmailFrame from './email-frame';
+import QuotedTextSummary from './quoted-text-summary';
+import { QUOTED_SUMMARIES_CONFIG_KEY } from './preferences-mail-assistant';
 import { BrowserWindow } from '@electron/remote';
 
 const TransparentPixel =
@@ -189,6 +191,10 @@ export default class MessageItemBody extends React.Component<
   }
 
   render() {
+    const body = this.props.message.body || '';
+    const quoteText = QuotedHTMLTransformer.hasQuotedHTML(body)
+      ? QuotedHTMLTransformer.extractQuotedText(body)
+      : '';
     return (
       <span>
         <InjectedComponentSet
@@ -198,10 +204,10 @@ export default class MessageItemBody extends React.Component<
           style={{ width: '100%' }}
         />
         {this._renderBody()}
-        <ConditionalQuotedTextControl
-          body={this.props.message.body || ''}
-          onClick={this._onToggleQuotedText}
-        />
+        <ConditionalQuotedTextControl body={body} onClick={this._onToggleQuotedText} />
+        {quoteText && AppEnv.config.get(QUOTED_SUMMARIES_CONFIG_KEY) !== false && (
+          <QuotedTextSummary message={this.props.message} quoteText={quoteText} />
+        )}
         {this.state.clipped && <a onClick={this._onShowClipped}>[Message Clipped - Show All]</a>}
       </span>
     );

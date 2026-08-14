@@ -1,0 +1,941 @@
+@import 'ui-variables';
+
+// FlashMail's shared visual layer. These values intentionally derive from the
+// active theme so Light, Dark, and custom themes keep their own personality.
+:root {
+  --fm-radius-sm: 7px;
+  --fm-radius: 10px;
+  --fm-radius-lg: 14px;
+  --fm-control-height: 34px;
+  --fm-surface: color-mix(in srgb, @background-primary 96%, @accent-primary 4%);
+  --fm-surface-raised: color-mix(in srgb, @background-primary 98%, @text-color 2%);
+  --fm-surface-muted: color-mix(in srgb, @background-secondary 92%, @accent-primary 8%);
+  --fm-border: color-mix(in srgb, @text-color 11%, transparent);
+  --fm-border-strong: color-mix(in srgb, @text-color 18%, transparent);
+  --fm-accent-soft: color-mix(in srgb, @accent-primary 13%, transparent);
+  --fm-accent-medium: color-mix(in srgb, @accent-primary 24%, transparent);
+  --fm-shadow-sm: 0 1px 2px rgba(10, 12, 20, 0.05), 0 1px 8px rgba(10, 12, 20, 0.035);
+  --fm-shadow-md: 0 8px 24px rgba(10, 12, 20, 0.1), 0 2px 6px rgba(10, 12, 20, 0.05);
+}
+
+mailspring-workspace {
+  --thread-list-item-height-narrow: 72px;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable', 'Segoe UI', @font-family;
+}
+
+body {
+  letter-spacing: -0.006em;
+}
+
+// Native workspace scrollbars keep their hit area but remain visually hidden
+// until SheetContainer marks the scrolling element active.
+mailspring-workspace * {
+  scrollbar-color: transparent transparent;
+}
+
+mailspring-workspace *::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+  background: transparent;
+}
+
+mailspring-workspace *::-webkit-scrollbar-track,
+mailspring-workspace *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+mailspring-workspace *::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+mailspring-workspace *::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: transparent;
+  background-clip: content-box;
+}
+
+mailspring-workspace *.scrollbar-active {
+  scrollbar-color: fade(@text-color, 38%) transparent;
+}
+
+mailspring-workspace *.scrollbar-active::-webkit-scrollbar-thumb {
+  background-color: fade(@text-color, 38%);
+}
+
+// Controls
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='search'],
+input[type='number'],
+input[type='url'],
+textarea,
+select,
+.search-bar .search-container {
+  border-color: var(--fm-border-strong);
+  border-radius: var(--fm-radius-sm);
+  box-shadow: 0 1px 1px rgba(10, 12, 20, 0.025);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+
+  &:focus,
+  &:focus-within {
+    border-color: @accent-primary;
+    box-shadow: 0 0 0 3px var(--fm-accent-soft);
+    outline: none;
+  }
+}
+
+.btn,
+button.btn,
+.button-dropdown .primary-item,
+.button-dropdown .secondary-picker {
+  border-radius: var(--fm-radius-sm);
+  box-shadow: none;
+  font-weight: @font-weight-medium;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 80ms ease;
+
+  &:active:not(.btn-disabled) {
+    transform: translateY(1px);
+  }
+}
+
+.btn.btn-emphasis,
+.btn.btn-action,
+.btn-primary {
+  background: @accent-primary;
+  border-color: @accent-primary;
+  color: @text-color-inverse;
+}
+
+.app-context-menu,
+.fixed-popover,
+.dropdown-menu {
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius);
+  box-shadow: var(--fm-shadow-md);
+  overflow: hidden;
+}
+
+// Recipient fields use Menu internally to render their autocomplete list.
+// They are inline form controls, not popup surfaces: the root must stay
+// borderless and allow the absolutely-positioned completion menu to escape.
+.composer-participant-field .tokenizing-field {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition: none;
+
+  &:focus,
+  &:focus-within {
+    border: 0;
+    box-shadow: none;
+    outline: none;
+  }
+
+  > .content-container:not(.empty) {
+    overflow: hidden;
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius);
+    box-shadow: var(--fm-shadow-md);
+  }
+}
+
+// Window chrome and workspace
+.app-tab-bar {
+  background: color-mix(in srgb, @background-secondary 93%, @background-primary 7%);
+  border-bottom-color: var(--fm-border);
+}
+
+.app-tab {
+  border-radius: 8px 8px 0 0;
+  margin-right: 2px;
+
+  &.active {
+    border-top-width: 2px;
+    box-shadow: 0 -1px 8px rgba(10, 12, 20, 0.035);
+  }
+}
+
+.sheet-toolbar {
+  background: color-mix(in srgb, @background-primary 96%, @background-secondary 4%);
+  border-bottom: 1px solid var(--fm-border);
+  box-shadow: none;
+
+  .item-container {
+    align-items: center;
+  }
+
+  .btn-toolbar,
+  .toolbar-menu-control,
+  button {
+    border-radius: var(--fm-radius-sm);
+  }
+}
+
+.sheet-toolbar-container {
+  border-bottom-color: var(--fm-border);
+}
+
+.column-RootSidebar,
+.toolbar-RootSidebar {
+  background: color-mix(in srgb, @source-list-bg 94%, @accent-primary 6%);
+}
+
+.column-RootSidebar {
+  border-right: 1px solid var(--fm-border);
+}
+
+.account-sidebar {
+  padding: 5px 5px 8px;
+  background: transparent;
+
+  .outline-view section {
+    margin-bottom: 3px;
+  }
+
+  .outline-view .heading {
+    min-height: 24px;
+    padding: 9px 8px 3px;
+    color: @text-color-very-subtle;
+    font-size: 11px;
+    font-weight: @font-weight-semi-bold;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+  }
+
+  .outline-view .item {
+    border-radius: var(--fm-radius-sm);
+    height: 29px;
+    min-height: 29px;
+    margin: 0;
+    padding-left: 7px;
+    padding-right: 7px;
+    transition:
+      background-color 100ms ease,
+      color 100ms ease;
+
+    &:hover:not(.selected) {
+      background: color-mix(in srgb, @text-color 6%, transparent);
+    }
+
+    &.selected {
+      background: var(--fm-accent-soft);
+      color: @accent-primary;
+      font-weight: @font-weight-semi-bold;
+    }
+
+    .item-count-box {
+      border-radius: 999px;
+      min-width: 20px;
+      padding: 1px 6px;
+      text-align: center;
+    }
+  }
+}
+
+.resizable-region-handle {
+  background: transparent;
+
+  &:hover,
+  &.resizing {
+    background: @accent-primary;
+  }
+}
+
+// Mail list
+.thread-search-bar {
+  // Keep the search field fully inside the 34px mail toolbar. The legacy
+  // component contributes a 5px top margin, which made a 34px field overflow
+  // and clipped its content on Windows.
+  box-sizing: border-box;
+  height: 28px;
+  margin-top: 3px;
+  line-height: 20px;
+  padding: 0 9px;
+  flex: 1 1 260px;
+  width: auto;
+  min-width: 180px;
+  max-width: 320px;
+
+  .tokenizing-contenteditable {
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: clip;
+
+    .layer {
+      align-items: center;
+      box-sizing: border-box;
+      display: flex;
+      height: 100%;
+      line-height: 20px;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  }
+}
+
+.toolbar-ThreadList .item-container {
+  gap: 6px;
+}
+
+.thread-list,
+.draft-list {
+  background: @background-primary;
+
+  .list-item {
+    background: @background-primary;
+    border-bottom-color: var(--fm-border);
+    transition: background-color 90ms ease;
+
+    &:hover:not(.focused):not(.selected) {
+      background: color-mix(in srgb, @background-primary 93%, @accent-primary 7%);
+    }
+
+    &.selected:not(.focused) {
+      background: var(--fm-accent-soft);
+      box-shadow: none;
+    }
+
+    &.focused {
+      background: @accent-primary;
+      box-shadow: none;
+    }
+  }
+
+  .list-column-HoverActions .inner {
+    border-radius: 999px;
+    box-shadow: var(--fm-shadow-sm);
+  }
+
+  .message-count,
+  .mail-label {
+    border-radius: 999px;
+  }
+}
+
+.layout-mode-splitVertical .thread-list .list-item {
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+// In wide/list layouts, use the same unread-only rail as the narrow cards.
+.thread-list:not(.thread-list-narrow) .list-item {
+  position: relative;
+
+  &.unread:before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    bottom: 7px;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: @accent-primary;
+  }
+}
+
+// Modern cards for the standard narrow / threaded inbox. This is the list
+// rendered in the normal three-pane mail layout (separate from the optional
+// individual-message view styled by unthreaded.less).
+mailspring-workspace .thread-list.thread-list-narrow {
+  .list-rows {
+    background: @background-primary;
+  }
+
+  .list-item {
+    position: relative;
+    box-sizing: border-box;
+    width: calc(100% - 4px);
+    height: calc(100% - 2px) !important;
+    margin: 1px 2px;
+    padding: 4px 7px 4px 6px;
+    overflow: hidden;
+    border: 1px solid fade(@text-color, 9%) !important;
+    border-radius: 12px;
+    background: color-mix(in srgb, @background-secondary 58%, @background-primary 42%);
+    box-shadow: 0 1px 2px fade(#000, 7%);
+    color: @text-color;
+    transition:
+      background 120ms ease,
+      border-color 120ms ease,
+      box-shadow 120ms ease,
+      transform 120ms ease;
+  }
+
+  .list-item:hover:not(.selected):not(.focused) {
+    border-color: color-mix(in srgb, @accent-primary 34%, transparent) !important;
+    background: color-mix(in srgb, @background-secondary 72%, @background-primary 28%);
+    box-shadow: 0 5px 14px fade(#000, 13%);
+    transform: translateY(-1px);
+  }
+
+  .list-item.selected,
+  .list-item.focused,
+  .list-item.selected.focused {
+    border-color: color-mix(in srgb, @accent-primary 52%, transparent) !important;
+    background: color-mix(in srgb, @background-secondary 76%, @accent-primary 24%);
+    box-shadow: 0 3px 12px fade(#000, 12%);
+    color: @text-color;
+  }
+
+  .list-item.unread:before {
+    content: '';
+    position: absolute;
+    top: 9px;
+    bottom: 9px;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: @accent-primary;
+  }
+
+  .thread-list-narrow-row-content {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    height: 100%;
+  }
+
+  .thread-info-column {
+    min-width: 0;
+  }
+
+  .thread-list-narrow-status-icons {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: 20px;
+
+    .thread-icon {
+      width: 22px;
+      height: 20px;
+      margin: 0;
+    }
+
+    .thread-injected-icons {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .mail-important-icon {
+      margin: 0;
+      padding: 10px;
+    }
+  }
+
+  .participants-wrapper {
+    min-height: 18px;
+  }
+
+  .participants {
+    color: @text-color;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .unread:not(.focused) .participants .unread-true {
+    font-weight: 700;
+  }
+
+  .subject {
+    margin-right: 0;
+    color: fade(@text-color, 82%);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 18px;
+  }
+
+  .unread:not(.focused) .subject {
+    color: fade(@text-color, 94%);
+    font-weight: 600;
+  }
+
+  .snippet-and-labels .snippet {
+    min-height: 17px;
+    margin-right: 0;
+    color: fade(@text-color, 62%);
+    font-size: 12px;
+    line-height: 17px;
+    opacity: 1;
+  }
+
+  .timestamp {
+    color: fade(@text-color, 62%);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    opacity: 1;
+    transition: opacity 80ms ease;
+  }
+
+  .thread-list-narrow-actions {
+    position: absolute;
+    z-index: 4;
+    top: -1px;
+    right: -2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid fade(@text-color, 11%);
+    border-radius: 9px;
+    background: color-mix(in srgb, @background-primary 90%, @background-secondary 10%);
+    box-shadow: 0 4px 12px fade(#000, 18%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(5px);
+    transition:
+      opacity 100ms ease,
+      transform 100ms ease;
+  }
+
+  .list-item:hover .thread-list-narrow-actions,
+  .list-item:focus-within .thread-list-narrow-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+
+  .list-item:hover .thread-injected-timestamp,
+  .list-item:focus-within .thread-injected-timestamp,
+  .list-item:hover .thread-list-narrow-status-icons,
+  .list-item:focus-within .thread-list-narrow-status-icons,
+  .list-item:hover .thread-icon-attachment,
+  .list-item:focus-within .thread-icon-attachment {
+    opacity: 0;
+  }
+
+  .thread-list-narrow-actions button {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: fade(@text-color, 70%);
+  }
+
+  .thread-list-narrow-actions button:hover,
+  .thread-list-narrow-actions button.active {
+    background: fade(@text-color, 10%);
+    color: @text-color;
+  }
+
+  .thread-list-narrow-actions button.active {
+    color: @accent-primary;
+  }
+
+  .thread-list-narrow-actions button:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: -1px;
+  }
+
+  .thread-list-narrow-actions svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .thread-list-narrow-actions button:last-child svg {
+    fill: currentColor;
+    stroke: none;
+  }
+}
+
+// Reading pane
+.message-list {
+  background: color-mix(in srgb, @background-secondary 45%, @background-primary 55%);
+
+  .message-item-wrap {
+    border-color: var(--fm-border);
+    border-radius: var(--fm-radius-lg);
+    box-shadow: var(--fm-shadow-sm);
+    margin-left: 14px;
+    margin-right: 14px;
+    overflow: hidden;
+  }
+
+  .message-item-white-wrap,
+  .message-item-area {
+    background: @background-primary;
+  }
+
+  .message-header {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}
+
+// `message-list` is both the id and class on the same element. Keep these
+// selectors outside the nested `.message-list` block so legacy/theme rules
+// that reset message cards to square corners cannot win. The visible card is
+// the white wrapper (the outer item has spacing but no painted surface).
+#message-list.message-list .message-item-wrap > .message-item-white-wrap {
+  border-radius: var(--fm-radius-lg) !important;
+  overflow: hidden !important;
+  background-clip: padding-box;
+}
+
+#message-list.message-list .message-item-wrap > .message-item-white-wrap > .message-item-area {
+  border-radius: inherit !important;
+  overflow: hidden;
+}
+
+#message-list.message-list .footer-reply-area-wrap {
+  border-radius: 0 0 var(--fm-radius-lg) var(--fm-radius-lg) !important;
+  overflow: hidden;
+}
+
+.sticky-thread-header {
+  background: color-mix(in srgb, @background-primary 92%, transparent);
+  backdrop-filter: blur(16px) saturate(1.15);
+  border-bottom-color: var(--fm-border);
+}
+
+.composer-inner-wrap,
+.composer-full-window {
+  border-radius: var(--fm-radius-lg);
+
+  .composer-header {
+    background: var(--fm-surface-raised);
+    border-bottom-color: var(--fm-border);
+  }
+}
+
+// Contacts
+.contacts-perspective-list {
+  background: color-mix(in srgb, @source-list-bg 94%, @accent-primary 6%);
+  padding: 8px 7px;
+
+  .item {
+    border-radius: var(--fm-radius-sm);
+    margin: 1px 0;
+
+    &.selected {
+      background: var(--fm-accent-soft);
+      color: @accent-primary;
+      font-weight: @font-weight-semi-bold;
+    }
+  }
+}
+
+.contact-search {
+  padding: 7px 9px;
+
+  input {
+    min-height: var(--fm-control-height);
+    background: var(--fm-surface-muted);
+  }
+}
+
+.contact-list {
+  background: @background-primary;
+
+  .list-item {
+    border-bottom: 1px solid var(--fm-border);
+    padding-left: 6px;
+    transition: background-color 100ms ease;
+
+    &:hover:not(.focused):not(.selected) {
+      background: color-mix(in srgb, @background-primary 93%, @accent-primary 7%);
+    }
+
+    &.focused,
+    &.selected {
+      background: var(--fm-accent-soft);
+      box-shadow: inset 3px 0 0 @accent-primary;
+      color: @text-color;
+    }
+  }
+}
+
+.contact-detail-column {
+  background: color-mix(in srgb, @background-secondary 38%, @background-primary 62%);
+
+  .contact-detail-content-wrap {
+    margin: 20px auto;
+    max-width: 760px;
+    width: calc(100% - 40px);
+    padding: 28px 32px;
+    background: @background-primary;
+    border: 1px solid var(--fm-border);
+    border-radius: var(--fm-radius-lg);
+    box-shadow: var(--fm-shadow-sm);
+  }
+
+  .contact-hero {
+    border-bottom: 1px solid var(--fm-border);
+    padding-bottom: 22px;
+
+    h3 {
+      font-size: 22px;
+      letter-spacing: -0.025em;
+    }
+  }
+
+  .contact-group-memberships .group-membership {
+    background: var(--fm-accent-soft);
+    border-radius: 999px;
+    color: @accent-primary;
+  }
+
+  .contact-attributes .contact-attributes-section {
+    border-bottom-color: var(--fm-border);
+    padding: 8px 0 14px;
+  }
+}
+
+// Calendar
+.mailspring-calendar {
+  background: @background-primary;
+
+  .calendar-header,
+  .header-controls {
+    background: color-mix(in srgb, @background-primary 96%, @background-secondary 4%);
+    border-bottom-color: var(--fm-border);
+  }
+
+  button,
+  .button-group > div,
+  .calendar-view-button {
+    border-radius: var(--fm-radius-sm);
+  }
+
+  .calendar-source-list,
+  .calendar-sidebar {
+    background: color-mix(in srgb, @source-list-bg 94%, @accent-primary 6%);
+    border-right-color: var(--fm-border);
+  }
+
+  .week-view,
+  .month-view,
+  .day-view {
+    background: @background-primary;
+  }
+
+  .day-cell,
+  .month-view-day-cell,
+  .calendar-grid-cell,
+  .hour-row {
+    border-color: var(--fm-border);
+  }
+
+  .calendar-event {
+    border: 0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(10, 12, 20, 0.12);
+    padding-left: 6px;
+  }
+
+  .current-time-indicator {
+    filter: drop-shadow(0 1px 2px color-mix(in srgb, @accent-primary 30%, transparent));
+  }
+}
+
+.calendar-event-popover,
+.quick-event-popover {
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-lg);
+  box-shadow: var(--fm-shadow-md);
+  overflow: hidden;
+}
+
+.mini-month-view .day {
+  border-radius: 50%;
+}
+
+// Preferences: replace the legacy icon ribbon with a compact settings rail.
+.preferences-wrap {
+  background: @background-primary;
+
+  > .flexbox-handle,
+  > div,
+  .preferences-root-flexbox {
+    min-height: 0;
+  }
+
+  .container-preference-tabs {
+    width: 220px;
+    min-width: 220px;
+    height: 100%;
+    border: 0;
+    border-right: 1px solid var(--fm-border);
+    background: color-mix(in srgb, @source-list-bg 94%, @accent-primary 6%);
+  }
+
+  .preferences-tabs {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 20px 12px;
+    background: transparent;
+
+    > div[style] {
+      display: none;
+    }
+
+    .item {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      min-height: 42px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin: 0;
+      padding: 8px 10px;
+      border-radius: var(--fm-radius-sm);
+      text-align: left;
+      transition:
+        background-color 100ms ease,
+        color 100ms ease;
+
+      &:hover:not(.active) {
+        background: color-mix(in srgb, @text-color 6%, transparent);
+      }
+
+      &.active {
+        background: var(--fm-accent-soft);
+        box-shadow: none;
+        color: @accent-primary;
+        font-weight: @font-weight-semi-bold;
+      }
+
+      .tab-icon {
+        width: 23px !important;
+        height: 23px !important;
+        margin: 0;
+        opacity: 0.82;
+      }
+
+      &.active .tab-icon {
+        background-color: @accent-primary;
+        opacity: 1;
+      }
+
+      .name {
+        padding: 0;
+        font-size: @font-size-base;
+        line-height: 20px;
+      }
+    }
+  }
+
+  .preferences-content {
+    background: color-mix(in srgb, @background-secondary 38%, @background-primary 62%);
+
+    > .scroll-region-content {
+      padding: 38px 44px 64px;
+    }
+
+    section {
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      background: @background-primary;
+      border: 1px solid var(--fm-border);
+      border-radius: var(--fm-radius-lg);
+      box-shadow: var(--fm-shadow-sm);
+    }
+
+    h6 {
+      color: @text-color;
+      font-size: @font-size-small;
+      font-weight: @font-weight-semi-bold;
+      letter-spacing: 0.015em;
+      text-transform: none;
+    }
+  }
+
+  .container-appearance .appearance-mode-switch .appearance-mode {
+    background: var(--fm-surface-raised);
+    border-color: var(--fm-border);
+    border-radius: var(--fm-radius);
+    padding: 18px 18px 10px;
+
+    &.active {
+      background: var(--fm-accent-soft);
+      border-color: @accent-primary;
+      box-shadow: 0 0 0 2px var(--fm-accent-soft);
+    }
+  }
+}
+
+// Dialogs and empty states
+.modal-container .modal,
+.dialog-container .dialog {
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-lg);
+  box-shadow: var(--fm-shadow-md);
+}
+
+.empty-list-state,
+.contacts-empty-state,
+.calendar-empty-state {
+  color: @text-color-subtle;
+
+  .message,
+  h2,
+  h3 {
+    color: @text-color;
+    font-weight: @font-weight-semi-bold;
+    letter-spacing: -0.02em;
+  }
+}
+
+@media (max-width: 900px) {
+  .preferences-wrap {
+    .container-preference-tabs {
+      width: 76px;
+      min-width: 76px;
+    }
+
+    .preferences-tabs .item {
+      justify-content: center;
+
+      .name {
+        display: none;
+      }
+    }
+
+    .preferences-content > .scroll-region-content {
+      padding: 26px 24px 48px;
+    }
+  }
+
+  .contact-detail-column .contact-detail-content-wrap {
+    margin: 12px auto;
+    width: calc(100% - 24px);
+    padding: 22px;
+  }
+}

@@ -57,11 +57,12 @@ class PreferencesAccountDetails extends Component<
   },
   {
     account: Account;
+    calendarPassword: string;
   }
 > {
   constructor(props) {
     super(props);
-    this.state = { account: props.account.clone() };
+    this.state = { account: props.account.clone(), calendarPassword: '' };
   }
 
   componentDidUpdate(prevProps: {
@@ -192,6 +193,39 @@ class PreferencesAccountDetails extends Component<
   _onResetColor = () => {
     this.state.account.color = '';
     this._saveChanges();
+  };
+
+  _onCalendarSettingChanged = (key: 'caldav_host' | 'caldav_username', value: string) => {
+    this._setState({
+      settings: {
+        ...this.state.account.settings,
+        [key]: value,
+      },
+    });
+  };
+
+  _onSyncCalendar = async () => {
+    const account = this.state.account.clone();
+    account.settings.caldav_username =
+      account.settings.caldav_username || account.settings.imap_username || account.emailAddress;
+    this.setState({ account });
+    this.props.onAccountUpdated(this.props.account, account);
+
+    if (this.state.calendarPassword) {
+      await KeyManager.replacePassword(
+        `${account.emailAddress}-caldav`,
+        this.state.calendarPassword
+      );
+      this.setState({ calendarPassword: '' });
+    }
+
+    // Account settings are copied into the native worker when it launches. A
+    // normal wake keeps the old copy, so restart this account's worker before
+    // asking it to run CalDAV discovery.
+    await AppEnv.mailsyncBridge.forceRelaunchClient(account);
+    AppEnv.mailsyncBridge.sendMessageToAccount(account.id, {
+      type: 'sync-calendar',
+    });
   };
 
   _onContactSupport = () => {
@@ -379,6 +413,53 @@ class PreferencesAccountDetails extends Component<
             </div>
           )}
         </div>
+        {(account.provider === 'imap' || account.provider === 'smartermail') && (
+          <div className="account-calendar-settings">
+            <h6>{localized('Calendar')} (CalDAV)</h6>
+            <p className="account-calendar-help">
+              {localized(
+                'A calendar-capable account is detected when CalDAV discovery returns at least one calendar. Enter the CalDAV service URL below; the username and password default to this account’s IMAP credentials.'
+              )}
+            </p>
+            <label htmlFor="account-caldav-host">{localized('Server URL')}</label>
+            <input
+              id="account-caldav-host"
+              type="text"
+              value={account.settings.caldav_host || ''}
+              placeholder="https://mail.example.com/WebDAV/"
+              onBlur={this._saveChanges}
+              onChange={(event) =>
+                this._onCalendarSettingChanged('caldav_host', event.target.value)
+              }
+            />
+            <label htmlFor="account-caldav-username">{localized('Username')}</label>
+            <input
+              id="account-caldav-username"
+              type="text"
+              value={account.settings.caldav_username || ''}
+              placeholder={account.settings.imap_username || account.emailAddress}
+              onBlur={this._saveChanges}
+              onChange={(event) =>
+                this._onCalendarSettingChanged('caldav_username', event.target.value)
+              }
+            />
+            <label htmlFor="account-caldav-password">{localized('Password or app password')}</label>
+            <input
+              id="account-caldav-password"
+              type="password"
+              value={this.state.calendarPassword}
+              placeholder={localized('Leave blank to use the IMAP password')}
+              autoComplete="new-password"
+              onChange={(event) => this.setState({ calendarPassword: event.target.value })}
+            />
+            <p className="account-calendar-help">
+              {localized('SmarterMail must also have WebDAV service access enabled for this user.')}
+            </p>
+            <div className="btn btn-emphasis" onClick={this._onSyncCalendar}>
+              {localized('Save and Sync Calendar')}
+            </div>
+          </div>
+        )}
         <h6>{localized('Local Data')}</h6>
         <div className="btn" onClick={this._onResetCache}>
           {localized('Rebuild Cache...')}

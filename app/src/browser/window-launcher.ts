@@ -42,7 +42,14 @@ export default class WindowLauncher {
     config: import('../config').default;
   }) {
     this._defaultWindowOpts = {
+      // The hot window becomes the main workspace first. On Windows it must
+      // therefore match the main workspace's custom frameless title bar.
       frame: process.platform !== 'darwin',
+      titleBarStyle: process.platform === 'win32' ? 'hidden' : undefined,
+      titleBarOverlay:
+        process.platform === 'win32'
+          ? { color: '#111111', symbolColor: '#ffffff', height: 40 }
+          : undefined,
       toolbar: process.platform !== 'linux',
       hidden: false,
       devMode,
@@ -78,6 +85,22 @@ export default class WindowLauncher {
 
   newWindow(options) {
     const opts = Object.assign(this.createDefaultWindowOpts(), options);
+
+    // Composer, popout, contacts, and other secondary Windows windows do not
+    // render AppTabs, so retain their native frame unless a caller explicitly
+    // requests otherwise (onboarding is intentionally frameless).
+    if (
+      process.platform === 'win32' &&
+      opts.windowType !== WindowLauncher.EMPTY_WINDOW &&
+      opts.windowType !== 'default'
+    ) {
+      if (options.frame == null) opts.frame = true;
+      // Do not leak the main workspace's native caption overlay into composer,
+      // onboarding, or preview windows. They keep their explicitly requested
+      // frame/title-bar behavior.
+      opts.titleBarStyle = options.titleBarStyle;
+      opts.titleBarOverlay = options.titleBarOverlay;
+    }
 
     let win;
 
@@ -171,13 +194,17 @@ export default class WindowLauncher {
   // a window has been setup. If we detect this case we have to bootup a
   // plain MailspringWindow instead of using a hot window.
   _mustUseColdWindow(opts) {
-    const { bootstrapScript, frame } = this.createDefaultWindowOpts();
+    const { bootstrapScript, frame, titleBarStyle, titleBarOverlay } =
+      this.createDefaultWindowOpts();
 
     const usesOtherBootstrap = opts.bootstrapScript !== bootstrapScript;
     const usesOtherFrame = !!opts.frame !== frame;
+    const usesOtherTitleBar =
+      opts.titleBarStyle !== titleBarStyle ||
+      JSON.stringify(opts.titleBarOverlay) !== JSON.stringify(titleBarOverlay);
     const requestsColdStart = opts.coldStartOnly;
 
-    return usesOtherBootstrap || usesOtherFrame || requestsColdStart;
+    return usesOtherBootstrap || usesOtherFrame || usesOtherTitleBar || requestsColdStart;
   }
 
   _hotWindowOpts() {

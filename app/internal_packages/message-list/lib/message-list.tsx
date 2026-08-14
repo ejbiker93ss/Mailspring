@@ -16,6 +16,7 @@ import {
   EmlUtils,
   SearchableComponentStore,
   SearchableComponentMaker,
+  WorkspaceStore,
 } from 'mailspring-exports';
 
 import {
@@ -33,6 +34,8 @@ import FindInThread from './find-in-thread';
 import MessageItemContainer from './message-item-container';
 import { MessageListScrollTooltip } from './message-list-scroll-tooltip';
 import { SubjectLineIcons } from './subject-line-icons';
+import ThreadSummary from './thread-summary';
+import { THREAD_SUMMARIES_CONFIG_KEY } from './preferences-mail-assistant';
 
 type MinifiedBundle = { type: 'minifiedBundle'; messages: Message[] };
 type MessageOrBundle = Message | MinifiedBundle;
@@ -318,7 +321,7 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
       if (!item) return;
 
       if (isMinifiedBundle(item)) {
-        this.setState({ minified: false });
+        this._expandMinifiedBundle(item);
       } else {
         // Click the MessageItem root to toggle collapsed state
         const firstChild = focused.firstElementChild as HTMLElement;
@@ -499,7 +502,7 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
     const threadId = this.state.currentThread && this.state.currentThread.id;
     const nextThreadId = newState.currentThread && newState.currentThread.id;
     if (threadId !== nextThreadId) {
-      newState.minified = true;
+      newState.minified = WorkspaceStore.rootSheet() !== WorkspaceStore.Sheet.Conversation;
       newState.focusedMessageIndex = 0;
     }
     this.setState(newState);
@@ -566,18 +569,19 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
     const h = Math.round(BUNDLE_HEIGHT / lines.length);
 
     return (
-      <div
+      <button
+        type="button"
         className="minified-bundle"
         role="listitem"
         tabIndex={isFocused ? 0 : -1}
         aria-label={localized('%@ older messages', bundle.messages.length)}
-        onClick={() => this.setState({ minified: false })}
+        onClick={() => this._expandMinifiedBundle(bundle)}
         onFocus={() => {
           if (bundleIndex !== this.state.focusedMessageIndex) {
             this.setState({ focusedMessageIndex: bundleIndex });
           }
         }}
-        key={Utils.generateTempId()}
+        key={`minified-${bundle.messages[0]?.id}-${bundle.messages[bundle.messages.length - 1]?.id}`}
       >
         <div className="num-messages">{`${bundle.messages.length} ${localized(
           'older messages'
@@ -587,9 +591,18 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
             <div key={msg.id} style={{ height: h * 2, top: -h * i }} className="msg-line" />
           ))}
         </div>
-      </div>
+      </button>
     );
   }
+
+  _expandMinifiedBundle = (bundle: MinifiedBundle) => {
+    this.setState({ minified: false });
+    bundle.messages.forEach((message) => {
+      if (!this.state.messagesExpandedState[message.id]) {
+        Actions.toggleMessageIdExpanded(message.id);
+      }
+    });
+  };
 
   render() {
     if (!this.state.currentThread) {
@@ -623,6 +636,10 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
             }}
           >
             {this._renderSubject()}
+            {this.state.messages.filter((message) => !message.draft).length > 2 &&
+              AppEnv.config.get(THREAD_SUMMARIES_CONFIG_KEY) !== false && (
+                <ThreadSummary thread={this.state.currentThread} messages={this.state.messages} />
+              )}
             <div className="headers" style={{ position: 'relative' }}>
               <InjectedComponentSet
                 className="message-list-headers"

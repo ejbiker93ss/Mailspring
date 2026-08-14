@@ -1,4 +1,4 @@
-import { BrowserWindow, app, dialog } from 'electron';
+import { BrowserWindow, app, dialog, BrowserWindowConstructorOptions } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import url from 'url';
@@ -30,6 +30,8 @@ export interface MailspringWindowSettings {
   exitWhenDone?: boolean;
   configDirPath?: string;
   autoHideMenuBar?: boolean;
+  titleBarStyle?: BrowserWindowConstructorOptions['titleBarStyle'];
+  titleBarOverlay?: BrowserWindowConstructorOptions['titleBarOverlay'];
   bootstrapScript?: string;
   appVersion?: string;
   shellLoadTime?: number;
@@ -62,7 +64,15 @@ export default class MailspringWindow extends EventEmitter {
   constructor(settings: MailspringWindowSettings = {}) {
     super();
 
-    let frame, height, pathToOpen, resizable, title, width, autoHideMenuBar, titleBarStyle;
+    let frame,
+      height,
+      pathToOpen,
+      resizable,
+      title,
+      width,
+      autoHideMenuBar,
+      titleBarStyle,
+      titleBarOverlay;
 
     ({
       frame,
@@ -73,6 +83,7 @@ export default class MailspringWindow extends EventEmitter {
       resizable,
       pathToOpen,
       titleBarStyle,
+      titleBarOverlay,
       isSpec: this.isSpec,
       devMode: this.devMode,
       windowKey: this.windowKey,
@@ -105,6 +116,7 @@ export default class MailspringWindow extends EventEmitter {
       height,
       resizable,
       titleBarStyle,
+      titleBarOverlay,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,

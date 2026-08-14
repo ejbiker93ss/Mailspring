@@ -8,7 +8,15 @@ import {
   InjectedComponentSet,
 } from 'mailspring-component-kit';
 
-import { localized, FocusedPerspectiveStore, Utils, DateUtils, Thread } from 'mailspring-exports';
+import {
+  localized,
+  Actions,
+  TaskFactory,
+  FocusedPerspectiveStore,
+  Utils,
+  DateUtils,
+  Thread,
+} from 'mailspring-exports';
 
 import { ThreadArchiveQuickAction, ThreadTrashQuickAction } from './thread-list-quick-actions';
 import ThreadListParticipants from './thread-list-participants';
@@ -59,6 +67,87 @@ const getSnippet = function (thread: ThreadWithMessagesMetadata) {
     if (messages[ii].snippet) return messages[ii].snippet;
   }
   return null;
+};
+
+const NarrowActionIcon = ({ name }: { name: 'flag' | 'trash' | 'reply' }) => {
+  const paths = {
+    flag: <path d="M6 21V4m0 1h11l-2 4 2 4H6" />,
+    trash: <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" />,
+    reply: <path d="M9 7 4 12l5 5v-3c5 0 8 1 11 4-1-6-4-9-11-9V7Z" />,
+  };
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      {paths[name]}
+    </svg>
+  );
+};
+
+const NarrowHoverActions = ({ thread }: { thread: ThreadWithMessagesMetadata }) => {
+  const messages = thread.__messages || [];
+  const replyTarget = messages[messages.length - 1];
+  const canTrash = FocusedPerspectiveStore.current().canMoveThreadsTo([thread], 'trash');
+  const stopAnd = (callback: () => void) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    callback();
+  };
+
+  const toggleFlag = () =>
+    Actions.queueTask(
+      TaskFactory.taskForInvertingStarred({
+        source: 'Message Card Hover Action',
+        threads: [thread],
+      })
+    );
+  const moveToTrash = () =>
+    Actions.queueTasks(
+      TaskFactory.tasksForMovingToTrash({
+        source: 'Message Card Hover Action',
+        threads: [thread],
+      })
+    );
+  const reply = () => {
+    if (!replyTarget) return;
+    Actions.composeReply({
+      threadId: thread.id,
+      messageId: replyTarget.id,
+      popout: true,
+      type: 'reply',
+      behavior: 'prefer-existing-if-pristine',
+    });
+  };
+
+  return (
+    <div
+      className="thread-list-narrow-actions"
+      role="group"
+      aria-label={localized('Message actions')}
+    >
+      <button
+        className={thread.starred ? 'active' : ''}
+        title={thread.starred ? localized('Unflag') : localized('Flag')}
+        aria-label={thread.starred ? localized('Unflag') : localized('Flag')}
+        aria-pressed={!!thread.starred}
+        onClick={stopAnd(toggleFlag)}
+      >
+        <NarrowActionIcon name="flag" />
+      </button>
+      {canTrash ? (
+        <button
+          title={localized('Trash')}
+          aria-label={localized('Trash')}
+          onClick={stopAnd(moveToTrash)}
+        >
+          <NarrowActionIcon name="trash" />
+        </button>
+      ) : null}
+      {replyTarget ? (
+        <button title={localized('Reply')} aria-label={localized('Reply')} onClick={stopAnd(reply)}>
+          <NarrowActionIcon name="reply" />
+        </button>
+      ) : null}
+    </div>
+  );
 };
 
 const c1 = new ListTabular.Column({
@@ -197,26 +286,25 @@ const cNarrow = new ListTabular.Column({
     // TODO We are limiting the amount on injected icons in narrow mode to 1
     // until we revisit the UI to accommodate more icons
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-        <div className="icons-column">
-          <ThreadListIcon thread={thread} />
-          <InjectedComponentSet
-            inline={true}
-            matchLimit={1}
-            direction="column"
-            containersRequired={false}
-            key="injected-component-set"
-            exposedProps={{ thread: thread }}
-            matching={{ role: 'ThreadListIcon' }}
-            className="thread-injected-icons"
-          />
-          <MailImportantIcon thread={thread} showIfAvailableForAnyAccount={true} />
-        </div>
+      <div className="thread-list-narrow-row-content">
         <div className="thread-info-column">
           <div className="participants-wrapper">
             <ThreadListParticipants thread={thread} />
             {pencil}
             <span style={{ flex: 1 }} />
+            <div className="thread-list-narrow-status-icons">
+              <ThreadListIcon thread={thread} />
+              <InjectedComponentSet
+                inline={true}
+                matchLimit={1}
+                containersRequired={false}
+                key="injected-component-set"
+                exposedProps={{ thread: thread }}
+                matching={{ role: 'ThreadListIcon' }}
+                className="thread-injected-icons"
+              />
+              <MailImportantIcon thread={thread} showIfAvailableForAnyAccount={true} />
+            </div>
             {attachment}
             <InjectedComponent
               key="thread-injected-timestamp"
@@ -237,6 +325,7 @@ const cNarrow = new ListTabular.Column({
             <MailLabelSet thread={thread} />
           </div>
         </div>
+        <NarrowHoverActions thread={thread} />
       </div>
     );
   },

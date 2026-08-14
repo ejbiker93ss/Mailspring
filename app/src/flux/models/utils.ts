@@ -73,7 +73,7 @@ export function convertToModel(json: any) {
     throw new Error('convertToModel: no __cls found on object.');
   }
   if (!DatabaseObjectRegistry.isInRegistry(json.__cls)) {
-    throw new Error('convertToModel: __cls is not a known class.');
+    throw new Error(`convertToModel: ${json.__cls} is not a known class.`);
   }
   return DatabaseObjectRegistry.deserialize(json.__cls, json);
 }

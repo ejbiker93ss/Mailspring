@@ -176,7 +176,8 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
       this.props.item.onEdited != null ||
       this.props.item.onExport != null ||
       this.props.item.onExportMbox != null ||
-      this.props.item.onCreateChild != null
+      this.props.item.onCreateChild != null ||
+      this.props.item.onToggleFavorite != null
     );
   };
 
@@ -205,6 +206,16 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
 
   _onDrop = (event: React.DragEvent) => {
     this._runCallback('onDrop', event);
+  };
+
+  _onDragStart = (event: React.DragEvent) => {
+    this._runCallback('onDragStart', event);
+    event.stopPropagation();
+  };
+
+  _onDragEnd = (event: React.DragEvent) => {
+    this._runCallback('onDragEnd', event);
+    event.stopPropagation();
   };
 
   _onCollapseToggled = () => {
@@ -301,6 +312,15 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
       );
     }
 
+    if (this.props.item.onToggleFavorite) {
+      menu.append(
+        new MenuItem({
+          label: item.favorite ? localized(`Remove from Favorites`) : localized(`Add to Favorites`),
+          click: () => this._runCallback('onToggleFavorite'),
+        })
+      );
+    }
+
     if (this.props.item.onExport) {
       menu.append(
         new MenuItem({
@@ -346,6 +366,9 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
       <DropZone
         id={item.id}
         className={containerClass}
+        draggable={item.draggable}
+        onDragStart={this._onDragStart}
+        onDragEnd={this._onDragEnd}
         onDrop={this._onDrop}
         onClick={this._onClick}
         onDoubleClick={this._onEdit}

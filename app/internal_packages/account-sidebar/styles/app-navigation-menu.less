@@ -1,0 +1,73 @@
+@import 'ui-variables';
+
+.sheet-toolbar .app-navigation-button {
+  order: -101;
+  width: 68px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: fade(@text-color-heading, 88%);
+
+  svg {
+    flex: none;
+  }
+
+  .app-navigation-button-divider {
+    align-self: stretch;
+    width: 1px;
+    margin: 4px 5px;
+    background: fade(@text-color-heading, 14%);
+  }
+
+  .app-navigation-chevron {
+    transition: transform 120ms ease;
+  }
+
+  &:active .app-navigation-chevron {
+    transform: translateY(1px);
+  }
+}
+
+.app-navigation-menu {
+  width: 220px;
+  padding: 5px;
+  border: 1px solid @border-color-secondary;
+  border-radius: 12px;
+  background: @background-secondary;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  color: @text-color;
+
+  .app-navigation-menu-item {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: transparent;
+    color: @text-color;
+    font: inherit;
+    font-size: 16px;
+    text-align: left;
+    cursor: default;
+
+    svg {
+      flex: none;
+      color: @text-color-subtle;
+    }
+
+    &:hover,
+    &:focus,
+    &.active {
+      outline: none;
+      background: fade(@text-color, 8%);
+    }
+
+    &:active {
+      background: fade(@text-color, 14%);
+    }
+  }
+}

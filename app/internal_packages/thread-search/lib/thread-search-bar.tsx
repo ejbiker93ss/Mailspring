@@ -187,6 +187,10 @@ class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarSta
     if (this.props.query === this._initialQueryForPerspective()) {
       this._onSearchQueryChanged('');
     }
+    // Chromium may scroll the contenteditable vertically while moving the
+    // caret during blur. Reset it after that browser work so the placeholder
+    // returns to its centered resting position.
+    window.requestAnimationFrame(() => this._fieldEl && this._fieldEl.resetScrollPosition());
   };
 
   _onKeyDown = (e: React.KeyboardEvent) => {

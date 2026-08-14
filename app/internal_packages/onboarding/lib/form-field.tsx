@@ -4,6 +4,7 @@ const FormField = (props: {
   field: string;
   title: string;
   type?: string;
+  placeholder?: string;
   style?: React.CSSProperties;
   submitting?: boolean;
   onFieldKeyPress?: (e: React.KeyboardEvent) => void;
@@ -22,6 +23,7 @@ const FormField = (props: {
       <label htmlFor={props.field}>{props.title}:</label>
       <input
         type={props.type || 'text'}
+        placeholder={props.placeholder}
         id={props.field}
         style={props.style}
         className={val && props.errorFieldNames.includes(props.field) ? 'error' : ''}

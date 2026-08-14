@@ -45,6 +45,8 @@ class OnboardingStore extends MailspringStore {
         this._pageStack = ['account-choose', 'account-settings-o365'];
       } else if (this._account.provider === 'outlook') {
         this._pageStack = ['account-choose', 'account-settings-outlook'];
+      } else if (this._account.provider === 'smartermail') {
+        this._pageStack = ['account-choose', 'account-settings-smartermail'];
       } else if (this._account.provider === 'imap') {
         this._pageStack = ['account-choose', 'account-settings', 'account-settings-imap'];
       } else {
@@ -88,7 +90,9 @@ class OnboardingStore extends MailspringStore {
           ? 'account-settings-o365'
           : provider === 'outlook'
             ? 'account-settings-outlook'
-            : 'account-settings';
+            : provider === 'smartermail'
+              ? 'account-settings-smartermail'
+              : 'account-settings';
 
     // Don't carry over any type-specific account information
     this._onSetAccount(
@@ -149,7 +153,7 @@ class OnboardingStore extends MailspringStore {
     const isFirstAccount = AccountStore.accounts().length === 0;
 
     try {
-      AccountStore.addAccount(account);
+      await AccountStore.addAccount(account);
     } catch (e) {
       AppEnv.reportError(e);
       AppEnv.showErrorDialog({

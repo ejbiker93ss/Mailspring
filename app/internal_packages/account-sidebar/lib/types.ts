@@ -16,6 +16,7 @@ export interface ISidebarItem {
   onExport?: () => void;
   onExportMbox?: () => void;
   onCreateChild?: (item, childName: string) => void;
+  onToggleFavorite?: (item) => void;
   onCollapseToggled: () => void;
   onDrop: (item, event) => void;
   shouldAcceptDrop: (item, event) => void;
@@ -25,6 +26,10 @@ export interface ISidebarItem {
   editable?: boolean;
   exportable?: boolean;
   deleted?: boolean;
+  favorite?: boolean;
+  draggable?: boolean;
+  onDragStart?: (item, event) => void;
+  onDragEnd?: (item, event) => void;
 }
 
 export interface ISidebarSection {
@@ -35,4 +40,10 @@ export interface ISidebarSection {
   titleColor?: string;
   onCollapseToggled?: () => void;
   onItemCreated?: (displayName) => void;
+  accountId?: string;
+  reorderable?: boolean;
+  onSectionDragStart?: (event) => void;
+  onSectionDragEnd?: (event) => void;
+  shouldAcceptSectionDrop?: (event) => boolean;
+  onSectionDrop?: (event) => void;
 }

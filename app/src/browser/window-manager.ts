@@ -265,6 +265,14 @@ export default class WindowManager {
       neverClose: true,
       bootstrapScript: require.resolve('../window-bootstrap'),
       mainWindow: true,
+      // Keep the tabbed title bar, but let Windows own the caption buttons so
+      // maximize participates in Windows 11 Snap Layouts.
+      frame: true,
+      titleBarStyle: process.platform === 'win32' ? 'hidden' : undefined,
+      titleBarOverlay:
+        process.platform === 'win32'
+          ? { color: '#111111', symbolColor: '#ffffff', height: 40 }
+          : undefined,
       width: 900, // Gets changed based on previous settings
       height: 600, // Gets changed based on previous settings
       initializeInBackground: this.initializeInBackground,

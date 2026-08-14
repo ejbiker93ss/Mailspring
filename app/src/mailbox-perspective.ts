@@ -1,6 +1,8 @@
 /* eslint global-require: 0 */
 /* eslint no-use-before-define: 0 */
 import _ from 'underscore';
+import fs from 'fs';
+import path from 'path';
 
 import { localized } from './intl';
 import * as Utils from './flux/models/utils';
@@ -27,6 +29,7 @@ let ChangeLabelsTask = null;
 let ChangeFolderTask = null;
 let ChangeUnreadTask = null;
 let FocusedPerspectiveStore = null;
+let CrossAccountMoveFolderTask = null;
 
 // This is a class cluster. Subclasses are not for external use!
 // https://developer.apple.com/library/ios/documentation/General/Conceptual/CocoaEncyclopedia/ClassClusters/ClassClusters.html
@@ -437,9 +440,17 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 
   canReceiveThreadsFromAccountIds(threads: string[]) {
+    if (this._categories.some((c) => c.isLockedCategory())) return false;
+    if (super.canReceiveThreadsFromAccountIds(threads)) return true;
+
+    // Cross-account APPEND needs one concrete IMAP mailbox. Gmail labels and
+    // aggregate multi-account perspectives are intentionally not ambiguous
+    // drop targets.
     return (
-      super.canReceiveThreadsFromAccountIds(threads) &&
-      !this._categories.some((c) => c.isLockedCategory())
+      AppEnv.config.get('core.reading.crossAccountDragEnabled') !== false &&
+      this._categories.length === 1 &&
+      this._categories[0] instanceof Folder &&
+      threads.every((accountId) => accountId !== this._categories[0].accountId)
     );
   }
 
@@ -461,6 +472,38 @@ class CategoryMailboxPerspective extends MailboxPerspective {
 
     const myCat = this.categories().find((c) => c.accountId === accountId);
     const currentCat = current.categories().find((c) => c.accountId === accountId);
+
+    if (!myCat) {
+      const targetFolder = this._categories.length === 1 ? this._categories[0] : null;
+      if (
+        AppEnv.config.get('core.reading.crossAccountDragEnabled') === false ||
+        !(targetFolder instanceof Folder) ||
+        targetFolder.isLockedCategory()
+      ) {
+        return [];
+      }
+
+      CrossAccountMoveFolderTask =
+        CrossAccountMoveFolderTask ||
+        require('./flux/tasks/cross-account-move-folder-task').CrossAccountMoveFolderTask;
+      const transfer = new CrossAccountMoveFolderTask({
+        phase: 'prepare',
+        threads,
+        sourceAccountId: accountId,
+        targetAccountId: targetFolder.accountId,
+        targetFolder,
+        deleteFromSource:
+          (AppEnv.config.get('core.reading.crossAccountDragBehavior') || 'move') === 'move',
+        source: 'Cross-account drag and drop',
+      });
+      transfer.stagingDirectory = path.join(
+        AppEnv.getConfigDirPath(),
+        'cross-account-transfers',
+        transfer.transferId
+      );
+      fs.mkdirSync(transfer.stagingDirectory, { recursive: true });
+      return [transfer];
+    }
 
     // Don't drag and drop on ourselves
     // NOTE: currentCat can be nil in case of SearchPerspective

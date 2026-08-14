@@ -1,0 +1,12 @@
+{
+  "name": "Catppuccin-RichGreen",
+  "title": "Catppuccin Rich Green Mailspring Theme",
+  "displayName": "Catppuccin-RichGreen",
+  "theme": "ui",
+  "version": "1.1.1",
+  "description": "Catppuccin theme - Rich Green flavour",
+  "license": "MIT",
+  "engines": {
+    "mailspring": "*"
+  }
+}

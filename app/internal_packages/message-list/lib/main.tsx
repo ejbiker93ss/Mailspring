@@ -5,24 +5,34 @@ import {
   DatabaseStore,
   Actions,
   Thread,
+  ExtensionRegistry,
+  PreferencesUIStore,
+  localized,
 } from 'mailspring-exports';
 
 import { MessageListHiddenMessagesToggle } from './message-list-hidden-messages-toggle';
 import MessageList from './message-list';
-import { SidebarPluginContainer } from './sidebar-plugin-container';
-import { SidebarParticipantPicker } from './sidebar-participant-picker';
+import UnthreadedMessageList from './unthreaded-message-list';
+import MessageOwnerStatus from './message-owner-status';
+import StickyThreadHeader from './sticky-thread-header';
+import LongDashQuotedReplyExtension from './extensions/long-dash-quoted-reply-extension';
 
 export function activate() {
+  UnthreadedMessageList.CoreComponent = MessageList;
+  ExtensionRegistry.MessageView.register(LongDashQuotedReplyExtension);
+  ComponentRegistry.register(MessageOwnerStatus, { role: 'MessageHeaderStatus' });
+  ComponentRegistry.register(StickyThreadHeader, { role: 'MessageListHeaders' });
+  this.preferencesTab = new PreferencesUIStore.TabItem({
+    tabId: 'AI Assistant',
+    displayName: localized('AI Assistant'),
+    componentClassFn: () => require('./preferences-mail-assistant').default,
+  });
+  PreferencesUIStore.registerPreferencesTab(this.preferencesTab);
+
   if (AppEnv.isMainWindow()) {
     // Register Message List Actions we provide globally
-    ComponentRegistry.register(MessageList, {
+    ComponentRegistry.register(UnthreadedMessageList, {
       location: WorkspaceStore.Location.MessageList,
-    });
-    ComponentRegistry.register(SidebarParticipantPicker, {
-      location: WorkspaceStore.Location.MessageListSidebar,
-    });
-    ComponentRegistry.register(SidebarPluginContainer, {
-      location: WorkspaceStore.Location.MessageListSidebar,
     });
     ComponentRegistry.register(MessageListHiddenMessagesToggle, {
       role: 'MessageListHeaders',
@@ -30,7 +40,9 @@ export function activate() {
   } else {
     // This is for the thread-popout window.
     const { threadId, perspectiveJSON } = AppEnv.getWindowProps();
-    ComponentRegistry.register(MessageList, { location: WorkspaceStore.Location.Center });
+    ComponentRegistry.register(UnthreadedMessageList, {
+      location: WorkspaceStore.Location.Center,
+    });
 
     // We need to locate the thread and focus it so that the MessageList displays it
     DatabaseStore.find<Thread>(Thread, threadId).then((thread) =>
@@ -47,7 +59,9 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(MessageList);
-  ComponentRegistry.unregister(SidebarPluginContainer);
-  ComponentRegistry.unregister(SidebarParticipantPicker);
+  ExtensionRegistry.MessageView.unregister(LongDashQuotedReplyExtension);
+  ComponentRegistry.unregister(UnthreadedMessageList);
+  ComponentRegistry.unregister(MessageOwnerStatus);
+  ComponentRegistry.unregister(StickyThreadHeader);
+  PreferencesUIStore.unregisterPreferencesTab(this.preferencesTab.tabId);
 }

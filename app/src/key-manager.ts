@@ -23,6 +23,7 @@ class KeyManager {
       const keys = await this._getKeyHash();
       delete keys[`${account.emailAddress}-imap`];
       delete keys[`${account.emailAddress}-smtp`];
+      delete keys[`${account.emailAddress}-caldav`];
       delete keys[`${account.emailAddress}-refresh-token`];
       await this._writeKeyHash(keys);
     } catch (err) {
@@ -35,6 +36,11 @@ class KeyManager {
       const keys = await this._getKeyHash();
       keys[`${account.emailAddress}-imap`] = account.settings.imap_password;
       keys[`${account.emailAddress}-smtp`] = account.settings.smtp_password;
+      if (account.settings.caldav_password) {
+        keys[`${account.emailAddress}-caldav`] = account.settings.caldav_password;
+      } else {
+        delete keys[`${account.emailAddress}-caldav`];
+      }
       keys[`${account.emailAddress}-refresh-token`] = account.settings.refresh_token;
       await this._writeKeyHash(keys);
     } catch (err) {
@@ -43,6 +49,7 @@ class KeyManager {
     const next = account.clone();
     delete next.settings.imap_password;
     delete next.settings.smtp_password;
+    delete next.settings.caldav_password;
     delete next.settings.refresh_token;
     return next;
   }
@@ -52,6 +59,7 @@ class KeyManager {
     if (!keys) keys = await this._getKeyHash();
     next.settings.imap_password = keys[`${account.emailAddress}-imap`];
     next.settings.smtp_password = keys[`${account.emailAddress}-smtp`];
+    next.settings.caldav_password = keys[`${account.emailAddress}-caldav`];
     next.settings.refresh_token = keys[`${account.emailAddress}-refresh-token`];
     return next;
   }

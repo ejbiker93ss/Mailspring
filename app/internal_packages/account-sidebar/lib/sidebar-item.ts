@@ -21,6 +21,45 @@ import { ISidebarItem } from './types';
 
 const idForCategories = (categories: { id: string }[]) => categories.map((c) => c.id).join('-');
 
+export const FAVORITE_FOLDERS_CONFIG_KEY = 'core.workspace.favoriteFoldersByAccount';
+
+type FavoriteFoldersByAccount = Record<string, string[]>;
+
+const configuredFavorites = (): FavoriteFoldersByAccount =>
+  AppEnv.config.get(FAVORITE_FOLDERS_CONFIG_KEY) || {};
+
+export const favoriteFolderIdsForAccount = (accountId: string): string[] => {
+  const saved = configuredFavorites();
+  if (Object.prototype.hasOwnProperty.call(saved, accountId)) {
+    return Array.isArray(saved[accountId]) ? saved[accountId] : [];
+  }
+  const inbox = CategoryStore.getCategoryByRole(accountId, 'inbox');
+  return inbox ? [inbox.id] : [];
+};
+
+const onToggleFavoriteFolder = function (item: ISidebarItem) {
+  const categories = item.perspective.categories();
+  if (categories.length === 0) return;
+
+  const saved = configuredFavorites();
+  const remove = categories.every((category) =>
+    favoriteFolderIdsForAccount(category.accountId).includes(category.id)
+  );
+  const next = { ...saved };
+
+  categories.forEach((category) => {
+    const configured = next[category.accountId];
+    const current = Array.isArray(configured)
+      ? configured
+      : favoriteFolderIdsForAccount(category.accountId);
+    next[category.accountId] = remove
+      ? current.filter((id) => id !== category.id)
+      : [...new Set([...current, category.id])];
+  });
+
+  AppEnv.config.set(FAVORITE_FOLDERS_CONFIG_KEY, next);
+};
+
 const countForItem = function (perspective: MailboxPerspective) {
   const unreadCountEnabled = AppEnv.config.get('core.workspace.showUnreadForAllCategories');
   if (perspective.isInbox() || unreadCountEnabled) {
@@ -339,6 +378,12 @@ export default class SidebarItem {
       opts.exportable = !role || !EXCLUDED_EXPORT_ROLES.has(role);
     }
     opts.contextMenuLabel = contextMenuLabel;
+    if (categories.length > 0) {
+      opts.favorite = categories.every((category) =>
+        favoriteFolderIdsForAccount(category.accountId).includes(category.id)
+      );
+      opts.onToggleFavorite = onToggleFavoriteFolder;
+    }
     return this.forPerspective(id, perspective, opts);
   }
 

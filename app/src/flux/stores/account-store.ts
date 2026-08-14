@@ -151,6 +151,7 @@ class _AccountStore extends MailspringStore {
       // the account is added, but we want to be on the safe side.
       delete a.settings.imap_password;
       delete a.settings.smtp_password;
+      delete a.settings.caldav_password;
       delete a.settings.refresh_token;
     });
     AppEnv.config.set(configAccountsKey, configAccounts);

@@ -55,6 +55,7 @@ describe('Account', function () {
       { provider: 'yandex', expected: 'Yandex' },
       { provider: 'office365', expected: 'Office 365' },
       { provider: 'outlook', expected: 'Outlook' },
+      { provider: 'smartermail', expected: 'SmarterMail' },
     ];
 
     cases.forEach(({ provider, expected }) => {

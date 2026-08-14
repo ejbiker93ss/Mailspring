@@ -100,6 +100,11 @@ export class Account extends ModelWithMetadata {
     imap_password: string;
     imap_allow_insecure_ssl: boolean;
     imap_security: 'SSL / TLS' | 'STARTTLS' | 'none';
+    caldav_host?: string;
+    carddav_host?: string;
+    caldav_username?: string;
+    caldav_password?: string;
+    smartermail_server?: string;
     smtp_host: string;
     smtp_port: number;
     smtp_username: string;
@@ -197,6 +202,8 @@ export class Account extends ModelWithMetadata {
       return 'Office 365';
     } else if (this.provider === 'outlook') {
       return 'Outlook';
+    } else if (this.provider === 'smartermail') {
+      return 'SmarterMail';
     }
     return this.provider;
   }
