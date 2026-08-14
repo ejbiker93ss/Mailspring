@@ -3,6 +3,7 @@ import { MailboxPerspective } from 'mailspring-exports';
 export interface ISidebarItem {
   id: string;
   name: string;
+  title?: string;
   contextMenuLabel: string;
   count: number;
   iconName: string;

@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { AccountStore, Message, Thread, localized } from 'mailspring-exports';
 import { AiSummaryMarkdown } from './ai-summary-markdown';
 import { generateThreadSummary } from './ai-summary-client';
@@ -140,38 +141,57 @@ export default class ThreadSummary extends React.Component<Props, State> {
     if (!this.state.restored) return null;
     const messageCount = this.props.messages.filter((message) => !message.draft).length;
     const stale = !!this.state.result && messageCount > this.state.result.messageCount;
-    const actionLabel = this.state.result ? localized('Regenerate') : localized('Summarize');
+    const actionLabel = this.state.result
+      ? localized('Regenerate AI summary')
+      : localized('Summarize thread with AI');
+    const controlTarget = Array.from(
+      document.querySelectorAll<HTMLElement>('.ai-summary-toolbar-target')
+    ).find((target) => target.dataset.threadId === this.props.thread.id);
+    const control = (
+      <button
+        type="button"
+        className={`ai-summary-toolbar-button ${this.state.result ? 'has-summary' : ''} ${
+          this.state.loading ? 'is-loading' : ''
+        }`}
+        disabled={this.state.loading || !this.state.hasAPIKey}
+        title={
+          this.state.hasAPIKey
+            ? actionLabel
+            : localized('Add your OpenAI API key in AI Assistant settings to summarize mail.')
+        }
+        aria-label={actionLabel}
+        onClick={this._generate}
+      >
+        <span aria-hidden="true">AI</span>
+        {this.state.loading && <span className="ai-summary-toolbar-progress" aria-hidden="true" />}
+      </button>
+    );
 
     return (
-      <section className="ai-thread-summary" aria-label={localized('AI thread summary')}>
-        <div className="ai-summary-heading">
-          <span>{localized('AI summary')}</span>
-          {this.state.result && (
-            <button className="btn btn-toolbar" onClick={() => this._setOpen(!this.state.open)}>
-              {this.state.open ? localized('Collapse') : localized('Expand')}
-            </button>
-          )}
-        </div>
-        {this.state.result && this.state.open && (
-          <AiSummaryMarkdown content={this.state.result.summary} />
+      <>
+        {controlTarget && ReactDOM.createPortal(control, controlTarget)}
+        {(this.state.result || this.state.error) && (
+          <section className="ai-thread-summary" aria-label={localized('AI thread summary')}>
+            <div className="ai-summary-heading">
+              <span>{localized('AI summary')}</span>
+              {this.state.result && (
+                <button className="btn btn-toolbar" onClick={() => this._setOpen(!this.state.open)}>
+                  {this.state.open ? localized('Collapse') : localized('Expand')}
+                </button>
+              )}
+            </div>
+            {this.state.result && this.state.open && (
+              <AiSummaryMarkdown content={this.state.result.summary} />
+            )}
+            {stale && this.state.open && (
+              <p className="ai-summary-stale">
+                {localized('New messages since the last summary.')}
+              </p>
+            )}
+            {this.state.error && <p className="ai-summary-error">{this.state.error}</p>}
+          </section>
         )}
-        {stale && this.state.open && (
-          <p className="ai-summary-stale">{localized('New messages since the last summary.')}</p>
-        )}
-        {this.state.error && <p className="ai-summary-error">{this.state.error}</p>}
-        <button
-          className="btn ai-summary-action"
-          disabled={this.state.loading || !this.state.hasAPIKey}
-          title={
-            this.state.hasAPIKey
-              ? ''
-              : localized('Add your OpenAI API key in AI Assistant settings to summarize mail.')
-          }
-          onClick={this._generate}
-        >
-          {this.state.loading ? localized('Summarizing...') : actionLabel}
-        </button>
-      </section>
+      </>
     );
   }
 }

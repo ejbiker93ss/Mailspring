@@ -1,5 +1,20 @@
 # Mailspring Changelog
 
+## 1.23.2 (8/14/2026)
+
+Features:
+
+- Added richer inline attachment previews with rotation, zoom, fit-to-window, and a larger dedicated viewer.
+- Improved mailbox navigation with nested folders and total-message counts in folder tooltips.
+- Improved calendar event colors and contrast across light and dark themes.
+- Refined threaded and unthreaded message layouts, hover actions, summaries, and native Windows title-bar theming.
+
+Bug Fixes:
+
+- Fixed calendar deletion and prevented edits on read-only calendars and past events.
+- Fixed pasting HTML signatures into the Raw Signature editor.
+- Fixed several attachment-preview, thread-summary, and Windows window-control layout issues.
+
 ## 1.23.0 (7/19/2026)
 
 Features:

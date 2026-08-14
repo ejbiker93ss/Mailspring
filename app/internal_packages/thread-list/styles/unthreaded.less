@@ -947,19 +947,20 @@
 
 .unthreaded-row-actions {
   position: absolute;
-  top: 7px;
-  right: 8px;
+  top: 50%;
+  right: 6px;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 1px;
+  gap: 0;
+  padding: 2px;
   border: 1px solid fade(@text-color, 10%);
   border-radius: 7px;
   background: color-mix(in srgb, @background-primary 90%, @background-secondary 10%);
   box-shadow: 0 4px 12px fade(#000, 18%);
   opacity: 0;
   pointer-events: none;
-  transform: translateX(5px);
+  transform: translate(5px, -50%);
   transition:
     opacity 100ms ease,
     transform 100ms ease;
@@ -969,7 +970,7 @@
 .unthreaded-row:focus-within .unthreaded-row-actions {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(0);
+  transform: translate(0, -50%);
 }
 
 .unthreaded-row:hover .unthreaded-row-meta,
@@ -977,13 +978,22 @@
   opacity: 0;
 }
 
+.unthreaded-row:hover .unthreaded-row-top,
+.unthreaded-row:hover .unthreaded-subject,
+.unthreaded-row:hover .unthreaded-snippet,
+.unthreaded-row:focus-within .unthreaded-row-top,
+.unthreaded-row:focus-within .unthreaded-subject,
+.unthreaded-row:focus-within .unthreaded-snippet {
+  padding-right: 27px;
+}
+
 .unthreaded-row-actions button {
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 18px;
   padding: 0;
   border: 0;
   border-radius: 5px;

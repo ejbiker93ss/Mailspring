@@ -19,6 +19,7 @@ interface MessageAttachmentsState {
   loadingById: { [fileId: string]: boolean };
   openById: { [fileId: string]: boolean };
   resolvedPathById: { [fileId: string]: string };
+  rotationById: { [fileId: string]: number };
 }
 
 const PDF_CONTENT_TYPE = 'application/pdf';
@@ -93,6 +94,7 @@ interface PdfCanvasPreviewProps {
   filePath: string;
   onError: (error: Error) => void;
   onReady: () => void;
+  rotation?: number;
 }
 
 class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
@@ -106,7 +108,9 @@ class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
   }
 
   componentDidUpdate(prevProps: PdfCanvasPreviewProps) {
-    if (prevProps.filePath !== this.props.filePath) this._renderPdf();
+    if (prevProps.filePath !== this.props.filePath || prevProps.rotation !== this.props.rotation) {
+      this._renderPdf();
+    }
   }
 
   componentWillUnmount() {
@@ -146,11 +150,14 @@ class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
       for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
         const page = await pdf.getPage(pageNumber);
         if (generation !== this._generation) return;
-        const initialViewport = page.getViewport({ scale: 1 });
+        const initialViewport = page.getViewport({ scale: 1, rotation: this.props.rotation || 0 });
         const availableWidth = Math.max(320, this._container.clientWidth - 28);
         const cssScale = Math.min(2, availableWidth / initialViewport.width);
         const outputScale = window.devicePixelRatio || 1;
-        const viewport = page.getViewport({ scale: cssScale * outputScale });
+        const viewport = page.getViewport({
+          scale: cssScale * outputScale,
+          rotation: this.props.rotation || 0,
+        });
         const canvas = document.createElement('canvas');
         canvas.className = 'attachment-pdf-page';
         canvas.width = viewport.width;
@@ -187,6 +194,7 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
     loadingById: {},
     openById: {},
     resolvedPathById: {},
+    rotationById: {},
   };
 
   _openPreview = async (file: File) => {
@@ -240,6 +248,15 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
     if (filePath) Actions.quickPreviewFile(filePath);
   };
 
+  _rotatePreview = (fileId: string, amount: number) => {
+    this.setState((prevState) => ({
+      rotationById: {
+        ...prevState.rotationById,
+        [fileId]: ((prevState.rotationById[fileId] || 0) + amount + 360) % 360,
+      },
+    }));
+  };
+
   renderAttachment(AttachmentRenderer: React.ComponentType<any>, file: File) {
     const { canRemoveAttachments, downloads, filePreviewPaths } = this.props;
     const displayFilePreview = AppEnv.config.get('core.attachments.displayFilePreview');
@@ -277,6 +294,7 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
     const filePath = this.state.resolvedPathById[file.id];
     const loading = !!this.state.loadingById[file.id];
     const error = this.state.errorById[file.id];
+    const rotation = this.state.rotationById[file.id] || 0;
 
     return (
       <div key={`attachment-preview-${file.id}`} className="inline-attachment-preview is-open">
@@ -285,22 +303,42 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
             {file.displayName()}
           </span>
           <span className="inline-attachment-preview-hint">Double-click for larger view</span>
-          <button
-            className="btn btn-small"
-            onClick={() => this._closePreview(file.id)}
-            type="button"
-          >
-            Close Preview
-          </button>
+          <div className="inline-attachment-preview-actions">
+            <button
+              aria-label="Rotate counterclockwise"
+              className="btn btn-small"
+              onClick={() => this._rotatePreview(file.id, -90)}
+              title="Rotate counterclockwise"
+              type="button"
+            >
+              ↶
+            </button>
+            <button
+              aria-label="Rotate clockwise"
+              className="btn btn-small"
+              onClick={() => this._rotatePreview(file.id, 90)}
+              title="Rotate clockwise"
+              type="button"
+            >
+              ↷
+            </button>
+            <button
+              className="btn btn-small"
+              onClick={() => this._closePreview(file.id)}
+              type="button"
+            >
+              Close Preview
+            </button>
+          </div>
         </div>
         <div
           className={`inline-attachment-preview-body ${isImageFile(file) ? 'is-image' : 'is-pdf'}`}
           onDoubleClick={() => this._openLargePreview(file.id)}
-          title="Double-click for larger view"
         >
           {filePath && isPdfFile(file) ? (
             <PdfCanvasPreview
               filePath={filePath}
+              rotation={rotation}
               onReady={() => this._setPreviewReady(file.id)}
               onError={(previewError) => this._setPreviewError(file.id, previewError)}
             />
@@ -310,6 +348,7 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
               className="inline-attachment-preview-image"
               src={pathToFileURL(filePath).href}
               alt={file.displayName()}
+              style={{ transform: `rotate(${rotation}deg)` }}
               onLoad={() => this._setPreviewReady(file.id)}
               onError={() =>
                 this._setPreviewError(

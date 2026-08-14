@@ -288,6 +288,126 @@
       border: 1px solid #eee;
       padding: 3px;
     }
+
+    html.media-preview,
+    body.media-preview {
+      width: 100%;
+      height: 100%;
+      margin: 0 !important;
+      overflow: hidden;
+      background: #191b22 !important;
+      color: #f1f3f8;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .media-viewer {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 40%, #292d38 0, #191b22 72%);
+    }
+    .media-drag-region {
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 56px;
+      -webkit-app-region: drag;
+    }
+    .media-title {
+      position: absolute;
+      z-index: 3;
+      top: 18px;
+      left: 22px;
+      max-width: calc(100% - 470px);
+      overflow: hidden;
+      color: rgba(241, 243, 248, 0.82);
+      font-size: 13px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .media-toolbar {
+      position: absolute;
+      z-index: 5;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 5px;
+      border-radius: 11px;
+      background: rgba(28, 31, 39, 0.88);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(14px);
+      -webkit-app-region: no-drag;
+    }
+    .media-toolbar button,
+    .media-zoom-label {
+      height: 30px;
+      min-width: 30px;
+      border: 0;
+      border-radius: 7px;
+      color: #e8ebf4;
+      background: transparent;
+      font: 600 14px/30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: center;
+    }
+    .media-toolbar button {
+      padding: 0 9px;
+      cursor: default;
+    }
+    .media-toolbar button:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .media-toolbar button:active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+    .media-toolbar .media-close:hover {
+      color: white;
+      background: #d83b45;
+    }
+    .media-zoom-label {
+      width: 54px;
+      color: rgba(241, 243, 248, 0.76);
+      font-size: 12px;
+    }
+    .media-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+      box-sizing: border-box;
+      padding: 70px 28px 28px;
+      overscroll-behavior: contain;
+    }
+    .media-stage {
+      position: relative;
+      margin: auto;
+    }
+    .media-stage.is-image img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: block;
+      max-width: none;
+      max-height: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: 0 12px 42px rgba(0, 0, 0, 0.38);
+      transform-origin: center;
+    }
+    .media-stage.is-pdf {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .media-stage.is-pdf canvas {
+      display: block;
+      flex: none;
+      background: white;
+      box-shadow: 0 12px 42px rgba(0, 0, 0, 0.38);
+    }
   </style>
 
   <div id="the-doc"><canvas id="the-canvas"></canvas></div>
@@ -318,6 +438,171 @@
       });
     }
 
+    function createMediaViewer(title) {
+      document.documentElement.classList.add('media-preview');
+      document.body.classList.add('media-preview');
+      div.innerHTML = `
+        <div class="media-viewer">
+          <div class="media-drag-region"></div>
+          <div class="media-title"></div>
+          <div class="media-toolbar">
+            <button type="button" data-action="rotate-left" title="Rotate counterclockwise">↶</button>
+            <button type="button" data-action="rotate-right" title="Rotate clockwise">↷</button>
+            <button type="button" data-action="zoom-out" title="Zoom out">−</button>
+            <span class="media-zoom-label">100%</span>
+            <button type="button" data-action="zoom-in" title="Zoom in">+</button>
+            <button type="button" data-action="reset" title="Reset view">Fit</button>
+            <button type="button" class="media-close" data-action="close" title="Close">×</button>
+          </div>
+          <div class="media-viewport"><div class="media-stage"></div></div>
+        </div>`;
+
+      const viewport = div.querySelector('.media-viewport');
+      const stage = div.querySelector('.media-stage');
+      const zoomLabel = div.querySelector('.media-zoom-label');
+      div.querySelector('.media-title').textContent = title || '';
+      const listeners = [];
+      let rotation = 0;
+      let zoom = 1;
+
+      const notify = () => {
+        zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+        listeners.forEach((listener) => listener({ rotation, zoom }));
+      };
+      const setZoom = (nextZoom) => {
+        zoom = Math.max(0.25, Math.min(4, nextZoom));
+        notify();
+      };
+      const rotate = (amount) => {
+        rotation = (rotation + amount + 360) % 360;
+        notify();
+      };
+      const reset = () => {
+        rotation = 0;
+        zoom = 1;
+        viewport.scrollTo({ top: 0, left: 0 });
+        notify();
+      };
+
+      div.querySelector('[data-action="rotate-left"]').onclick = () => rotate(-90);
+      div.querySelector('[data-action="rotate-right"]').onclick = () => rotate(90);
+      div.querySelector('[data-action="zoom-out"]').onclick = () => setZoom(zoom / 1.2);
+      div.querySelector('[data-action="zoom-in"]').onclick = () => setZoom(zoom * 1.2);
+      div.querySelector('[data-action="reset"]').onclick = reset;
+      div.querySelector('[data-action="close"]').onclick = () => window.close();
+      viewport.addEventListener(
+        'wheel',
+        (event) => {
+          event.preventDefault();
+          setZoom(zoom * (event.deltaY < 0 ? 1.12 : 1 / 1.12));
+        },
+        { passive: false }
+      );
+
+      return {
+        viewport,
+        stage,
+        getState: () => ({ rotation, zoom }),
+        onChange: (listener) => listeners.push(listener),
+        notify,
+      };
+    }
+
+    async function runImage() {
+      const viewer = createMediaViewer(filePath.split(/[\\/]/).pop());
+      viewer.stage.classList.add('is-image');
+      const extension = filePath.split('.').pop().toLowerCase();
+      const mimeTypes = {
+        avif: 'image/avif',
+        bmp: 'image/bmp',
+        gif: 'image/gif',
+        ico: 'image/x-icon',
+        jpeg: 'image/jpeg',
+        jpg: 'image/jpeg',
+        png: 'image/png',
+        svg: 'image/svg+xml',
+        webp: 'image/webp',
+      };
+      const buffer = await window.electronAPI.previewFileAsBuffer();
+      const objectURL = URL.createObjectURL(new Blob([buffer], { type: mimeTypes[extension] }));
+      const image = document.createElement('img');
+      viewer.stage.appendChild(image);
+
+      image.onload = () => {
+        const availableWidth = Math.max(320, viewer.viewport.clientWidth - 56);
+        const availableHeight = Math.max(240, viewer.viewport.clientHeight - 98);
+        const fitScale = Math.min(
+          1,
+          availableWidth / image.naturalWidth,
+          availableHeight / image.naturalHeight
+        );
+        const baseWidth = image.naturalWidth * fitScale;
+        const baseHeight = image.naturalHeight * fitScale;
+
+        const update = ({ rotation, zoom }) => {
+          const sideways = rotation % 180 !== 0;
+          const width = baseWidth * zoom;
+          const height = baseHeight * zoom;
+          viewer.stage.style.width = `${sideways ? height : width}px`;
+          viewer.stage.style.height = `${sideways ? width : height}px`;
+          image.style.width = `${width}px`;
+          image.style.height = `${height}px`;
+          image.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        };
+        viewer.onChange(update);
+        update(viewer.getState());
+      };
+      image.src = objectURL;
+      window.addEventListener('unload', () => URL.revokeObjectURL(objectURL), { once: true });
+    }
+
+    async function showPdfInMediaViewer(pdf) {
+      const viewer = createMediaViewer(filePath.split(/[\\/]/).pop());
+      viewer.stage.classList.add('is-pdf');
+      let renderGeneration = 0;
+
+      const renderPages = async ({ rotation, zoom }) => {
+        const generation = ++renderGeneration;
+        viewer.stage.innerHTML = '';
+        const availableWidth = Math.max(320, viewer.viewport.clientWidth - 64);
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          const page = await pdf.getPage(pageNumber);
+          if (generation !== renderGeneration) return;
+          const initialViewport = page.getViewport({ scale: 1, rotation });
+          const cssScale = Math.min(2, availableWidth / initialViewport.width);
+          const outputScale = window.devicePixelRatio || 1;
+          const viewport = page.getViewport({ scale: cssScale * outputScale, rotation });
+          const canvas = document.createElement('canvas');
+          const baseWidth = viewport.width / outputScale;
+          const baseHeight = viewport.height / outputScale;
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          canvas.dataset.baseWidth = String(baseWidth);
+          canvas.dataset.baseHeight = String(baseHeight);
+          const currentZoom = viewer.getState().zoom;
+          canvas.style.width = `${baseWidth * currentZoom}px`;
+          canvas.style.height = `${baseHeight * currentZoom}px`;
+          viewer.stage.appendChild(canvas);
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        }
+      };
+
+      let previousRotation = 0;
+      viewer.onChange((state) => {
+        if (state.rotation !== previousRotation) {
+          previousRotation = state.rotation;
+          renderPages(state);
+          return;
+        }
+        viewer.stage.querySelectorAll('canvas').forEach((canvas) => {
+          canvas.style.width = `${Number(canvas.dataset.baseWidth) * state.zoom}px`;
+          canvas.style.height = `${Number(canvas.dataset.baseHeight) * state.zoom}px`;
+        });
+      });
+      await renderPages(viewer.getState());
+    }
+
     async function runPDF({ previewToken, mode }) {
       const el = document.createElement('script');
       el.onload = async () => {
@@ -329,11 +614,16 @@
           cMapPacked: true,
         }).promise;
 
+        if (mode === 'display') {
+          await showPdfInMediaViewer(pdf);
+          return;
+        }
+
         div.innerHTML = '';
         document.body.style.margin = '0';
         document.body.style.background = '#252525';
 
-        const pageCount = mode === 'capture' ? 1 : pdf.numPages;
+        const pageCount = 1;
         for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
           const page = await pdf.getPage(pageNumber);
           const viewport = page.getViewport({ scale: 1 });
@@ -540,6 +830,8 @@
     window.requestAnimationFrame(() => {
       if (strategy === 'pdfjs') {
         runPDF({ previewToken, mode });
+      } else if (strategy === 'image') {
+        runImage();
       } else if (strategy === 'mammoth') {
         runMammoth({ mode, previewToken });
       } else if (strategy === 'snarkdown') {

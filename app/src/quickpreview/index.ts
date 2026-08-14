@@ -26,7 +26,7 @@ const QuickPreviewCSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for inline script in renderer.html
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https: http:", // Allow external images
+  "img-src 'self' data: blob: https: http:", // Allow decoded local previews and external images
   "object-src 'none'",
   "frame-src 'none'",
   "base-uri 'self'",
@@ -240,13 +240,22 @@ export async function displayQuickPreviewWindow(filePath: string) {
   }
 
   if (quickPreviewWindow === null) {
-    const { BrowserWindow } = require('@electron/remote');
+    const { BrowserWindow, screen } = require('@electron/remote');
+    const currentWindow = AppEnv.getCurrentWindow();
+    const display = screen.getDisplayMatching(currentWindow.getBounds());
+    const width = Math.min(1600, Math.max(900, Math.round(display.workAreaSize.width * 0.9)));
+    const height = Math.min(1050, Math.max(650, Math.round(display.workAreaSize.height * 0.9)));
     quickPreviewWindow = new BrowserWindow({
-      width: 800,
-      height: 600,
+      width,
+      height,
+      minWidth: 640,
+      minHeight: 480,
       center: true,
       skipTaskbar: true,
-      backgroundColor: isPDF ? '#404040' : '#FFF',
+      frame: false,
+      resizable: true,
+      maximizable: true,
+      backgroundColor: '#191b22',
       webPreferences: {
         preload: path.join(filesRoot, 'preload.js'),
         nodeIntegration: false,
@@ -289,7 +298,11 @@ export async function displayQuickPreviewWindow(filePath: string) {
       })
       .catch(onLoadError);
   } else if (isImage) {
-    quickPreviewWindow.loadFile(filePath).catch(onLoadError);
+    quickPreviewWindow
+      .loadFile(path.join(filesRoot, 'renderer.html'), {
+        search: JSON.stringify({ mode: 'display', filePath, strategy: 'image' }),
+      })
+      .catch(onLoadError);
   } else {
     quickPreviewWindow
       .loadFile(path.join(filesRoot, 'renderer.html'), {

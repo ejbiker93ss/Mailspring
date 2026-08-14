@@ -238,6 +238,65 @@ body.platform-win32 {
       margin-left: @padding-small-horizontal;
     }
   }
+
+  .ai-summary-toolbar-target {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: @padding-small-horizontal;
+  }
+
+  .ai-summary-toolbar-button {
+    position: relative;
+    min-width: 26px;
+    height: 24px;
+    padding: 0 5px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: @text-color-subtle;
+    font-size: 10px;
+    font-weight: @font-weight-semi-bold;
+    line-height: 24px;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: fade(@text-color, 9%);
+      color: @text-color;
+      outline: none;
+    }
+
+    &.has-summary {
+      background: color-mix(in srgb, @accent-primary 12%, transparent);
+      color: @accent-primary;
+    }
+
+    &:disabled {
+      opacity: 0.48;
+    }
+  }
+
+  .ai-summary-toolbar-progress {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: @accent-primary;
+    animation: ai-summary-toolbar-pulse 900ms ease-in-out infinite alternate;
+  }
+
+  @keyframes ai-summary-toolbar-pulse {
+    from {
+      opacity: 0.35;
+      transform: scale(0.75);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
   .thread-injected-mail-labels {
     vertical-align: top;
     margin-top: 3px;

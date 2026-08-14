@@ -32,22 +32,27 @@ const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
 // unchanged makes Electron reject the update and retain the black bootstrap
 // fallback from the BrowserWindow constructor.
 const electronHexColor = (color: string): string | null => {
-  if (/^#[\da-f]{6}([\da-f]{2})?$/i.test(color)) return color;
+  const hexMatch = color.match(/^#([\da-f]{6})(?:[\da-f]{2})?$/i);
+  if (hexMatch) return `#${hexMatch[1]}`;
   const match = color.match(
     /^rgba?\(\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)(?:\s*[,/]\s*(\d+(?:\.\d+)?%?))?\s*\)$/i
   );
-  if (!match) return null;
 
   const channel = (value: string) =>
     Math.max(0, Math.min(255, Math.round(Number(value))))
       .toString(16)
       .padStart(2, '0');
-  const rgb = `${channel(match[1])}${channel(match[2])}${channel(match[3])}`;
-  if (!match[4]) return `#${rgb}`;
-  const alphaValue = match[4].endsWith('%')
-    ? (Number(match[4].slice(0, -1)) / 100) * 255
-    : Number(match[4]) * 255;
-  return `#${rgb}${channel(String(alphaValue))}`;
+  if (match) return `#${channel(match[1])}${channel(match[2])}${channel(match[3])}`;
+
+  // Chromium may preserve wide-gamut colors in computed styles. Electron's native title-bar
+  // overlay only needs opaque sRGB, so normalize color(srgb ...) values here as well.
+  const srgbMatch = color.match(
+    /^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*[\d.]+%?)?\)$/i
+  );
+  if (!srgbMatch) return null;
+  return `#${channel(String(Number(srgbMatch[1]) * 255))}${channel(
+    String(Number(srgbMatch[2]) * 255)
+  )}${channel(String(Number(srgbMatch[3]) * 255))}`;
 };
 
 /**
@@ -62,6 +67,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
   private appMenuButton = React.createRef<HTMLButtonElement>();
   private titleBar = React.createRef<HTMLElement>();
   private themeDisposable?: { dispose: () => void };
+  private nativeColorSyncTimers: number[] = [];
 
   constructor(props) {
     super(props);
@@ -79,15 +85,26 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       Actions.openThreadInTab.listen(this._onOpenThreadInTab),
     ];
     this.themeDisposable = AppEnv.themes.onDidChangeActiveThemes(
-      this._syncNativeWindowControlColors
+      this._queueNativeWindowControlColorSync
     );
-    this._syncNativeWindowControlColors();
+    window.addEventListener('focus', this._queueNativeWindowControlColorSync);
+    this._queueNativeWindowControlColorSync();
   }
 
   componentWillUnmount() {
     this.unlisteners.forEach((unlisten) => unlisten());
     this.themeDisposable?.dispose();
+    window.removeEventListener('focus', this._queueNativeWindowControlColorSync);
+    this.nativeColorSyncTimers.forEach((timer) => window.clearTimeout(timer));
   }
+
+  _queueNativeWindowControlColorSync = () => {
+    if (process.platform !== 'win32') return;
+    this.nativeColorSyncTimers.forEach((timer) => window.clearTimeout(timer));
+    this.nativeColorSyncTimers = [0, 75, 300, 1000].map((delay) =>
+      window.setTimeout(this._syncNativeWindowControlColors, delay)
+    );
+  };
 
   _syncNativeWindowControlColors = () => {
     if (process.platform !== 'win32') return;

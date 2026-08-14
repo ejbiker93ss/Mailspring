@@ -542,6 +542,8 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
         <SubjectLineIcons
           canCollapse={this.state.canCollapse}
           hasCollapsedItems={this.state.hasCollapsedItems}
+          showAiSummaryControl={this._shouldShowThreadSummary()}
+          threadId={this.state.currentThread.id}
           onPrint={this._onPrintThread}
           onPopIn={this._onPopThreadIn}
           onPopOut={this._onPopoutThread}
@@ -558,6 +560,10 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
       }
     }
   }
+
+  _shouldShowThreadSummary = () =>
+    this.state.messages.filter((message) => !message.draft).length > 2 &&
+    AppEnv.config.get(THREAD_SUMMARIES_CONFIG_KEY) !== false;
 
   _renderMinifiedBundle(
     bundle: { type: 'minifiedBundle'; messages: Message[] },
@@ -636,10 +642,9 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
             }}
           >
             {this._renderSubject()}
-            {this.state.messages.filter((message) => !message.draft).length > 2 &&
-              AppEnv.config.get(THREAD_SUMMARIES_CONFIG_KEY) !== false && (
-                <ThreadSummary thread={this.state.currentThread} messages={this.state.messages} />
-              )}
+            {this._shouldShowThreadSummary() && (
+              <ThreadSummary thread={this.state.currentThread} messages={this.state.messages} />
+            )}
             <div className="headers" style={{ position: 'relative' }}>
               <InjectedComponentSet
                 className="message-list-headers"

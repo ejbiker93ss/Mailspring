@@ -113,6 +113,66 @@ const makeFoldersReorderable = (
   });
 };
 
+export const nestSidebarFolderItems = (
+  items: ISidebarItem[],
+  accountId: string
+): ISidebarItem[] => {
+  const entries: Array<{ category: any; item: ISidebarItem }> = [];
+
+  const collect = (siblings: ISidebarItem[]) => {
+    siblings.forEach((item) => {
+      const categories = item.perspective?.categories() || [];
+      const category =
+        categories.length === 1 &&
+        categories[0].accountId === accountId &&
+        item.id === categories[0].id
+          ? categories[0]
+          : null;
+      if (category) entries.push({ category, item });
+      collect(item.children || []);
+    });
+  };
+  collect(items);
+
+  const rebuilt = new Map(
+    entries.map(({ category, item }) => [category.id, { ...item, children: [] }])
+  );
+  const parentIdByChildId = new Map<string, string>();
+
+  entries.forEach(({ category }) => {
+    const childPath = String(category.path || '').toLocaleLowerCase();
+    const parent = entries
+      .filter(({ category: candidate }) => {
+        const parentPath = String(candidate.path || '').toLocaleLowerCase();
+        return (
+          candidate.id !== category.id &&
+          childPath.length > parentPath.length &&
+          childPath.startsWith(parentPath) &&
+          ['/', '.', '\\'].includes(childPath[parentPath.length])
+        );
+      })
+      .sort((left, right) => right.category.path.length - left.category.path.length)[0];
+    if (parent) parentIdByChildId.set(category.id, parent.category.id);
+  });
+
+  entries.forEach(({ category }) => {
+    const parentId = parentIdByChildId.get(category.id);
+    if (parentId && rebuilt.has(parentId)) {
+      rebuilt.get(parentId).children.push(rebuilt.get(category.id));
+    }
+  });
+
+  const roots: ISidebarItem[] = [];
+  items.forEach((item) => {
+    if (!rebuilt.has(item.id)) {
+      roots.push(item);
+    } else if (!parentIdByChildId.has(item.id)) {
+      roots.push(rebuilt.get(item.id));
+    }
+  });
+  return roots;
+};
+
 class SidebarSection {
   static empty(title: string): ISidebarSection {
     return {
@@ -433,7 +493,10 @@ class SidebarSection {
       title: account.label,
       iconName: 'folder.png',
       items: makeFoldersReorderable(
-        sortSidebarItems([...standard.items, ...user.items], account.id),
+        sortSidebarItems(
+          nestSidebarFolderItems([...standard.items, ...user.items], account.id),
+          account.id
+        ),
         account.id,
         'root',
         reordering

@@ -10,6 +10,7 @@ import {
   DestroyCategoryTask,
   GetManyRFC2822Task,
   CategoryStore,
+  ThreadCountsStore,
   Actions,
   RegExpUtils,
   localized,
@@ -116,6 +117,20 @@ const countForItem = function (perspective: MailboxPerspective) {
     return perspective.unreadCount();
   }
   return 0;
+};
+
+const titleForItem = function (perspective: MailboxPerspective) {
+  const categories = perspective.categories();
+  if (categories.length === 0) return perspective.name;
+
+  const counts = categories.map((category) =>
+    ThreadCountsStore.totalCountForCategoryId(category.id)
+  );
+  if (counts.some((count) => count == null)) return perspective.name;
+
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  const noun = total === 1 ? localized('email') : localized('emails');
+  return `${perspective.name} — ${total.toLocaleString()} ${noun}`;
 };
 
 const isItemSelected = (perspective: MailboxPerspective) =>
@@ -354,6 +369,7 @@ export default class SidebarItem {
       {
         id,
         name: perspective.name,
+        title: titleForItem(perspective),
         contextMenuLabel: perspective.name,
         count: countForItem(perspective),
         iconName: perspective.iconName,

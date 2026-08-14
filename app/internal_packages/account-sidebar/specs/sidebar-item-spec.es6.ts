@@ -1,10 +1,10 @@
-import { Folder, Actions, CategoryStore } from 'mailspring-exports';
+import { Folder, Actions, CategoryStore, ThreadCountsStore } from 'mailspring-exports';
 import SidebarItem, {
   configuredFavoriteFolders,
   FAVORITE_FOLDERS_CONFIG_KEY,
   reorderFavoriteFolders,
 } from '../lib/sidebar-item';
-import SidebarSection from '../lib/sidebar-section';
+import SidebarSection, { nestSidebarFolderItems } from '../lib/sidebar-section';
 
 describe('sidebar-item', function sidebarItemSpec() {
   it('preserves nested labels on rename', () => {
@@ -30,6 +30,40 @@ describe('sidebar-item', function sidebarItemSpec() {
     const { existingPath, path } = task;
     expect(existingPath).toBe('a');
     expect(path).toBe('b');
+  });
+
+  it('includes the total email count in folder tooltips', () => {
+    const folder = new Folder({ id: 'Work', path: 'Work', accountId: TEST_ACCOUNT_ID });
+    spyOn(ThreadCountsStore, 'totalCountForCategoryId').andReturn(1234);
+    AppEnv.savedState.sidebarKeysCollapsed = {};
+
+    const item = SidebarItem.forCategories([folder]);
+
+    expect(item.title).toBe('Work — 1,234 emails');
+  });
+
+  it('nests subfolders beneath their folder-path parent', () => {
+    const inbox = new Folder({
+      id: 'inbox-id',
+      path: 'INBOX',
+      role: 'inbox',
+      accountId: TEST_ACCOUNT_ID,
+    });
+    const accounting = new Folder({
+      id: 'accounting-id',
+      path: 'INBOX/Accounting',
+      accountId: TEST_ACCOUNT_ID,
+    });
+    AppEnv.savedState.sidebarKeysCollapsed = {};
+
+    const nested = nestSidebarFolderItems(
+      [SidebarItem.forCategories([inbox]), SidebarItem.forCategories([accounting])],
+      TEST_ACCOUNT_ID
+    );
+
+    expect(nested.length).toBe(1);
+    expect(nested[0].id).toBe(inbox.id);
+    expect(nested[0].children.map((item) => item.id)).toEqual([accounting.id]);
   });
 
   it('identifies favorites by both account and folder', () => {

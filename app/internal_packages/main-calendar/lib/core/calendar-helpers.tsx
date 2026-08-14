@@ -191,16 +191,31 @@ export function calcEventColors(calendarId: string): {
   const { r, g, b } = parsed;
 
   const textParsed = getThemeTextColor();
-  const mix = 0.4; // 40% calendar color, 60% theme text color
-  const tr = textParsed ? Math.round(r * mix + textParsed.r * (1 - mix)) : Math.round(r * 0.7);
-  const tg = textParsed ? Math.round(g * mix + textParsed.g * (1 - mix)) : Math.round(g * 0.7);
-  const tb = textParsed ? Math.round(b * mix + textParsed.b * (1 - mix)) : Math.round(b * 0.7);
+  const themeTextLuminance = textParsed
+    ? (textParsed.r * 0.2126 + textParsed.g * 0.7152 + textParsed.b * 0.0722) / 255
+    : 0.5;
+  const isDarkTheme = themeTextLuminance > 0.55;
+  const visibilityTarget = isDarkTheme ? 255 : 0;
+
+  // Calendar providers often supply colors designed for a white background. Pull the solid
+  // accent toward the theme's high-contrast end so dark blues and similar colors remain visible.
+  const bandBoost = isDarkTheme ? 0.2 : 0.08;
+  const br = Math.round(r * (1 - bandBoost) + visibilityTarget * bandBoost);
+  const bg = Math.round(g * (1 - bandBoost) + visibilityTarget * bandBoost);
+  const bb = Math.round(b * (1 - bandBoost) + visibilityTarget * bandBoost);
+
+  // Keep titles recognizably calendar-colored while borrowing enough of the theme text color
+  // for reliable legibility. Previously the very low-opacity surface made these look washed out.
+  const colorWeight = 0.72;
+  const tr = textParsed ? Math.round(br * colorWeight + textParsed.r * (1 - colorWeight)) : br;
+  const tg = textParsed ? Math.round(bg * colorWeight + textParsed.g * (1 - colorWeight)) : bg;
+  const tb = textParsed ? Math.round(bb * colorWeight + textParsed.b * (1 - colorWeight)) : bb;
 
   return {
-    // Light pastel background (15% opacity)
-    background: `rgba(${r}, ${g}, ${b}, 0.15)`,
-    // Solid color for left band
-    band: `rgb(${r}, ${g}, ${b})`,
+    // A clearly tinted surface that still leaves the calendar grid visible.
+    background: `rgba(${br}, ${bg}, ${bb}, ${isDarkTheme ? 0.28 : 0.2})`,
+    // Strong, theme-adjusted color for bars, dots, and borders.
+    band: `rgb(${br}, ${bg}, ${bb})`,
     // Calendar color mixed with theme text color for readability
     text: `rgb(${tr}, ${tg}, ${tb})`,
   };

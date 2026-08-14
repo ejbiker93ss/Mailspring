@@ -7,6 +7,8 @@ const EMAIL_RENDER_MODE_KEY = 'core.reading.emailRenderMode';
 interface SubjectLineIconsProps {
   canCollapse: boolean;
   hasCollapsedItems: boolean;
+  showAiSummaryControl: boolean;
+  threadId: string;
 
   onPrint: () => void;
   onPopIn: () => void;
@@ -82,6 +84,9 @@ class EmailRenderModeToggle extends React.Component<Record<string, never>, { mod
 
 export const SubjectLineIcons: React.FunctionComponent<SubjectLineIconsProps> = (props) => (
   <div className="message-icons-wrap">
+    {props.showAiSummaryControl && (
+      <span className="ai-summary-toolbar-target" data-thread-id={props.threadId} />
+    )}
     {props.canCollapse && (
       <div
         role="button"
