@@ -5,13 +5,13 @@
   "description": "Calendar",
   "license": "GPL-3.0",
   "private": true,
-  "scripts": {
-  },
+  "scripts": {},
   "engines": {
     "mailspring": "*"
   },
   "syncInit": true,
   "windowTypes": {
+    "default": true,
     "calendar": true
   }
 }

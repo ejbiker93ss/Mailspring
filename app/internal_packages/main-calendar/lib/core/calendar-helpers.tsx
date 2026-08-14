@@ -5,6 +5,7 @@ import {
   DateUtils,
   Event,
   ICSEventHelpers,
+  AccountStore,
   SyncbackEventTask,
   TaskQueue,
   localized,
@@ -356,6 +357,9 @@ export interface CreateCalendarEventOptions {
  */
 export async function createCalendarEvent(options: CreateCalendarEventOptions): Promise<void> {
   const icsuid = ICSEventHelpers.generateUID();
+  const organizerAccount = options.attendees?.length
+    ? AccountStore.accountForId(options.accountId)
+    : null;
   const ics = ICSEventHelpers.createICSString({
     uid: icsuid,
     summary: options.summary,
@@ -365,6 +369,9 @@ export async function createCalendarEvent(options: CreateCalendarEventOptions): 
     timezone: options.timezone || DateUtils.timeZone,
     description: options.description,
     location: options.location,
+    organizer: organizerAccount
+      ? { email: organizerAccount.emailAddress, name: organizerAccount.name }
+      : undefined,
     attendees: options.attendees,
     recurrenceRule: options.recurrenceRule,
   });
@@ -391,5 +398,6 @@ export async function createCalendarEvent(options: CreateCalendarEventOptions): 
     Actions.focusCalendarEvent({ id: event.id, start: event.recurrenceStart });
   } catch (error) {
     console.error('Failed to sync new event to server:', error);
+    throw error;
   }
 }

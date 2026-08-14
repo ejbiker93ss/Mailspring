@@ -21,6 +21,95 @@ import { ISidebarItem } from './types';
 
 const idForCategories = (categories: { id: string }[]) => categories.map((c) => c.id).join('-');
 
+export const FAVORITE_FOLDERS_CONFIG_KEY = 'core.workspace.favoriteFolders';
+const LEGACY_FAVORITE_FOLDERS_CONFIG_KEY = 'core.workspace.favoriteFoldersByAccount';
+
+export type FavoriteFolderRef = { accountId: string; folderId: string };
+
+export const favoriteFolderRefKey = (favorite: FavoriteFolderRef) =>
+  `${favorite.accountId}\0${favorite.folderId}`;
+
+const isFavoriteFolderRef = (value: any): value is FavoriteFolderRef =>
+  value && typeof value.accountId === 'string' && typeof value.folderId === 'string';
+
+const defaultFavorites = (): FavoriteFolderRef[] =>
+  CategoryStore.categories()
+    .filter((category) => category.role === 'inbox')
+    .map((category) => ({ accountId: category.accountId, folderId: category.id }));
+
+export const configuredFavoriteFolders = (): FavoriteFolderRef[] => {
+  const saved = AppEnv.config.get(FAVORITE_FOLDERS_CONFIG_KEY);
+  if (Array.isArray(saved)) return saved.filter(isFavoriteFolderRef);
+
+  const legacy = AppEnv.config.get(LEGACY_FAVORITE_FOLDERS_CONFIG_KEY) || {};
+  if (legacy && typeof legacy === 'object' && !Array.isArray(legacy)) {
+    const migrated = Object.keys(legacy).reduce((refs: FavoriteFolderRef[], accountId) => {
+      const folderIds = Array.isArray(legacy[accountId]) ? legacy[accountId] : [];
+      folderIds.forEach((folderId) => {
+        if (typeof folderId === 'string') refs.push({ accountId, folderId });
+      });
+      return refs;
+    }, []);
+    if (Object.keys(legacy).length > 0) return migrated;
+  }
+
+  return defaultFavorites();
+};
+
+export const favoriteFolderIdsForAccount = (accountId: string): string[] => {
+  return configuredFavoriteFolders()
+    .filter((favorite) => favorite.accountId === accountId)
+    .map((favorite) => favorite.folderId);
+};
+
+export const reorderFavoriteFolders = (
+  source: FavoriteFolderRef,
+  target: FavoriteFolderRef,
+  placeAfter = false
+) => {
+  const sourceKey = favoriteFolderRefKey(source);
+  const targetKey = favoriteFolderRefKey(target);
+  if (sourceKey === targetKey) return;
+
+  const current = configuredFavoriteFolders();
+  const sourceFavorite = current.find((favorite) => favoriteFolderRefKey(favorite) === sourceKey);
+  if (
+    !sourceFavorite ||
+    !current.some((favorite) => favoriteFolderRefKey(favorite) === targetKey)
+  ) {
+    return;
+  }
+  const next = current.filter((favorite) => favoriteFolderRefKey(favorite) !== sourceKey);
+  const targetIndex = next.findIndex((favorite) => favoriteFolderRefKey(favorite) === targetKey);
+  next.splice(targetIndex + (placeAfter ? 1 : 0), 0, sourceFavorite);
+  AppEnv.config.set(FAVORITE_FOLDERS_CONFIG_KEY, next);
+};
+
+const onToggleFavoriteFolder = function (item: ISidebarItem) {
+  const categories = item.perspective.categories();
+  if (categories.length === 0) return;
+
+  const current = configuredFavoriteFolders();
+  const selected = new Set(
+    categories.map((category) =>
+      favoriteFolderRefKey({ accountId: category.accountId, folderId: category.id })
+    )
+  );
+  const remove = categories.every((category) =>
+    current.some(
+      (favorite) => favorite.accountId === category.accountId && favorite.folderId === category.id
+    )
+  );
+  const next = current.filter((favorite) => !selected.has(favoriteFolderRefKey(favorite)));
+  if (!remove) {
+    categories.forEach((category) =>
+      next.push({ accountId: category.accountId, folderId: category.id })
+    );
+  }
+
+  AppEnv.config.set(FAVORITE_FOLDERS_CONFIG_KEY, next);
+};
+
 const countForItem = function (perspective: MailboxPerspective) {
   const unreadCountEnabled = AppEnv.config.get('core.workspace.showUnreadForAllCategories');
   if (perspective.isInbox() || unreadCountEnabled) {
@@ -339,6 +428,12 @@ export default class SidebarItem {
       opts.exportable = !role || !EXCLUDED_EXPORT_ROLES.has(role);
     }
     opts.contextMenuLabel = contextMenuLabel;
+    if (categories.length > 0) {
+      opts.favorite = categories.every((category) =>
+        favoriteFolderIdsForAccount(category.accountId).includes(category.id)
+      );
+      opts.onToggleFavorite = onToggleFavoriteFolder;
+    }
     return this.forPerspective(id, perspective, opts);
   }
 

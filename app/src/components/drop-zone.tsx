@@ -7,6 +7,9 @@ interface DropZoneProps {
   style?: React.CSSProperties;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
   shouldAcceptDrop: (e: React.DragEvent<HTMLDivElement>) => boolean;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragStateChange: (state: { isDropping: boolean }) => void;

@@ -15,6 +15,19 @@
       margin-right: 30px;
     }
   }
+
+  .outline-view .heading[draggable='true'],
+  .outline-view .item[draggable='true'] {
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  .outline-view .item-container.dropping > .item {
+    box-shadow: inset 0 2px 0 @component-active-color;
+  }
 }
 
 .account-switcher {

@@ -29,10 +29,14 @@ export class ChangeFolderTask extends ChangeMailTask {
       modelKey: 'folder',
       itemClass: Folder,
     }),
+    crossAccountTransferId: Attributes.String({
+      modelKey: 'crossAccountTransferId',
+    }),
   };
 
   previousFolder: Folder;
   folder: Folder;
+  crossAccountTransferId: string;
 
   constructor(
     data: AttributeValues<typeof ChangeFolderTask.attributes> & {

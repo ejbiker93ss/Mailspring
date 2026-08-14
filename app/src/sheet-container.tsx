@@ -7,6 +7,7 @@ import Toolbar from './sheet-toolbar';
 import { Flexbox } from './components/flexbox';
 import { InjectedComponentSet } from './components/injected-component-set';
 import { SheetDeclaration } from './flux/stores/workspace-store';
+import AppTabs from './app-tabs';
 
 interface SheetContainerState {
   stack: SheetDeclaration[];
@@ -22,6 +23,7 @@ export default class SheetContainer extends React.Component<
 
   _toolbarComponents = {};
   unsubscribe?: () => void;
+  _scrollbarHideTimers = new Map<HTMLElement, number>();
 
   constructor(props) {
     super(props);
@@ -30,6 +32,7 @@ export default class SheetContainer extends React.Component<
 
   componentDidMount() {
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
+    document.addEventListener('scroll', this._onWorkspaceScroll, true);
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -43,7 +46,28 @@ export default class SheetContainer extends React.Component<
     if (this.unsubscribe) {
       this.unsubscribe();
     }
+    document.removeEventListener('scroll', this._onWorkspaceScroll, true);
+    this._scrollbarHideTimers.forEach((timer, element) => {
+      window.clearTimeout(timer);
+      element.classList.remove('scrollbar-active');
+    });
+    this._scrollbarHideTimers.clear();
   }
+
+  _onWorkspaceScroll = (event: Event) => {
+    const element = event.target;
+    if (!(element instanceof HTMLElement)) return;
+
+    element.classList.add('scrollbar-active');
+    const previousTimer = this._scrollbarHideTimers.get(element);
+    if (previousTimer) window.clearTimeout(previousTimer);
+
+    const timer = window.setTimeout(() => {
+      element.classList.remove('scrollbar-active');
+      this._scrollbarHideTimers.delete(element);
+    }, 650);
+    this._scrollbarHideTimers.set(element, timer);
+  };
 
   _getStateFromStores() {
     return {
@@ -86,7 +110,12 @@ export default class SheetContainer extends React.Component<
 
   _toolbarContainerElement() {
     const { toolbar } = AppEnv.getLoadSettings();
-    if (!toolbar) {
+    const topSheet = WorkspaceStore.topSheet();
+    if (
+      !toolbar ||
+      WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Conversation ||
+      topSheet === WorkspaceStore.Sheet.Preferences
+    ) {
       return [];
     }
 
@@ -144,6 +173,7 @@ export default class SheetContainer extends React.Component<
         className={`layout-mode-${this.state.mode}`}
         style={{ overflow: 'hidden' }}
       >
+        {process.platform === 'win32' && AppEnv.isMainWindow() ? <AppTabs /> : null}
         {this._toolbarContainerElement()}
 
         <div style={{ order: 1, zIndex: 2 }}>

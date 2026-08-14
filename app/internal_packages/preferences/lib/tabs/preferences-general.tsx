@@ -7,6 +7,7 @@ import WorkspaceSection from './workspace-section';
 import SendingSection from './sending-section';
 import LanguageSection from './language-section';
 import { ConfigLike, ConfigSchemaLike } from '../types';
+import { createSettingsBundle, sanitizedSettings, settingsFromBundle } from '../settings-transfer';
 
 class PreferencesGeneral extends React.Component<{
   config: ConfigLike;
@@ -51,6 +52,72 @@ class PreferencesGeneral extends React.Component<{
   _onResetEmailCache = () => {
     const ipc = require('electron').ipcRenderer;
     ipc.send('command', 'application:reset-database', {});
+  };
+
+  _onExportSettings = () => {
+    AppEnv.showSaveDialog(
+      {
+        title: localized('Export Settings'),
+        buttonLabel: localized('Export'),
+        defaultPath: 'flashmail-settings.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      },
+      (filePath: string) => {
+        if (!filePath) return;
+        try {
+          const rawSettings = (AppEnv.config as any).getRawValues();
+          const bundle = createSettingsBundle(rawSettings);
+          fs.writeFileSync(filePath, JSON.stringify(bundle, null, 2), 'utf8');
+          require('@electron/remote').dialog.showMessageBoxSync({
+            type: 'info',
+            message: localized('Settings exported successfully.'),
+            detail: localized(
+              'Account credentials and security tokens are intentionally not included.'
+            ),
+            buttons: [localized('OK')],
+          });
+        } catch (err) {
+          AppEnv.showErrorDialog(localized('Could not export settings.\n\n%@', err.toString()));
+        }
+      }
+    );
+  };
+
+  _onImportSettings = () => {
+    AppEnv.showOpenDialog(
+      {
+        title: localized('Import Settings'),
+        buttonLabel: localized('Import'),
+        properties: ['openFile'],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      },
+      (selected: string[]) => {
+        if (!selected || !selected[0]) return;
+        try {
+          const bundle = JSON.parse(fs.readFileSync(selected[0], 'utf8'));
+          const current = (AppEnv.config as any).getRawValues();
+          const next = settingsFromBundle(bundle, current);
+          const importedRoots = new Set(Object.keys(sanitizedSettings(bundle.settings)));
+          if (Array.isArray(bundle.folderPreferences)) {
+            importedRoots.add('core');
+            importedRoots.add('mail-kanban');
+          }
+          (AppEnv.config as any).transact(() => {
+            importedRoots.forEach((key) => AppEnv.config.set(key, next[key]));
+          });
+          require('@electron/remote').dialog.showMessageBoxSync({
+            type: 'info',
+            message: localized('Settings imported successfully.'),
+            detail: localized(
+              'Favorite folders and Kanban lanes were matched to the folders on this device.'
+            ),
+            buttons: [localized('OK')],
+          });
+        } catch (err) {
+          AppEnv.showErrorDialog(localized('Could not import settings.\n\n%@', err.toString()));
+        }
+      }
+    );
   };
 
   render() {
@@ -115,6 +182,18 @@ class PreferencesGeneral extends React.Component<{
 
         <div className="local-data">
           <h6>{localized('Local Data')}</h6>
+          <p>
+            {localized(
+              'Export or import application preferences, including favorite folders and Kanban lanes. Account credentials and security tokens are never exported.'
+            )}
+          </p>
+          <div className="btn" onClick={this._onExportSettings} style={{ marginLeft: 0 }}>
+            {localized('Export Settings')}
+          </div>
+          <div className="btn" onClick={this._onImportSettings}>
+            {localized('Import Settings')}
+          </div>
+          <div style={{ height: 12 }} />
           <div className="btn" onClick={this._onResetEmailCache} style={{ marginLeft: 0 }}>
             {localized('Reset Cache')}
           </div>

@@ -16,10 +16,15 @@ export default class TokenizingContenteditable extends Component<TokenizingConte
   _textEl: HTMLDivElement;
   _tokensEl: HTMLDivElement;
 
+  componentDidMount() {
+    this.resetScrollPosition();
+  }
+
   shouldComponentUpdate(nextProps: TokenizingContenteditableProps) {
     if (nextProps.value !== this._textEl.innerText.replace(/\s/g, ' ')) {
       this._textEl.innerHTML = nextProps.value.replace(/\s/g, '&nbsp;');
       this._tokensEl.innerHTML = this.valueToHTML(nextProps.value);
+      this.resetScrollPosition();
       if (document.activeElement === this._textEl) {
         this.focus();
       }
@@ -39,6 +44,12 @@ export default class TokenizingContenteditable extends Component<TokenizingConte
 
   blur = () => {
     this._textEl.blur();
+  };
+
+  resetScrollPosition = () => {
+    const container = this._textEl && this._textEl.parentElement;
+    if (!container) return;
+    container.scrollTop = 0;
   };
 
   insertionIndex = () => {

@@ -1,0 +1,327 @@
+@import 'ui-variables';
+
+.mail-kanban {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  background: @background-primary;
+  color: @text-color;
+}
+
+.mail-kanban-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid @border-color-divider;
+
+  h1 {
+    margin: 0 0 3px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  p {
+    margin: 0;
+    color: @text-color-subtle;
+  }
+}
+
+.mail-kanban-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mail-kanban-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: clamp(190px, 22vw, 320px);
+  height: 34px;
+  color: @text-color-very-subtle;
+
+  > span {
+    position: absolute;
+    left: 11px;
+    z-index: 1;
+    font-size: 18px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    height: 34px;
+    padding: 0 34px 0 34px;
+    border: 1px solid var(--fm-border-strong, @border-color-divider);
+    border-radius: var(--fm-radius-sm, 7px);
+    background: var(--fm-surface-muted, @background-secondary);
+    color: @text-color;
+  }
+
+  button {
+    position: absolute;
+    right: 4px;
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: @text-color-subtle;
+    font-size: 18px;
+
+    &:hover {
+      background: fade(@text-color, 8%);
+      color: @text-color;
+    }
+  }
+}
+
+.mail-kanban-controls select,
+.mail-kanban-lane-header select {
+  min-height: 32px;
+  border: 1px solid @border-color-divider;
+  border-radius: 6px;
+  background: @background-primary;
+  color: @text-color;
+}
+
+.mail-kanban-workspace {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mail-kanban-board {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.mail-kanban-lane {
+  display: flex;
+  flex: 1 0 250px;
+  flex-direction: column;
+  min-width: 230px;
+  max-width: 420px;
+  min-height: 0;
+  border: 1px solid @border-color-divider;
+  border-radius: 10px;
+  background: @background-secondary;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.mail-kanban-lane.drag-active {
+  border-style: dashed;
+}
+
+.mail-kanban-lane.drag-over {
+  border-color: @component-active-color;
+  background: color-mix(in srgb, @component-active-color 7%, @background-secondary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, @component-active-color 12%, transparent);
+}
+
+.mail-kanban-lane-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid @border-color-divider;
+
+  select {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+  }
+}
+
+.mail-kanban-count {
+  min-width: 24px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: fade(@text-color, 8%);
+  color: @text-color-subtle;
+  text-align: center;
+  font-size: 12px;
+}
+
+.mail-kanban-remove {
+  border: 0;
+  background: transparent;
+  color: @text-color-subtle;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mail-kanban-cards {
+  flex: 1;
+  min-height: 80px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.mail-kanban-card {
+  margin-bottom: 9px;
+  padding: 12px;
+  border: 1px solid @border-color-divider;
+  border-radius: 8px;
+  background: @background-primary;
+  box-shadow: 0 1px 2px fade(#000, 8%);
+  cursor: grab;
+
+  &:hover {
+    border-color: @component-active-color;
+    box-shadow: 0 3px 10px fade(#000, 12%);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: @component-active-color;
+    box-shadow: 0 0 0 3px color-mix(in srgb, @component-active-color 14%, transparent);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.unread {
+    border-left: 3px solid @component-active-color;
+  }
+
+  &.selected {
+    border-color: @component-active-color;
+    background: color-mix(in srgb, @component-active-color 7%, @background-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, @component-active-color 12%, transparent);
+  }
+}
+
+.mail-kanban-card-subject {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mail-kanban-card-participants {
+  margin-top: 4px;
+  color: @text-color-subtle;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mail-kanban-card-snippet {
+  margin-top: 8px;
+  color: @text-color-subtle;
+  font-size: 12px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mail-kanban-card-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  color: @text-color-subtle;
+  font-size: 11px;
+}
+.mail-kanban-card-meta span:first-child {
+  color: #e7ad24;
+}
+.mail-kanban-empty,
+.mail-kanban-lane-empty {
+  padding: 32px;
+  color: @text-color-subtle;
+  text-align: center;
+}
+.mail-kanban-lane-empty {
+  padding: 48px 10px;
+  border: 1px dashed @border-color-divider;
+  border-radius: 7px;
+}
+
+.mail-kanban-preview {
+  position: relative;
+  flex: 0 0 clamp(390px, 38vw, 600px);
+  min-width: 360px;
+  min-height: 0;
+  border-left: 1px solid var(--fm-border, @border-color-divider);
+  background: @background-secondary;
+  box-shadow: -8px 0 24px fade(#000, 8%);
+  overflow: hidden;
+
+  > .key-commands-region,
+  > div:not(.mail-kanban-preview-close),
+  #message-list {
+    width: 100%;
+    height: 100%;
+  }
+
+  #message-list .message-subject-wrap {
+    padding-right: 52px;
+  }
+}
+
+.mail-kanban-preview-close {
+  position: absolute;
+  top: 10px;
+  right: 23px;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--fm-border, @border-color-divider);
+  border-radius: 50%;
+  background: color-mix(in srgb, @background-primary 92%, transparent);
+  color: @text-color-subtle;
+  box-shadow: var(--fm-shadow-sm, 0 1px 3px fade(#000, 12%));
+  font-size: 20px;
+  line-height: 1;
+
+  &:hover {
+    border-color: @component-active-color;
+    color: @text-color;
+  }
+}
+
+@media (max-width: 980px) {
+  .mail-kanban-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mail-kanban-controls {
+    width: 100%;
+  }
+
+  .mail-kanban-search {
+    flex: 1;
+    width: auto;
+  }
+
+  .mail-kanban-preview {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: 92vw;
+    max-width: 560px;
+    min-width: 0;
+  }
+}

@@ -1,36 +1,39 @@
-import { localized, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
-import { HasTutorialTip } from 'mailspring-component-kit';
+import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
 
-import ModeToggle from './mode-toggle';
+import MailAssistant from '../../message-list/lib/mail-assistant';
+import { CompactCalendarSidebar } from '../../main-calendar/lib/compact-calendar-sidebar';
+import SidebarVisibilityControls from './sidebar-visibility-controls';
 
-const ToggleWithTutorialTip = HasTutorialTip(ModeToggle, {
-  title: localized('Compose with context'),
-  instructions: localized(
-    'Mailspring shows you everything about your contacts right inside your inbox. See LinkedIn profiles, Twitter bios, message history, and more.'
-  ),
-});
+// ComponentRegistry keys registrations by component identity. Separate classes
+// let the same control follow whichever primary mail column owns the toolbar in
+// the current layout without rendering twice in split view.
+class MessageToolbarSidebarControls extends SidebarVisibilityControls {
+  static displayName = 'MessageToolbarSidebarControls';
+}
 
-// NOTE: this is a hack to allow ComponentRegistry
-// to register the same component multiple times in
-// different areas. if we do this more than once, let's
-// dry this out.
-class ToggleWithTutorialTipList extends ToggleWithTutorialTip {
-  static displayName = 'ModeToggleList';
+class ThreadToolbarSidebarControls extends SidebarVisibilityControls {
+  static displayName = 'ThreadToolbarSidebarControls';
 }
 
 export function activate() {
-  ComponentRegistry.register(ToggleWithTutorialTipList, {
-    location: WorkspaceStore.Sheet.Thread.Toolbar.Right,
-    modes: ['list'],
+  ComponentRegistry.register(MailAssistant, {
+    location: WorkspaceStore.Location.MessageListSidebar,
   });
-
-  ComponentRegistry.register(ToggleWithTutorialTip, {
-    location: WorkspaceStore.Sheet.Threads.Toolbar.Right,
-    modes: ['split', 'splitVertical'],
+  ComponentRegistry.register(CompactCalendarSidebar, {
+    location: WorkspaceStore.Location.CalendarSidebar,
+  });
+  ComponentRegistry.register(MessageToolbarSidebarControls, {
+    location: WorkspaceStore.Location.MessageList.Toolbar,
+  });
+  ComponentRegistry.register(ThreadToolbarSidebarControls, {
+    location: WorkspaceStore.Location.ThreadList.Toolbar,
+    modes: ['list', 'splitVertical'],
   });
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(ToggleWithTutorialTip);
-  ComponentRegistry.unregister(ToggleWithTutorialTipList);
+  ComponentRegistry.unregister(MailAssistant);
+  ComponentRegistry.unregister(CompactCalendarSidebar);
+  ComponentRegistry.unregister(MessageToolbarSidebarControls);
+  ComponentRegistry.unregister(ThreadToolbarSidebarControls);
 }

@@ -3,6 +3,7 @@ import {
   MailboxPerspective,
   TaskFactory,
   Label,
+  Folder,
   CategoryStore,
 } from 'mailspring-exports';
 
@@ -112,6 +113,32 @@ describe('MailboxPerspective', function mailboxPerspective() {
       it('returns false if it is a locked category', () => {
         this.perspective._categories.push(new Label({ role: 'sent', path: 'c4', accountId: 'a1' }));
         expect(this.perspective.canReceiveThreadsFromAccountIds(['a2'])).toBe(false);
+      });
+
+      it('allows a different account to drop into one concrete folder', () => {
+        this.perspective = MailboxPerspective.forCategory(
+          new Folder({ id: 'dest', path: 'Destination', accountId: 'a2' })
+        );
+        AppEnv.config.set('core.reading.crossAccountDragEnabled', true);
+        expect(this.perspective.canReceiveThreadsFromAccountIds(['a1'])).toBe(true);
+      });
+
+      it('does not allow ambiguous aggregate or label cross-account targets', () => {
+        AppEnv.config.set('core.reading.crossAccountDragEnabled', true);
+        expect(this.perspective.canReceiveThreadsFromAccountIds(['a4'])).toBe(false);
+
+        this.perspective = MailboxPerspective.forCategory(
+          new Label({ id: 'dest', path: 'Destination', accountId: 'a2' })
+        );
+        expect(this.perspective.canReceiveThreadsFromAccountIds(['a1'])).toBe(false);
+      });
+
+      it('honors the cross-account drag preference', () => {
+        this.perspective = MailboxPerspective.forCategory(
+          new Folder({ id: 'dest', path: 'Destination', accountId: 'a2' })
+        );
+        AppEnv.config.set('core.reading.crossAccountDragEnabled', false);
+        expect(this.perspective.canReceiveThreadsFromAccountIds(['a1'])).toBe(false);
       });
     });
 

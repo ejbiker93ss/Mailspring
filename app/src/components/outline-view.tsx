@@ -29,9 +29,16 @@ export interface IOutlineViewItem {
   onExport?: (...args: any[]) => any;
   onExportMbox?: (...args: any[]) => any;
   onCreateChild?: (...args: any[]) => any;
+  onToggleFavorite?: (...args: any[]) => any;
+  onToggleReorder?: (...args: any[]) => any;
+  favorite?: boolean;
+  reordering?: boolean;
+  draggable?: boolean;
+  onDragStart?: (...args: any[]) => any;
+  onDragEnd?: (...args: any[]) => any;
 }
 
-interface OutlineViewProps {
+export interface OutlineViewProps {
   title: string;
   items: IOutlineViewItem[];
   iconName?: string;
@@ -39,6 +46,11 @@ interface OutlineViewProps {
   titleColor?: string;
   onCollapseToggled?: (props: OutlineViewProps) => void;
   onItemCreated?: (displayName) => void;
+  reorderable?: boolean;
+  onSectionDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onSectionDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
+  shouldAcceptSectionDrop?: (event: React.DragEvent<HTMLDivElement>) => boolean;
+  onSectionDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
 }
 
 interface OutlineViewState {
@@ -203,9 +215,12 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
     return (
       <DropZone
         className="heading"
-        onDrop={() => true}
+        draggable={this.props.reorderable}
+        onDragStart={this.props.onSectionDragStart}
+        onDragEnd={this.props.onSectionDragEnd}
+        onDrop={this.props.onSectionDrop || (() => true)}
         onDragStateChange={this._onDragStateChange}
-        shouldAcceptDrop={() => true}
+        shouldAcceptDrop={this.props.shouldAcceptSectionDrop || (() => true)}
       >
         <span style={style} className="text" title={this.props.title}>
           {this.props.title}

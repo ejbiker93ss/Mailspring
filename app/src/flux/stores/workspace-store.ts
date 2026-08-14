@@ -23,6 +23,7 @@ interface SheetSet {
   Drafts: SheetDeclaration;
   Main: SheetDeclaration;
   Threads: SheetDeclaration;
+  Conversation: SheetDeclaration;
   Global: SheetDeclaration;
   [key: string]: SheetDeclaration;
 }
@@ -117,12 +118,31 @@ class WorkspaceStore extends MailspringStore {
         'Threads',
         { root: true },
         {
-          list: ['RootSidebar', 'ThreadList'],
-          split: ['RootSidebar', 'ThreadList', 'MessageList', 'MessageListSidebar'],
-          splitVertical: ['RootSidebar', 'ThreadList', 'MessageListSidebar'],
+          list: ['RootSidebar', 'ThreadList', 'MessageListSidebar', 'CalendarSidebar'],
+          split: [
+            'RootSidebar',
+            'ThreadList',
+            'MessageList',
+            'MessageListSidebar',
+            'CalendarSidebar',
+          ],
+          splitVertical: ['RootSidebar', 'ThreadList', 'MessageListSidebar', 'CalendarSidebar'],
         }
       );
-      this.defineSheet('Thread', {}, { list: ['MessageList', 'MessageListSidebar'] });
+      this.defineSheet(
+        'Conversation',
+        { root: true },
+        {
+          list: ['MessageList', 'MessageListSidebar', 'CalendarSidebar'],
+          split: ['MessageList', 'MessageListSidebar', 'CalendarSidebar'],
+          splitVertical: ['MessageList', 'MessageListSidebar', 'CalendarSidebar'],
+        }
+      );
+      this.defineSheet(
+        'Thread',
+        {},
+        { list: ['MessageList', 'MessageListSidebar', 'CalendarSidebar'] }
+      );
     } else {
       this.defineSheet('Global');
     }
@@ -173,7 +193,9 @@ class WorkspaceStore extends MailspringStore {
 
   _onSetFocus = ({ collection, item }) => {
     if (collection === 'thread') {
-      if (this.layoutMode() === 'list') {
+      // Kanban renders its own inline message preview. Keep list layout from
+      // pushing the full-screen Thread sheet over the board when a card opens.
+      if (this.layoutMode() === 'list' && this.rootSheet() !== Sheet.Kanban) {
         if (item && this.topSheet() !== Sheet.Thread) {
           this.pushSheet(Sheet.Thread);
         }

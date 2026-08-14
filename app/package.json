@@ -2,7 +2,7 @@
   "name": "mailspring",
   "productName": "Mailspring",
   "desktopName": "Mailspring.desktop",
-  "version": "1.23.0",
+  "version": "1.23.1",
   "repository": {
     "type": "git",
     "url": "git://github.com/foundry376/mailspring.git"
@@ -28,6 +28,7 @@
     "emoji-data": "^0.2.0",
     "event-kit": "^1.0.2",
     "getmac": "^1.2.1",
+    "heic-convert": "2.1.0",
     "ical-expander": "^3.2.0",
     "ical.js": "^2.2.1",
     "immutable": "^3.8.2",

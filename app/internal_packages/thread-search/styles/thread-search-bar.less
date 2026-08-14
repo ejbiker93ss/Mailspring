@@ -52,8 +52,12 @@
     background: @input-bg;
     border-bottom-left-radius: @border-radius-base;
     border-bottom-right-radius: @border-radius-base;
-    box-shadow: 0 0.5px 0 @btn-border-color, 0 -0.5px 0 @btn-border-color,
-      0.5px 0 0 @btn-border-color, -0.5px 0 0 @btn-border-color, 0 4px 7px @standard-shadow-color;
+    box-shadow:
+      0 0.5px 0 @btn-border-color,
+      0 -0.5px 0 @btn-border-color,
+      0.5px 0 0 @btn-border-color,
+      -0.5px 0 0 @btn-border-color,
+      0 4px 7px @standard-shadow-color;
 
     padding-top: @padding-small-vertical;
 
@@ -92,7 +96,8 @@
     flex: 1;
     height: 100%;
     position: relative;
-    overflow-x: scroll;
+    overflow-x: auto;
+    overflow-y: hidden;
     white-space: nowrap;
 
     &::-webkit-scrollbar {
@@ -102,10 +107,17 @@
       top: 0;
       left: 0;
       bottom: 0;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      height: 100%;
       min-width: 100%;
       position: absolute;
+      line-height: 20px;
       padding-left: @padding-xs-horizontal;
       padding-right: @padding-xs-horizontal;
+      padding-top: 0;
+      padding-bottom: 0;
     }
 
     .layer-tokens {

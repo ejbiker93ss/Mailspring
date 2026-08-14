@@ -1,41 +1,246 @@
-<body style="padding:0; border:0; margin: 15px; background-color: white;" tabindex="1">
+<body style="padding: 0; border: 0; margin: 15px; background-color: white" tabindex="1">
   <script src="./dompurify/purify.min.js"></script>
   <script>
     // Sanitization config matching SanitizeTransformer
     const SanitizeConfig = {
       ALLOWED_TAGS: [
-        '#text', 'a', 'abbr', 'address', 'area', 'article', 'aside', 'b', 'bdi', 'bdo',
-        'big', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'cite', 'center',
-        'code', 'col', 'colgroup', 'data', 'datalist', 'dd', 'del', 'details', 'dfn',
-        'dialog', 'div', 'dl', 'dt', 'em', 'fieldset', 'figcaption', 'figure', 'footer',
-        'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'i', 'img',
-        'input', 'ins', 'kbd', 'keygen', 'label', 'legend', 'li', 'main', 'map', 'mark',
-        'menu', 'menuitem', 'meta', 'meter', 'nav', 'ol', 'optgroup', 'option', 'output',
-        'p', 'param', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp',
-        'section', 'select', 'small', 'source', 'span', 'strong', 'style', 'strike', 'sub',
-        'summary', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'time',
-        'title', 'tr', 'track', 'u', 'ul', 'var', 'wbr', 'html'
+        '#text',
+        'a',
+        'abbr',
+        'address',
+        'area',
+        'article',
+        'aside',
+        'b',
+        'bdi',
+        'bdo',
+        'big',
+        'blockquote',
+        'body',
+        'br',
+        'button',
+        'canvas',
+        'caption',
+        'cite',
+        'center',
+        'code',
+        'col',
+        'colgroup',
+        'data',
+        'datalist',
+        'dd',
+        'del',
+        'details',
+        'dfn',
+        'dialog',
+        'div',
+        'dl',
+        'dt',
+        'em',
+        'fieldset',
+        'figcaption',
+        'figure',
+        'footer',
+        'font',
+        'form',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'header',
+        'hr',
+        'i',
+        'img',
+        'input',
+        'ins',
+        'kbd',
+        'keygen',
+        'label',
+        'legend',
+        'li',
+        'main',
+        'map',
+        'mark',
+        'menu',
+        'menuitem',
+        'meta',
+        'meter',
+        'nav',
+        'ol',
+        'optgroup',
+        'option',
+        'output',
+        'p',
+        'param',
+        'picture',
+        'pre',
+        'progress',
+        'q',
+        'rp',
+        'rt',
+        'ruby',
+        's',
+        'samp',
+        'section',
+        'select',
+        'small',
+        'source',
+        'span',
+        'strong',
+        'style',
+        'strike',
+        'sub',
+        'summary',
+        'sup',
+        'table',
+        'tbody',
+        'td',
+        'textarea',
+        'tfoot',
+        'th',
+        'thead',
+        'time',
+        'title',
+        'tr',
+        'track',
+        'u',
+        'ul',
+        'var',
+        'wbr',
+        'html',
       ],
       ALLOWED_ATTR: [
-        'abbr', 'accept', 'acceptcharset', 'accesskey', 'action', 'align', 'alt', 'async',
-        'autocomplete', 'axis', 'border', 'background', 'bgcolor', 'cellpadding', 'cellspacing',
-        'char', 'charoff', 'charset', 'checked', 'classid', 'class', 'classname', 'clear',
-        'colspan', 'cols', 'color', 'content', 'contextmenu', 'controls', 'compact', 'coords',
-        'data', 'datetime', 'defer', 'dir', 'disabled', 'download', 'draggable', 'enctype',
-        'face', 'form', 'formaction', 'formenctype', 'formmethod', 'formnovalidate', 'formtarget',
-        'frame', 'frameborder', 'headers', 'height', 'hidden', 'high', 'href', 'hreflang',
-        'htmlfor', 'httpequiv', 'hspace', 'icon', 'id', 'label', 'lang', 'list', 'loop', 'low',
-        'manifest', 'marginheight', 'marginwidth', 'max', 'maxlength', 'media', 'mediagroup',
-        'method', 'min', 'multiple', 'muted', 'name', 'novalidate', 'nowrap', 'noshade', 'open',
-        'optimum', 'pattern', 'placeholder', 'poster', 'preload', 'radiogroup', 'readonly',
-        'rel', 'required', 'role', 'rowspan', 'rows', 'rules', 'sandbox', 'scope', 'scoped',
-        'scrolling', 'seamless', 'selected', 'shape', 'size', 'sizes', 'start', 'sortable',
-        'sorted', 'span', 'spellcheck', 'src', 'srcdoc', 'srcset', 'start', 'step', 'style',
-        'summary', 'tabindex', 'target', 'title', 'translate', 'type', 'usemap', 'valign',
-        'value', 'vspace', 'width', 'wmode'
+        'abbr',
+        'accept',
+        'acceptcharset',
+        'accesskey',
+        'action',
+        'align',
+        'alt',
+        'async',
+        'autocomplete',
+        'axis',
+        'border',
+        'background',
+        'bgcolor',
+        'cellpadding',
+        'cellspacing',
+        'char',
+        'charoff',
+        'charset',
+        'checked',
+        'classid',
+        'class',
+        'classname',
+        'clear',
+        'colspan',
+        'cols',
+        'color',
+        'content',
+        'contextmenu',
+        'controls',
+        'compact',
+        'coords',
+        'data',
+        'datetime',
+        'defer',
+        'dir',
+        'disabled',
+        'download',
+        'draggable',
+        'enctype',
+        'face',
+        'form',
+        'formaction',
+        'formenctype',
+        'formmethod',
+        'formnovalidate',
+        'formtarget',
+        'frame',
+        'frameborder',
+        'headers',
+        'height',
+        'hidden',
+        'high',
+        'href',
+        'hreflang',
+        'htmlfor',
+        'httpequiv',
+        'hspace',
+        'icon',
+        'id',
+        'label',
+        'lang',
+        'list',
+        'loop',
+        'low',
+        'manifest',
+        'marginheight',
+        'marginwidth',
+        'max',
+        'maxlength',
+        'media',
+        'mediagroup',
+        'method',
+        'min',
+        'multiple',
+        'muted',
+        'name',
+        'novalidate',
+        'nowrap',
+        'noshade',
+        'open',
+        'optimum',
+        'pattern',
+        'placeholder',
+        'poster',
+        'preload',
+        'radiogroup',
+        'readonly',
+        'rel',
+        'required',
+        'role',
+        'rowspan',
+        'rows',
+        'rules',
+        'sandbox',
+        'scope',
+        'scoped',
+        'scrolling',
+        'seamless',
+        'selected',
+        'shape',
+        'size',
+        'sizes',
+        'start',
+        'sortable',
+        'sorted',
+        'span',
+        'spellcheck',
+        'src',
+        'srcdoc',
+        'srcset',
+        'start',
+        'step',
+        'style',
+        'summary',
+        'tabindex',
+        'target',
+        'title',
+        'translate',
+        'type',
+        'usemap',
+        'valign',
+        'value',
+        'vspace',
+        'width',
+        'wmode',
       ],
-      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|xxx):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
-      KEEP_CONTENT: true
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|xxx):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+      KEEP_CONTENT: true,
     };
 
     function sanitizeHTML(html) {
@@ -96,7 +301,7 @@
 
       // Wait up to 1 sec for images in the rendered HTML to finish loading
       const waitingForImage = Array.from(document.querySelectorAll('img')).find(
-        i => i.complete === false
+        (i) => i.complete === false
       );
       if (waitingForImage && Date.now() - startedAt < 1000) {
         setTimeout(() => finishWithWindowCapture(previewToken, startedAt), 50);
@@ -113,42 +318,44 @@
       });
     }
 
-    async function runPDFCapture({ previewToken }) {
-      const canvas = document.getElementById('the-canvas');
-      const context = canvas.getContext('2d');
+    async function runPDF({ previewToken, mode }) {
       const el = document.createElement('script');
       el.onload = async () => {
         pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs-4.3.136/build/pdf.worker.mjs';
 
         const buffer = await window.electronAPI.previewFileAsBuffer();
-        const pdf = await (pdfjsLib.getDocument(buffer, {
+        const pdf = await pdfjsLib.getDocument(buffer, {
           cMapUrl: './pdfjs-4.3.136/web/cmaps',
           cMapPacked: true,
-        }).promise);
+        }).promise;
 
-        const page = await pdf.getPage(1);
+        div.innerHTML = '';
+        document.body.style.margin = '0';
+        document.body.style.background = '#252525';
 
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = window.outerWidth / (viewport.width || viewport.viewBox[2]);
-        const scaledViewport = page.getViewport({ scale: scale });
-
-        scaledViewport.height = scaledViewport.height || viewport.viewBox[3] * scale;
-        scaledViewport.width = scaledViewport.width || viewport.viewBox[2] * scale;
-        if (Number.isNaN(scaledViewport.transform[0])) {
-          scaledViewport.transform = [scale, 0, 0, -scale, 0, scaledViewport.height];
+        const pageCount = mode === 'capture' ? 1 : pdf.numPages;
+        for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+          const page = await pdf.getPage(pageNumber);
+          const viewport = page.getViewport({ scale: 1 });
+          const availableWidth = mode === 'capture' ? window.outerWidth : window.innerWidth - 32;
+          const scale = Math.min(2, availableWidth / viewport.width);
+          const scaledViewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = scaledViewport.width;
+          canvas.height = scaledViewport.height;
+          canvas.style.display = 'block';
+          canvas.style.maxWidth = 'calc(100% - 32px)';
+          canvas.style.height = 'auto';
+          canvas.style.margin = '16px auto';
+          canvas.style.boxShadow = '0 2px 14px rgba(0,0,0,.45)';
+          div.appendChild(canvas);
+          await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
         }
-        canvas.height = scaledViewport.height;
-        canvas.width = scaledViewport.width;
-        canvas.style.height = scaledViewport.height / window.devicePixelRatio + 'px';
-        canvas.style.width = scaledViewport.width / window.devicePixelRatio + 'px';
 
-        const renderTask = page.render({
-          canvasContext: context,
-          viewport: scaledViewport,
-        });
-
-        await renderTask.promise.then(function() {
-          canvas.toBlob(blob => {
+        if (mode === 'capture') {
+          const canvas = div.querySelector('canvas');
+          canvas.toBlob((blob) => {
             const reader = new FileReader();
             reader.addEventListener('loadend', async () => {
               await window.electronAPI.finishWithData(previewToken, new Uint8Array(reader.result));
@@ -156,10 +363,10 @@
             });
             reader.readAsArrayBuffer(blob);
           });
-        });
+        }
       };
 
-      el.type="module";
+      el.type = 'module';
       el.src = `pdfjs-4.3.136/build/pdf.mjs`;
       document.body.appendChild(el);
     }
@@ -177,13 +384,15 @@
         div.innerHTML = '';
 
         if (mode === 'capture') {
-          div.innerHTML = sanitizeHTML(window.XLSX.write(workbook, {
-            sheet: workbook.SheetNames[0],
-            type: 'string',
-            bookType: 'html',
-            header: '<div>',
-            footer: '</div>',
-          }));
+          div.innerHTML = sanitizeHTML(
+            window.XLSX.write(workbook, {
+              sheet: workbook.SheetNames[0],
+              type: 'string',
+              bookType: 'html',
+              header: '<div>',
+              footer: '</div>',
+            })
+          );
           finishWithWindowCapture(previewToken);
         } else {
           const content = document.createElement('div');
@@ -193,21 +402,23 @@
           tabs.classList.add('xlsx-tabs');
           div.appendChild(tabs);
 
-          const showTab = sheetName => {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+          const showTab = (sheetName) => {
+            document.querySelectorAll('.tab').forEach((tab) => tab.classList.remove('active'));
             const tab = document.querySelector(`[data-sheet-name="${sheetName}"]`);
             if (tab) tab.classList.add('active');
 
-            content.innerHTML = sanitizeHTML(window.XLSX.write(workbook, {
-              sheet: sheetName,
-              type: 'string',
-              bookType: 'html',
-              header: '<div>',
-              footer: '</div>',
-            }));
+            content.innerHTML = sanitizeHTML(
+              window.XLSX.write(workbook, {
+                sheet: sheetName,
+                type: 'string',
+                bookType: 'html',
+                header: '<div>',
+                footer: '</div>',
+              })
+            );
           };
 
-          workbook.SheetNames.forEach(sheetName => {
+          workbook.SheetNames.forEach((sheetName) => {
             const tab = document.createElement('div');
             tab.classList.add('tab');
             tab.innerText = sheetName;
@@ -328,11 +539,7 @@
 
     window.requestAnimationFrame(() => {
       if (strategy === 'pdfjs') {
-        if (mode === 'capture') {
-          runPDFCapture({ previewToken });
-        } else {
-          // To view PDFs we use the separate pdfviewer included with pdfjs
-        }
+        runPDF({ previewToken, mode });
       } else if (strategy === 'mammoth') {
         runMammoth({ mode, previewToken });
       } else if (strategy === 'snarkdown') {

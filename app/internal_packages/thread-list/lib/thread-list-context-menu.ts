@@ -14,13 +14,9 @@ import {
   TaskQueue,
   EmlUtils,
 } from 'mailspring-exports';
+import { AppContextMenuItem, showAppContextMenu } from '../../../src/components/app-context-menu';
 
-type TemplateItem =
-  | {
-      label: string;
-      click: () => void;
-    }
-  | { type: 'separator' };
+type TemplateItem = AppContextMenuItem;
 
 export default class ThreadListContextMenu {
   threadIds: string[];
@@ -38,6 +34,8 @@ export default class ThreadListContextMenu {
         this.threads = threads;
 
         return Promise.all<TemplateItem>([
+          this.openInNewTabItem(),
+          { type: 'separator' },
           this.findWithFrom(),
           this.findWithSubject(),
           { type: 'separator' },
@@ -68,6 +66,14 @@ export default class ThreadListContextMenu {
           return true;
         });
       });
+  }
+
+  openInNewTabItem(): TemplateItem | null {
+    if (this.threadIds.length !== 1 || !this.threads[0]) return null;
+    return {
+      label: localized('Open in New Tab'),
+      click: () => Actions.openThreadInTab(this.threads[0]),
+    };
   }
 
   findWithFrom(): TemplateItem | null {
@@ -394,9 +400,9 @@ export default class ThreadListContextMenu {
     };
   }
 
-  displayMenu() {
+  displayMenu({ x, y }: { x: number; y: number }) {
     this.menuItemTemplate().then((template) => {
-      require('@electron/remote').Menu.buildFromTemplate(template).popup({});
+      showAppContextMenu(template, { x, y });
     });
   }
 }

@@ -12,6 +12,9 @@ export const isRTL: isRTL;
 // Actions
 export type Actions = typeof import('../flux/actions');
 export const Actions: Actions;
+export type RecentFiles = typeof import('../services/recent-files').default;
+export const RecentFiles: RecentFiles;
+export type { RecentLocalFile } from '../services/recent-files';
 
 // API Endpoints
 export type MailspringAPIRequest = typeof import('../flux/mailspring-api-request').default;
@@ -88,6 +91,7 @@ export * from '../flux/tasks/destroy-contact-task';
 export * from '../flux/tasks/destroy-contactgroup-task';
 export * from '../flux/tasks/syncback-contactgroup-task';
 export * from '../flux/tasks/change-contactgroup-membership-task';
+export * from '../flux/tasks/cross-account-move-folder-task';
 
 // Stores
 // These need to be required immediately since some Stores are
@@ -143,6 +147,9 @@ export const FolderSyncProgressStore: FolderSyncProgressStore;
 export type FocusedPerspectiveStore =
   typeof import('../flux/stores/focused-perspective-store').default;
 export const FocusedPerspectiveStore: FocusedPerspectiveStore;
+export type CrossAccountTransferStore =
+  typeof import('../flux/stores/cross-account-transfer-store').default;
+export const CrossAccountTransferStore: CrossAccountTransferStore;
 export type SearchableComponentStore =
   typeof import('../flux/stores/searchable-component-store').default;
 export const SearchableComponentStore: SearchableComponentStore;

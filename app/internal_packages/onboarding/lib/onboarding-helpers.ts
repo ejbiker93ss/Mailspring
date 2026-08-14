@@ -396,6 +396,12 @@ export async function finalizeAndValidateAccount(account: Account) {
   if (account.settings.smtp_host) {
     account.settings.smtp_host = account.settings.smtp_host.trim();
   }
+  if (account.settings.caldav_host) {
+    account.settings.caldav_host = account.settings.caldav_host.trim();
+  }
+  if (account.settings.carddav_host) {
+    account.settings.carddav_host = account.settings.carddav_host.trim();
+  }
 
   account.id = idForAccount(account.emailAddress, account.settings);
 
@@ -423,6 +429,54 @@ export async function finalizeAndValidateAccount(account: Account) {
   // Record the date of successful auth
   account.authedAt = new Date();
   return account;
+}
+
+export function normalizeSmarterMailServerURL(value: string) {
+  const candidate = /^https?:\/\//i.test((value || '').trim())
+    ? value.trim()
+    : `https://${(value || '').trim()}`;
+  const server = new URL(candidate);
+
+  if (server.protocol !== 'https:') {
+    throw new Error(localized('SmarterMail connections require an HTTPS server URL.'));
+  }
+  if (!server.hostname || server.username || server.password || server.search || server.hash) {
+    throw new Error(localized('Please provide a valid SmarterMail server URL.'));
+  }
+
+  return server.origin;
+}
+
+export function buildSmarterMailAccount(account: Account) {
+  const serverOrigin = normalizeSmarterMailServerURL(account.settings.smartermail_server);
+  const server = new URL(serverOrigin);
+  const password = account.settings.imap_password;
+  const webdavURL = `${serverOrigin}/WebDAV/`;
+  const populated = account.clone();
+
+  populated.provider = 'smartermail';
+  populated.settings = {
+    ...populated.settings,
+    smartermail_server: serverOrigin,
+    imap_host: server.hostname,
+    imap_port: 993,
+    imap_username: populated.emailAddress,
+    imap_password: password,
+    imap_security: 'SSL / TLS',
+    imap_allow_insecure_ssl: false,
+    smtp_host: server.hostname,
+    smtp_port: 465,
+    smtp_username: populated.emailAddress,
+    smtp_password: password,
+    smtp_security: 'SSL / TLS',
+    smtp_allow_insecure_ssl: false,
+    caldav_host: webdavURL,
+    carddav_host: webdavURL,
+    caldav_username: populated.emailAddress,
+    caldav_password: password,
+    container_folder: '',
+  };
+  return populated;
 }
 
 async function TryThunderbirdAutoconfig(populated: Account, account: Account) {

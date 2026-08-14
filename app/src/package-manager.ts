@@ -96,6 +96,18 @@ export default class PackageManager {
   }
 
   activatePackages(windowType: string) {
+    // Calendar is now part of the core workspace rather than an optional preview.
+    // Older profiles may still carry `main-calendar` in disabledPackages, which
+    // leaves the calendar sidebar column present but empty. Remove that stale
+    // preference before activating packages.
+    const disabledPackages = AppEnv.config.get('core.disabledPackages');
+    if (Array.isArray(disabledPackages) && disabledPackages.includes('main-calendar')) {
+      AppEnv.config.set(
+        'core.disabledPackages',
+        disabledPackages.filter((name) => name !== 'main-calendar')
+      );
+    }
+
     for (const name of Object.keys(this.available)) {
       const pkg = this.available[name];
 

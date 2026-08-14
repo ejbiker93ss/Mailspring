@@ -12,6 +12,15 @@ import { Disposable } from 'event-kit';
 
 // Sort order for built-in themes; community themes not in this list sort last.
 const INTERNAL_THEME_ORDER = [
+  'Catppuccin-Aura',
+  'Catppuccin-Frappe',
+  'Catppuccin-Latte',
+  'Catppuccin-Macchiato',
+  'Catppuccin-Mocha',
+  'Catppuccin-RichBlue',
+  'Catppuccin-RichGreen',
+  'Catppuccin-RichPurple',
+  'Catppuccin-RichRed',
   'ui-less-is-more',
   'ui-ubuntu',
   'ui-taiga',

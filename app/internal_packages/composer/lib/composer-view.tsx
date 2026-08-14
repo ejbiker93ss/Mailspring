@@ -8,6 +8,7 @@ import {
   DraftEditingSession,
   MessageWithEditorState,
   File,
+  RecentFiles,
 } from 'mailspring-exports';
 import { webUtils } from 'electron';
 import {
@@ -28,8 +29,11 @@ import { ActionBarPlugins } from './action-bar-plugins';
 import { AttachmentsArea } from './attachments-area';
 import { QuotedTextControl } from './quoted-text-control';
 import Fields from './fields';
+import RecentFilesPopover from './recent-files-popover';
+import QuotedTextSummary from '../../message-list/lib/quoted-text-summary';
+import { QUOTED_SUMMARIES_CONFIG_KEY } from '../../message-list/lib/preferences-mail-assistant';
 
-const { hasBlockquote, hasNonTrailingBlockquote, hideQuotedTextByDefault } =
+const { hasBlockquote, hasNonTrailingBlockquote, hideQuotedTextByDefault, quotedTextFromValue } =
   ComposerSupport.BaseBlockPlugins;
 
 interface ComposerViewProps {
@@ -87,6 +91,8 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     const { date, files } = this.props.draft;
 
     this._mounted = true;
+    window.addEventListener('focus', this._refreshRecentFiles);
+    this._refreshRecentFiles();
 
     files.forEach((file) => {
       if (Utils.shouldDisplayAsImage(file)) {
@@ -119,7 +125,12 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
 
   componentWillUnmount() {
     this._mounted = false;
+    window.removeEventListener('focus', this._refreshRecentFiles);
   }
+
+  _refreshRecentFiles = () => {
+    if (!AppEnv.inSpecMode()) RecentFiles.refreshInBackground();
+  };
 
   focus() {
     if (!this._mounted || !this.header.current || !this.editor.current) return;
@@ -142,6 +153,7 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     const restrictWidth = AppEnv.config.get('core.reading.restrictMaxWidth');
     const { quotedTextHidden, quotedTextPresent } = this.state;
     const { draft, session } = this.props;
+    const quoteText = !draft.plaintext ? quotedTextFromValue(draft.bodyEditorState) : '';
 
     return (
       <div className={`composer-centered ${restrictWidth && 'restrict-width'}`}>
@@ -189,16 +201,30 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                     session.changes.add({ bodyEditorState: change.value }, { skipSaving });
                   }}
                 />
-                <QuotedTextControl
-                  quotedTextHidden={quotedTextHidden}
-                  quotedTextPresent={quotedTextPresent}
-                  onUnhide={() => this.setState({ quotedTextHidden: false })}
-                  onRemove={() => {
-                    this.setState({ quotedTextHidden: false }, () =>
-                      this.editor.current.removeQuotedText()
-                    );
-                  }}
-                />
+                <div className="composer-quoted-actions">
+                  <QuotedTextControl
+                    quotedTextHidden={quotedTextHidden}
+                    quotedTextPresent={quotedTextPresent}
+                    onUnhide={() => this.setState({ quotedTextHidden: false })}
+                    onRemove={() => {
+                      this.setState({ quotedTextHidden: false }, () =>
+                        this.editor.current.removeQuotedText()
+                      );
+                    }}
+                  />
+                  {quotedTextHidden &&
+                    quoteText &&
+                    AppEnv.config.get(QUOTED_SUMMARIES_CONFIG_KEY) !== false && (
+                      <QuotedTextSummary
+                        composer
+                        message={draft}
+                        quoteText={quoteText}
+                        onInsert={(summary) =>
+                          (this.editor.current as ComposerEditor).insertAISummary(summary)
+                        }
+                      />
+                    )}
+                </div>
               </>
             )}
 
@@ -433,9 +459,19 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     Actions.selectAttachment({ headerMessageId: this.props.draft.headerMessageId });
   };
 
+  _onShowRecentFiles = (button: HTMLElement) => {
+    Actions.openPopover(
+      <RecentFilesPopover
+        headerMessageId={this.props.draft.headerMessageId}
+        onBrowse={this._onSelectAttachment}
+      />,
+      { originRect: button.getBoundingClientRect(), direction: 'up' }
+    );
+  };
+
   render() {
     return (
-      <div className={this.props.className}>
+      <div className={this.props.className} onFocusCapture={this._refreshRecentFiles}>
         <KeyCommandsRegion
           localHandlers={this._keymapHandlers}
           className={'message-item-white-wrap composer-outer-wrap'}
@@ -487,7 +523,10 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                     isValidDraft={this._isValidDraft}
                   />
                   <DeleteButton onClick={this._onDestroyDraft} />
-                  <AttachFileButton onClick={this._onSelectAttachment} />
+                  <AttachFileButton
+                    onClick={this._onSelectAttachment}
+                    onShowRecent={this._onShowRecentFiles}
+                  />
 
                   <div style={{ order: 0, flex: 1 }} />
 
@@ -517,16 +556,47 @@ const DropToAttachCover = (props: { visible: boolean }) => (
   </div>
 );
 
-const AttachFileButton = (props: { onClick: () => void }) => (
-  <button
-    tabIndex={-1}
-    className="btn btn-toolbar btn-attach"
-    style={{ order: 0 }}
-    title={localized('Attach File')}
-    onClick={props.onClick}
+const AttachFileButton = (props: {
+  onClick: () => void;
+  onShowRecent: (button: HTMLElement) => void;
+}) => (
+  <span className="composer-attach-button-group" style={{ order: 0 }}>
+    <button
+      tabIndex={-1}
+      className="btn btn-toolbar btn-attach"
+      title={localized('Attach File')}
+      aria-label={localized('Attach File')}
+      onClick={props.onClick}
+    >
+      <RetinaImg name="icon-composer-attachment.png" mode={RetinaImg.Mode.ContentIsMask} />
+    </button>
+    <button
+      tabIndex={-1}
+      className="btn btn-toolbar btn-attach-recent"
+      title={localized('Attach a recent file')}
+      aria-label={localized('Attach a recent file')}
+      onClick={(event) => props.onShowRecent(event.currentTarget)}
+    >
+      <RecentFilesIcon />
+    </button>
+  </span>
+);
+
+const RecentFilesIcon = () => (
+  <svg
+    className="recent-files-icon"
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
   >
-    <RetinaImg name="icon-composer-attachment.png" mode={RetinaImg.Mode.ContentIsMask} />
-  </button>
+    <path d="M3.5 4.5v5h5" />
+    <path d="M4 9.5a6.5 6.5 0 1 1 1.8 4.6" />
+    <path d="M10 6.3v4l2.7 1.6" />
+  </svg>
 );
 
 const DeleteButton = (props: { onClick: () => void }) => (

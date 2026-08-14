@@ -5,6 +5,7 @@ import { isWaylandSession } from '../../../../src/browser/is-wayland';
 import SystemTrayIconStore from '../../../system-tray/lib/system-tray-icon-store';
 import { ConfigLike } from '../types';
 import ConfigSchemaItem from './config-schema-item';
+import { resetSidebarArrangement } from '../../../account-sidebar/lib/sidebar-preferences';
 
 class AppearanceScaleSlider extends React.Component<
   { id: string; config: ConfigLike },
@@ -183,6 +184,82 @@ class AppearanceModeSwitch extends React.Component<
   }
 }
 
+class SidebarOrganizationPicker extends React.Component<{ config: ConfigLike }, { value: string }> {
+  static displayName = 'SidebarOrganizationPicker';
+
+  kp = 'core.workspace.sidebarOrganization';
+
+  constructor(props) {
+    super(props);
+    this.state = { value: props.config.get(this.kp) || 'folders' };
+  }
+
+  componentDidUpdate(prevProps: { config: ConfigLike }) {
+    if (prevProps.config !== this.props.config) {
+      this.setState({ value: this.props.config.get(this.kp) || 'folders' });
+    }
+  }
+
+  onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    this.setState({ value });
+    this.props.config.set(this.kp, value);
+  };
+
+  render() {
+    const options = [
+      {
+        value: 'folders',
+        label: localized('Group matching folders across accounts'),
+        note: localized(
+          'Inbox, Sent, Archive, Trash, Drafts, and other standard folders appear once with each account nested below.'
+        ),
+      },
+      {
+        value: 'accounts',
+        label: localized('Keep each account separate'),
+        note: localized('Each account displays its complete folder tree in its own section.'),
+      },
+    ];
+
+    return (
+      <div className="sidebar-organization-picker">
+        {options.map((option) => (
+          <label key={option.value} className="sidebar-organization-option">
+            <input
+              type="radio"
+              name="sidebarOrganization"
+              value={option.value}
+              checked={this.state.value === option.value}
+              onChange={this.onChange}
+            />
+            <span>
+              <strong>{option.label}</strong>
+              <span className="platform-note">{option.note}</span>
+            </span>
+          </label>
+        ))}
+        <div className="platform-note">
+          {localized('Favorites always remain in a separate section at the top.')}
+        </div>
+        <div className="sidebar-arrangement-preference">
+          <div>
+            <strong>{localized('Account and folder arrangement')}</strong>
+            <span className="platform-note">
+              {localized(
+                'Drag account headings or folder rows in the Mail sidebar to reorder them. Account collapse state and both orders are included when you export settings.'
+              )}
+            </span>
+          </div>
+          <button className="btn" onClick={resetSidebarArrangement}>
+            {localized('Reset Arrangement')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
 class TrayIconStylePicker extends React.Component<{ config: ConfigLike }> {
   kp = 'core.workspace.trayIconStyle';
 
@@ -348,6 +425,10 @@ class PreferencesAppearance extends React.Component<{ config: ConfigLike; config
         <section>
           <h6>{localized('Layout')}</h6>
           <AppearanceModeSwitch id="change-layout" config={this.props.config} />
+        </section>
+        <section>
+          <h6>{localized('Mail Sidebar')}</h6>
+          <SidebarOrganizationPicker config={this.props.config} />
         </section>
         <section>
           <h6 style={{ marginTop: 10 }}>{localized('Theme and Style')}</h6>

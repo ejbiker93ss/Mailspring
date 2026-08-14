@@ -1,0 +1,12 @@
+{
+  "name": "Catppuccin-Aura",
+  "title": "Catppuccin Aura Mailspring Theme",
+  "displayName": "Catppuccin-Aura",
+  "theme": "ui",
+  "version": "1.1.1",
+  "description": "Catppuccin theme - Aura flavour",
+  "license": "MIT",
+  "engines": {
+    "mailspring": "*"
+  }
+}

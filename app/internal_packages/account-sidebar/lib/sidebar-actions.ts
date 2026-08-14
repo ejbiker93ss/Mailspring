@@ -10,3 +10,6 @@ focusAccounts.sync = true;
 
 export const setKeyCollapsed = Reflux.createAction('setKeyCollapsed');
 setKeyCollapsed.sync = true;
+
+export const setReordering = Reflux.createAction('setReordering');
+setReordering.sync = true;

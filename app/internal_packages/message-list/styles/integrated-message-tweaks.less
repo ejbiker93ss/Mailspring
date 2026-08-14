@@ -1,0 +1,238 @@
+@import 'ui-variables';
+@import 'ui-mixins';
+
+.message-owner-status {
+  display: none;
+}
+
+.message-owner-status-wrap {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.message-trash-single-btn {
+  height: 20px;
+  line-height: 18px;
+  padding: 0 8px;
+  border: 1px solid @border-color-divider;
+  border-radius: 10px;
+  background: transparent;
+  color: @text-color-very-subtle;
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 2px;
+
+  &:hover:not(:disabled) {
+    color: @text-color;
+    border-color: @text-color-very-subtle;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+}
+
+/* Thread message cards */
+#message-list .message-item-wrap.sent-by-me .message-item-white-wrap {
+  margin-left: 40px;
+  margin-right: 10px;
+  border: 1px solid rgba(108, 212, 32, 0.2);
+  border-left: 3px solid #6cd420;
+  border-radius: 12px;
+  max-width: calc(100% - 50px);
+}
+
+#message-list .message-item-wrap.collapsed.sent-by-me .message-item-white-wrap {
+  margin-left: 40px;
+  margin-right: 10px;
+  border: 1px solid rgba(108, 212, 32, 0.2);
+  border-left: 3px solid #6cd420;
+  border-radius: 12px;
+  max-width: calc(100% - 50px);
+}
+
+#message-list .message-item-wrap.sent-by-me .message-item-white-wrap.composer-outer-wrap,
+#message-list .message-item-white-wrap.composer-outer-wrap.sent-by-me {
+  margin-left: 40px;
+  margin-right: 10px;
+  border: 1px solid rgba(108, 212, 32, 0.2);
+  border-left: 3px solid #6cd420;
+  border-radius: 12px;
+  background: @background-primary;
+  background-color: @background-primary;
+  max-width: calc(100% - 50px);
+}
+
+#message-list .message-item-wrap.sent-by-me .message-item-white-wrap.composer-outer-wrap.focused,
+#message-list .message-item-white-wrap.composer-outer-wrap.sent-by-me.focused {
+  border: 1px solid rgba(108, 212, 32, 0.2);
+  border-left: 3px solid #6cd420;
+  border-radius: 12px;
+  background: @background-primary;
+  background-color: @background-primary;
+}
+
+#message-list .message-item-wrap.received-from-others .message-item-white-wrap {
+  margin-left: 10px;
+  margin-right: 40px;
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  border-left: 3px solid #4a90e2;
+  border-radius: 12px;
+  max-width: calc(100% - 50px);
+}
+
+#message-list .message-item-wrap.collapsed.received-from-others .message-item-white-wrap {
+  margin-left: 10px;
+  margin-right: 40px;
+  border: 1px solid rgba(74, 144, 226, 0.2);
+  border-left: 3px solid #4a90e2;
+  border-radius: 12px;
+  max-width: calc(100% - 50px);
+}
+
+#message-list .message-item-wrap.received-from-others .message-item-white-wrap.composer-outer-wrap,
+#message-list .message-item-white-wrap.composer-outer-wrap.received-from-others {
+  margin-left: 10px;
+  margin-right: 40px;
+  max-width: calc(100% - 50px);
+}
+
+/* Bottom reply area alignment should match */
+#message-list .footer-reply-area-wrap.sent-by-me {
+  margin-top: 4px;
+  margin-left: 40px;
+  margin-right: 10px;
+  max-width: calc(100% - 50px);
+}
+
+#message-list .footer-reply-area-wrap.received-from-others {
+  margin-top: 4px;
+  margin-left: 10px;
+  margin-right: 40px;
+  max-width: calc(100% - 50px);
+}
+
+.message-attachments-inline-pdf {
+  .nylas-attachment-item.file-attachment-item {
+    .file-name {
+      color: @text-color !important;
+    }
+
+    .file-size {
+      color: @text-color-very-subtle;
+    }
+  }
+
+  .inline-pdf-preview,
+  .inline-attachment-preview {
+    margin: 10px 0 14px;
+    border: 1px solid @border-color-divider;
+    border-radius: 8px;
+    background: @background-secondary;
+    overflow: hidden;
+  }
+
+  .inline-pdf-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid @border-color-divider;
+    background: @background-primary;
+    color: @text-color;
+  }
+
+  .inline-pdf-preview-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: inherit !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .inline-attachment-preview-hint {
+    margin-left: auto;
+    margin-right: 10px;
+    color: @text-color-very-subtle;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .inline-pdf-preview-body {
+    position: relative;
+    height: 68vh;
+    min-height: 420px;
+    background: #202124;
+  }
+
+  .inline-attachment-preview-body {
+    position: relative;
+    height: 68vh;
+    min-height: 420px;
+    overflow: auto;
+    background: #202124;
+    cursor: zoom-in;
+
+    &.is-image {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+  }
+
+  .inline-attachment-preview-image {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+  }
+
+  .attachment-pdf-pages {
+    min-height: 100%;
+    padding: 1px 0 16px;
+  }
+
+  .attachment-pdf-page {
+    display: block;
+    max-width: calc(100% - 28px);
+    margin: 14px auto 0;
+    background: white;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  }
+
+  .inline-pdf-preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .inline-pdf-preview-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    background: rgba(0, 0, 0, 0.5);
+    color: @text-color-inverse;
+  }
+
+  .inline-attachment-preview-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.72);
+    color: @text-color-inverse;
+    text-align: center;
+  }
+}

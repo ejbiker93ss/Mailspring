@@ -14,9 +14,21 @@ import {
   localized,
 } from 'mailspring-exports';
 
-import SidebarItem, { createCategory } from './sidebar-item';
+import SidebarItem, {
+  configuredFavoriteFolders,
+  createCategory,
+  favoriteFolderRefKey,
+  reorderFavoriteFolders,
+} from './sidebar-item';
 import * as SidebarActions from './sidebar-actions';
 import { ISidebarSection, ISidebarItem } from './types';
+import {
+  SIDEBAR_REORDER_DRAG_TYPE,
+  isAccountCollapsed,
+  reorderFolders,
+  sortSidebarItems,
+  toggleAccountCollapsed,
+} from './sidebar-preferences';
 
 function isSectionCollapsed(title: string) {
   if (AppEnv.savedState.sidebarKeysCollapsed[title] !== undefined) {
@@ -33,6 +45,74 @@ function toggleSectionCollapsed(section: ISidebarSection) {
   SidebarActions.setKeyCollapsed(section.title, !isSectionCollapsed(section.title));
 }
 
+const readSidebarDrag = (event: any) => {
+  try {
+    return JSON.parse(event.dataTransfer.getData(SIDEBAR_REORDER_DRAG_TYPE));
+  } catch (_err) {
+    return null;
+  }
+};
+
+const makeFoldersReorderable = (
+  items: ISidebarItem[],
+  accountId: string,
+  parentId = 'root',
+  reordering = false
+): ISidebarItem[] => {
+  const siblingIds = items.map((item) => item.id);
+  return items.map((item) => {
+    const originalOnDrop = item.onDrop;
+    const originalShouldAcceptDrop = item.shouldAcceptDrop;
+    return {
+      ...item,
+      draggable: reordering,
+      reordering,
+      onToggleReorder: () => SidebarActions.setReordering(!reordering),
+      children: makeFoldersReorderable(item.children || [], accountId, item.id, reordering),
+      onDragStart(_draggedItem, event) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData(
+          SIDEBAR_REORDER_DRAG_TYPE,
+          JSON.stringify({ kind: 'folder', accountId, itemId: item.id, parentId })
+        );
+      },
+      shouldAcceptDrop(targetItem, event) {
+        if (event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) {
+          const payload = readSidebarDrag(event);
+          return (
+            payload?.kind === 'folder' &&
+            payload.accountId === accountId &&
+            payload.parentId === parentId &&
+            payload.itemId !== item.id
+          );
+        }
+        return originalShouldAcceptDrop ? originalShouldAcceptDrop(targetItem, event) : false;
+      },
+      onDrop(targetItem, event) {
+        if (event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) {
+          const payload = readSidebarDrag(event);
+          if (
+            payload?.kind === 'folder' &&
+            payload.accountId === accountId &&
+            payload.parentId === parentId
+          ) {
+            const bounds = event.currentTarget.getBoundingClientRect();
+            reorderFolders(
+              accountId,
+              payload.itemId,
+              item.id,
+              siblingIds,
+              event.clientY > bounds.top + bounds.height / 2
+            );
+          }
+          return;
+        }
+        if (originalOnDrop) originalOnDrop(targetItem, event);
+      },
+    };
+  });
+};
+
 class SidebarSection {
   static empty(title: string): ISidebarSection {
     return {
@@ -41,7 +121,7 @@ class SidebarSection {
     };
   }
 
-  static standardSectionForAccount(account: Account): ISidebarSection {
+  static standardSectionForAccount(account: Account, reordering = false): ISidebarSection {
     if (!account) {
       throw new Error('standardSectionForAccount: You must pass an account.');
     }
@@ -77,11 +157,85 @@ class SidebarSection {
 
     return {
       title: account.label,
+      items: makeFoldersReorderable(
+        sortSidebarItems(items, account.id),
+        account.id,
+        'root',
+        reordering
+      ),
+    };
+  }
+
+  static favoritesSectionForAccounts(accounts: Account[], reordering = false): ISidebarSection {
+    const items: ISidebarItem[] = [];
+    const accountsById = new Map(accounts.map((account) => [account.id, account]));
+    const foldersByAccount = new Map(
+      accounts.map((account) => [
+        account.id,
+        new Map(CategoryStore.categories(account.id).map((category) => [category.id, category])),
+      ])
+    );
+
+    configuredFavoriteFolders().forEach((favorite) => {
+      const account = accountsById.get(favorite.accountId);
+      const category: any = foldersByAccount.get(favorite.accountId)?.get(favorite.folderId);
+      if (!account || !category) return;
+      const item = SidebarItem.forCategories([category], {
+        id: `favorite-${account.id}-${category.id}`,
+        name:
+          accounts.length > 1 ? `${category.displayName} - ${account.label}` : category.displayName,
+        editable: false,
+        deletable: false,
+        exportable: false,
+      });
+      items.push({
+        ...item,
+        draggable: reordering,
+        reordering,
+        onToggleReorder: () => SidebarActions.setReordering(!reordering),
+        onDragStart(_draggedItem, event) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData(
+            SIDEBAR_REORDER_DRAG_TYPE,
+            JSON.stringify({ kind: 'favorite', ...favorite })
+          );
+        },
+        shouldAcceptDrop(targetItem, event) {
+          if (event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) {
+            const payload = readSidebarDrag(event);
+            return (
+              payload?.kind === 'favorite' &&
+              favoriteFolderRefKey(payload) !== favoriteFolderRefKey(favorite)
+            );
+          }
+          return item.shouldAcceptDrop(targetItem, event);
+        },
+        onDrop(targetItem, event) {
+          if (event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) {
+            const payload = readSidebarDrag(event);
+            if (payload?.kind === 'favorite') {
+              const bounds = event.currentTarget.getBoundingClientRect();
+              reorderFavoriteFolders(
+                payload,
+                favorite,
+                event.clientY > bounds.top + bounds.height / 2
+              );
+            }
+            return;
+          }
+          item.onDrop(targetItem, event);
+        },
+      });
+    });
+
+    return {
+      title: localized('Favorites'),
+      iconName: 'starred.png',
       items,
     };
   }
 
-  static standardSectionForAccounts(accounts?: Account[]): ISidebarSection {
+  static standardSectionForAccounts(accounts?: Account[], reordering = false): ISidebarSection {
     let children;
     if (!accounts || accounts.length === 0) {
       return this.empty(localized('All Accounts'));
@@ -90,7 +244,7 @@ class SidebarSection {
       return this.empty(localized('All Accounts'));
     }
     if (accounts.length === 1) {
-      return this.standardSectionForAccount(accounts[0]);
+      return this.standardSectionForAccount(accounts[0], reordering);
     }
 
     const standardNames = ['inbox', 'important', 'sent', ['archive', 'all'], 'spam', 'trash'];
@@ -170,7 +324,17 @@ class SidebarSection {
 
   static forUserCategories(
     account: Account,
-    { title, collapsible }: { title?: string; collapsible?: boolean } = {}
+    {
+      title,
+      collapsible,
+      accountSection,
+      reordering,
+    }: {
+      title?: string;
+      collapsible?: boolean;
+      accountSection?: boolean;
+      reordering?: boolean;
+    } = {}
   ): ISidebarSection {
     let onCollapseToggled;
     if (!account) {
@@ -228,22 +392,52 @@ class SidebarSection {
       }
       iconName = 'folder.png';
     }
-    const collapsed = isSectionCollapsed(title);
+    const collapsed = accountSection ? isAccountCollapsed(account.id) : isSectionCollapsed(title);
     if (collapsible) {
-      onCollapseToggled = toggleSectionCollapsed;
+      onCollapseToggled = accountSection
+        ? () => toggleAccountCollapsed(account.id)
+        : toggleSectionCollapsed;
     }
     const titleColor = account.color;
 
     return {
       title,
       iconName,
-      items,
+      items: makeFoldersReorderable(
+        sortSidebarItems(items, account.id),
+        account.id,
+        'root',
+        reordering
+      ),
+      accountId: account.id,
       collapsed,
       titleColor,
       onCollapseToggled,
       onItemCreated(displayName: string) {
         createCategory(account.id, displayName);
       },
+    };
+  }
+
+  static completeSectionForAccount(account: Account, reordering = false): ISidebarSection {
+    const standard = this.standardSectionForAccount(account, reordering);
+    const user = this.forUserCategories(account, {
+      title: account.label,
+      collapsible: true,
+      accountSection: true,
+      reordering,
+    });
+
+    return {
+      ...user,
+      title: account.label,
+      iconName: 'folder.png',
+      items: makeFoldersReorderable(
+        sortSidebarItems([...standard.items, ...user.items], account.id),
+        account.id,
+        'root',
+        reordering
+      ),
     };
   }
 }

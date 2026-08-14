@@ -835,7 +835,7 @@ export class MailspringCalendar extends React.Component<
 
   _renderMainContent() {
     if (this._shouldShowEmptyState()) {
-      return <CalendarEmptyState />;
+      return <CalendarEmptyState accounts={this.state.accounts} />;
     }
 
     const CurrentView = VIEWS[this.state.view];

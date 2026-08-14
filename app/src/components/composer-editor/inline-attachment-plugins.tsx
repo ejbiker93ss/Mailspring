@@ -1,6 +1,6 @@
 import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
-import { AttachmentStore } from 'mailspring-exports';
+import { Actions, AttachmentStore } from 'mailspring-exports';
 import { File as MailspringFile } from '../../flux/models/file';
 import { isQuoteNode } from './base-block-plugins';
 import { ComposerEditorPlugin } from './types';
@@ -26,12 +26,15 @@ function ImageNode(props) {
     return <span {...attributes} />;
   }
 
+  const filePath = AttachmentStore.pathForFile(file);
+
   return (
     <ImageAttachmentItem
       {...attributes}
       className={`file-upload custom-block ${isFocused && 'focused'}`}
-      filePath={AttachmentStore.pathForFile(file)}
+      filePath={filePath}
       displayName={file.filename}
+      onOpenAttachment={() => Actions.quickPreviewFile(filePath)}
       onRemoveAttachment={() => editor.removeNodeByKey(node.key)}
       imgProps={imgProps}
       onResized={(width, height) => {

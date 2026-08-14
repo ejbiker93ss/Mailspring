@@ -78,7 +78,7 @@ class PreferencesRoot extends React.Component<{ tab: any; tabs: any[]; selection
         tabIndex={0}
         localHandlers={this._localHandlers}
       >
-        <Flexbox direction="column">
+        <Flexbox direction="row" className="preferences-root-flexbox">
           <PreferencesTabsBar tabs={tabs} selection={selection} />
           <ScrollRegion className="preferences-content">
             <ConfigPropContainer

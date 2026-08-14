@@ -1,0 +1,73 @@
+@import 'ui-variables';
+
+.app-context-menu-backdrop {
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-context-menu {
+  background: @background-secondary;
+  border: 1px solid @border-color-divider;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px fade(@black, 22%), 0 2px 8px fade(@black, 14%);
+  max-height: calc(100vh - 16px);
+  min-width: 238px;
+  overflow: hidden;
+  padding: 5px;
+  position: fixed;
+
+  &:focus {
+    outline: none;
+  }
+
+  .menu,
+  .menu .content-container {
+    background: transparent;
+  }
+
+  .menu .header-container,
+  .menu .footer-container {
+    display: none;
+  }
+
+  .menu .content-container {
+    margin: 0;
+    max-height: calc(100vh - 28px);
+  }
+
+  .menu .item {
+    align-items: center;
+    border-radius: 5px;
+    color: @text-color;
+    display: flex;
+    font-size: @font-size-base;
+    line-height: 20px;
+    min-height: 30px;
+    padding: 5px 10px;
+  }
+
+  .menu .item:not(.divider):hover,
+  .menu .item.selected {
+    background: fade(@text-color, 7%);
+    color: @text-color;
+  }
+
+  .menu .item.divider {
+    background: @border-color-divider;
+    border: 0;
+    border-radius: 0;
+    height: 1px;
+    margin: 5px 7px;
+    min-height: 1px;
+    padding: 0;
+    width: auto;
+  }
+}
+
+body.is-blurred .app-context-menu {
+  box-shadow: 0 8px 24px fade(@black, 14%);
+}

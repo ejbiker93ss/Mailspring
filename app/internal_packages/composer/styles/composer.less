@@ -134,7 +134,9 @@
 
   button {
     cursor: pointer;
-    color: rgb(from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 70%);
+    color: rgb(
+      from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 70%
+    );
     padding: 4px 4.7px;
     border: none;
     background: none;
@@ -144,7 +146,9 @@
     max-width: 32px;
 
     &:hover {
-      color: rgb(from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 95%);
+      color: rgb(
+        from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 95%
+      );
       background: none;
     }
 
@@ -176,8 +180,11 @@
     position: absolute;
     background: @background-primary;
     border-radius: @border-radius-base @border-radius-base 0 @border-radius-base;
-    box-shadow: 0 0.5px 0 @standard-shadow-color, 0 -0.5px 0 @standard-shadow-color,
-      0.5px 0 0 @standard-shadow-color, -0.5px 0 0 @standard-shadow-color,
+    box-shadow:
+      0 0.5px 0 @standard-shadow-color,
+      0 -0.5px 0 @standard-shadow-color,
+      0.5px 0 0 @standard-shadow-color,
+      -0.5px 0 0 @standard-shadow-color,
       0 -3px 12px @standard-shadow-color;
   }
 
@@ -185,7 +192,7 @@
     display: inline-block;
     position: relative;
 
-    &>button {
+    & > button {
       cursor: pointer;
       width: 20px;
       height: 14px;
@@ -193,7 +200,10 @@
       margin-left: 4px;
       margin-bottom: 2px;
       vertical-align: middle;
-      box-shadow: @text-color 0 0.5px, @text-color 0 -0.5px, @text-color 0.5px 0,
+      box-shadow:
+        @text-color 0 0.5px,
+        @text-color 0 -0.5px,
+        @text-color 0.5px 0,
         @text-color -0.5px 0;
     }
   }
@@ -315,12 +325,17 @@ body.platform-win32 {
       white-space: nowrap;
 
       img.content-mask {
-        background-color: rgb(from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 70%);
+        background-color: rgb(
+          from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 70%
+        );
       }
 
       &:hover {
         img.content-mask {
-          background-color: rgb(from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 95%);
+          background-color: rgb(
+            from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b /
+              95%
+          );
         }
       }
 
@@ -336,6 +351,41 @@ body.platform-win32 {
     .btn-send {
       margin-right: 10px;
       white-space: nowrap;
+    }
+
+    .composer-attach-button-group {
+      display: inline-flex;
+      align-items: stretch;
+
+      .btn.btn-toolbar {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .btn-attach {
+        padding-right: 4px;
+      }
+
+      .btn-attach-recent {
+        padding-left: 3px;
+        padding-right: 8px;
+        color: rgb(
+          from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b / 76%
+        );
+
+        &:hover {
+          color: rgb(
+            from color-mix(in srgb, @btn-default-text-color 88%, @component-active-color) r g b /
+              100%
+          );
+        }
+
+        .recent-files-icon {
+          display: block;
+          width: 17px;
+          height: 17px;
+        }
+      }
     }
 
     .composer-action-bar-content {
@@ -582,6 +632,29 @@ body.platform-win32 {
         display: block;
       }
     }
+
+    .composer-quoted-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 24px;
+      margin: 0 22px 8px;
+      cursor: default;
+
+      .quoted-text-control {
+        flex: 0 0 auto;
+        margin: 0;
+      }
+
+      .composer-ai-summary-action {
+        min-height: 22px;
+        margin: 0;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: @font-size-smaller;
+        line-height: 16px;
+      }
+    }
   }
 
   .composer-footer-region {
@@ -645,9 +718,11 @@ body.platform-win32 {
       }
 
       .show-more-fade {
-        background: linear-gradient(to right,
-            fade(@blurred-primary-color, 0%) 0%,
-            fade(@blurred-primary-color, 100%) 40%);
+        background: linear-gradient(
+          to right,
+          fade(@blurred-primary-color, 0%) 0%,
+          fade(@blurred-primary-color, 100%) 40%
+        );
       }
 
       .composer-action-bar-wrap {
@@ -662,14 +737,18 @@ body.platform-win32 {
     }
 
     .message-item-white-wrap.composer-outer-wrap.focused {
-      box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.28), 0 1px 1.5px rgba(0, 0, 0, 0.08),
+      box-shadow:
+        0 0 0.5px rgba(0, 0, 0, 0.28),
+        0 1px 1.5px rgba(0, 0, 0, 0.08),
         0 0 3px @accent-primary;
       background-color: @background-primary;
 
       .show-more-fade {
-        background: linear-gradient(to right,
-            fade(@background-primary, 0%) 0%,
-            fade(@background-primary, 100%) 40%);
+        background: linear-gradient(
+          to right,
+          fade(@background-primary, 0%) 0%,
+          fade(@background-primary, 100%) 40%
+        );
       }
 
       .composer-action-bar-wrap {
@@ -742,7 +821,6 @@ body.platform-win32 {
     }
 
     &:hover {
-
       .primary-item,
       .only-item {
         border-radius: @border-radius-base;
@@ -781,6 +859,128 @@ body.platform-win32 {
 
   .tokenizing-field-input {
     margin-left: 2.8em;
+  }
+}
+
+.recent-files-picker {
+  width: 430px;
+  max-width: calc(100vw - 24px);
+
+  .content-container {
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  .recent-file-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .recent-file-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 7px;
+    color: @text-color-subtle;
+    background: fade(@text-color, 7%);
+
+    svg {
+      width: 22px;
+      height: 22px;
+      overflow: visible;
+    }
+
+    .file-page,
+    .file-symbol {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.55;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .file-page {
+      opacity: 0.55;
+    }
+
+    &.type-spreadsheet {
+      color: #32a66a;
+      background: fade(#32a66a, 13%);
+    }
+
+    &.type-document {
+      color: #4b82e5;
+      background: fade(#4b82e5, 13%);
+    }
+
+    &.type-pdf {
+      color: #e05252;
+      background: fade(#e05252, 13%);
+    }
+
+    &.type-image {
+      color: #a06ce0;
+      background: fade(#a06ce0, 13%);
+    }
+
+    &.type-presentation {
+      color: #df783f;
+      background: fade(#df783f, 13%);
+    }
+
+    &.type-archive,
+    &.type-package {
+      color: #d39c3f;
+      background: fade(#d39c3f, 13%);
+    }
+
+    &.type-code {
+      color: #56a7c9;
+      background: fade(#56a7c9, 13%);
+    }
+
+    &.type-audio {
+      color: #d064a5;
+      background: fade(#d064a5, 13%);
+    }
+
+    &.type-video {
+      color: #6d79db;
+      background: fade(#6d79db, 13%);
+    }
+  }
+
+  .recent-file-content {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 2px 0;
+  }
+
+  .recent-file-name,
+  .recent-file-details {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recent-file-details {
+    color: @text-color-very-subtle;
+    font-size: 11px;
+  }
+
+  .recent-files-status {
+    padding: 10px 14px;
+    color: @text-color-subtle;
+
+    &.is-error {
+      color: @color-danger;
+    }
   }
 }
 

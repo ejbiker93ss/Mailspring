@@ -73,6 +73,27 @@ export default {
             default: false,
             title: localized('Show unread counts for all folders / labels'),
           },
+          sidebarOrganization: {
+            type: 'string',
+            default: 'folders',
+            enum: ['folders', 'accounts'],
+            enumLabels: [localized('Group by folder'), localized('Group by account')],
+            title: localized('Sidebar organization'),
+          },
+          sidebarAccountOrder: {
+            type: 'array',
+            default: [],
+            items: { type: 'string' },
+          },
+          sidebarFolderOrderByAccount: {
+            type: 'object',
+            default: {},
+          },
+          sidebarCollapsedAccountIds: {
+            type: 'array',
+            default: [],
+            items: { type: 'string' },
+          },
           use24HourClock: {
             type: 'boolean',
             default: false,
@@ -121,6 +142,39 @@ export default {
             type: 'boolean',
             default: true,
             title: localized('Display thumbnail previews for attachments when available.'),
+          },
+        },
+      },
+      mailAssistant: {
+        type: 'object',
+        properties: {
+          model: {
+            type: 'string',
+            default: 'gpt-5.6-terra',
+          },
+          includeRedactedText: {
+            type: 'boolean',
+            default: true,
+          },
+          redactPersonalInfo: {
+            type: 'boolean',
+            default: true,
+          },
+          useCurrentThread: {
+            type: 'boolean',
+            default: true,
+          },
+          threadSummariesEnabled: {
+            type: 'boolean',
+            default: true,
+          },
+          quotedTextSummariesEnabled: {
+            type: 'boolean',
+            default: true,
+          },
+          summaryInputCap: {
+            type: 'integer',
+            default: 120000,
           },
         },
       },
@@ -184,6 +238,22 @@ export default {
               localized('Dark email mode'),
             ],
             title: localized('Email body appearance'),
+          },
+          crossAccountDragEnabled: {
+            type: 'boolean',
+            default: true,
+            title: localized('Allow dragging mail between accounts'),
+          },
+          crossAccountDragBehavior: {
+            type: 'string',
+            default: 'move',
+            enum: ['move', 'copy'],
+            enumLabels: [
+              localized('Move (copy first, then move source to Trash)'),
+              localized('Copy (keep mail in the source account)'),
+            ],
+            title: localized('When dragging mail between accounts'),
+            showWhen: 'core.reading.crossAccountDragEnabled',
           },
         },
       },

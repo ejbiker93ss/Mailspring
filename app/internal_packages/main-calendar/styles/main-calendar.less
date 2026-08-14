@@ -2,6 +2,502 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
+.sheet-toolbar .calendar-sidebar-toggle {
+  color: @text-color-subtle;
+
+  .calendar-sidebar-toggle-icon {
+    display: block;
+  }
+
+  &:hover,
+  &:focus-visible,
+  &[aria-pressed='true'] {
+    color: @accent-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: -2px;
+  }
+}
+
+.mail-calendar-sidebar {
+  --compact-calendar-hour-height: 54px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  color: @text-color;
+  background: @background-primary;
+  border: 1px solid @border-color-divider;
+  border-radius: 11px;
+
+  button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: default;
+  }
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .compact-calendar-toolbar {
+    min-height: 49px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    border-bottom: 1px solid @border-color-divider;
+
+    > button {
+      height: 30px;
+      min-width: 28px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      color: @text-color-subtle;
+
+      &:hover,
+      &:focus-visible {
+        outline: none;
+        color: @text-color;
+        background: fade(@text-color, 8%);
+      }
+    }
+
+    .compact-calendar-title {
+      min-width: 0;
+      flex: 1;
+      justify-content: flex-start;
+      gap: 7px;
+      padding-left: 5px;
+      color: @text-color;
+      font-weight: @font-weight-semi-bold;
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      svg {
+        color: @accent-primary;
+      }
+    }
+
+    .today-button {
+      padding: 0 9px;
+      border: 1px solid @border-color-divider;
+      color: @text-color;
+      font-size: @font-size-small;
+    }
+  }
+
+  .compact-month-wrap {
+    position: relative;
+    flex: none;
+    border-bottom: 1px solid @border-color-divider;
+    background: @background-primary;
+
+    &.collapsed {
+      height: 22px;
+    }
+
+    .compact-month-toggle {
+      position: absolute;
+      top: 7px;
+      right: 8px;
+      z-index: 2;
+      padding: 2px;
+      color: @text-color-very-subtle;
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    &.collapsed .compact-month-toggle svg {
+      transform: rotate(180deg);
+    }
+
+    .mini-month-view {
+      padding: 7px 13px 11px;
+      background: transparent;
+
+      .header {
+        height: 32px;
+        padding: 0 18px 0 0;
+        border-bottom: 0;
+        background: transparent;
+      }
+
+      .mini-month-nav {
+        width: 28px;
+        height: 28px;
+        margin: 0;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        box-shadow: none;
+        color: @text-color-subtle;
+
+        &:hover,
+        &:focus-visible {
+          color: @text-color;
+          background: fade(@text-color, 8%);
+        }
+      }
+
+      .month-title {
+        font-weight: @font-weight-semi-bold;
+        color: @text-color;
+      }
+
+      .legend,
+      .week {
+        height: 30px;
+      }
+
+      .weekday,
+      .day {
+        flex: 1;
+        font-size: 11px;
+        line-height: 28px;
+        text-align: center;
+      }
+
+      .weekday {
+        color: @text-color-very-subtle;
+        font-weight: @font-weight-semi-bold;
+      }
+
+      .day {
+        margin: 1px;
+        border-radius: 50%;
+        color: @text-color-very-subtle;
+
+        &.cur-month {
+          color: @text-color;
+        }
+
+        &:hover {
+          background: fade(@text-color, 8%);
+        }
+
+        &.cur-day {
+          color: @text-color-inverse;
+          background: @accent-primary;
+          font-weight: @font-weight-semi-bold;
+        }
+
+        &.today:not(.cur-day) {
+          color: @accent-primary;
+          box-shadow: inset 0 0 0 1px @accent-primary;
+        }
+      }
+    }
+  }
+
+  .compact-calendar-tabs {
+    height: 40px;
+    flex: none;
+    display: flex;
+    border-bottom: 1px solid @border-color-divider;
+
+    button {
+      flex: 1;
+      position: relative;
+      color: @text-color-subtle;
+
+      &:hover {
+        color: @text-color;
+      }
+
+      &.active {
+        color: @accent-primary;
+
+        &:after {
+          content: '';
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          height: 2px;
+          background: @accent-primary;
+        }
+      }
+    }
+  }
+
+  .compact-calendar-content,
+  .compact-day-view,
+  .compact-hours-scroll {
+    min-height: 0;
+    flex: 1;
+  }
+
+  .compact-calendar-content,
+  .compact-day-view {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .compact-all-day-row {
+    min-height: 38px;
+    padding: 7px 9px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    border-bottom: 1px solid @border-color-divider;
+    color: @text-color-very-subtle;
+    font-size: @font-size-small;
+
+    > span {
+      width: 45px;
+      flex: none;
+    }
+
+    > div {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    button {
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: @text-color-inverse;
+      background: @accent-primary;
+      font-size: 11px;
+    }
+  }
+
+  .compact-hours-scroll {
+    overflow-y: auto;
+  }
+
+  .compact-hours {
+    position: relative;
+    margin-left: 50px;
+  }
+
+  .compact-hour {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: var(--compact-calendar-hour-height);
+    border-top: 1px solid fade(@text-color, 7%);
+
+    span {
+      position: absolute;
+      top: -8px;
+      left: -45px;
+      width: 40px;
+      color: @text-color-very-subtle;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+  }
+
+  .compact-timed-event {
+    position: absolute;
+    right: 8px;
+    left: 5px;
+    z-index: 2;
+    padding: 4px 7px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border-left: 3px solid @accent-primary;
+    border-radius: 6px;
+    color: @text-color;
+    background: rgb(from @accent-primary r g b / 16%);
+    text-align: left;
+
+    &:hover {
+      background: rgb(from @accent-primary r g b / 24%);
+    }
+
+    strong,
+    span {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      font-size: 11px;
+    }
+
+    span {
+      color: @text-color-subtle;
+      font-size: 10px;
+    }
+
+    &.is-short {
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding-top: 3px;
+      padding-bottom: 3px;
+
+      strong {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      span {
+        flex: 0 0 auto;
+      }
+    }
+  }
+
+  .compact-now-line {
+    position: absolute;
+    right: 6px;
+    left: 0;
+    z-index: 3;
+    height: 2px;
+    background: #ff3b4f;
+    pointer-events: none;
+
+    span {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ff3b4f;
+    }
+  }
+
+  .compact-day-empty,
+  .compact-calendar-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    color: @text-color-subtle;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      color: @text-color-very-subtle;
+    }
+  }
+
+  .compact-day-empty {
+    position: sticky;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .compact-calendar-empty {
+    height: 100%;
+
+    small {
+      color: @text-color-very-subtle;
+    }
+  }
+
+  .compact-calendar-agenda {
+    height: 100%;
+    overflow-y: auto;
+    padding: 7px;
+  }
+
+  .compact-agenda-day + .compact-agenda-day {
+    margin-top: 8px;
+  }
+
+  .compact-agenda-day-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 8px 4px;
+    border-bottom: 1px solid fade(@text-color, 8%);
+    color: @text-color-subtle;
+
+    strong {
+      color: @text-color;
+      font-size: @font-size-small;
+    }
+
+    span {
+      font-size: 11px;
+    }
+  }
+
+  .compact-agenda-event {
+    width: 100%;
+    min-height: 48px;
+    padding: 7px 8px;
+    display: grid;
+    grid-template-columns: 7px 58px 1fr;
+    align-items: start;
+    gap: 8px;
+    border-radius: 7px;
+    text-align: left;
+
+    &:hover {
+      background: fade(@text-color, 7%);
+    }
+
+    .compact-event-dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: @accent-primary;
+    }
+
+    .compact-agenda-time {
+      color: @text-color-subtle;
+      font-size: 11px;
+      line-height: 17px;
+    }
+
+    .compact-agenda-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      strong,
+      small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      strong {
+        font-size: @font-size-small;
+        color: @text-color;
+      }
+
+      small {
+        margin-top: 2px;
+        color: @text-color-very-subtle;
+      }
+    }
+  }
+}
+
 .fixed-popover .calendar-event-popover {
   color: fadeout(@text-color, 20%);
   background-color: @background-primary;
@@ -476,10 +972,10 @@
     }
 
     .tokenizing-field .tokenizing-field-input {
-        position: relative;
-        margin-left: 0;
-        padding-top: 0;
-        padding-bottom: 0;
+      position: relative;
+      margin-left: 0;
+      padding-top: 0;
+      padding-bottom: 0;
     }
   }
 
@@ -581,8 +1077,12 @@
     background: @input-bg;
     border-bottom-left-radius: @border-radius-base;
     border-bottom-right-radius: @border-radius-base;
-    box-shadow: 0 0.5px 0 @btn-border-color, 0 -0.5px 0 @btn-border-color,
-      0.5px 0 0 @btn-border-color, -0.5px 0 0 @btn-border-color, 0 4px 7px @btn-border-color;
+    box-shadow:
+      0 0.5px 0 @btn-border-color,
+      0 -0.5px 0 @btn-border-color,
+      0.5px 0 0 @btn-border-color,
+      -0.5px 0 0 @btn-border-color,
+      0 4px 7px @btn-border-color;
     padding-top: @padding-small-vertical;
     max-height: 350px;
     overflow-y: auto;

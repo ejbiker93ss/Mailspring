@@ -9,6 +9,7 @@ import {
   OutboxStore,
   FocusedPerspectiveStore,
   CategoryStore,
+  localized,
 } from 'mailspring-exports';
 
 import SidebarSection from './sidebar-section';
@@ -16,6 +17,15 @@ import * as SidebarActions from './sidebar-actions';
 import * as AccountCommands from './account-commands';
 import { Disposable } from 'event-kit';
 import { ISidebarSection } from './types';
+import { FAVORITE_FOLDERS_CONFIG_KEY } from './sidebar-item';
+import {
+  SIDEBAR_ACCOUNT_ORDER_CONFIG_KEY,
+  SIDEBAR_COLLAPSED_ACCOUNTS_CONFIG_KEY,
+  SIDEBAR_FOLDER_ORDER_CONFIG_KEY,
+  SIDEBAR_REORDER_DRAG_TYPE,
+  reorderAccounts,
+  sortedAccounts,
+} from './sidebar-preferences';
 
 const Sections = {
   Standard: 'Standard',
@@ -31,6 +41,7 @@ class SidebarStore extends MailspringStore {
     User: [],
   };
   configSubscription: Disposable;
+  _reordering = false;
 
   constructor() {
     super();
@@ -45,7 +56,7 @@ class SidebarStore extends MailspringStore {
   }
 
   accounts() {
-    return AccountStore.accounts();
+    return sortedAccounts(AccountStore.accounts());
   }
 
   sidebarAccountIds() {
@@ -63,6 +74,7 @@ class SidebarStore extends MailspringStore {
   _registerListeners() {
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
+    this.listenTo(SidebarActions.setReordering, this._onSetReordering);
     this.listenTo(AccountStore, this._onAccountsChanged);
     this.listenTo(FocusedPerspectiveStore, this._onFocusedPerspectiveChanged);
     this.listenTo(WorkspaceStore, this._updateSections);
@@ -74,6 +86,11 @@ class SidebarStore extends MailspringStore {
       'core.workspace.showUnreadForAllCategories',
       this._updateSections
     );
+    AppEnv.config.onDidChange('core.workspace.sidebarOrganization', this._updateSections);
+    AppEnv.config.onDidChange(FAVORITE_FOLDERS_CONFIG_KEY, this._updateSections);
+    AppEnv.config.onDidChange(SIDEBAR_ACCOUNT_ORDER_CONFIG_KEY, this._updateSections);
+    AppEnv.config.onDidChange(SIDEBAR_FOLDER_ORDER_CONFIG_KEY, this._updateSections);
+    AppEnv.config.onDidChange(SIDEBAR_COLLAPSED_ACCOUNTS_CONFIG_KEY, this._updateSections);
   }
 
   _onSetCollapsedByKey = (itemKey: string, collapsed: boolean) => {
@@ -82,6 +99,12 @@ class SidebarStore extends MailspringStore {
       AppEnv.savedState.sidebarKeysCollapsed[itemKey] = collapsed;
       this._updateSections();
     }
+  };
+
+  _onSetReordering = (reordering: boolean) => {
+    if (this._reordering === reordering) return;
+    this._reordering = reordering;
+    this._updateSections();
   };
 
   _onSetCollapsedByName = (itemName: string, collapsed: boolean) => {
@@ -141,26 +164,95 @@ class SidebarStore extends MailspringStore {
   };
 
   _updateSections = () => {
-    const accounts = FocusedPerspectiveStore.sidebarAccountIds()
-      .map((id) => AccountStore.accountForId(id))
-      .filter((a) => !!a);
+    const accounts = sortedAccounts(
+      FocusedPerspectiveStore.sidebarAccountIds()
+        .map((id) => AccountStore.accountForId(id))
+        .filter((a) => !!a)
+    );
 
     if (accounts.length === 0) {
       return;
     }
     const multiAccount = accounts.length > 1;
+    const organization = AppEnv.config.get('core.workspace.sidebarOrganization') || 'folders';
 
-    this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);
-    this._sections[Sections.User] = accounts.map(function (acc) {
-      const opts: { title?: string; collapsible?: boolean } = {};
-      if (multiAccount) {
-        opts.title = acc.label;
-        opts.collapsible = true;
-      }
-      return SidebarSection.forUserCategories(acc, opts);
-    });
+    this._sections[Sections.Standard] = SidebarSection.favoritesSectionForAccounts(
+      accounts,
+      this._reordering
+    );
+
+    if (organization === 'accounts') {
+      this._sections[Sections.User] = accounts.map((account) => {
+        const section = SidebarSection.completeSectionForAccount(account, this._reordering);
+        return this._makeAccountSectionReorderable(section, account, accounts);
+      });
+    } else {
+      const groupedFolders = SidebarSection.standardSectionForAccounts(accounts, this._reordering);
+      groupedFolders.title = localized('Mailboxes');
+      groupedFolders.iconName = 'folder.png';
+
+      const customFolders = accounts.map((acc) => {
+        const opts: {
+          title?: string;
+          collapsible?: boolean;
+          accountSection?: boolean;
+          reordering?: boolean;
+        } = { reordering: this._reordering };
+        if (multiAccount) {
+          opts.title = acc.label;
+          opts.collapsible = true;
+          opts.accountSection = true;
+        }
+        const section = SidebarSection.forUserCategories(acc, opts);
+        return multiAccount ? this._makeAccountSectionReorderable(section, acc, accounts) : section;
+      });
+      this._sections[Sections.User] = [groupedFolders, ...customFolders];
+    }
     this.trigger();
   };
+
+  _makeAccountSectionReorderable = (
+    section: ISidebarSection,
+    account: Account,
+    accounts: Account[]
+  ): ISidebarSection => ({
+    ...section,
+    accountId: account.id,
+    reorderable: accounts.length > 1 && this._reordering,
+    onSectionDragStart(event) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData(
+        SIDEBAR_REORDER_DRAG_TYPE,
+        JSON.stringify({ kind: 'account', accountId: account.id })
+      );
+    },
+    shouldAcceptSectionDrop(event) {
+      if (!event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) return true;
+      try {
+        const payload = JSON.parse(event.dataTransfer.getData(SIDEBAR_REORDER_DRAG_TYPE));
+        return payload.kind === 'account' && payload.accountId !== account.id;
+      } catch (_err) {
+        return false;
+      }
+    },
+    onSectionDrop(event) {
+      if (!event.dataTransfer.types.includes(SIDEBAR_REORDER_DRAG_TYPE)) return;
+      try {
+        const payload = JSON.parse(event.dataTransfer.getData(SIDEBAR_REORDER_DRAG_TYPE));
+        if (payload.kind === 'account') {
+          const bounds = event.currentTarget.getBoundingClientRect();
+          reorderAccounts(
+            payload.accountId,
+            account.id,
+            accounts,
+            event.clientY > bounds.top + bounds.height / 2
+          );
+        }
+      } catch (_err) {
+        // Ignore malformed drag data from outside FlashMail.
+      }
+    },
+  });
 }
 
 export default new SidebarStore();

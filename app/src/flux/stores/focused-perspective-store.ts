@@ -26,13 +26,20 @@ class FocusedPerspectiveStore extends MailspringStore {
 
   sidebarAccountIds() {
     let ids = AppEnv.savedState.sidebarAccountIds;
+    const accountIds = AccountStore.accountIds();
     if (!ids || !ids.length || !ids.every((id) => AccountStore.accountForId(id))) {
-      ids = AppEnv.savedState.sidebarAccountIds = AccountStore.accountIds();
+      ids = AppEnv.savedState.sidebarAccountIds = accountIds;
+    } else if (ids.length > 1 && ids.length !== accountIds.length) {
+      // A multi-account sidebar means "All Accounts" (there is no UI for
+      // selecting an arbitrary subset). Include accounts added after this
+      // saved state was written so they appear without requiring the user to
+      // select All Accounts again.
+      ids = AppEnv.savedState.sidebarAccountIds = accountIds;
     }
 
     // Always defer to the AccountStore for the desired order of accounts in
     // the sidebar - users can re-arrange them!
-    const order = AccountStore.accountIds();
+    const order = accountIds;
     ids = ids.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 
     return ids;

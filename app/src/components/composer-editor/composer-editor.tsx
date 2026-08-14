@@ -9,6 +9,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { debounce } from 'underscore';
+import DOMPurify from 'dompurify';
 
 import { KeyCommandsRegion } from '../key-commands-region';
 import ComposerEditorToolbar from './composer-editor-toolbar';
@@ -16,6 +17,8 @@ import { schema, plugins, convertFromHTML, convertToHTML, convertToPlainText } f
 import { lastUnquotedNode, removeQuotedText, isQuoteNode } from './base-block-plugins';
 import { UNEDITABLE_TYPE } from './uneditable-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
+
+const snarkdown = require('snarkdown');
 
 // Returns a reason string if the document needs recovery, or null if it's fine.
 function getDocumentBrokenReason(value: Value): string | null {
@@ -167,6 +170,20 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
 
   removeQuotedText = () => {
     removeQuotedText(this.editor);
+  };
+
+  insertAISummary = (summary: string) => {
+    if (!this.editor || !summary) return;
+    const summaryHTML = DOMPurify.sanitize(snarkdown(summary), {
+      ALLOWED_TAGS: ['br', 'code', 'em', 'li', 'ol', 'p', 'strong', 'ul'],
+      ALLOWED_ATTR: [],
+    });
+    const value = convertFromHTML(
+      `<p><strong>Summary of previous messages</strong></p>${summaryHTML}<p><br></p>`
+    );
+    const insertionPoint = lastUnquotedNode(this.editor.value);
+    if (!value || !value.document || !insertionPoint) return;
+    this.editor.moveToEndOfNode(insertionPoint).insertFragment(value.document).focus();
   };
 
   insertInlineAttachment = (file) => {

@@ -13,7 +13,8 @@ const COLUMN_META: Record<string, { role: string; label: () => string }> = {
   RootSidebar: { role: 'complementary', label: () => localized('Account sidebar') },
   ThreadList: { role: 'region', label: () => localized('Thread list') },
   MessageList: { role: 'region', label: () => localized('Messages') },
-  MessageListSidebar: { role: 'complementary', label: () => localized('Contact panel') },
+  MessageListSidebar: { role: 'complementary', label: () => localized('AI Chat') },
+  CalendarSidebar: { role: 'complementary', label: () => localized('Calendar sidebar') },
 };
 
 interface SheetLocation {

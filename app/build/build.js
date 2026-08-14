@@ -4,7 +4,6 @@
 /* eslint quote-props: 0 */
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const util = require('util');
 const { execSync, spawn: childSpawn } = require('child_process');
 const fsExtra = require('fs-extra');
@@ -12,30 +11,20 @@ const fsPlus = require('fs-plus');
 const glob = require('glob');
 const _ = require('underscore');
 const TypeScript = require('typescript');
-const { packager } = require('@electron/packager');
+const { packager, serialHooks } = require('@electron/packager');
 
 const platform = process.platform;
 const rootDir = path.resolve(__dirname, '..', '..');
 const appDir = path.resolve(rootDir, 'app');
 const buildDir = path.join(appDir, 'build');
 const outputDir = path.join(appDir, 'dist');
-const tmpdir = path.resolve(os.tmpdir(), 'nylas-build');
+const tmpdir = path.resolve(rootDir, 'node_modules', '.cache', 'mailspring-build');
 const packageJSON = require(path.join(appDir, 'package.json'));
 const { compilerOptions } = require(path.join(appDir, 'tsconfig.json'));
 
 const sourceGlobs = [
-  'internal_packages/**/*.ts',
-  'internal_packages/**/*.tsx',
-  'internal_packages/**/*.jsx',
-  'src/**/*.ts',
-  'src/**/*.tsx',
-  'src/**/*.jsx',
-  '!src/**/node_modules/**/*.ts',
-  '!src/**/node_modules/**/*.tsx',
-  '!src/**/node_modules/**/*.jsx',
-  '!internal_packages/**/node_modules/**/*.ts',
-  '!internal_packages/**/node_modules/**/*.tsx',
-  '!internal_packages/**/node_modules/**/*.jsx',
+  'internal_packages/**/*.{ts,tsx,jsx}',
+  'src/**/*.{ts,tsx,jsx}',
 ];
 
 function spawn(options) {
@@ -122,11 +111,25 @@ function writeFileEnsureDir(filePath, contents) {
 
 function runTranspilers({ buildPath }) {
   console.log('---> Running TypeScript Compiler');
+  const sourcePaths = new Set();
   sourceGlobs.forEach(pattern => {
-    glob.sync(pattern, { cwd: buildPath }).forEach(relPath => {
+    glob
+      .sync(pattern, {
+        cwd: buildPath,
+        ignore: ['src/**/node_modules/**', 'internal_packages/**/node_modules/**'],
+      })
+      .forEach(relPath => sourcePaths.add(relPath));
+  });
+
+  if (sourcePaths.size === 0) {
+    throw new Error(`TypeScript compiler found no application sources in ${buildPath}`);
+  }
+
+  console.log(`  ---> Compiling ${sourcePaths.size} application source files in ${buildPath}`);
+  sourcePaths.forEach(relPath => {
       const tsPath = path.join(buildPath, relPath);
       const tsCode = fs.readFileSync(tsPath).toString();
-      if (/(node_modules|\.js$)/.test(tsPath)) return;
+      if (/(^|[\\/])node_modules([\\/]|$)/.test(relPath)) return;
       if (tsPath.endsWith('.d.ts')) return;
       const outPath = tsPath.replace(path.extname(tsPath), '.js');
       console.log(`  ---> Compiling ${tsPath.slice(tsPath.indexOf('/app') + 4)}`);
@@ -136,8 +139,27 @@ function runTranspilers({ buildPath }) {
         writeFileEnsureDir(outPath + '.map', res.sourceMapText);
       }
       fs.unlinkSync(tsPath);
-    });
   });
+}
+
+function runVerifyUnpackedRuntimeAssets({ buildPath }) {
+  const unpackedPath = `${buildPath}.asar.unpacked`;
+  const requiredAssets = [
+    path.join('src', 'quickpreview', 'renderer.html'),
+    path.join('src', 'quickpreview', 'preload.js'),
+    path.join('src', 'quickpreview', 'pdfjs-4.3.136', 'build', 'pdf.mjs'),
+    path.join('static', 'extensions', 'chrome-i18n', 'manifest.json'),
+    path.join('static', 'all_licenses.html'),
+  ];
+  const missingAssets = requiredAssets.filter(
+    relativePath => !fs.existsSync(path.join(unpackedPath, relativePath))
+  );
+  if (missingAssets.length) {
+    throw new Error(
+      `Packaged runtime assets are missing from app.asar.unpacked: ${missingAssets.join(', ')}`
+    );
+  }
+  console.log('---> Verified unpacked quick preview and language-extension assets');
 }
 
 async function runUploadSourceMapsToSentry({ buildPath }) {
@@ -217,6 +239,8 @@ function buildPackagerOptions() {
     appCopyright: `Copyright (C) 2014-${new Date().getFullYear()} Foundry 376, LLC. All rights reserved.`,
     derefSymlinks: false,
     asar: {
+      unpackDir:
+        '{src/quickpreview,static/extensions,node_modules/spellchecker,src/tasks,**/vendor}',
       unpack:
         '{' +
         [
@@ -228,13 +252,8 @@ function buildPackagerOptions() {
           '*.dll',
           '*.pdb',
           '*.node',
-          '**/vendor/**',
           'examples/**',
-          '**/src/tasks/**',
-          '**/src/quickpreview/**',
-          '**/static/all_licenses.html',
-          '**/static/extensions/**',
-          '**/node_modules/spellchecker/**',
+          'all_licenses.html',
         ].join(',') +
         '}',
     },
@@ -272,6 +291,7 @@ function buildPackagerOptions() {
       /node_modules[/].*[/]benchmark$/,
     ],
     out: outputDir,
+    electronZipDir: process.env.ELECTRON_ZIP_DIR || undefined,
     overwrite: true,
     prune: true,
     osxSign: process.env.SIGN_BUILD
@@ -326,14 +346,17 @@ function buildPackagerOptions() {
     // See https://github.com/electron-userland/electron-packager/blob/master/mac.js#L50
     extendInfo: path.resolve(appDir, 'build', 'resources', 'mac', 'extra.plist'),
     appBundleId: 'com.mailspring.mailspring',
-    afterCopy: [
+    afterCopy: serialHooks([
       runCopyPlatformSpecificResources,
       runWriteCommitHashIntoPackage,
       runUpdateSandboxHelperPermissions,
       runCopySymlinkedPackages,
+    ]),
+    afterPrune: serialHooks([
       runTranspilers,
       runUploadSourceMapsToSentry,
-    ],
+    ]),
+    afterAsar: serialHooks([runVerifyUnpackedRuntimeAssets]),
   };
 }
 

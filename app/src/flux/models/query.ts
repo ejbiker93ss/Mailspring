@@ -318,6 +318,20 @@ export default class ModelQuery<T extends Model | Model[]> {
           }
           object[attr.modelKey] = attr.deserialize(object, value);
         }
+        // ThreadCategory keeps unread state per folder / label. Category-scoped
+        // thread-list queries select this synthetic column so a message that is
+        // unread in another folder does not paint the current folder's row unread.
+        if (row.__categoryScopedUnread !== undefined && row.__categoryScopedUnread !== null) {
+          (object as any).unread = row.__categoryScopedUnread >= 1;
+        }
+        if (
+          row.__categoryScopedLastMessageReceivedTimestamp !== undefined &&
+          row.__categoryScopedLastMessageReceivedTimestamp !== null
+        ) {
+          (object as any).lastMessageReceivedTimestamp = new Date(
+            row.__categoryScopedLastMessageReceivedTimestamp * 1000
+          );
+        }
         return object;
       });
     } catch (error) {
@@ -392,7 +406,16 @@ export default class ModelQuery<T extends Model | Model[]> {
 
     if (joins.length === 1 && this._canSubselectForJoin(joins[0], allMatchers)) {
       const subSql = this._subselectSQL(joins[0], this._matchers, order, limit);
-      return `SELECT${distinct} ${result} FROM \`${this._klass.name}\` WHERE \`id\` IN (${subSql}) ${order}`;
+      const categoryScopedUnread = this._categoryScopedUnreadSelect(joins[0]);
+      const categoryScopedTimestamp = this._categoryScopedTimestampSelect(joins[0]);
+      const scopedColumns = [categoryScopedUnread, categoryScopedTimestamp].filter(Boolean);
+      const scopedResult = scopedColumns.length ? `${result}, ${scopedColumns.join(', ')}` : result;
+      const scopedOrder = this._categoryScopedOrder(
+        joins[0],
+        order,
+        `\`${this._klass.name}\`.\`id\``
+      );
+      return `SELECT${distinct} ${scopedResult} FROM \`${this._klass.name}\` WHERE \`id\` IN (${subSql}) ${scopedOrder}`;
     }
 
     return `SELECT${distinct} ${result} FROM \`${
@@ -447,7 +470,67 @@ export default class ModelQuery<T extends Model | Model[]> {
       new RegExp(`\`${returningMatcher.joinTableRef()}\``, 'g'),
       `\`${table}\``
     );
+    innerSQL = this._categoryScopedOrder(returningMatcher, innerSQL, `\`${table}\`.\`id\``);
     return innerSQL;
+  }
+
+  _categoryScopedUnreadSelect(joinMatcher: Matcher) {
+    if (this._count || this._returnIds || !this._klass.attributes.unread) {
+      return '';
+    }
+
+    const joinAttribute = joinMatcher.attribute() as AttributeCollection;
+    if (!joinAttribute.joinQueryableBy.includes('unread')) {
+      return '';
+    }
+
+    const table = joinAttribute.tableNameForJoinAgainst(this._klass);
+    const alias = '__categoryScope';
+    const categoryWhere = joinMatcher
+      .whereSQL(this._klass)
+      .replace(new RegExp(`\`${joinMatcher.joinTableRef()}\``, 'g'), `\`${alias}\``);
+
+    return `(SELECT MAX(\`${alias}\`.\`unread\`) FROM \`${table}\` AS \`${alias}\` WHERE \`${alias}\`.\`id\` = \`${this._klass.name}\`.\`id\` AND ${categoryWhere}) AS \`__categoryScopedUnread\``;
+  }
+
+  _categoryScopedTimestampSelect(joinMatcher: Matcher) {
+    const expression = this._categoryScopedTimestampExpression(
+      joinMatcher,
+      `\`${this._klass.name}\`.\`id\``
+    );
+    return expression ? `${expression} AS \`__categoryScopedLastMessageReceivedTimestamp\`` : '';
+  }
+
+  _categoryScopedTimestampExpression(joinMatcher: Matcher, threadIdSQL: string) {
+    const joinAttribute = joinMatcher.attribute() as AttributeCollection;
+    const table = joinAttribute.tableNameForJoinAgainst(this._klass);
+    if (this._klass.name !== 'Thread' || table !== 'ThreadCategory') {
+      return '';
+    }
+
+    const alias = '__categoryMessage';
+    const folderWhere = joinMatcher
+      .whereSQL(this._klass)
+      .replace(new RegExp(`\`${joinMatcher.joinTableRef()}\``, 'g'), `\`${alias}\``)
+      .replace(new RegExp(`\`${alias}\`.\`value\``, 'g'), `\`${alias}\`.\`remoteFolderId\``);
+
+    return `(SELECT MAX(\`${alias}\`.\`date\`) FROM \`Message\` AS \`${alias}\` WHERE \`${alias}\`.\`threadId\` = ${threadIdSQL} AND ${folderWhere})`;
+  }
+
+  _categoryScopedOrder(joinMatcher: Matcher, orderSQL: string, threadIdSQL: string) {
+    const expression = this._categoryScopedTimestampExpression(joinMatcher, threadIdSQL);
+    if (!expression) {
+      return orderSQL;
+    }
+
+    const table = (joinMatcher.attribute() as AttributeCollection).tableNameForJoinAgainst(
+      this._klass
+    );
+    const primaryTimestamp = `\`${this._klass.name}\`.\`lastMessageReceivedTimestamp\``;
+    const joinedTimestamp = `\`${table}\`.\`lastMessageReceivedTimestamp\``;
+    return orderSQL
+      .replace(new RegExp(primaryTimestamp, 'g'), `COALESCE(${expression}, $&)`)
+      .replace(new RegExp(joinedTimestamp, 'g'), `COALESCE(${expression}, $&)`);
   }
 
   _whereClause() {

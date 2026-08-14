@@ -159,6 +159,20 @@ const AccountProviders = [
     color: '#fff',
   },
   {
+    provider: 'smartermail',
+    displayName: 'SmarterMail',
+    note: (
+      <span>
+        {localized(
+          'Connect mail, calendars, and contacts using the secure IMAP, SMTP, CalDAV, and CardDAV services provided by your SmarterMail server.'
+        )}
+      </span>
+    ),
+    icon: 'ic-settings-account-imap.png',
+    headerIcon: 'setup-icon-provider-imap.png',
+    color: '#1676D2',
+  },
+  {
     provider: 'imap',
     displayName: 'IMAP / SMTP',
     displayNameShort: 'IMAP',

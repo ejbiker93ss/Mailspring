@@ -82,8 +82,10 @@ export default class Application extends EventEmitter {
     });
 
     try {
-      const mailsync = new MailsyncProcess(options);
-      await mailsync.migrate();
+      if (!specMode) {
+        const mailsync = new MailsyncProcess(options);
+        await mailsync.migrate();
+      }
     } catch (err) {
       let message = null;
       let buttons = [localized('Quit')];
@@ -433,9 +435,10 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:show-calendar', () => {
-      this.windowManager.ensureWindow(WindowManager.CALENDAR_WINDOW, {});
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        main.focus();
+        main.sendMessage('command', 'calendar:show');
         main.sendMessage('run-calendar-sync');
       }
     });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { WorkspaceStore, ComponentRegistry, localized } from 'mailspring-exports';
+import { WorkspaceStore, ComponentRegistry, Actions, localized } from 'mailspring-exports';
 import { QuickEventButton } from './quick-event-button';
 import { MailspringCalendar } from './core/mailspring-calendar';
 import { EventSearchBar } from './core/event-search-bar';
@@ -15,6 +15,8 @@ const Notice = () =>
   );
 
 Notice.displayName = 'Notice';
+
+let commandDisposable: { dispose(): void } | null = null;
 
 function adjustMenus() {
   const calendarMenu: (typeof AppEnv.menu.template)[0] = {
@@ -84,24 +86,39 @@ function adjustMenus() {
 }
 
 export function activate() {
-  adjustMenus();
+  if (AppEnv.isMainWindow()) {
+    WorkspaceStore.defineSheet('Calendar', { root: true }, { list: ['CalendarMain'] });
+    commandDisposable = AppEnv.commands.add(document.body, {
+      'calendar:show': () => Actions.selectRootSheet(WorkspaceStore.Sheet.Calendar),
+    });
+  } else {
+    adjustMenus();
+  }
 
   ComponentRegistry.register(MailspringCalendar, {
-    location: WorkspaceStore.Location.Center,
-  });
-  ComponentRegistry.register(Notice, {
-    location: WorkspaceStore.Sheet.Main.Header,
+    location: AppEnv.isMainWindow()
+      ? WorkspaceStore.Location.CalendarMain
+      : WorkspaceStore.Location.Center,
   });
   ComponentRegistry.register(QuickEventButton, {
-    location: WorkspaceStore.Location.Center.Toolbar,
+    location: AppEnv.isMainWindow()
+      ? WorkspaceStore.Location.CalendarMain.Toolbar
+      : WorkspaceStore.Location.Center.Toolbar,
   });
   ComponentRegistry.register(EventSearchBar, {
-    location: WorkspaceStore.Location.Center.Toolbar,
+    location: AppEnv.isMainWindow()
+      ? WorkspaceStore.Location.CalendarMain.Toolbar
+      : WorkspaceStore.Location.Center.Toolbar,
   });
+  if (!AppEnv.isMainWindow()) {
+    ComponentRegistry.register(Notice, { location: WorkspaceStore.Sheet.Main.Header });
+  }
 }
 
 export function deactivate() {
   ComponentRegistry.unregister(MailspringCalendar);
   ComponentRegistry.unregister(QuickEventButton);
   ComponentRegistry.unregister(EventSearchBar);
+  commandDisposable?.dispose();
+  commandDisposable = null;
 }

@@ -13,6 +13,11 @@ import {
   canPossiblyPreviewExtension,
   displayQuickPreviewWindow,
 } from '../../quickpreview';
+import {
+  ensureHeicPreview,
+  isHeicExtension,
+  isHeicFilePath,
+} from '../../quickpreview/heic-preview';
 
 Promise.promisifyAll(_fs);
 const fs = _fs as any;
@@ -99,12 +104,29 @@ class AttachmentStore extends MailspringStore {
     return this._filePreviewPaths[fileId];
   }
 
+  /**
+   * Resolve a downloaded attachment to its real local path for an in-app preview.
+   * Attachments occasionally arrive with a provider-normalized filename, so callers
+   * should not assume pathForFile() is the file that exists on disk.
+   */
+  async resolveFilePathForPreview(file: File): Promise<string> {
+    const filePath = await this._prepareAndResolveFilePath(file);
+    if (!(await fileAccessibleAtPath(filePath))) {
+      throw new Error(localized('The attachment has not finished downloading.'));
+    }
+    if (isHeicExtension(file.displayExtension()) || isHeicFilePath(filePath)) {
+      const previewPath = await ensureHeicPreview(filePath, `${filePath}.preview.png`);
+      this._filePreviewPaths[file.id] = previewPath;
+      this.trigger();
+      return previewPath;
+    }
+    return filePath;
+  }
+
   async _prepareAndResolveFilePath(file: File) {
     let filePath = this.pathForFile(file);
 
-    if (await fileAccessibleAtPath(filePath)) {
-      this._ensurePreviewOfFile(file);
-    } else {
+    if (!(await fileAccessibleAtPath(filePath))) {
       // try to find the file in the directory (it should be the only file)
       // this allows us to handle obscure edge cases where the sync engine
       // the file with an altered name.
@@ -115,10 +137,12 @@ class AttachmentStore extends MailspringStore {
       }
     }
 
+    this._ensurePreviewOfFile(file, filePath);
+
     return filePath;
   }
 
-  async _ensurePreviewOfFile(file: File) {
+  async _ensurePreviewOfFile(file: File, filePath: string = this.pathForFile(file)) {
     if (!AppEnv.config.get('core.attachments.displayFilePreview')) {
       return;
     }
@@ -126,10 +150,10 @@ class AttachmentStore extends MailspringStore {
       return;
     }
 
-    const filePath = this.pathForFile(file);
     const previewPath = `${filePath}.png`;
+    const isHeic = isHeicExtension(file.displayExtension()) || isHeicFilePath(filePath);
 
-    if (await fileAccessibleAtPath(previewPath)) {
+    if (!isHeic && (await fileAccessibleAtPath(previewPath))) {
       // If the preview file already exists, set our state and bail
       this._filePreviewPaths[file.id] = previewPath;
       this.trigger();
@@ -393,6 +417,9 @@ class AttachmentStore extends MailspringStore {
       await fs.unlinkAsync(filePath);
       if (await fileAccessibleAtPath(`${filePath}.png`)) {
         await fs.unlinkAsync(`${filePath}.png`);
+      }
+      if (await fileAccessibleAtPath(`${filePath}.preview.png`)) {
+        await fs.unlinkAsync(`${filePath}.preview.png`);
       }
       await fs.rmdirAsync(path.dirname(filePath));
     } catch (err) {

@@ -86,6 +86,9 @@ export default class MailsyncBridge {
   _crashTracker = new CrashTracker();
   _clients: { [accountId: string]: MailsyncProcess } = {};
   _lastWait: number;
+  _incomingMessageQueue: string[] = [];
+  _incomingMessageQueueOffset = 0;
+  _incomingMessageDrainScheduled = false;
 
   constructor() {
     if (!AppEnv.isMainWindow() || AppEnv.inSpecMode()) {
@@ -174,8 +177,13 @@ export default class MailsyncBridge {
   }, 100);
 
   async forceRelaunchClient(account: Account) {
+    const existing = this._clients[account.id];
+    if (existing) {
+      delete this._clients[account.id];
+      existing.kill();
+    }
     const keys = await KeyManager._getKeyHash();
-    this._launchClient(account, keys, { force: true });
+    await this._launchClient(account, keys, { force: true });
   }
 
   async tailClientLog(accountId: string) {
@@ -393,60 +401,98 @@ export default class MailsyncBridge {
   }
 
   _onIncomingMessages = (msgs: string[]) => {
-    for (const msg of msgs) {
-      if (msg.length === 0) {
-        continue;
-      }
-      if (msg[0] !== '{') {
-        if (!msg.startsWith('Waiting for')) {
-          console.log(`Sync worker sent non-JSON formatted message: ${msg}`);
-        }
-        continue;
-      }
+    this._incomingMessageQueue.push(...msgs);
+    this._scheduleIncomingMessageDrain();
+  };
 
-      let json = null;
-      try {
-        json = JSON.parse(msg);
-      } catch (err) {
-        console.log(`Sync worker sent non-JSON formatted message: ${msg}. ${err}`);
-        continue;
-      }
-
-      const { type, modelJSONs, modelClass } = json;
-      if (!modelJSONs || !type || !modelClass) {
-        console.log(`Sync worker sent a JSON formatted message with unexpected keys: ${msg}`);
-        continue;
-      }
-
-      // Note: these deltas don't reflect a real model - we just stream in the process
-      // state changes (online / offline) alongside the database changes.
-      if (modelClass === 'ProcessState' && modelJSONs.length) {
-        OnlineStatusStore.onSyncProcessStateReceived(modelJSONs[0]);
-        continue;
-      }
-      if (modelClass === 'ProcessAccountSecretsUpdated' && modelJSONs.length) {
-        KeyManager.extractAndStoreAccountSecrets(new Account(modelJSONs[0]));
-        continue;
-      }
-
-      if (modelClass === 'ProcessIdentityRefreshNeeded') {
-        IdentityStore.fetchIdentitySoon();
-        continue;
-      }
-
-      // dispatch the message to other windows
-      ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', msg);
-
-      const models = modelJSONs.map(Utils.convertToModel);
-      this._onIncomingChangeRecord(
-        new DatabaseChangeRecord({
-          type, // TODO BG move to "model" naming style, finding all uses might be tricky
-          objectClass: modelClass,
-          objects: models,
-          objectsRawJSON: modelJSONs,
-        })
-      );
+  _scheduleIncomingMessageDrain = () => {
+    if (this._incomingMessageDrainScheduled) {
+      return;
     }
+    this._incomingMessageDrainScheduled = true;
+    setTimeout(this._drainIncomingMessages, 0);
+  };
+
+  _drainIncomingMessages = () => {
+    this._incomingMessageDrainScheduled = false;
+
+    // Initial sync can produce thousands of deltas in a short burst. Processing the
+    // entire stdout chunk synchronously prevents Electron from painting or handling
+    // Windows messages long enough for the OS to report that Mailspring is hung.
+    const deadline = Date.now() + 8;
+    let processed = 0;
+    while (
+      this._incomingMessageQueueOffset < this._incomingMessageQueue.length &&
+      processed < 25 &&
+      Date.now() < deadline
+    ) {
+      const msg = this._incomingMessageQueue[this._incomingMessageQueueOffset];
+      this._incomingMessageQueueOffset += 1;
+      this._processIncomingMessage(msg);
+      processed += 1;
+    }
+
+    if (this._incomingMessageQueueOffset < this._incomingMessageQueue.length) {
+      this._scheduleIncomingMessageDrain();
+    } else {
+      this._incomingMessageQueue = [];
+      this._incomingMessageQueueOffset = 0;
+    }
+  };
+
+  _processIncomingMessage = (msg: string) => {
+    if (msg.length === 0) {
+      return;
+    }
+    if (msg[0] !== '{') {
+      if (!msg.startsWith('Waiting for')) {
+        console.log(`Sync worker sent non-JSON formatted message: ${msg}`);
+      }
+      return;
+    }
+
+    let json = null;
+    try {
+      json = JSON.parse(msg);
+    } catch (err) {
+      console.log(`Sync worker sent non-JSON formatted message: ${msg}. ${err}`);
+      return;
+    }
+
+    const { type, modelJSONs, modelClass } = json;
+    if (!modelJSONs || !type || !modelClass) {
+      console.log(`Sync worker sent a JSON formatted message with unexpected keys: ${msg}`);
+      return;
+    }
+
+    // Note: these deltas don't reflect a real model - we just stream in the process
+    // state changes (online / offline) alongside the database changes.
+    if (modelClass === 'ProcessState' && modelJSONs.length) {
+      OnlineStatusStore.onSyncProcessStateReceived(modelJSONs[0]);
+      return;
+    }
+    if (modelClass === 'ProcessAccountSecretsUpdated' && modelJSONs.length) {
+      KeyManager.extractAndStoreAccountSecrets(new Account(modelJSONs[0]));
+      return;
+    }
+
+    if (modelClass === 'ProcessIdentityRefreshNeeded') {
+      IdentityStore.fetchIdentitySoon();
+      return;
+    }
+
+    // dispatch the message to other windows
+    ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', msg);
+
+    const models = modelJSONs.map(Utils.convertToModel);
+    this._onIncomingChangeRecord(
+      new DatabaseChangeRecord({
+        type, // TODO BG move to "model" naming style, finding all uses might be tricky
+        objectClass: modelClass,
+        objects: models,
+        objectsRawJSON: modelJSONs,
+      })
+    );
   };
 
   _onIncomingChangeRecord = (record: DatabaseChangeRecord<Model>) => {

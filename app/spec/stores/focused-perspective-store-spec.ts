@@ -184,6 +184,25 @@ describe('FocusedPerspectiveStore', function () {
     });
   });
 
+  describe('sidebarAccountIds', function () {
+    it('includes newly added accounts when the sidebar is showing All Accounts', function () {
+      spyOn(AccountStore, 'accountIds').andReturn(['a', 'b', 'c']);
+      spyOn(AccountStore, 'accountForId').andCallFake((id) => ({ id }));
+      AppEnv.savedState.sidebarAccountIds = ['a', 'b'];
+
+      expect(FocusedPerspectiveStore.sidebarAccountIds()).toEqual(['a', 'b', 'c']);
+      expect(AppEnv.savedState.sidebarAccountIds).toEqual(['a', 'b', 'c']);
+    });
+
+    it('keeps a deliberately selected single-account sidebar', function () {
+      spyOn(AccountStore, 'accountIds').andReturn(['a', 'b', 'c']);
+      spyOn(AccountStore, 'accountForId').andCallFake((id) => ({ id }));
+      AppEnv.savedState.sidebarAccountIds = ['a'];
+
+      expect(FocusedPerspectiveStore.sidebarAccountIds()).toEqual(['a']);
+    });
+  });
+
   describe('_onFocusPerspective', () =>
     it('should focus the category and trigger', function () {
       FocusedPerspectiveStore._onFocusPerspective(this.userPerspective);

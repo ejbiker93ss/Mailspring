@@ -120,14 +120,31 @@ describe('ModelQuery', function ModelQuerySpecs() {
     });
   });
 
-  describe('response formatting', () =>
+  describe('response formatting', () => {
     it('should always return a Number for counts', () => {
       const q = new ModelQuery(Message, this.db);
       q.where({ accountId: 'abcd' }).count();
 
       const raw = [{ count: '12' }];
       expect(q.formatResult(q.inflateResult(raw) as any)).toBe(12);
-    }));
+    });
+
+    it('should apply category-scoped unread state to inflated threads', () => {
+      const q = new ModelQuery(Thread, this.db);
+      const thread = new Thread({ id: 'thread-id', unread: true });
+      const raw = [
+        {
+          data: JSON.stringify(thread),
+          __categoryScopedUnread: 0,
+          __categoryScopedLastMessageReceivedTimestamp: 1234,
+        },
+      ];
+
+      const inflated = q.inflateResult(raw) as Thread[];
+      expect(inflated[0].unread).toBe(false);
+      expect(inflated[0].lastMessageReceivedTimestamp.getTime()).toBe(1234 * 1000);
+    });
+  });
 
   describe('sql', () => {
     beforeEach(() => {
@@ -238,6 +255,22 @@ describe('ModelQuery', function ModelQuerySpecs() {
           "WHERE `M1`.`value` = 'l-1' AND `M2`.`value` = 'l-2'  " +
           'ORDER BY `Thread`.`lastMessageReceivedTimestamp` DESC',
       });
+    });
+
+    it('should select category-scoped unread state for paged thread lists', () => {
+      Attributes.Matcher.muid = 1;
+      const q = new ModelQuery(Thread, this.db)
+        .where(Thread.attributes.categories.contains('category-id'))
+        .where({ inAllMail: true })
+        .limit(50);
+
+      const sql = q.sql();
+      expect(sql).toContain('AS `__categoryScopedUnread`');
+      expect(sql).toContain('AS `__categoryScopedLastMessageReceivedTimestamp`');
+      expect(sql).toContain("`__categoryScope`.`value` = 'category-id'");
+      expect(sql).toContain('FROM `ThreadCategory` AS `__categoryScope`');
+      expect(sql).toContain('FROM `Message` AS `__categoryMessage`');
+      expect(sql).toContain("`__categoryMessage`.`remoteFolderId` = 'category-id'");
     });
 
     it("should correctly generate queries with the class's naturalSortOrder when one is available and no other orders are provided", () => {

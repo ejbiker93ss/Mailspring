@@ -75,6 +75,7 @@ class FixedPopover extends Component<FixedPopoverProps, FixedPopoverState> {
     this.mounted = true;
     findDOMNode(this.refs.popoverContainer).addEventListener('animationend', this.onAnimationEnd);
     window.addEventListener('resize', this.onWindowResize);
+    document.addEventListener('mousedown', this.onDocumentMouseDown, true);
     _.defer(this.onPopoverRendered);
   }
 
@@ -99,7 +100,15 @@ class FixedPopover extends Component<FixedPopoverProps, FixedPopoverState> {
       this.onAnimationEnd
     );
     window.removeEventListener('resize', this.onWindowResize);
+    document.removeEventListener('mousedown', this.onDocumentMouseDown, true);
   }
+
+  onDocumentMouseDown = (event: MouseEvent) => {
+    const popover = findDOMNode(this.refs.popover) as HTMLElement | null;
+    if (popover && !popover.contains(event.target as Node)) {
+      Actions.closePopover();
+    }
+  };
 
   onAnimationEnd = () => {
     _.defer(this.props.focusElementWithTabIndex);

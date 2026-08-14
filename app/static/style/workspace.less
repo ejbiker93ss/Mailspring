@@ -33,6 +33,393 @@ mailspring-workspace {
   height: 100%;
 }
 
+// The Windows main window is frameless. This strip is both the app-level tab
+// switcher and the draggable title bar, so tabs occupy the very top edge.
+.app-tab-bar {
+  -webkit-app-region: drag;
+  align-items: stretch;
+  background: darken(@background-primary, 3%);
+  border-bottom: 1px solid @border-color-divider;
+  color: @text-color;
+  display: flex;
+  flex: 0 0 40px;
+  height: 40px;
+  min-height: 40px;
+  overflow: hidden;
+  box-sizing: border-box;
+  // Keep tabs and drag targets out from beneath Windows' native caption
+  // buttons. With no overlay these fallbacks resolve to zero padding.
+  padding-right: calc(100% - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100%));
+  position: relative;
+  user-select: none;
+  z-index: 20;
+
+  button,
+  [role='button'],
+  [role='tab'] {
+    -webkit-app-region: no-drag;
+  }
+}
+
+.app-tab-menu {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid fade(@border-color-divider, 70%);
+  color: @text-color;
+  display: flex;
+  flex: 0 0 46px;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+
+  &:hover {
+    background: @list-hover-bg;
+  }
+
+  .app-mark {
+    align-items: center;
+    background: @accent-primary;
+    border-radius: 5px;
+    color: white;
+    display: flex;
+    font-size: 12px;
+    height: 22px;
+    justify-content: center;
+    width: 22px;
+  }
+}
+
+.app-tabs {
+  -webkit-app-region: no-drag;
+  align-items: flex-end;
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-top: 5px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.app-tab {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid transparent;
+  border-right: 1px solid fade(@border-color-divider, 65%);
+  border-top: 2px solid transparent;
+  color: fade(@text-color, 72%);
+  display: flex;
+  flex: 0 1 170px;
+  font: inherit;
+  gap: 8px;
+  height: 35px;
+  margin: 0;
+  // Keep primary destinations readable even when the tab strip gets busy.
+  // This accommodates the Calendar icon, label, gap, and horizontal padding.
+  min-width: 120px;
+  max-width: 210px;
+  outline: none;
+  padding: 0 12px;
+  position: relative;
+  text-align: left;
+  cursor: default;
+
+  &:hover {
+    background: fade(@list-hover-bg, 65%);
+    color: @text-color;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, @accent-primary 70%, transparent);
+  }
+
+  &.active {
+    background: @background-primary;
+    border-left-color: @border-color-divider;
+    border-top-color: @accent-primary;
+    color: @text-color;
+  }
+
+  .app-tab-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.app-tab-icon {
+  box-sizing: border-box;
+  display: block;
+  flex: 0 0 14px;
+  height: 13px;
+  opacity: 0.78;
+  position: relative;
+  width: 14px;
+}
+
+.app-tab-threads .app-tab-icon,
+.app-tab-conversation .app-tab-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+
+  &::after {
+    border-bottom: 1.5px solid currentColor;
+    border-left: 1.5px solid currentColor;
+    content: '';
+    height: 7px;
+    left: 2px;
+    position: absolute;
+    top: -2px;
+    transform: rotate(-45deg);
+    width: 7px;
+  }
+}
+
+.app-tab-calendar .app-tab-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+
+  &::before {
+    border-bottom: 1.5px solid currentColor;
+    content: '';
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 3px;
+  }
+}
+
+.app-tab-compose {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: fade(@text-color, 68%);
+  display: inline-flex;
+  flex: 0 0 26px;
+  height: 26px;
+  justify-content: center;
+  margin: 0 -5px 0 2px;
+  padding: 0;
+  width: 26px;
+
+  &:hover {
+    background: fade(@text-color, 9%);
+    color: @text-color;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, @accent-primary 70%, transparent);
+    outline: none;
+  }
+
+  svg {
+    fill: none;
+    height: 16px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.5;
+    width: 16px;
+  }
+}
+
+.app-tab-kanban .app-tab-icon {
+  border-left: 3px solid currentColor;
+  border-right: 3px solid currentColor;
+
+  &::after {
+    border-left: 3px solid currentColor;
+    content: '';
+    height: 9px;
+    left: 4px;
+    position: absolute;
+    top: 0;
+  }
+}
+
+.app-tab-contacts .app-tab-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  height: 7px;
+  margin-top: -4px;
+
+  &::after {
+    border: 1.5px solid currentColor;
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    content: '';
+    height: 6px;
+    left: -3px;
+    position: absolute;
+    top: 8px;
+    width: 17px;
+  }
+}
+
+.app-tab-activity .app-tab-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+
+  &::after {
+    background: currentColor;
+    content: '';
+    height: 1.5px;
+    left: 6px;
+    position: absolute;
+    top: 2px;
+    transform: rotate(35deg);
+    transform-origin: 0 5px;
+    width: 5px;
+  }
+}
+
+.app-tab-conversation {
+  min-width: 135px;
+
+  .app-tab-close {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 3px;
+    color: inherit;
+    display: flex;
+    flex: 0 0 20px;
+    font-size: 17px;
+    height: 20px;
+    justify-content: center;
+    line-height: 18px;
+    margin-right: -6px;
+
+    &:hover {
+      background: fade(@text-color, 12%);
+    }
+  }
+}
+
+.app-titlebar-drag-space {
+  flex: 1 1 24px;
+  min-width: 12px;
+}
+
+.app-titlebar-menu {
+  -webkit-app-region: no-drag;
+  width: 46px;
+  height: 40px;
+  flex: 0 0 46px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid fade(@border-color-divider, 55%);
+  color: @text-color;
+  background: transparent;
+
+  &:hover,
+  &:focus-visible {
+    background: @list-hover-bg;
+    outline: none;
+  }
+}
+
+.app-titlebar-menu-icon {
+  width: 15px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow:
+    0 -5px 0 currentColor,
+    0 5px 0 currentColor;
+}
+
+.app-window-controls {
+  -webkit-app-region: no-drag;
+  display: flex;
+  flex: 0 0 auto;
+
+  button {
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 0;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    width: 46px;
+
+    &:hover {
+      background-color: @list-hover-bg;
+    }
+
+    &::before,
+    &::after {
+      content: '';
+      left: 50%;
+      position: absolute;
+      top: 50%;
+    }
+  }
+
+  .minimize::before {
+    background: @text-color;
+    height: 1px;
+    transform: translate(-50%, 4px);
+    width: 10px;
+  }
+
+  .maximize::before {
+    border: 1px solid @text-color;
+    height: 9px;
+    transform: translate(-50%, -50%);
+    width: 9px;
+  }
+
+  .close {
+    &:hover {
+      background-color: #c42b1c;
+    }
+
+    &:hover::before,
+    &:hover::after {
+      background: white;
+    }
+
+    &::before,
+    &::after {
+      background: @text-color;
+      height: 1px;
+      width: 12px;
+    }
+
+    &::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    &::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+  }
+}
+
+body.is-blurred .app-tab-bar {
+  color: fade(@text-color, 55%);
+
+  .app-tab:not(.active) {
+    color: fade(@text-color, 45%);
+  }
+}
+
 .sheet {
   background-color: @background-primary;
 }
@@ -144,8 +531,11 @@ body.is-blurred {
 
     .btn.btn-toolbar {
       background: none;
-      box-shadow: 0 0.5px 0 @btn-border-color, 0 -0.5px 0 @btn-border-color,
-        0.5px 0 0 @btn-border-color, -0.5px 0 0 @btn-border-color;
+      box-shadow:
+        0 0.5px 0 @btn-border-color,
+        0 -0.5px 0 @btn-border-color,
+        0.5px 0 0 @btn-border-color,
+        -0.5px 0 0 @btn-border-color;
       img {
         opacity: 0.5;
       }
@@ -243,7 +633,9 @@ body.is-blurred {
     flex-shrink: 0;
     line-height: 1.75em;
     height: 1.75em;
-    box-shadow: 0 0.5px 0.05px rgba(0, 0, 0, 0.4), 0 -0.5px 0 rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0 0.5px 0.05px rgba(0, 0, 0, 0.4),
+      0 -0.5px 0 rgba(0, 0, 0, 0.12);
     img.content-mask {
       background-color: fade(@text-color-heading, 80%);
     }
@@ -516,6 +908,96 @@ body.platform-win32 {
         box-shadow: none;
       }
     }
+  }
+}
+
+// On the Windows main window, the mail toolbar begins over the mail columns
+// instead of reserving an empty row above the folder sidebar.
+body.platform-win32.window-type-default {
+  // AppTabs is now the only Windows drag surface. The legacy sheet toolbar
+  // can overlap column headers, and marking it draggable makes Windows consume
+  // clicks intended for controls such as AI history and New Chat.
+  .sheet-toolbar,
+  .sheet-toolbar .item-spacer {
+    -webkit-app-region: no-drag;
+  }
+
+  // Windows exposes the application menu in AppTabs beside the native window
+  // controls. Suppress the legacy copy injected into the mail toolbar.
+  .sheet-toolbar .toolbar-menu-control {
+    display: none !important;
+  }
+
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads']) {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    left: 0;
+    height: 34px;
+    min-height: 34px;
+    background: transparent;
+    border-bottom: 0;
+    pointer-events: none;
+  }
+
+  // The toolbar is floated over the sheet so the folder sidebar can begin
+  // directly below the app tabs. Keep the shared container transparent or it
+  // paints an empty strip over (and clips) the first sidebar rows.
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
+    .sheet-toolbar-container[data-id='Threads'] {
+    background: transparent;
+    background-image: none;
+    border-bottom: 0;
+  }
+
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
+    .sheet-toolbar-container
+    [data-column] {
+    height: 34px;
+    background: color-mix(in srgb, @background-primary 96%, @background-secondary 4%);
+    border-bottom: 1px solid @border-color-divider;
+    pointer-events: auto;
+  }
+
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
+    .sheet-toolbar-container
+    .toolbar-RootSidebar {
+    display: none !important;
+  }
+
+  // The assistant and calendar columns have no toolbar controls. Do not render
+  // empty cells or reserve blank space above either panel.
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
+    .sheet-toolbar-container
+    .toolbar-MessageListSidebar,
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Thread'])
+    .sheet-toolbar-container
+    .toolbar-MessageListSidebar,
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads'])
+    .sheet-toolbar-container
+    .toolbar-CalendarSidebar,
+  .sheet-toolbar:has(.sheet-toolbar-container[data-id='Thread'])
+    .sheet-toolbar-container
+    .toolbar-CalendarSidebar {
+    display: none !important;
+  }
+
+  .sheet[data-id='Threads'] .column-MessageListSidebar:has(.mail-assistant),
+  .sheet[data-id='Thread'] .column-MessageListSidebar:has(.mail-assistant),
+  .sheet[data-id='Threads'] .column-CalendarSidebar:has(.mail-calendar-sidebar),
+  .sheet[data-id='Thread'] .column-CalendarSidebar:has(.mail-calendar-sidebar) {
+    padding-top: 0;
+  }
+
+  .sheet[data-id='Threads'] .column-ThreadList,
+  .sheet[data-id='Threads'] .column-MessageList,
+  .sheet[data-id='Threads'] .column-MessageListSidebar,
+  .sheet[data-id='Threads'] .column-CalendarSidebar,
+  .sheet[data-id='Thread'] .column-MessageList,
+  .sheet[data-id='Thread'] .column-MessageListSidebar,
+  .sheet[data-id='Thread'] .column-CalendarSidebar {
+    box-sizing: border-box;
+    padding-top: 34px;
   }
 }
 

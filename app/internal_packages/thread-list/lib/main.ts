@@ -1,6 +1,9 @@
 import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
 
 import ThreadList from './thread-list';
+import UnthreadedThreadList from './unthreaded-thread-list';
+import UnthreadedToolbarToggle from './unthreaded-toolbar-toggle';
+import ThreadListControls from './thread-list-controls';
 import ThreadListToolbar from './thread-list-toolbar';
 import ThreadListVertical from './thread-list-vertical';
 import ThreadListEmptyFolderBar from './thread-list-empty-folder-bar';
@@ -12,14 +15,25 @@ import { UpButton, DownButton, MoveButtons, FlagButtons } from './thread-toolbar
 
 export function activate() {
   ThreadPermalinkHandler.activate();
+  UnthreadedThreadList.CoreComponent = ThreadList;
 
   ComponentRegistry.register(ThreadListEmptyFolderBar, {
     location: WorkspaceStore.Location.ThreadList,
   });
 
-  ComponentRegistry.register(ThreadList, {
+  ComponentRegistry.register(UnthreadedThreadList, {
     location: WorkspaceStore.Location.ThreadList,
     role: 'ThreadList',
+    modes: ['split', 'list', 'splitVertical'],
+  });
+
+  ComponentRegistry.register(UnthreadedToolbarToggle, {
+    location: WorkspaceStore.Location.ThreadList.Toolbar,
+    modes: ['split', 'list', 'splitVertical'],
+  });
+
+  ComponentRegistry.register(ThreadListControls, {
+    location: WorkspaceStore.Location.ThreadList.Toolbar,
     modes: ['split', 'list'],
   });
 
@@ -63,7 +77,9 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(ThreadList);
+  ComponentRegistry.unregister(UnthreadedThreadList);
+  ComponentRegistry.unregister(UnthreadedToolbarToggle);
+  ComponentRegistry.unregister(ThreadListControls);
   ComponentRegistry.unregister(SelectedItemsStack);
   ComponentRegistry.unregister(ThreadListToolbar);
   ComponentRegistry.unregister(MessageListToolbar);

@@ -55,10 +55,10 @@ body.platform-win32 {
     }
     .minified-bundle {
       .num-messages {
-        border-radius: 0;
+        border-radius: 999px;
       }
       .msg-line {
-        border-radius: 0;
+        border-radius: var(--fm-radius);
       }
     }
     .footer-reply-area-wrap {
@@ -208,7 +208,9 @@ body.platform-win32 {
     line-height: @font-size-large * 1.8;
     display: flex;
     align-items: center;
-    padding: 0 @padding-base-horizontal;
+    // ScrollRegion's 17px custom track overlays its absolutely-positioned
+    // content. Reserve that width so the final subject action remains clear.
+    padding: 0 calc(@padding-base-horizontal + 17px) 0 @padding-base-horizontal;
   }
   .mail-important-icon {
     margin-right: @spacing-half;
@@ -282,7 +284,9 @@ body.platform-win32 {
     .message-item-white-wrap {
       background: @background-primary;
       border: 0;
-      box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.28), 0 1px 1.5px rgba(0, 0, 0, 0.08);
+      box-shadow:
+        0 0 0.5px rgba(0, 0, 0, 0.28),
+        0 1px 1.5px rgba(0, 0, 0, 0.08);
       border-radius: 4px;
     }
 
@@ -362,36 +366,88 @@ body.platform-win32 {
 
   .minified-bundle {
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    width: 100%;
+    max-width: none;
+    height: 38px;
+    margin: 0 auto 11px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    outline: none;
+
     .num-messages {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-left: -80px;
-      margin-top: -15px;
-      border-radius: 15px;
-      border: 1px solid @border-color-divider;
-      width: 160px;
-      background: @background-primary;
+      position: relative;
+      grid-column: 2;
+      grid-row: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 0;
+      width: auto;
+      height: 28px;
+      box-sizing: border-box;
+      margin: 0 !important;
+      padding: 0 10px !important;
+      transform: none;
+      border-radius: 999px !important;
+      border: 1px solid var(--fm-border-strong);
+      background: var(--fm-surface-raised);
       text-align: center;
-      color: @text-color-very-subtle;
+      color: @text-color-subtle;
+      font-size: @font-size-small;
+      font-weight: @font-weight-medium;
+      line-height: 26px;
       z-index: 2;
-      background: @background-primary;
-      &:hover {
-        cursor: default;
+
+      &::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        margin-top: -3px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg);
+        opacity: 0.72;
       }
     }
+
     .msg-lines {
-      margin: 0 auto;
-      width: 100%;
-      margin-top: -13px;
-    }
-    .msg-line {
-      border-radius: 4px 4px 0 0;
       position: relative;
-      border-top: 1px solid @border-color-divider;
-      background-color: darken(@background-primary, 2%);
-      box-shadow: 0 0.5px 0 rgba(0, 0, 0, 0.1), 0 -0.5px 0 rgba(0, 0, 0, 0.1),
-        0.5px 0 0 rgba(0, 0, 0, 0.1), -0.5px 0 0 rgba(0, 0, 0, 0.1);
+      grid-column: 1 / -1;
+      grid-row: 1;
+      width: 100%;
+      max-width: none !important;
+      height: 1px !important;
+      margin: 0 !important;
+      overflow: hidden;
+      background: var(--fm-border);
+    }
+
+    .msg-line {
+      display: none;
+    }
+
+    &:hover .num-messages {
+      color: @accent-primary;
+      border-color: color-mix(in srgb, @accent-primary 45%, var(--fm-border));
+      background: color-mix(in srgb, @accent-primary 9%, var(--fm-surface-raised));
+    }
+
+    &:active .num-messages {
+      transform: translateY(1px);
+    }
+
+    &:focus-visible .num-messages {
+      border-color: @accent-primary;
+      box-shadow: 0 0 0 3px var(--fm-accent-soft);
     }
   }
 
@@ -433,7 +489,9 @@ body.platform-win32 {
     }
 
     .message-actions-wrap {
-      transition: opacity 100ms, width 150ms;
+      transition:
+        opacity 100ms,
+        width 150ms;
       transition-delay: 50ms, 0ms;
       transition-timing-function: ease-in-out;
       opacity: 1;
@@ -554,7 +612,9 @@ body.platform-win32 {
     z-index: 2;
 
     border: 0;
-    box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.28), 0 1px 1.5px rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 0 0.5px rgba(0, 0, 0, 0.28),
+      0 1px 1.5px rgba(0, 0, 0, 0.08);
     border-top: 1px dashed @border-color-divider;
     border-radius: 0 0 4px 4px;
     background: @background-primary;
@@ -580,6 +640,85 @@ body.platform-win32 {
       margin-left: 0.5em;
     }
   }
+}
+
+.ai-thread-summary {
+  width: calc(~'100% - 12px');
+  max-width: @message-max-width;
+  box-sizing: border-box;
+  margin: 0 auto 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius);
+  background: var(--fm-surface-raised);
+  box-shadow: var(--fm-shadow-sm);
+  color: @text-color;
+}
+
+.ai-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: @text-color;
+  font-size: @font-size-small;
+  font-weight: @font-weight-semi-bold;
+}
+
+.ai-summary-markdown {
+  user-select: text;
+  line-height: 1.48;
+
+  p {
+    margin: 0 0 8px;
+  }
+
+  ul,
+  ol {
+    margin: 6px 0 10px;
+    padding-left: 22px;
+  }
+
+  li + li {
+    margin-top: 4px;
+  }
+}
+
+.ai-summary-action {
+  margin-top: 4px;
+}
+
+.ai-summary-stale {
+  margin: 8px 0;
+  color: @text-color-subtle;
+  font-size: @font-size-small;
+}
+
+.ai-summary-error {
+  margin: 8px 0;
+  color: @color-error;
+  font-size: @font-size-small;
+}
+
+.ai-quoted-summary {
+  display: inline-block;
+  max-width: 100%;
+  margin: 6px 0 10px 8px;
+  vertical-align: top;
+}
+
+.ai-quoted-summary-card {
+  display: block;
+  width: min(620px, calc(~'100vw - 120px'));
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius);
+  background: var(--fm-surface-raised);
+  color: @text-color;
+  box-shadow: var(--fm-shadow-sm);
 }
 
 .download-all {
