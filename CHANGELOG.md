@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.6 (8/17/2026)
+
+Bug Fixes:
+
+- Fixed the final “Looks Good!” onboarding button on Windows so it closes setup immediately and opens the main mail window instead of waiting indefinitely for a renderer load event.
+
 ## 1.23.5 (8/17/2026)
 
 Improvements:

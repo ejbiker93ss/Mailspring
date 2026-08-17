@@ -29,6 +29,7 @@ import {
   registerNotificationIPCHandlers,
 } from './notification-ipc';
 import WindowsTaskbarManager from './windows-taskbar-manager';
+import { completeAccountSetup } from './complete-account-setup';
 
 let clipboard = null;
 
@@ -791,24 +792,7 @@ export default class Application extends EventEmitter {
       clipboard.writeText(selectedText, 'selection');
     });
 
-    ipcMain.on('account-setup-successful', () => {
-      this.windowManager.ensureWindow(WindowManager.MAIN_WINDOW);
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      const onboarding = this.windowManager.get(WindowManager.ONBOARDING_WINDOW);
-      if (onboarding) {
-        if (mainWindow) {
-          // Wait for the main window to finish loading before closing onboarding.
-          // On Wayland, closing the onboarding window (which holds the activation
-          // context) before the main window is visible causes show() to fail
-          // silently because the activation context is lost.
-          mainWindow.waitForLoad(() => {
-            onboarding.close();
-          });
-        } else {
-          onboarding.close();
-        }
-      }
-    });
+    ipcMain.on('account-setup-successful', () => this._onAccountSetupSuccessful());
 
     ipcMain.on('run-in-window', (event, params) => {
       const sourceWindow = BrowserWindow.fromWebContents(event.sender);
@@ -894,6 +878,14 @@ export default class Application extends EventEmitter {
     registerQuickpreviewIPCHandlers(ipcMain);
     registerNotificationIPCHandlers(ipcMain);
   }
+
+  _onAccountSetupSuccessful = (platform = process.platform) => {
+    completeAccountSetup(
+      this.windowManager,
+      { main: WindowManager.MAIN_WINDOW, onboarding: WindowManager.ONBOARDING_WINDOW },
+      platform
+    );
+  };
 
   // Public: Executes the given command.
   //
