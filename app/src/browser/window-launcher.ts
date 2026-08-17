@@ -5,6 +5,10 @@ import { MailspringWindowSettings } from './mailspring-window';
 const DEBUG_SHOW_HOT_WINDOW = process.env.SHOW_HOT_WINDOW === 'true';
 let winNum = 0;
 
+export function isHotWindowReady(hotWindow?: Pick<MailspringWindow, 'isLoaded'>) {
+  return !!hotWindow && hotWindow.isLoaded();
+}
+
 /**
  * It takes a full second or more to bootup a Mailspring window. Most of this
  * is due to sheer amount of time it takes to parse all of the javascript
@@ -104,15 +108,15 @@ export default class WindowLauncher {
 
     let win;
 
-    // On Wayland, always use cold windows - see createHotWindow comment above
-    if (this._mustUseColdWindow(opts) || isWaylandSession()) {
+    // A hot window cannot receive load-settings-changed until its renderer has
+    // finished startSecondaryWindow and registered the listener. Reusing it
+    // before then loses the message and leaves a hidden empty window plus the
+    // tray icon. This is most visible on a fast first launch after install.
+    // Fall back to a cold window until the preload is fully ready.
+    // On Wayland, always use cold windows - see createHotWindow comment below.
+    if (this._mustUseColdWindow(opts) || isWaylandSession() || !isHotWindowReady(this.hotWindow)) {
       win = new MailspringWindow(opts);
     } else {
-      // Check if the hot window has been deleted. This may happen when we are
-      // relaunching the app
-      if (!this.hotWindow) {
-        this.createHotWindow();
-      }
       win = this.hotWindow;
 
       const newLoadSettings = Object.assign({}, win.loadSettings(), opts);

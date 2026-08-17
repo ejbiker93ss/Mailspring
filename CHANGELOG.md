@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.8 (8/17/2026)
+
+Bug Fixes:
+
+- Fixed a Windows first-launch race that could leave Mailspring running only in the system tray when the hidden preloaded window was reused before its renderer was ready.
+- Main and secondary windows now fall back to a normal cold launch until the preloaded window can safely receive window configuration.
+
 ## 1.23.7 (8/17/2026)
 
 Bug Fixes:
