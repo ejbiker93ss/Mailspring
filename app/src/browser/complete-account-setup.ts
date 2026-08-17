@@ -1,5 +1,7 @@
 interface SetupWindow {
   close(): void;
+  focus?(): void;
+  show?(): void;
   waitForLoad?(callback: () => void): void;
 }
 
@@ -16,7 +18,7 @@ export function completeAccountSetup(
   windowManager.ensureWindow(windowKeys.main);
   const mainWindow = windowManager.get(windowKeys.main);
   const onboarding = windowManager.get(windowKeys.onboarding);
-  if (!onboarding) return;
+  if (!mainWindow || !onboarding) return;
 
   if (platform === 'linux' && mainWindow?.waitForLoad) {
     // On Wayland, closing the onboarding window (which holds the activation
@@ -26,8 +28,16 @@ export function completeAccountSetup(
     return;
   }
 
-  // Windows and macOS do not need the Wayland activation context. Closing
-  // immediately also prevents onboarding from becoming stuck if the main
-  // window's renderer never emits the application-specific window:loaded event.
+  // On Windows, the normal showWhenLoaded path waits for the renderer's
+  // application-specific window:loaded event. If that event stalls, closing
+  // onboarding would leave only the tray icon with a permanently hidden main
+  // window. Present the already-created window synchronously before closing
+  // onboarding; the renderer can finish populating the window afterward.
+  if (platform === 'win32') {
+    mainWindow.show?.();
+    mainWindow.focus?.();
+  }
+
+  // Windows and macOS do not need the Wayland activation context.
   onboarding.close();
 }

@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.7 (8/17/2026)
+
+Bug Fixes:
+
+- Fixed Windows onboarding completion so the main mail window is explicitly shown and focused before setup closes, preventing a tray-only state when the renderer load event stalls.
+- Kept onboarding open if the main window cannot be created.
+
 ## 1.23.6 (8/17/2026)
 
 Bug Fixes:
