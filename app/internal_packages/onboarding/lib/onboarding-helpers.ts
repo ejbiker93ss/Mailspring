@@ -343,6 +343,7 @@ export async function buildMicrosoftAccountFromAuthResponse(
   };
   if (sharedMailboxAddress) {
     settings.smtp_username = emailAddress;
+    settings.graph_mailbox = sharedMailboxAddress;
     settings.smtp_verification = 'login';
     settings.create_helper_folders = false;
     emailAddress = sharedMailboxAddress;
@@ -353,13 +354,14 @@ export async function buildMicrosoftAccountFromAuthResponse(
       name: me.displayName,
       emailAddress: emailAddress,
       provider: provider,
-      settings,
+      settings: { ...settings, sync_engine: 'microsoft_graph' },
     })
   );
 
   account.id = idForAccount(emailAddress, account.settings);
 
-  // test the account locally to ensure the refresh token can be exchanged for an account token.
+  // Test the Microsoft Graph mailbox and token. Microsoft accounts deliberately
+  // bypass the legacy IMAP / SMTP account validator.
   await finalizeAndValidateAccount(account);
 
   return account;

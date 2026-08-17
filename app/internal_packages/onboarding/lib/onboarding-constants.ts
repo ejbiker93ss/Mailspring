@@ -48,14 +48,10 @@ export const O365_SCOPES = [
   'Contacts.ReadWrite.Shared', // contacts
   'Calendars.ReadWrite', // calendar
   'Calendars.ReadWrite.Shared', // calendar
-
-  // Future note: When you exchange the refresh token for an access token, you may
-  // request these two OR the above set but NOT BOTH, because Microsoft has mapped
-  // two underlying systems with different tokens onto the single flow and you
-  // need to get an outlook token and not a Micrsosoft Graph token to use these APIs.
-  // https://stackoverflow.com/questions/61597263/
-  'https://outlook.office.com/IMAP.AccessAsUser.All', // email
-  'https://outlook.office.com/SMTP.Send', // email
+  'Mail.ReadWrite', // mail sync through Microsoft Graph
+  'Mail.ReadWrite.Shared', // shared mailboxes granted to the signed-in user
+  'Mail.Send', // sending through Microsoft Graph
+  'Mail.Send.Shared', // send-as / send-on-behalf for shared mailboxes
 ];
 
 // Re-created only at onboarding page load / auth session start because storing

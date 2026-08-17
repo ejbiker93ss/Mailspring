@@ -1,5 +1,13 @@
 # Mailspring Changelog
 
+## 1.23.4 (8/17/2026)
+
+Bug Fixes:
+
+- Replaced Office 365 and Outlook IMAP/SMTP authentication, synchronization, and sending with Microsoft Graph.
+- Added Microsoft Graph support for mailbox validation, folders, incremental message sync, MIME bodies, read and flag changes, moves, deletes, and sending.
+- Added delegated Graph permissions for personal and shared mailboxes and removed legacy IMAP and authenticated SMTP permissions from Microsoft onboarding.
+
 ## 1.23.3 (8/17/2026)
 
 Features:

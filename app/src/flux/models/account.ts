@@ -112,6 +112,8 @@ export class Account extends ModelWithMetadata {
     smtp_allow_insecure_ssl: boolean;
     smtp_security: 'SSL / TLS' | 'STARTTLS' | 'none';
     refresh_token: string;
+    sync_engine?: 'microsoft_graph';
+    graph_mailbox?: string;
     container_folder: string;
   };
   public label: string;
@@ -183,6 +185,10 @@ export class Account extends ModelWithMetadata {
 
   usesLabels() {
     return this.provider === 'gmail';
+  }
+
+  usesMicrosoftGraph() {
+    return this.settings && this.settings.sync_engine === 'microsoft_graph';
   }
 
   // Public: Returns the localized, properly capitalized provider name,
