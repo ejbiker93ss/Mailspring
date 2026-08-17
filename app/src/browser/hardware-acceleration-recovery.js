@@ -7,8 +7,11 @@ let recoveryStarted = false;
 
 const markerPath = (configDirPath) => path.join(configDirPath, MARKER_FILENAME);
 
-const shouldRecoverFromEarlyRendererCrash = ({ platform, mainWindow, loaded, reason }) =>
-  platform === 'win32' && mainWindow && !loaded && !['clean-exit', 'killed'].includes(reason);
+const isPrimaryWindowForRecovery = ({ mainWindow, windowType }) =>
+  !!mainWindow || windowType === 'onboarding';
+
+const shouldRecoverFromEarlyRendererCrash = ({ platform, primaryWindow, loaded, reason }) =>
+  platform === 'win32' && primaryWindow && !loaded && !['clean-exit', 'killed'].includes(reason);
 
 const preparePersistentSoftwareRendering = (
   app,
@@ -45,14 +48,14 @@ const attemptEarlyRendererCrashRecovery = ({
   app,
   configDirPath,
   loaded,
-  mainWindow,
+  primaryWindow,
   platform = process.platform,
   reason,
   fileSystem = fs,
 }) => {
   if (
     recoveryStarted ||
-    !shouldRecoverFromEarlyRendererCrash({ platform, mainWindow, loaded, reason })
+    !shouldRecoverFromEarlyRendererCrash({ platform, primaryWindow, loaded, reason })
   ) {
     return false;
   }
@@ -73,6 +76,7 @@ const resetRecoveryStateForTests = () => {
 
 module.exports = {
   attemptEarlyRendererCrashRecovery,
+  isPrimaryWindowForRecovery,
   markerPath,
   preparePersistentSoftwareRendering,
   resetRecoveryStateForTests,

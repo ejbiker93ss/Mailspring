@@ -1,5 +1,6 @@
 const {
   attemptEarlyRendererCrashRecovery,
+  isPrimaryWindowForRecovery,
   markerPath,
   preparePersistentSoftwareRendering,
   resetRecoveryStateForTests,
@@ -9,11 +10,17 @@ const {
 describe('Windows hardware acceleration recovery', () => {
   beforeEach(() => resetRecoveryStateForTests());
 
+  it('treats both onboarding and the main mail window as recoverable primary windows', () => {
+    expect(isPrimaryWindowForRecovery({ mainWindow: true, windowType: 'default' })).toBe(true);
+    expect(isPrimaryWindowForRecovery({ mainWindow: false, windowType: 'onboarding' })).toBe(true);
+    expect(isPrimaryWindowForRecovery({ mainWindow: false, windowType: 'composer' })).toBe(false);
+  });
+
   it('recovers only when the Windows main renderer crashes before loading', () => {
     expect(
       shouldRecoverFromEarlyRendererCrash({
         platform: 'win32',
-        mainWindow: true,
+        primaryWindow: true,
         loaded: false,
         reason: 'crashed',
       })
@@ -21,7 +28,7 @@ describe('Windows hardware acceleration recovery', () => {
     expect(
       shouldRecoverFromEarlyRendererCrash({
         platform: 'win32',
-        mainWindow: true,
+        primaryWindow: true,
         loaded: true,
         reason: 'crashed',
       })
@@ -29,7 +36,7 @@ describe('Windows hardware acceleration recovery', () => {
     expect(
       shouldRecoverFromEarlyRendererCrash({
         platform: 'linux',
-        mainWindow: true,
+        primaryWindow: true,
         loaded: false,
         reason: 'crashed',
       })
@@ -46,7 +53,7 @@ describe('Windows hardware acceleration recovery', () => {
       app,
       configDirPath: 'C:\\profile',
       loaded: false,
-      mainWindow: true,
+      primaryWindow: true,
       platform: 'win32',
       reason: 'crashed',
       fileSystem,

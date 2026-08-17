@@ -6,7 +6,10 @@ import { EventEmitter } from 'events';
 import { isWaylandSession } from './is-wayland';
 import { XDG_DATA_PATHS, getFirstExistingPath } from '../utils/xdg-paths';
 
-const { attemptEarlyRendererCrashRecovery } = require('./hardware-acceleration-recovery');
+const {
+  attemptEarlyRendererCrashRecovery,
+  isPrimaryWindowForRecovery,
+} = require('./hardware-acceleration-recovery');
 
 let WindowIconPath = null;
 let idNum = 0;
@@ -378,7 +381,10 @@ export default class MailspringWindow extends EventEmitter {
           app,
           configDirPath: this.configDirPath,
           loaded: this.loaded,
-          mainWindow: this.mainWindow,
+          primaryWindow: isPrimaryWindowForRecovery({
+            mainWindow: this.mainWindow,
+            windowType: this.windowType,
+          }),
           reason: details.reason,
         })
       ) {

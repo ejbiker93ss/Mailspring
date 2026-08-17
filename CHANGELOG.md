@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.10 (8/17/2026)
+
+Bug Fixes:
+
+- Extended automatic Windows software-rendering recovery to both onboarding and the main mail window, so first-time setup also recovers from an early GPU renderer crash.
+
 ## 1.23.9 (8/17/2026)
 
 Bug Fixes:
