@@ -1,5 +1,13 @@
 # Mailspring Changelog
 
+## 1.23.9 (8/17/2026)
+
+Bug Fixes:
+
+- Added automatic Windows recovery when the main renderer crashes before the interface loads: Mailspring records software-rendering mode and relaunches automatically.
+- Clears corrupted Chromium GPU and code caches once during recovery while preserving accounts, mail data, and user settings.
+- Hardware acceleration remains enabled on Windows PCs that do not experience the startup crash.
+
 ## 1.23.8 (8/17/2026)
 
 Bug Fixes:

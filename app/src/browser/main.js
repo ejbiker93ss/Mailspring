@@ -334,6 +334,10 @@ const start = () => {
   global.errorLogger = setupErrorLogger(options);
   const configDirPath = setupConfigDir(options);
   options.configDirPath = configDirPath;
+  require('./hardware-acceleration-recovery').preparePersistentSoftwareRendering(
+    app,
+    configDirPath
+  );
 
   // On macOS, setLoginItemSettings doesn't support passing custom args, so we
   // detect login-item launches via wasOpenedAtLogin and start in background.
