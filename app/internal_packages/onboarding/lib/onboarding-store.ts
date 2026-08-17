@@ -1,10 +1,4 @@
-import {
-  localized,
-  AccountStore,
-  Account,
-  IdentityStore,
-  IdentityAuthResponse,
-} from 'mailspring-exports';
+import { localized, AccountStore, Account, IdentityStore } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 
@@ -22,7 +16,6 @@ class OnboardingStore extends MailspringStore {
     this.listenTo(OnboardingActions.setAccount, this._onSetAccount);
     this.listenTo(OnboardingActions.chooseAccountProvider, this._onChooseAccountProvider);
     this.listenTo(OnboardingActions.finishAndAddAccount, this._onFinishAndAddAccount);
-    this.listenTo(OnboardingActions.identityJSONReceived, this._onIdentityJSONReceived);
 
     const { existingAccountJSON, addingAccount } = AppEnv.getWindowProps();
 
@@ -55,16 +48,11 @@ class OnboardingStore extends MailspringStore {
     } else if (addingAccount) {
       // Adding a new, unknown account
       this._pageStack = ['account-choose'];
-    } else if (identity) {
-      // Should only happen if config was edited to remove all accounts,
-      // but don't want to re-login to Mailspring account. Very useful when
-      // switching environments.
+    } else if (identity || hasAccounts) {
+      // Account setup is local in this distribution. Existing profiles and
+      // profiles upgraded without a legacy Mailspring ID go straight to the
+      // provider picker instead of the hosted identity/subscription flow.
       this._pageStack = ['account-choose'];
-    } else if (hasAccounts) {
-      // Should only happen when the user has "signed out" of their Mailspring ID,
-      // but already has accounts synced. Or is upgrading from a very old build.
-      // We used to show "Welcome Back", but now just jump to sign in.
-      this._pageStack = ['authenticate'];
     } else {
       // Standard new user onboarding flow.
       this._pageStack = ['welcome'];
@@ -124,29 +112,6 @@ class OnboardingStore extends MailspringStore {
   _onMoveToPage = (page: string) => {
     this._pageStack.push(page);
     this.trigger();
-  };
-
-  _onIdentityJSONReceived = async (json: IdentityAuthResponse) => {
-    const isFirstAccount = AccountStore.accounts().length === 0;
-    const emptyAccount = this._account.clone();
-
-    if ('skipped' in json) {
-      await IdentityStore.saveIdentity(null);
-    } else {
-      await IdentityStore.saveIdentity(json);
-
-      emptyAccount.name = `${json.firstName || ''} ${json.lastName || ''}`;
-      emptyAccount.emailAddress = json.emailAddress;
-    }
-
-    setTimeout(() => {
-      if (isFirstAccount) {
-        this._onSetAccount(emptyAccount);
-        OnboardingActions.moveToPage('account-choose');
-      } else {
-        this._onOnboardingComplete();
-      }
-    }, 1000);
   };
 
   _onFinishAndAddAccount = async (account: Account) => {

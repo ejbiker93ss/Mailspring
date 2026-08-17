@@ -6,7 +6,6 @@ import PageTopBar from './page-top-bar';
 
 import WelcomePage from './page-welcome';
 import TutorialPage from './page-tutorial';
-import AuthenticatePage from './page-authenticate';
 import AccountChoosePage from './page-account-choose';
 import AccountSettingsPage from './page-account-settings';
 import AccountSettingsPageGmail from './page-account-settings-gmail';
@@ -20,7 +19,6 @@ import AccountSettingsPageSmarterMail from './page-account-settings-smartermail'
 const PageComponents = {
   welcome: WelcomePage,
   tutorial: TutorialPage,
-  authenticate: AuthenticatePage,
   'account-choose': AccountChoosePage,
   'account-settings': AccountSettingsPage,
   'account-settings-gmail': AccountSettingsPageGmail,

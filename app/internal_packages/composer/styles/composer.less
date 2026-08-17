@@ -194,7 +194,7 @@
       font-size: @font-size-smaller;
 
       &:hover {
-        background: fade(@accent-primary, 10%);
+        background: color-mix(in srgb, @accent-primary 10%, transparent);
         color: @accent-primary;
       }
 
@@ -460,7 +460,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: fade(@accent-primary, 13%);
+  background: color-mix(in srgb, @accent-primary 13%, transparent);
   color: @accent-primary;
   font-size: 19px;
   font-weight: @font-weight-semi-bold;
@@ -845,10 +845,10 @@ body.platform-win32 {
     .ai-composer-summary {
       margin: 10px 0 12px;
       padding: 9px 11px 10px;
-      border: 1px solid fade(@accent-primary, 28%);
+      border: 1px solid color-mix(in srgb, @accent-primary 28%, transparent);
       border-left: 3px solid @accent-primary;
       border-radius: 5px;
-      background: fade(@accent-primary, 7%);
+      background: color-mix(in srgb, @accent-primary 7%, transparent);
       color: @text-color-subtle;
       font-size: 12px;
       line-height: 1.42;

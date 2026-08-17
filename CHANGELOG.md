@@ -1,5 +1,15 @@
 # Mailspring Changelog
 
+## 1.23.5 (8/17/2026)
+
+Improvements:
+
+- Simplified first-run onboarding by removing the hosted Mailspring identity and subscription screens and continuing directly to email-provider selection.
+
+Bug Fixes:
+
+- Fixed translucent accent styling in the composer and Microsoft Teams calendar controls when the active accent color is provided as a runtime CSS color.
+
 ## 1.23.4 (8/17/2026)
 
 Bug Fixes:
