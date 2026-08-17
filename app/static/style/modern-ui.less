@@ -575,12 +575,12 @@ mailspring-workspace .thread-list.thread-list-narrow {
   background: color-mix(in srgb, @background-secondary 45%, @background-primary 55%);
 
   .message-item-wrap {
-    border-color: var(--fm-border);
-    border-radius: var(--fm-radius-lg);
-    box-shadow: var(--fm-shadow-sm);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
     margin-left: 14px;
     margin-right: 14px;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .message-item-white-wrap,
@@ -598,6 +598,13 @@ mailspring-workspace .thread-list.thread-list-narrow {
 // selectors outside the nested `.message-list` block so legacy/theme rules
 // that reset message cards to square corners cannot win. The visible card is
 // the white wrapper (the outer item has spacing but no painted surface).
+#message-list.message-list .message-item-wrap {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
 #message-list.message-list .message-item-wrap > .message-item-white-wrap {
   border-radius: var(--fm-radius-lg) !important;
   overflow: hidden !important;

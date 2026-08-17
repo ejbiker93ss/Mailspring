@@ -17,6 +17,7 @@ import {
   serializeThreadDetail,
   serializeThreadSummary,
 } from '../../mcp-server/lib/mcp-serializers';
+import { mailAssistantThreadHref } from './mail-assistant-email-links';
 
 export const MAILBOX_READ_TOOL_NAMES = [
   'list_accounts',
@@ -51,6 +52,7 @@ function serializeAssistantThreadSummary(
   if (!summary) return null;
   return {
     ...summary,
+    mailspringLink: mailAssistantThreadHref(thread.id),
     participants: (thread.participants || []).map((contact) => ({
       name: contact.name,
       email: contact.email,
@@ -161,5 +163,5 @@ export async function callMailboxReadTool(
     .order(Message.attributes.date.ascending());
   const detail = serializeThreadDetail(thread, messages);
   if (!detail) throw new Error(`Thread '${args.threadId}' not found`);
-  return json(detail);
+  return json({ ...detail, mailspringLink: mailAssistantThreadHref(thread.id) });
 }

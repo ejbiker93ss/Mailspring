@@ -1,5 +1,26 @@
 # Mailspring Changelog
 
+## 1.23.3 (8/17/2026)
+
+Features:
+
+- Added AI-powered spelling, grammar, and tone checks directly to the composer, with private-data masking and reviewable changes.
+- Added clickable email references in AI assistant responses so referenced conversations open directly in Mailspring.
+- Added Microsoft Teams meeting creation to calendar events, including selectable host accounts, join links, and dial-in details.
+- Added AI conversation summaries to replies and made quoted text collapsible in both directions.
+
+Improvements:
+
+- Improved calendar event creation, deletion, location controls, popovers, and visual styling.
+- Refined message-card spacing and the compact older-messages control.
+- Improved composer layout, AI assistant settings, onboarding defaults, and Windows window behavior.
+
+Bug Fixes:
+
+- Restored normal wheel and trackpad scrolling in PDF and image previews; Ctrl+wheel now controls zoom.
+- Fixed a message-card wrapper outline that could bleed into the spacing around collapsed messages.
+- Fixed several AI composer, calendar, notification, and feature-usage edge cases.
+
 ## 1.23.2 (8/14/2026)
 
 Features:

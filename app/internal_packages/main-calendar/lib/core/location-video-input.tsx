@@ -7,6 +7,7 @@ interface LocationVideoInputProps {
   onChange: (value: string) => void; // Callback when location changes
   onVideoToggle?: () => void; // Optional callback for video button click
   showVideoButton?: boolean; // Whether to show video button (default: true)
+  videoActive?: boolean;
 }
 
 export const LocationVideoInput: React.FC<LocationVideoInputProps> = ({
@@ -14,6 +15,7 @@ export const LocationVideoInput: React.FC<LocationVideoInputProps> = ({
   onChange,
   onVideoToggle,
   showVideoButton = true,
+  videoActive = false,
 }) => {
   const handleVideoClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -35,9 +37,11 @@ export const LocationVideoInput: React.FC<LocationVideoInputProps> = ({
       />
       {showVideoButton && (
         <div
-          className="video-toggle"
+          className={`video-toggle${videoActive ? ' active' : ''}`}
           onClick={handleVideoClick}
-          title={localized('Add Video Call')}
+          title={localized(
+            videoActive ? 'Remove Microsoft Teams meeting' : 'Add Microsoft Teams meeting'
+          )}
         >
           <RetinaImg name="ic-eventcard-videocall.png" mode={RetinaImg.Mode.ContentIsMask} />
         </div>

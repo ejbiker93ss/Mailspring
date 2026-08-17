@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">MailFlume icon concept</title>
+  <desc id="desc">Three clean streams converge through a channel and continue as one.</desc>
+
+  <rect width="1024" height="1024" rx="224" fill="#141625"/>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Three independent inputs: messages arriving from different sources. -->
+    <path
+      d="M190 298 C350 298 374 424 510 492"
+      stroke="#F7F7FA"
+      stroke-width="76"
+    />
+    <path
+      d="M190 466 C344 466 398 492 510 526"
+      stroke="#766CF2"
+      stroke-width="76"
+    />
+    <path
+      d="M190 634 C348 634 404 566 510 558"
+      stroke="#F7F7FA"
+      stroke-width="76"
+    />
+
+    <!-- The flume: one focused, fast output. -->
+    <path
+      d="M510 526 C638 526 682 660 834 690"
+      stroke="#766CF2"
+      stroke-width="92"
+    />
+  </g>
+
+</svg>

@@ -32,14 +32,12 @@ describe('FeatureUsageStore', function featureUsageStoreSpec() {
       expect(FeatureUsageStore.isUsable('is-usable')).toBe(true);
     });
 
-    it('returns false if a feature is at its quota', () => {
-      expect(FeatureUsageStore.isUsable('not-usable')).toBe(false);
+    it('returns true if a feature is at its former subscription quota', () => {
+      expect(FeatureUsageStore.isUsable('not-usable')).toBe(true);
     });
 
     it('returns true if no quota is present for the feature', () => {
-      spyOn(console, 'warn');
       expect(FeatureUsageStore.isUsable('unsupported')).toBe(true);
-      expect(console.warn).toHaveBeenCalled();
     });
   });
 
@@ -77,7 +75,7 @@ describe('FeatureUsageStore', function featureUsageStoreSpec() {
       expect((FeatureUsageStore.markUsed as jasmine.Spy).callCount).toBe(1);
     });
 
-    describe('showing modal', () => {
+    describe('without subscription gates', () => {
       beforeEach(() => {
         this.lexicon = {
           headerText: 'all test used',
@@ -86,45 +84,15 @@ describe('FeatureUsageStore', function featureUsageStoreSpec() {
         };
       });
 
-      it('resolves the modal if you upgrade', async () => {
-        setImmediate(() => {
-          this.fakeIdentity.featureUsage['not-usable'].quota = 10000;
-          FeatureUsageStore._onModalClose();
-        });
+      it('marks quota-limited features without opening a modal', async () => {
         await FeatureUsageStore.markUsedOrUpgrade('not-usable', this.lexicon);
-        expect(Actions.openModal).toHaveBeenCalled();
-        expect((Actions.openModal as unknown as jasmine.Spy).calls.length).toBe(1);
+        expect(FeatureUsageStore.markUsed).toHaveBeenCalled();
+        expect(Actions.openModal).not.toHaveBeenCalled();
       });
 
-      it('pops open a modal with the correct text', async () => {
-        setImmediate(() => {
-          this.fakeIdentity.featureUsage['not-usable'].quota = 10000;
-          FeatureUsageStore._onModalClose();
-        });
-        await FeatureUsageStore.markUsedOrUpgrade('not-usable', this.lexicon);
-        expect(Actions.openModal).toHaveBeenCalled();
-        expect((Actions.openModal as unknown as jasmine.Spy).calls.length).toBe(1);
-        const component = (Actions.openModal as unknown as jasmine.Spy).calls[0].args[0].component;
-        expect(component.props).toEqual({
-          modalClass: 'not-usable',
-          headerText: 'all test used',
-          iconUrl: 'icon url',
-          rechargeText: 'add a test to',
-        });
-      });
-
-      it("rejects if you don't upgrade", async () => {
-        let caughtError = false;
-        setImmediate(() => {
-          FeatureUsageStore._onModalClose();
-        });
-        try {
-          await FeatureUsageStore.markUsedOrUpgrade('not-usable', this.lexicon);
-        } catch (err) {
-          expect(err instanceof FeatureUsageStore.NoProAccessError).toBe(true);
-          caughtError = true;
-        }
-        expect(caughtError).toBe(true);
+      it('keeps the legacy upgrade-modal API non-blocking', async () => {
+        await FeatureUsageStore.displayUpgradeModal('not-usable', this.lexicon);
+        expect(Actions.openModal).not.toHaveBeenCalled();
       });
     });
   });

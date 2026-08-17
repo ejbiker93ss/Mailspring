@@ -19,6 +19,7 @@ import {
 } from 'mailspring-exports';
 
 import { createCalendarEvent } from '../../main-calendar/lib/core/calendar-helpers';
+import { getMicrosoftTeamsHosts } from '../../main-calendar/lib/core/microsoft-teams-connection';
 import {
   askMailAssistant,
   AssistantChatMessage,
@@ -48,6 +49,10 @@ import {
   saveMailAssistantConversation,
   saveMailAssistantDraft,
 } from './mail-assistant-session-store';
+import {
+  mailAssistantThreadHref,
+  threadIdFromMailAssistantHref,
+} from './mail-assistant-email-links';
 
 const snarkdown = require('snarkdown');
 
@@ -107,13 +112,6 @@ const AssistantMarkdown = ({ content }: { content: string }) => (
   <div
     className="mail-assistant-markdown"
     dangerouslySetInnerHTML={{ __html: markdownHTML(content) }}
-    onClick={(event) => {
-      const target = event.target as HTMLElement;
-      const anchor = target.closest('a') as HTMLAnchorElement | null;
-      if (!anchor) return;
-      event.preventDefault();
-      AppEnv.windowEventHandler.openLink({ href: anchor.href, metaKey: event.metaKey });
-    }}
   />
 );
 
@@ -452,6 +450,26 @@ export default class MailAssistant extends React.Component<Record<string, never>
     if (lastUser) this._ask(lastUser.content, true);
   };
 
+  _onLinkClick = async (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    const anchor = target.closest('a') as HTMLAnchorElement | null;
+    if (!anchor) return;
+    const href = anchor.getAttribute('href');
+    const threadId = threadIdFromMailAssistantHref(href);
+    event.preventDefault();
+    event.stopPropagation();
+    if (!threadId) {
+      AppEnv.windowEventHandler.openLink({ href: anchor.href, metaKey: event.metaKey });
+      return;
+    }
+    const thread = await DatabaseStore.find<Thread>(Thread, threadId);
+    if (!thread) {
+      AppEnv.showErrorDialog(localized('That email is no longer available.'));
+      return;
+    }
+    Actions.setFocus({ collection: 'thread', item: thread });
+  };
+
   _executeAction = async (action: PendingAction) => {
     this._updateAction(action.id, { status: 'running', error: undefined });
     try {
@@ -489,6 +507,21 @@ export default class MailAssistant extends React.Component<Record<string, never>
           this._aliases,
           !this._redactPersonalInfo
         ).map((email) => ({ email }));
+        let teamsHostAccountId: string | undefined;
+        if (action.arguments.meetingProvider === 'teams') {
+          const microsoftHosts = getMicrosoftTeamsHosts(AccountStore.accounts());
+          const preferredHostId = AppEnv.config.get('mailspring.teamsHostAccountId');
+          const teamsHost =
+            microsoftHosts.find((host) => host.id === preferredHostId) || microsoftHosts[0];
+          if (!teamsHost) {
+            throw new Error(
+              localized(
+                'Connect Microsoft Teams in AI Assistant settings before creating a meeting.'
+              )
+            );
+          }
+          teamsHostAccountId = teamsHost.id;
+        }
         await createCalendarEvent({
           summary: action.arguments.title,
           start,
@@ -499,6 +532,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
           description: action.arguments.description,
           location: action.arguments.location,
           attendees,
+          teamsHostAccountId,
         });
       } else if (action.name === 'move_threads') {
         const threadIds = Array.isArray(action.arguments.threadIds)
@@ -566,14 +600,28 @@ export default class MailAssistant extends React.Component<Record<string, never>
         <strong>{this._actionSummary(action)}</strong>
         {action.name === 'create_email_draft' && <p>{action.arguments.body}</p>}
         {action.name === 'create_calendar_event' && (
-          <p>
-            {action.arguments.start} – {action.arguments.end}
-          </p>
+          <div>
+            <p>
+              {action.arguments.start} – {action.arguments.end}
+            </p>
+            {action.arguments.meetingProvider === 'teams' && (
+              <p>
+                {localized('Microsoft Teams meeting')} ·{' '}
+                {(
+                  getMicrosoftTeamsHosts(AccountStore.accounts()).find(
+                    (host) => host.id === AppEnv.config.get('mailspring.teamsHostAccountId')
+                  ) || getMicrosoftTeamsHosts(AccountStore.accounts())[0]
+                )?.emailAddress || localized('Microsoft connection required')}
+              </p>
+            )}
+          </div>
         )}
         {action.name === 'move_threads' && (
           <div className="mail-assistant-move-list">
             {(action.arguments.threads || []).map((thread) => (
-              <div key={thread.id}>{thread.subject}</div>
+              <div key={thread.id}>
+                <a href={mailAssistantThreadHref(thread.id)}>{thread.subject}</a>
+              </div>
             ))}
           </div>
         )}
@@ -605,7 +653,11 @@ export default class MailAssistant extends React.Component<Record<string, never>
 
   render() {
     return (
-      <aside className="mail-assistant" aria-label={localized('AI Mail Assistant')}>
+      <aside
+        className="mail-assistant"
+        aria-label={localized('AI Mail Assistant')}
+        onClick={this._onLinkClick}
+      >
         <header className="mail-assistant-header">
           <span className="mail-assistant-header-icon">
             <SparklesIcon />

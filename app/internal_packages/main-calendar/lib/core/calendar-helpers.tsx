@@ -10,6 +10,12 @@ import {
   TaskQueue,
   localized,
 } from 'mailspring-exports';
+import {
+  createMicrosoftTeamsMeeting,
+  deleteMicrosoftTeamsMeeting,
+  formatTeamsMeetingDescription,
+} from './microsoft-teams-meeting';
+import { microsoftTeamsHostForId } from './microsoft-teams-connection';
 
 // Cache of calendar colors synced from CalDAV servers
 const calendarColorCache: Map<string, string> = new Map();
@@ -364,6 +370,8 @@ export interface CreateCalendarEventOptions {
   attendees?: Array<{ email: string; name?: string }>;
   recurrenceRule?: string;
   timezone?: string;
+  /** Microsoft account used only to host a Teams meeting. The calendar may belong to another provider. */
+  teamsHostAccountId?: string;
 }
 
 /**
@@ -372,6 +380,35 @@ export interface CreateCalendarEventOptions {
  */
 export async function createCalendarEvent(options: CreateCalendarEventOptions): Promise<void> {
   const icsuid = ICSEventHelpers.generateUID();
+  const teamsHost = options.teamsHostAccountId
+    ? microsoftTeamsHostForId(options.teamsHostAccountId, AccountStore.accounts())
+    : null;
+  let teamsMeeting = null;
+  let description = options.description;
+  let location = options.location;
+
+  if (options.teamsHostAccountId && !teamsHost) {
+    throw new Error(localized('The selected Microsoft Teams account is no longer available.'));
+  }
+  if (teamsHost) {
+    teamsMeeting = await createMicrosoftTeamsMeeting({
+      host: teamsHost,
+      subject: options.summary,
+      start: options.start,
+      end: options.end,
+      description: options.description,
+      attendees: options.attendees,
+      sendMicrosoftInvitations: teamsHost.account?.id === options.accountId,
+      transactionId: icsuid.split('@')[0],
+    });
+    const teamsDetails = formatTeamsMeetingDescription(teamsMeeting);
+    description = [options.description, teamsDetails].filter(Boolean).join('\n\n');
+    location = options.location || 'Microsoft Teams meeting';
+
+    // Graph owns the event and sends invitations when the selected calendar is the
+    // same Microsoft account. Its normal calendar sync will bring the event local.
+    if (teamsHost.account?.id === options.accountId) return;
+  }
   const organizerAccount = options.attendees?.length
     ? AccountStore.accountForId(options.accountId)
     : null;
@@ -382,8 +419,8 @@ export async function createCalendarEvent(options: CreateCalendarEventOptions): 
     end: options.end,
     isAllDay: options.isAllDay,
     timezone: options.timezone || DateUtils.timeZone,
-    description: options.description,
-    location: options.location,
+    description,
+    location,
     organizer: organizerAccount
       ? { email: organizerAccount.emailAddress, name: organizerAccount.name }
       : undefined,
@@ -412,6 +449,9 @@ export async function createCalendarEvent(options: CreateCalendarEventOptions): 
     await TaskQueue.waitForPerformRemote(task);
     Actions.focusCalendarEvent({ id: event.id, start: event.recurrenceStart });
   } catch (error) {
+    if (teamsMeeting && teamsHost) {
+      await deleteMicrosoftTeamsMeeting(teamsHost, teamsMeeting.eventId);
+    }
     console.error('Failed to sync new event to server:', error);
     throw error;
   }

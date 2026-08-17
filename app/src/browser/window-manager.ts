@@ -287,7 +287,9 @@ export default class WindowManager {
       toolbar: false,
       resizable: false,
       width: 900,
-      height: 600,
+      // Account-detail forms (notably SmarterMail) stack enough fields that
+      // the old 600px window clipped the final controls below the viewport.
+      height: 680,
     };
 
     const primaryDisplay = screen.getPrimaryDisplay();

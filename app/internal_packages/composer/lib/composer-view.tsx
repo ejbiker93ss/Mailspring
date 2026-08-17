@@ -32,6 +32,7 @@ import Fields from './fields';
 import RecentFilesPopover from './recent-files-popover';
 import QuotedTextSummary from '../../message-list/lib/quoted-text-summary';
 import { QUOTED_SUMMARIES_CONFIG_KEY } from '../../message-list/lib/preferences-mail-assistant';
+import ComposerAIActions from './composer-ai-actions';
 
 const { hasBlockquote, hasNonTrailingBlockquote, hideQuotedTextByDefault, quotedTextFromValue } =
   ComposerSupport.BaseBlockPlugins;
@@ -182,6 +183,12 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                   value={draft.bodyEditorState}
                   className={quotedTextHidden && 'hiding-quoted-text'}
                   propsForPlugins={{ draft, session }}
+                  toolbarExtras={
+                    <ComposerAIActions
+                      draft={draft}
+                      editorRef={this.editor as React.RefObject<ComposerEditor>}
+                    />
+                  }
                   onFileReceived={this._onFileReceived}
                   onUpdatedSlateEditor={(editor) => session.setMountedEditor(editor)}
                   onDrop={(e) =>
@@ -206,6 +213,7 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                     quotedTextHidden={quotedTextHidden}
                     quotedTextPresent={quotedTextPresent}
                     onUnhide={() => this.setState({ quotedTextHidden: false })}
+                    onHide={() => this.setState({ quotedTextHidden: true })}
                     onRemove={() => {
                       this.setState({ quotedTextHidden: false }, () =>
                         this.editor.current.removeQuotedText()

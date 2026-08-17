@@ -637,6 +637,11 @@
     padding: @padding-base-vertical @padding-base-horizontal;
     border-top: 1px solid @border-color-divider;
     flex-shrink: 0;
+
+    .event-delete-button {
+      margin-right: auto;
+      color: @color-error;
+    }
   }
 
   // ============================================
@@ -859,6 +864,37 @@
         width: 16px;
         height: 16px;
       }
+    }
+  }
+
+  .teams-meeting-settings {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px 10px;
+    padding: @padding-small-vertical @padding-base-horizontal;
+    border-bottom: 1px solid @border-color-divider;
+    background: fade(@accent-primary, 7%);
+
+    .teams-meeting-label {
+      color: @text-color-subtle;
+      font-size: @font-size-small;
+    }
+
+    select {
+      min-width: 0;
+      padding: 4px 7px;
+      border: 1px solid @border-color-divider;
+      border-radius: @border-radius-small;
+      background: @background-primary;
+      color: @text-color;
+      font-size: @font-size-small;
+    }
+
+    .teams-meeting-hint {
+      grid-column: 1 / -1;
+      color: @text-color-very-subtle;
+      font-size: @font-size-smaller;
     }
   }
 

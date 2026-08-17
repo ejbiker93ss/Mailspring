@@ -20,6 +20,14 @@ import { changes as InlineAttachmentChanges } from './inline-attachment-plugins'
 
 const snarkdown = require('snarkdown');
 
+export function buildAISummaryHTML(summary: string): string {
+  const summaryHTML = DOMPurify.sanitize(snarkdown(summary), {
+    ALLOWED_TAGS: ['br', 'code', 'em', 'li', 'ol', 'p', 'strong', 'ul'],
+    ALLOWED_ATTR: [],
+  });
+  return `<div class="ai-composer-summary" style="font-size: 12px;"><div class="ai-composer-summary-label"><strong>AI summary · previous messages</strong></div><div class="ai-composer-summary-content">${summaryHTML}</div></div><p><br></p>`;
+}
+
 // Returns a reason string if the document needs recovery, or null if it's fine.
 function getDocumentBrokenReason(value: Value): string | null {
   const { document } = value;
@@ -83,6 +91,7 @@ interface ComposerEditorProps {
   onDrop?: (e: React.DragEvent) => void;
   onFileReceived?: (path: string) => void;
   onUpdatedSlateEditor?: (editor: Editor | null) => void;
+  toolbarExtras?: React.ReactNode;
 }
 
 interface ComposerEditorState {
@@ -168,19 +177,64 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
     });
   };
 
+  private _editableLeadingNodes() {
+    if (!this.editor) return [];
+    const nodes = [];
+    for (const node of this.editor.value.document.nodes.toArray()) {
+      const className = node.data && node.data.get('className');
+      if (
+        isQuoteNode(node) ||
+        node.type === UNEDITABLE_TYPE ||
+        className === 'ai-composer-summary'
+      ) {
+        break;
+      }
+      nodes.push(node);
+    }
+    return nodes;
+  }
+
+  getEditableText = () => {
+    return this._editableLeadingNodes()
+      .map((node) => node.text)
+      .join('\n')
+      .replace(/\u00a0/g, ' ')
+      .trim();
+  };
+
+  replaceEditableText = (text: string) => {
+    if (!this.editor || !text.trim()) return;
+    const nodes = this._editableLeadingNodes();
+    const firstText = nodes[0]?.getFirstText();
+    const lastText = nodes[nodes.length - 1]?.getLastText();
+    if (!firstText || !lastText) return;
+    const escapeHTML = (value: string) =>
+      value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const html = text
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map((line) => `<div>${line ? escapeHTML(line) : '<br>'}</div>`)
+      .join('');
+    const replacement = convertFromHTML(html);
+    this.editor
+      .select({
+        anchor: { key: firstText.key, offset: 0 },
+        focus: { key: lastText.key, offset: lastText.text.length },
+        isFocused: true,
+        isBackward: false,
+      } as any)
+      .delete()
+      .insertFragment(replacement.document)
+      .focus();
+  };
+
   removeQuotedText = () => {
     removeQuotedText(this.editor);
   };
 
   insertAISummary = (summary: string) => {
     if (!this.editor || !summary) return;
-    const summaryHTML = DOMPurify.sanitize(snarkdown(summary), {
-      ALLOWED_TAGS: ['br', 'code', 'em', 'li', 'ol', 'p', 'strong', 'ul'],
-      ALLOWED_ATTR: [],
-    });
-    const value = convertFromHTML(
-      `<p><strong>Summary of previous messages</strong></p>${summaryHTML}<p><br></p>`
-    );
+    const value = convertFromHTML(buildAISummaryHTML(summary));
     const insertionPoint = lastUnquotedNode(this.editor.value);
     if (!value || !value.document || !insertionPoint) return;
     this.editor.moveToEndOfNode(insertionPoint).insertFragment(value.document).focus();
@@ -373,7 +427,8 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
 
   // Event Handlers
   render() {
-    const { className, onBlur, onDrop, value, propsForPlugins, readOnly } = this.props;
+    const { className, onBlur, onDrop, value, propsForPlugins, readOnly, toolbarExtras } =
+      this.props;
 
     const PluginTopComponents = this.editor ? plugins.filter((p) => p.topLevelComponent) : [];
 
@@ -383,7 +438,12 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
         localHandlers={this._pluginKeyHandlers}
       >
         {this.editor && (
-          <ComposerEditorToolbar editor={this.editor} plugins={plugins} value={value} />
+          <ComposerEditorToolbar
+            editor={this.editor}
+            plugins={plugins}
+            value={value}
+            extras={toolbarExtras}
+          />
         )}
         <div className="RichEditor-content" onClick={this.onFocusIfBlurred}>
           {this.editor &&

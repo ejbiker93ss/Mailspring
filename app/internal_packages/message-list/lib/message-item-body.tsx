@@ -25,11 +25,20 @@ class ConditionalQuotedTextControl extends React.Component<{
   onClick?: () => void;
   controlRef?: (el: HTMLAnchorElement) => void;
   anchoredTop: number | null;
+  expanded: boolean;
 }> {
   static displayName = 'ConditionalQuotedTextControl';
 
-  shouldComponentUpdate(nextProps: { body: string; anchoredTop: number | null }) {
-    return this.props.body !== nextProps.body || this.props.anchoredTop !== nextProps.anchoredTop;
+  shouldComponentUpdate(nextProps: {
+    body: string;
+    anchoredTop: number | null;
+    expanded: boolean;
+  }) {
+    return (
+      this.props.body !== nextProps.body ||
+      this.props.anchoredTop !== nextProps.anchoredTop ||
+      this.props.expanded !== nextProps.expanded
+    );
   }
 
   render() {
@@ -38,9 +47,13 @@ class ConditionalQuotedTextControl extends React.Component<{
     }
     return (
       <a
-        className={`quoted-text-control${this.props.anchoredTop === null ? '' : ' anchored'}`}
+        className={`quoted-text-control${this.props.anchoredTop === null ? '' : ' anchored'}${
+          this.props.expanded ? ' expanded' : ''
+        }`}
         onClick={this.props.onClick}
         ref={this.props.controlRef}
+        role="button"
+        aria-expanded={this.props.expanded}
         style={
           this.props.anchoredTop === null
             ? undefined
@@ -224,6 +237,7 @@ export default class MessageItemBody extends React.Component<
             body={body}
             onClick={this._onToggleQuotedText}
             anchoredTop={this.state.quotedTextControlTop}
+            expanded={this.state.showQuotedText}
             controlRef={(el) => {
               this._quotedTextControlEl = el;
             }}

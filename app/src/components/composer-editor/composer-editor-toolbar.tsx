@@ -6,6 +6,7 @@ interface ComposerEditorToolbarProps {
   editor: Editor;
   value: Value;
   plugins: ComposerEditorPlugin[];
+  extras?: React.ReactNode;
 }
 
 export interface ComposerEditorToolbarState {
@@ -76,7 +77,7 @@ export default class ComposerEditorToolbar extends React.Component<
   };
 
   render() {
-    const { editor, plugins, value } = this.props;
+    const { editor, extras, plugins, value } = this.props;
 
     const sectionItems = [];
 
@@ -115,7 +116,10 @@ export default class ComposerEditorToolbar extends React.Component<
     return (
       <div ref={(el) => (this._el = el)} className="RichEditor-toolbar">
         <div ref={(el) => (this._floatingEl = el)} className="floating-container">
-          <div className="inner display-deferrable">{sectionItems}</div>
+          <div className="inner display-deferrable">
+            {sectionItems}
+            {extras}
+          </div>
         </div>
       </div>
     );

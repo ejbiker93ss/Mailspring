@@ -175,6 +175,42 @@
     color: @component-active-color;
   }
 
+  .composer-ai-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    padding-left: 6px;
+    border-left: 1px solid @border-color-divider;
+
+    button {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 4px;
+      max-width: none;
+      padding: 4px 7px;
+      border-radius: 4px;
+      font-size: @font-size-smaller;
+
+      &:hover {
+        background: fade(@accent-primary, 10%);
+        color: @accent-primary;
+      }
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.55;
+      }
+    }
+
+    .composer-ai-toolbar-icon {
+      color: @accent-primary;
+      font-size: 13px;
+      font-weight: @font-weight-semi-bold;
+    }
+  }
+
   .dropdown {
     z-index: 4;
     position: absolute;
@@ -224,6 +260,225 @@
       }
     }
   }
+}
+
+.composer-ai-review-card {
+  position: relative;
+  width: 390px;
+  max-width: calc(~'100vw - 32px');
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid @border-color-divider;
+  border-top: 3px solid @accent-primary;
+  border-radius: 8px;
+  background: @background-primary;
+  color: @text-color;
+  box-shadow: 0 10px 32px fade(#000, 24%);
+
+  h2 {
+    margin: 3px 28px 7px 0;
+    color: @text-color;
+    font-size: @font-size-larger;
+  }
+
+  p {
+    margin: 8px 0;
+    color: @text-color-subtle;
+    line-height: 1.45;
+  }
+
+  ul {
+    margin: 10px 0 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin: 5px 0;
+    line-height: 1.4;
+  }
+
+  &.tone-good {
+    border-top-color: @color-success;
+  }
+
+  &.tone-caution {
+    border-top-color: @color-warning;
+  }
+
+  &.tone-harsh {
+    border-top-color: @color-error;
+  }
+}
+
+.composer-ai-review-close {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: @text-color-subtle;
+  font-size: 20px;
+  line-height: 24px;
+
+  &:hover {
+    background: @background-secondary;
+    color: @text-color;
+  }
+}
+
+.composer-ai-review-kicker {
+  color: @accent-primary;
+  font-size: @font-size-smaller;
+  font-weight: @font-weight-semi-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.composer-ai-corrected-preview {
+  max-height: 240px;
+  margin: 12px 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid @border-color-divider;
+  border-radius: 6px;
+  background: @background-secondary;
+  color: @text-color;
+  font-size: @font-size-small;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+.composer-ai-change-diff {
+  .diff-added {
+    border-radius: 2px;
+    background: fade(@color-success, 18%);
+    color: mix(@color-success, @text-color, 48%);
+    text-decoration: none;
+  }
+
+  .diff-removed {
+    border-radius: 2px;
+    background: fade(@color-error, 14%);
+    color: mix(@color-error, @text-color, 48%);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+}
+
+.composer-ai-diff-legend {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0 -5px;
+  color: @text-color-subtle;
+  font-size: @font-size-smaller;
+
+  span::before {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 5px;
+    border-radius: 2px;
+    content: '';
+  }
+
+  .removed::before {
+    background: fade(@color-error, 35%);
+  }
+
+  .added::before {
+    background: fade(@color-success, 45%);
+  }
+}
+
+.composer-ai-all-good {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid fade(@color-success, 30%);
+  border-radius: 7px;
+  background: fade(@color-success, 9%);
+
+  strong {
+    color: @text-color;
+    font-size: @font-size-base;
+  }
+
+  p {
+    margin: 3px 0 0;
+  }
+}
+
+.composer-ai-all-good-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: @color-success;
+  color: white;
+  font-size: 18px;
+  font-weight: @font-weight-semi-bold;
+}
+
+.composer-ai-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.composer-tone-verdict {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 12px 0;
+
+  h2 {
+    margin: 0 26px 2px 0;
+  }
+
+  span:not(.composer-tone-icon) {
+    color: @text-color-subtle;
+    font-size: @font-size-small;
+  }
+}
+
+.composer-tone-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: fade(@accent-primary, 13%);
+  color: @accent-primary;
+  font-size: 19px;
+  font-weight: @font-weight-semi-bold;
+}
+
+.tone-good .composer-tone-icon {
+  background: fade(@color-success, 14%);
+  color: @color-success;
+}
+
+.tone-caution .composer-tone-icon {
+  background: fade(@color-warning, 16%);
+  color: darken(@color-warning, 9%);
+}
+
+.tone-harsh .composer-tone-icon {
+  background: fade(@color-error, 14%);
+  color: @color-error;
 }
 
 // Composer-Specific
@@ -584,6 +839,44 @@ body.platform-win32 {
     .RichEditor-toolbar {
       .hide-in-composer {
         display: none;
+      }
+    }
+
+    .ai-composer-summary {
+      margin: 10px 0 12px;
+      padding: 9px 11px 10px;
+      border: 1px solid fade(@accent-primary, 28%);
+      border-left: 3px solid @accent-primary;
+      border-radius: 5px;
+      background: fade(@accent-primary, 7%);
+      color: @text-color-subtle;
+      font-size: 12px;
+      line-height: 1.42;
+
+      .ai-composer-summary-label {
+        margin-bottom: 6px;
+        color: @accent-primary;
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .ai-composer-summary-content {
+        > div,
+        > p {
+          margin: 0 0 6px;
+        }
+
+        ul,
+        ol {
+          margin: 5px 0 3px;
+          padding-left: 20px;
+        }
+
+        li {
+          margin: 2px 0;
+        }
       }
     }
 

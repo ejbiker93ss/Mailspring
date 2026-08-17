@@ -14,7 +14,6 @@ import AccountSettingsPageO365 from './page-account-settings-o365';
 import AccountSettingsPageIMAP from './page-account-settings-imap';
 import AccountOnboardingSuccess from './page-account-onboarding-success';
 import InitialPreferencesPage from './page-initial-preferences';
-import InitialSubscriptionPage from './page-initial-subscription';
 import AccountSettingsPageOutlook from './page-account-settings-outlook';
 import AccountSettingsPageSmarterMail from './page-account-settings-smartermail';
 
@@ -31,7 +30,6 @@ const PageComponents = {
   'account-settings-smartermail': AccountSettingsPageSmarterMail,
   'account-onboarding-success': AccountOnboardingSuccess,
   'initial-preferences': InitialPreferencesPage,
-  'initial-subscription': InitialSubscriptionPage,
 };
 
 interface OnboardingRootState {

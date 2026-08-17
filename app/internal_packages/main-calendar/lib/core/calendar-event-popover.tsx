@@ -35,6 +35,7 @@ import { EventPopoverActions } from './event-popover-actions';
 import { TimeZoneSelector } from './timezone-selector';
 import { parseEventIdFromOccurrence } from './calendar-drag-utils';
 import { showRecurringEventDialog } from './recurring-event-dialog';
+import { getMicrosoftTeamsHosts } from './microsoft-teams-connection';
 
 /**
  * Convert a RepeatOption UI value to an RRULE string (or null for 'none').
@@ -84,6 +85,8 @@ interface CalendarEventPopoverProps {
   disabledCalendars?: string[];
   /** Whether the calendar containing this event is read-only */
   isCalendarReadOnly?: boolean;
+  /** Deletes this event through the owning calendar's syncback path. */
+  onDelete?: () => void;
 }
 
 interface CalendarEventPopoverState {
@@ -106,6 +109,8 @@ interface CalendarEventPopoverState {
   // Calendar selection for new events
   selectedCalendarId: string;
   selectedAccountId: string;
+  teamsEnabled: boolean;
+  teamsHostAccountId: string;
 }
 
 export class CalendarEventPopover extends React.Component<
@@ -119,6 +124,8 @@ export class CalendarEventPopover extends React.Component<
     super(props);
     const { description, start, end, location, attendees, title, isAllDay } = this.props.event;
 
+    const microsoftHosts = getMicrosoftTeamsHosts(this.props.accounts || []);
+    const preferredTeamsHostId = AppEnv.config.get('mailspring.teamsHostAccountId');
     this.state = {
       description,
       start,
@@ -138,6 +145,11 @@ export class CalendarEventPopover extends React.Component<
       showNotes: !!description,
       selectedCalendarId: this.props.event.calendarId,
       selectedAccountId: this.props.event.accountId,
+      teamsEnabled: false,
+      teamsHostAccountId:
+        microsoftHosts.find((host) => host.id === preferredTeamsHostId)?.id ||
+        microsoftHosts[0]?.id ||
+        '',
     };
   }
 
@@ -382,6 +394,8 @@ export class CalendarEventPopover extends React.Component<
       timezone,
       selectedCalendarId,
       selectedAccountId,
+      teamsEnabled,
+      teamsHostAccountId,
     } = this.state;
 
     Actions.closePopover();
@@ -401,6 +415,7 @@ export class CalendarEventPopover extends React.Component<
           : undefined,
       recurrenceRule: repeatOptionToRRule(repeat) || undefined,
       timezone,
+      teamsHostAccountId: teamsEnabled ? teamsHostAccountId : undefined,
     });
   };
 
@@ -432,7 +447,11 @@ export class CalendarEventPopover extends React.Component<
       timezone,
       showInvitees,
       showNotes,
+      teamsEnabled,
+      teamsHostAccountId,
     } = this.state;
+
+    const microsoftHosts = getMicrosoftTeamsHosts(this.props.accounts || []);
 
     const notes = extractNotesFromDescription(description);
 
@@ -469,10 +488,41 @@ export class CalendarEventPopover extends React.Component<
           <LocationVideoInput
             value={location}
             onChange={(value) => this.updateField('location', value)}
+            showVideoButton={!!this.props.isNewEvent}
+            videoActive={teamsEnabled}
             onVideoToggle={() => {
-              // Placeholder: could add video call link
+              if (!microsoftHosts.length) {
+                Actions.switchPreferencesTab('AI Assistant');
+                Actions.openPreferences();
+                return;
+              }
+              this.updateField('teamsEnabled', !teamsEnabled);
             }}
           />
+
+          {teamsEnabled && (
+            <div className="teams-meeting-settings">
+              <span className="teams-meeting-label">{localized('Teams host')}</span>
+              <select
+                aria-label={localized('Microsoft Teams host account')}
+                value={teamsHostAccountId}
+                onChange={(event) => {
+                  const accountId = event.target.value;
+                  AppEnv.config.set('mailspring.teamsHostAccountId', accountId);
+                  this.updateField('teamsHostAccountId', accountId);
+                }}
+              >
+                {microsoftHosts.map((host) => (
+                  <option value={host.id} key={host.id}>
+                    {host.emailAddress}
+                  </option>
+                ))}
+              </select>
+              <span className="teams-meeting-hint">
+                {localized('Join link and phone dial-in details will be added automatically.')}
+              </span>
+            </div>
+          )}
 
           {/* All-day toggle */}
           <AllDayToggle
@@ -568,7 +618,11 @@ export class CalendarEventPopover extends React.Component<
           )}
 
           {/* Action buttons */}
-          <EventPopoverActions onSave={this.saveEdits} onCancel={() => Actions.closePopover()} />
+          <EventPopoverActions
+            onSave={this.saveEdits}
+            onCancel={() => Actions.closePopover()}
+            onDelete={!this.props.isNewEvent ? this.props.onDelete : undefined}
+          />
         </TabGroupRegion>
       </div>
     );
@@ -618,7 +672,7 @@ class CalendarEventPopoverUnenditable extends React.Component<
   }
 
   render() {
-    const { event, onEdit, isCalendarReadOnly } = this.props;
+    const { event, onEdit, onDelete, isCalendarReadOnly } = this.props;
     const { title, description, location, attendees } = event;
 
     const notes = extractNotesFromDescription(description);
@@ -711,6 +765,13 @@ class CalendarEventPopoverUnenditable extends React.Component<
             <div ref={this.descriptionRef}>{notes}</div>
           </div>
         </ScrollRegion>
+        {onDelete && (
+          <div className="event-popover-actions event-popover-view-actions">
+            <button className="btn event-delete-button" onClick={onDelete}>
+              {localized('Delete')}
+            </button>
+          </div>
+        )}
       </div>
     );
   }

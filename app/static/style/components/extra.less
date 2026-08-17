@@ -6,25 +6,41 @@
 }
 
 .quoted-text-control {
-  color: @text-color-very-subtle;
+  color: @text-color-subtle;
   display: inline-block;
-  border: 1px solid fade(@text-color-very-subtle, 15%);
-  border-radius: 3px;
+  background: @background-secondary;
+  border: 1px solid fade(@text-color, 22%);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px fade(#000, 14%);
   line-height: 11px;
   padding: 1px 5px;
   font-weight: @font-weight-semi-bold;
   font-size: 10.5px;
   margin: 5px 0 3px 0;
+  text-decoration: none;
 
   &.anchored {
     margin: 0;
-    background: @background-primary;
+  }
+
+  &.expanded {
+    color: @text-color;
+    background: color-mix(in srgb, @background-secondary 84%, @accent-primary 16%);
+    border-color: color-mix(in srgb, @text-color 40%, @accent-primary 60%);
+    box-shadow: 0 1px 3px fade(#000, 20%);
   }
 
   &:hover {
     cursor: pointer;
-    color: @text-color-subtle;
-    border: 1px solid fade(@text-color-subtle, 35%);
+    color: @text-color;
+    background: darken(@background-secondary, 4%);
+    border-color: fade(@text-color, 38%);
+  }
+
+  &:focus,
+  &:active {
+    color: @text-color;
+    outline: none;
   }
 
   .dots {
@@ -37,11 +53,22 @@
 
 body.platform-win32 {
   .quoted-text-control {
-    .windows-btn-bg;
-    .windows-btn-border;
+    background: @background-secondary;
+    border: 1px solid fade(@text-color, 22%);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px fade(#000, 14%);
+
     &:hover {
-      color: @text-color-very-subtle;
-      .windows-btn-border;
+      color: @text-color;
+      background: darken(@background-secondary, 4%);
+      border-color: fade(@text-color, 38%);
+    }
+
+    &.expanded {
+      color: @text-color;
+      background: color-mix(in srgb, @background-secondary 84%, @accent-primary 16%);
+      border-color: color-mix(in srgb, @text-color 40%, @accent-primary 60%);
+      box-shadow: 0 1px 3px fade(#000, 20%);
     }
   }
   .mail-label {

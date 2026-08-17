@@ -1,11 +1,8 @@
 import Rx from 'rx-lite';
-import React from 'react';
 import MailspringStore from 'mailspring-store';
-import { FeatureUsedUpModal } from 'mailspring-component-kit';
 import * as Actions from '../actions';
 import { IdentityStore, EMPTY_FEATURE_USAGE, IIdentity } from './identity-store';
 import { SendFeatureUsageEventTask } from '../tasks/send-feature-usage-event-task';
-import { localized } from '../../intl';
 
 class NoProAccessError extends Error {}
 
@@ -55,10 +52,8 @@ export interface FeatureLexicon {
  * 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'unlimited'
  */
 class _FeatureUsageStore extends MailspringStore {
-  _waitForModalClose = [];
   NoProAccessError = NoProAccessError;
   _disp: Rx.Disposable;
-  _usub: () => void;
 
   constructor() {
     super();
@@ -70,58 +65,24 @@ class _FeatureUsageStore extends MailspringStore {
     this._disp = Rx.Observable.fromStore(IdentityStore).subscribe(() => {
       this.trigger();
     });
-    this._usub = Actions.closeModal.listen(this._onModalClose);
   }
 
   deactivate() {
     this._disp.dispose();
-    this._usub();
   }
 
-  displayUpgradeModal(feature: string, lexicon: FeatureLexicon) {
-    const featureData = this._dataForFeature(feature);
-    let { headerText, rechargeText } = lexicon;
-
-    if (!featureData.quota) {
-      headerText = localized(`Uhoh - that's a pro feature!`);
-    } else {
-      headerText = headerText || localized("You've reached your quota");
-
-      const time = featureData.period === 'monthly' ? localized('month') : localized('week');
-      rechargeText = rechargeText.replace('%1$@', `${featureData.quota}`).replace('%2$@', time);
-    }
-
-    Actions.openModal({
-      height: 575,
-      width: 412,
-      component: (
-        <FeatureUsedUpModal
-          modalClass={feature}
-          headerText={headerText}
-          iconUrl={lexicon.iconUrl}
-          rechargeText={rechargeText}
-        />
-      ),
-    });
-
-    return new Promise((resolve, reject) => {
-      this._waitForModalClose.push({ resolve, reject, feature });
-    });
+  displayUpgradeModal(_feature: string, _lexicon: FeatureLexicon) {
+    // Retain the public API for older packages, but never interrupt the user
+    // with a subscription prompt in this distribution.
+    return Promise.resolve();
   }
 
-  isUsable(feature: string) {
-    const { usedInPeriod, quota } = this._dataForFeature(feature);
-    if (!quota) {
-      return true;
-    }
-    return usedInPeriod < quota;
+  isUsable(_feature: string) {
+    return true;
   }
 
   async markUsedOrUpgrade(feature: string, lexicon: FeatureLexicon) {
-    if (!this.isUsable(feature)) {
-      // throws if the user declines
-      await this.displayUpgradeModal(feature, lexicon);
-    }
+    void lexicon;
     this.markUsed(feature);
   }
 
@@ -137,17 +98,6 @@ class _FeatureUsageStore extends MailspringStore {
       Actions.queueTask(new SendFeatureUsageEventTask({ feature }));
     }
   }
-
-  _onModalClose = async () => {
-    for (const { feature, resolve, reject } of this._waitForModalClose) {
-      if (this.isUsable(feature)) {
-        resolve();
-      } else {
-        reject(new NoProAccessError(feature));
-      }
-    }
-    this._waitForModalClose = [];
-  };
 
   _dataForFeature(feature: string) {
     const identity = IdentityStore.identity();

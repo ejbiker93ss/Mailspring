@@ -5,6 +5,11 @@ import {
 import { buildMailAssistantInstructions } from '../lib/mail-assistant-system-prompt';
 import { resolveMailboxToolAccountId } from '../lib/mcp-mail-assistant-client';
 import { anchorLegacyActions } from '../lib/mail-assistant-session-store';
+import {
+  linkMailAssistantEmailReferences,
+  mailAssistantThreadHref,
+  threadIdFromMailAssistantHref,
+} from '../lib/mail-assistant-email-links';
 
 describe('MailAssistantContract', () => {
   it('sends only the bounded recent conversation window', () => {
@@ -101,5 +106,19 @@ describe('MailAssistantContract', () => {
     });
 
     expect(conversation.actions[0].afterMessageId).toBe('assistant-1');
+  });
+
+  it('turns referenced email subjects into links that focus their thread', () => {
+    const markdown = linkMailAssistantEmailReferences(
+      'Review Quarterly plan, but keep `[Quarterly plan](https://example.com)` unchanged.',
+      [{ id: 'thread/id 1', subject: 'Quarterly plan' }]
+    );
+
+    expect(markdown).toContain('[Quarterly plan](#mailspring-thread=thread%2Fid%201)');
+    expect(markdown).toContain('`[Quarterly plan](https://example.com)`');
+    expect(threadIdFromMailAssistantHref(mailAssistantThreadHref('thread/id 1'))).toBe(
+      'thread/id 1'
+    );
+    expect(threadIdFromMailAssistantHref('https://example.com')).toBe(null);
   });
 });

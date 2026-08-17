@@ -6,6 +6,7 @@ import {
   redactText,
 } from './mail-assistant-privacy';
 import { buildMailAssistantInstructions } from './mail-assistant-system-prompt';
+import { linkMailAssistantEmailReferences } from './mail-assistant-email-links';
 
 export interface AssistantChatMessage {
   role: 'user' | 'assistant';
@@ -177,7 +178,7 @@ const TOOLS = [
     type: 'function',
     name: 'create_calendar_event',
     description:
-      'Propose a calendar event. Use privacy aliases such as EMAIL_1 when the mail context contains them; otherwise use original email addresses. The user must confirm before it is created.',
+      'Propose a calendar event. Set meetingProvider to teams only when the user asks for Teams or a Teams meeting link. Use privacy aliases such as EMAIL_1 when the mail context contains them; otherwise use original email addresses. The user must confirm before it is created.',
     strict: true,
     parameters: {
       type: 'object',
@@ -188,8 +189,17 @@ const TOOLS = [
         location: { type: 'string' },
         description: { type: 'string' },
         attendees: { type: 'array', items: { type: 'string' } },
+        meetingProvider: { type: 'string', enum: ['none', 'teams'] },
       },
-      required: ['title', 'start', 'end', 'location', 'description', 'attendees'],
+      required: [
+        'title',
+        'start',
+        'end',
+        'location',
+        'description',
+        'attendees',
+        'meetingProvider',
+      ],
       additionalProperties: false,
     },
   },
@@ -366,8 +376,12 @@ export async function askMailAssistant(options: {
           });
           try {
             const parsed = JSON.parse(output);
-            if (item.name === 'search_mail' || item.name === 'list_threads') {
-              (Array.isArray(parsed) ? parsed : []).forEach((thread) => {
+            if (
+              item.name === 'search_mail' ||
+              item.name === 'list_threads' ||
+              item.name === 'get_thread'
+            ) {
+              (Array.isArray(parsed) ? parsed : [parsed]).forEach((thread) => {
                 if (thread && thread.id) knownThreads.set(thread.id, thread);
               });
             }
@@ -396,13 +410,14 @@ export async function askMailAssistant(options: {
     input = [...input, ...(response.output || []), ...outputs];
   }
 
-  const text = (response.output || [])
+  const rawText = (response.output || [])
     .filter((item) => item.type === 'message')
     .flatMap((item) => item.content || [])
     .filter((item) => item.type === 'output_text')
     .map((item) => item.text)
     .join('\n')
     .trim();
+  const text = linkMailAssistantEmailReferences(rawText, Array.from(knownThreads.values()));
   const toolCalls = (response.output || [])
     .filter(
       (item) =>

@@ -334,6 +334,13 @@ body.platform-win32 {
     margin-top: -5px;
   }
 
+  // The normal message gutter is too tall when it sits immediately above the
+  // compact "older messages" control. Keep just enough room to separate the
+  // card from the pill.
+  .message-item-wrap.collapsed:has(+ .minified-bundle) {
+    padding-bottom: 4px;
+  }
+
   .message-item-wrap {
     transition: height 0.1s;
     position: relative;
@@ -430,8 +437,8 @@ body.platform-win32 {
     align-items: center;
     width: 100%;
     max-width: none;
-    height: 38px;
-    margin: 0 auto 11px;
+    height: 32px;
+    margin: 0 auto 4px;
     padding: 0 8px;
     box-sizing: border-box;
     border: 0;

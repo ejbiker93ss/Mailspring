@@ -2,8 +2,7 @@ import React from 'react';
 import path from 'path';
 import fs from 'fs';
 import { RetinaImg, Flexbox, ConfigPropContainer } from 'mailspring-component-kit';
-import { localized, AccountStore, IdentityStore, Account } from 'mailspring-exports';
-import * as OnboardingActions from './onboarding-actions';
+import { localized, AccountStore, Account } from 'mailspring-exports';
 import NewsletterSignup from './newsletter-signup';
 
 // NOTE: Temporarily copied from preferences module
@@ -197,11 +196,7 @@ class InitialPreferencesPage extends React.Component<
   }
 
   _onFinished = () => {
-    if (IdentityStore.hasProFeatures()) {
-      require('electron').ipcRenderer.send('account-setup-successful');
-    } else {
-      OnboardingActions.moveToPage('initial-subscription');
-    }
+    require('electron').ipcRenderer.send('account-setup-successful');
   };
 }
 

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">MailFlume mountain channel icon</title>
+  <desc id="desc">A constructed blue flume carries water in a controlled descent down a mountain.</desc>
+
+  <rect width="1024" height="1024" rx="224" fill="#121625"/>
+
+  <!-- Mountain: two quiet geometric faces, kept secondary to the flume. -->
+  <path d="M154 764 L486 244 L514 244 L456 764 Z" fill="#F5F5FA"/>
+  <path d="M514 244 L870 764 L568 764 L474 654 Z" fill="#7670E8"/>
+
+  <!-- Snow line gives the summit a crisp, elevated read. -->
+  <path d="M486 244 L514 244 L609 383 L546 354 L507 399 L463 349 L412 361 Z" fill="#FFFFFF"/>
+
+  <!-- Engineered trough: pale retaining walls surrounding one fast water channel. -->
+  <path
+    d="M502 326 L430 468 L570 572 L476 760"
+    fill="none"
+    stroke="#F5F5FA"
+    stroke-width="142"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M502 326 L430 468 L570 572 L476 760"
+    fill="none"
+    stroke="#32C5F4"
+    stroke-width="82"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+</svg>

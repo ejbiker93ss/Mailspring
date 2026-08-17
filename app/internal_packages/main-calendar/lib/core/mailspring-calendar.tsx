@@ -240,10 +240,12 @@ export class MailspringCalendar extends React.Component<
     const direction = isDayView ? 'down' : 'right';
     const fallbackDirection = isDayView ? 'up' : 'left';
 
+    const isCalendarReadOnly = this._isCalendarReadOnly(eventModel.calendarId);
     Actions.openPopover(
       <CalendarEventPopover
         event={eventModel}
-        isCalendarReadOnly={this._isCalendarReadOnly(eventModel.calendarId)}
+        isCalendarReadOnly={isCalendarReadOnly}
+        onDelete={isCalendarReadOnly ? undefined : () => this._confirmAndDeleteEvent(eventModel)}
       />,
       {
         originRect: eventEl.getBoundingClientRect(),
@@ -413,10 +415,25 @@ export class MailspringCalendar extends React.Component<
     }
   };
 
+  _confirmAndDeleteEvent = async (occurrence: EventOccurrence) => {
+    const response = require('@electron/remote').dialog.showMessageBoxSync({
+      type: 'warning',
+      buttons: [localized('Delete'), localized('Cancel')],
+      defaultId: 1,
+      cancelId: 1,
+      message: localized('Delete or decline this event?'),
+      detail: localized('This change will be synced to the calendar that owns the event.'),
+    });
+    if (response !== 0) return;
+
+    const deleted = await this._deleteEvent(occurrence);
+    if (deleted) Actions.closePopover();
+  };
+
   /**
    * Delete a single event occurrence, handling recurring events appropriately
    */
-  async _deleteEvent(occurrence: EventOccurrence) {
+  async _deleteEvent(occurrence: EventOccurrence): Promise<boolean> {
     try {
       // Parse the event ID from the occurrence ID (handles recurring instance IDs)
       const eventId = parseEventIdFromOccurrence(occurrence.id);
@@ -425,7 +442,7 @@ export class MailspringCalendar extends React.Component<
       const event = await DatabaseStore.find<Event>(Event, eventId);
       if (!event) {
         console.error('Could not find event to delete:', eventId);
-        return;
+        return false;
       }
 
       // Check if this is a recurring event (and not already an exception)
@@ -436,7 +453,7 @@ export class MailspringCalendar extends React.Component<
         const choice = await showRecurringEventDialog('delete', occurrence.title);
 
         if (choice === 'cancel') {
-          return; // User cancelled this deletion
+          return false; // User cancelled this deletion
         }
 
         if (choice === 'this-occurrence') {
@@ -450,12 +467,14 @@ export class MailspringCalendar extends React.Component<
         // Non-recurring event or already an exception - delete normally
         await this._deleteEntireEvent(event);
       }
+      return true;
     } catch (error) {
       console.error('Failed to delete event:', error);
       AppEnv.showErrorDialog({
         title: localized('Delete Failed'),
         message: localized('Failed to delete the event. Please try again.'),
       });
+      return false;
     }
   }
 

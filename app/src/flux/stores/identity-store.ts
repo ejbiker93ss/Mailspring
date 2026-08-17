@@ -84,7 +84,10 @@ class _IdentityStore extends MailspringStore {
   }
 
   hasProFeatures() {
-    return this._identity && this._identity.stripePlanEffective !== 'Basic';
+    // This distribution does not gate local client functionality behind a
+    // Mailspring subscription. Keep this compatibility API returning true so
+    // existing feature packages use their fully enabled code paths.
+    return true;
   }
 
   _fetchAndPollRemoteIdentity() {
