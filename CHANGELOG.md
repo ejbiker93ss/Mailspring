@@ -1,5 +1,19 @@
 # Mailspring Changelog
 
+## 1.23.13 (8/18/2026)
+
+Improvements:
+
+- Kept all compact message-list toolbar controls visible in narrow columns and increased their contrast in automatic themes.
+- Added support for company-managed OpenAI credentials supplied through `MSSE_OPENAI_API_KEY` or `OPENAI_API_KEY` without saving the credential in Mailspring.
+- Added a verified company-share deployment bundle that downloads the installer locally before running it.
+
+Bug Fixes:
+
+- Stopped empty Unread views from recursively rebuilding their message subscriptions and freezing the renderer.
+- Deduplicated deferred query cleanup work to prevent `Invalid array length` failures during rapid list changes.
+- Improved search placeholder contrast in automatic light and dark themes.
+
 ## 1.23.12 (8/18/2026)
 
 Bug Fixes:

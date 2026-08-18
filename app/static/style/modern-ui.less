@@ -271,9 +271,12 @@ button.btn,
   margin-top: 3px;
   line-height: 20px;
   padding: 0 9px;
-  flex: 1 1 260px;
+  flex: 1 1 180px;
   width: auto;
-  min-width: 180px;
+  // The compact thread toolbar also contains sort, unread, refresh, and view
+  // controls. Let search yield space so those controls stay clickable when the
+  // message-list column is narrow.
+  min-width: 88px;
   max-width: 320px;
 
   .tokenizing-contenteditable {

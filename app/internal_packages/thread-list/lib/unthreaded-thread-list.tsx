@@ -38,9 +38,10 @@ class VisibleMessagesStore extends MailspringStore {
     this._loading = true;
     this._subscription = null;
     this._requestId = 0;
+    this._unthreadedQueryState = this._getUnthreadedQueryState();
     this.listenTo(FocusedPerspectiveStore, this._reload);
     this.listenTo(DatabaseStore, this._onDatabaseChanged);
-    this.listenTo(UnthreadedState, this._reload);
+    this.listenTo(UnthreadedState, this._onUnthreadedStateChanged);
     this._reload();
   }
 
@@ -66,6 +67,23 @@ class VisibleMessagesStore extends MailspringStore {
     if (!change || !['Message', 'Thread'].includes(change.objectClass)) {
       return;
     }
+    this._reload();
+  };
+
+  _getUnthreadedQueryState = () => ({
+    enabled: UnthreadedState.enabled(),
+    layout: UnthreadedState.layout(),
+  });
+
+  _onUnthreadedStateChanged = () => {
+    const next = this._getUnthreadedQueryState();
+    if (
+      next.enabled === this._unthreadedQueryState.enabled &&
+      next.layout === this._unthreadedQueryState.layout
+    ) {
+      return;
+    }
+    this._unthreadedQueryState = next;
     this._reload();
   };
 

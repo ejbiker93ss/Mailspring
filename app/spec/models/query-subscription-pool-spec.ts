@@ -7,7 +7,7 @@ describe('QuerySubscriptionPool', function QuerySubscriptionPoolSpecs() {
     this.query = DatabaseStore.findAll<Label>(Label);
     this.queryKey = this.query.sql();
     QuerySubscriptionPool._subscriptions = {};
-    QuerySubscriptionPool._cleanupChecks = [];
+    QuerySubscriptionPool._cleanupChecks = new Set<string>();
   });
 
   describe('add', () => {
@@ -54,6 +54,16 @@ describe('QuerySubscriptionPool', function QuerySubscriptionPoolSpecs() {
         expect(QuerySubscriptionPool._subscriptions[this.queryKey]).toBeDefined();
         advanceClock();
         expect(QuerySubscriptionPool._subscriptions[this.queryKey]).toBeUndefined();
+      });
+
+      it('should queue only one cleanup check for repeated unsubscribes of the same query', () => {
+        const unsubscribeA = QuerySubscriptionPool.add(this.query, () => {});
+        const unsubscribeB = QuerySubscriptionPool.add(this.query, () => {});
+
+        unsubscribeA();
+        unsubscribeB();
+
+        expect(QuerySubscriptionPool._cleanupChecks.size).toBe(1);
       });
     });
   });

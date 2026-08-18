@@ -129,10 +129,14 @@ class UnthreadedState extends MailspringStore {
 
   ensureValidSelection = (items) => {
     const selectedId = this._selected && this._selected.message && this._selected.message.id;
-    if (selectedId && items.find((item) => item.message.id === selectedId)) {
+    const nextSelection = items[0] || null;
+    if (
+      (!this._selected && !nextSelection) ||
+      (selectedId && items.find((item) => item.message.id === selectedId))
+    ) {
       return;
     }
-    this._selected = items[0] || null;
+    this._selected = nextSelection;
     this.trigger();
   };
 }

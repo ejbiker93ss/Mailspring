@@ -29,7 +29,10 @@
   }
   &.placeholder {
     .tokenizing-contenteditable .layer-tokens {
-      color: @text-color-very-subtle;
+      // Keep the account-aware placeholder readable in automatic themes.
+      // The legacy very-subtle color is translucent and can nearly disappear
+      // when automatic mode resolves to a light surface.
+      color: mix(@text-color, @input-bg, 68%);
     }
   }
   .search-accessory {

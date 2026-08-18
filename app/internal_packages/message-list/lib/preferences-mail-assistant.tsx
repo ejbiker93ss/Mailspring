@@ -8,6 +8,7 @@ import {
 } from '../../main-calendar/lib/core/microsoft-teams-connection';
 
 const API_KEY_NAME = 'openai-mail-assistant-api-key';
+const MANAGED_API_KEY_ENV_NAMES = ['MSSE_OPENAI_API_KEY', 'OPENAI_API_KEY'];
 export const MODEL_CONFIG_KEY = 'core.mailAssistant.model';
 export const INCLUDE_TEXT_CONFIG_KEY = 'core.mailAssistant.includeRedactedText';
 export const REDACT_PERSONAL_INFO_CONFIG_KEY = 'core.mailAssistant.redactPersonalInfo';
@@ -18,6 +19,7 @@ export const SUMMARY_INPUT_CAP_CONFIG_KEY = 'core.mailAssistant.summaryInputCap'
 
 interface State {
   apiKey: string;
+  hasManagedKey: boolean;
   hasSavedKey: boolean;
   includeRedactedText: boolean;
   model: string;
@@ -32,8 +34,16 @@ interface State {
   useCurrentThread: boolean;
 }
 
+export function getManagedMailAssistantAPIKey() {
+  for (const name of MANAGED_API_KEY_ENV_NAMES) {
+    const value = (process.env[name] || '').trim();
+    if (value) return value;
+  }
+  return '';
+}
+
 export async function getMailAssistantAPIKey() {
-  return KeyManager.getPassword(API_KEY_NAME);
+  return getManagedMailAssistantAPIKey() || KeyManager.getPassword(API_KEY_NAME);
 }
 
 export default class PreferencesMailAssistant extends React.Component<
@@ -44,6 +54,7 @@ export default class PreferencesMailAssistant extends React.Component<
 
   state: State = {
     apiKey: '',
+    hasManagedKey: false,
     hasSavedKey: false,
     includeRedactedText: AppEnv.config.get(INCLUDE_TEXT_CONFIG_KEY) !== false,
     model: AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra',
@@ -59,13 +70,17 @@ export default class PreferencesMailAssistant extends React.Component<
   };
 
   async componentDidMount() {
-    this.setState({ hasSavedKey: !!(await getMailAssistantAPIKey()) });
+    const hasManagedKey = !!getManagedMailAssistantAPIKey();
+    this.setState({
+      hasManagedKey,
+      hasSavedKey: hasManagedKey ? false : !!(await KeyManager.getPassword(API_KEY_NAME)),
+    });
   }
 
   _save = async () => {
     this.setState({ saving: true, status: '' });
     try {
-      if (this.state.apiKey.trim()) {
+      if (!this.state.hasManagedKey && this.state.apiKey.trim()) {
         await KeyManager.replacePassword(API_KEY_NAME, this.state.apiKey.trim());
       }
       AppEnv.config.set(MODEL_CONFIG_KEY, this.state.model.trim() || 'gpt-5.6-terra');
@@ -76,7 +91,8 @@ export default class PreferencesMailAssistant extends React.Component<
       AppEnv.config.set(QUOTED_SUMMARIES_CONFIG_KEY, this.state.quotedTextSummariesEnabled);
       this.setState({
         apiKey: '',
-        hasSavedKey: this.state.hasSavedKey || !!this.state.apiKey.trim(),
+        hasSavedKey:
+          !this.state.hasManagedKey && (this.state.hasSavedKey || !!this.state.apiKey.trim()),
         saving: false,
         status: localized('Saved securely.'),
       });
@@ -121,19 +137,31 @@ export default class PreferencesMailAssistant extends React.Component<
         <section>
           <h2>{localized('AI Mail Assistant')}</h2>
           <p>
-            {localized(
-              'Your API key is encrypted using the same operating-system credential storage as your mail passwords.'
-            )}
+            {this.state.hasManagedKey
+              ? localized(
+                  'Your organization provides the OpenAI API credential through the Windows environment. Mailspring does not save it.'
+                )
+              : localized(
+                  'Your API key is encrypted using the same operating-system credential storage as your mail passwords.'
+                )}
           </p>
-          <label htmlFor="mail-assistant-api-key">{localized('OpenAI API key')}</label>
-          <input
-            id="mail-assistant-api-key"
-            type="password"
-            autoComplete="off"
-            value={this.state.apiKey}
-            placeholder={this.state.hasSavedKey ? '•••••••••••••••• saved' : 'sk-…'}
-            onChange={(event) => this.setState({ apiKey: event.target.value, status: '' })}
-          />
+          {this.state.hasManagedKey ? (
+            <p className="mail-assistant-managed-key-status">
+              {localized('Managed company credential detected.')}
+            </p>
+          ) : (
+            <>
+              <label htmlFor="mail-assistant-api-key">{localized('OpenAI API key')}</label>
+              <input
+                id="mail-assistant-api-key"
+                type="password"
+                autoComplete="off"
+                value={this.state.apiKey}
+                placeholder={this.state.hasSavedKey ? '•••••••••••••••• saved' : 'sk-…'}
+                onChange={(event) => this.setState({ apiKey: event.target.value, status: '' })}
+              />
+            </>
+          )}
         </section>
         <section>
           <label htmlFor="mail-assistant-model">{localized('Model')}</label>
@@ -255,7 +283,7 @@ export default class PreferencesMailAssistant extends React.Component<
           <button className="btn btn-emphasis" disabled={this.state.saving} onClick={this._save}>
             {this.state.saving ? localized('Saving…') : localized('Save')}
           </button>
-          {this.state.hasSavedKey && (
+          {!this.state.hasManagedKey && this.state.hasSavedKey && (
             <button className="btn" disabled={this.state.saving} onClick={this._clearKey}>
               {localized('Remove API key')}
             </button>

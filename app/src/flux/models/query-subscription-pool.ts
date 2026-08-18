@@ -12,7 +12,7 @@ merge equivalent subscriptions, etc.
 */
 class QuerySubscriptionPool {
   _subscriptions = {};
-  _cleanupChecks = [];
+  _cleanupChecks = new Set<string>();
 
   constructor() {
     this._setup();
@@ -70,20 +70,23 @@ class QuerySubscriptionPool {
   _scheduleCleanupCheckForSubscription(key: string) {
     // We unlisten / relisten to lots of subscriptions and setTimeout is actually
     // /not/ that fast. Create one timeout for all checks, not one for each.
-    if (this._cleanupChecks.length === 0) {
+    if (this._cleanupChecks.size === 0) {
       setTimeout(() => this._runCleanupChecks(), 1);
     }
-    this._cleanupChecks.push(key);
+    this._cleanupChecks.add(key);
   }
 
   _runCleanupChecks() {
-    for (const key of this._cleanupChecks) {
+    // Swap the set before processing it. A callback may schedule another check
+    // while cleanup is running, and that work needs its own timer.
+    const cleanupChecks = this._cleanupChecks;
+    this._cleanupChecks = new Set<string>();
+    for (const key of cleanupChecks) {
       const subscription = this._subscriptions[key];
       if (subscription && subscription.callbackCount() === 0) {
         delete this._subscriptions[key];
       }
     }
-    this._cleanupChecks = [];
   }
 
   _formatRegistrationPoint(stackString: string) {
