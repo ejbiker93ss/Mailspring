@@ -28,6 +28,10 @@ const preparePersistentSoftwareRendering = (
   // render-process-gone is never emitted and reactive recovery cannot run.
   // Software rendering is the reliable default for this desktop mail client.
   app.disableHardwareAcceleration();
+  // Match the command-line workaround proven on affected Windows machines.
+  // disableHardwareAcceleration() alone can still leave Chromium attempting
+  // to initialize a GPU process that hangs without terminating the renderer.
+  app.commandLine.appendSwitch('disable-gpu');
 
   if (!fileSystem.existsSync(markerPath(configDirPath))) {
     return true;

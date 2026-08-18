@@ -67,7 +67,10 @@ describe('Windows hardware acceleration recovery', () => {
   });
 
   it('disables hardware acceleration by default on Windows without requiring a crash marker', () => {
-    const app = { disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration') };
+    const app = {
+      commandLine: { appendSwitch: jasmine.createSpy('appendSwitch') },
+      disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration'),
+    };
     const fileSystem = {
       existsSync: jasmine.createSpy('existsSync').andReturn(false),
       rmSync: jasmine.createSpy('rmSync'),
@@ -76,21 +79,29 @@ describe('Windows hardware acceleration recovery', () => {
 
     expect(preparePersistentSoftwareRendering(app, 'C:\\profile', 'win32', fileSystem)).toBe(true);
     expect(app.disableHardwareAcceleration).toHaveBeenCalled();
+    expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('disable-gpu');
     expect(fileSystem.rmSync).not.toHaveBeenCalled();
     expect(fileSystem.writeFileSync).not.toHaveBeenCalled();
   });
 
   it('leaves hardware acceleration unchanged outside Windows', () => {
-    const app = { disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration') };
+    const app = {
+      commandLine: { appendSwitch: jasmine.createSpy('appendSwitch') },
+      disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration'),
+    };
     const fileSystem = { existsSync: jasmine.createSpy('existsSync') };
 
     expect(preparePersistentSoftwareRendering(app, '/profile', 'linux', fileSystem)).toBe(false);
     expect(app.disableHardwareAcceleration).not.toHaveBeenCalled();
+    expect(app.commandLine.appendSwitch).not.toHaveBeenCalled();
     expect(fileSystem.existsSync).not.toHaveBeenCalled();
   });
 
   it('disables acceleration and clears Chromium caches when the marker exists', () => {
-    const app = { disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration') };
+    const app = {
+      commandLine: { appendSwitch: jasmine.createSpy('appendSwitch') },
+      disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration'),
+    };
     const fileSystem = {
       existsSync: jasmine
         .createSpy('existsSync')
@@ -102,6 +113,7 @@ describe('Windows hardware acceleration recovery', () => {
     expect(preparePersistentSoftwareRendering(app, 'C:\\profile', 'win32', fileSystem)).toBe(true);
     expect(fileSystem.existsSync).toHaveBeenCalledWith(markerPath('C:\\profile'));
     expect(app.disableHardwareAcceleration).toHaveBeenCalled();
+    expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('disable-gpu');
     expect(fileSystem.rmSync.callCount).toBe(3);
     expect(fileSystem.writeFileSync).toHaveBeenCalled();
   });

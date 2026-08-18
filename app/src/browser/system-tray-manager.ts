@@ -3,7 +3,7 @@ import { Tray, Menu, nativeImage, nativeTheme } from 'electron';
 import { localized } from '../intl';
 import Application from './application';
 
-function _getMenuTemplate(platform: string, application: Application) {
+export function getMenuTemplate(platform: string, application: Application) {
   const template = [
     {
       label: localized('New Message'),
@@ -22,12 +22,13 @@ function _getMenuTemplate(platform: string, application: Application) {
     },
   ];
 
-  if (platform !== 'win32') {
-    template.unshift({
-      label: `${localized('Open')} ${localized('Inbox')}`,
-      click: () => application.emit('application:show-main-window'),
-    });
-  }
+  template.unshift({
+    label:
+      platform === 'win32'
+        ? `${localized('Open')} Mailspring`
+        : `${localized('Open')} ${localized('Inbox')}`,
+    click: () => application.emit('application:show-main-window'),
+  });
 
   return template;
 }
@@ -105,7 +106,7 @@ class SystemTrayManager {
       this._tray.setToolTip(_getTooltip(this._unreadString));
       this._tray.addListener('click', this._onClick);
       this._tray.setContextMenu(
-        Menu.buildFromTemplate(_getMenuTemplate(this._platform, this._application) as any)
+        Menu.buildFromTemplate(getMenuTemplate(this._platform, this._application) as any)
       );
     }
   }

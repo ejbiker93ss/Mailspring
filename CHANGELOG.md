@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.12 (8/18/2026)
+
+Bug Fixes:
+
+- Applied Chromium's explicit `disable-gpu` startup switch on Windows, matching the command-line workaround proven to render onboarding on affected PCs.
+- Added an **Open Mailspring** action to the Windows tray and made it directly show and focus onboarding or the main window, providing a reliable recovery path when no window is visible.
+
 ## 1.23.11 (8/18/2026)
 
 Bug Fixes:

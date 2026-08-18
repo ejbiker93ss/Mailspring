@@ -325,6 +325,24 @@ export default class Application extends EventEmitter {
     }
   }
 
+  presentPrimaryWindow() {
+    if (!this.config || !this.windowManager) return;
+
+    const accounts = this.config.get('accounts');
+    const hasAccount = accounts && accounts.length > 0;
+    const windowKey = hasAccount ? WindowManager.MAIN_WINDOW : WindowManager.ONBOARDING_WINDOW;
+
+    this.ensureWindowsForTokenState();
+    const primary = this.windowManager.get(windowKey);
+    if (!primary) return;
+
+    if (primary.isMinimized()) {
+      primary.restore();
+    }
+    primary.show();
+    primary.focus();
+  }
+
   _resetDatabaseAndRelaunch = ({ errorMessage }: { errorMessage?: string } = {}) => {
     if (this._resettingAndRelaunching) return;
     this._resettingAndRelaunching = true;
@@ -475,7 +493,7 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:show-main-window', () => {
-      this.ensureWindowsForTokenState();
+      this.presentPrimaryWindow();
     });
 
     this.on('application:check-for-update', () => {
