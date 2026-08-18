@@ -19,14 +19,19 @@ const preparePersistentSoftwareRendering = (
   platform = process.platform,
   fileSystem = fs
 ) => {
-  if (platform !== 'win32' || !fileSystem.existsSync(markerPath(configDirPath))) {
+  if (platform !== 'win32') {
     return false;
   }
 
-  // This must run before Electron's ready event. The marker is intentionally
-  // persistent because retrying the GPU on every launch recreates the same
-  // Chromium cache corruption and renderer crash on affected Windows PCs.
+  // This must run before Electron's ready event. Some Windows GPU/driver
+  // combinations leave Chromium's renderer alive but permanently white, so
+  // render-process-gone is never emitted and reactive recovery cannot run.
+  // Software rendering is the reliable default for this desktop mail client.
   app.disableHardwareAcceleration();
+
+  if (!fileSystem.existsSync(markerPath(configDirPath))) {
+    return true;
+  }
 
   const cacheClearedPath = path.join(configDirPath, CACHE_CLEARED_FILENAME);
   if (!fileSystem.existsSync(cacheClearedPath)) {

@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.11 (8/18/2026)
+
+Bug Fixes:
+
+- Disabled Electron hardware acceleration before startup on Windows so fresh installations do not open as a permanently white window when Chromium's GPU renderer hangs without crashing.
+- Retained automatic crash recovery and one-time Chromium cache cleanup for existing affected profiles.
+
 ## 1.23.10 (8/17/2026)
 
 Bug Fixes:

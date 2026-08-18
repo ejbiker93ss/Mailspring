@@ -66,6 +66,29 @@ describe('Windows hardware acceleration recovery', () => {
     expect(attemptEarlyRendererCrashRecovery(options)).toBe(false);
   });
 
+  it('disables hardware acceleration by default on Windows without requiring a crash marker', () => {
+    const app = { disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration') };
+    const fileSystem = {
+      existsSync: jasmine.createSpy('existsSync').andReturn(false),
+      rmSync: jasmine.createSpy('rmSync'),
+      writeFileSync: jasmine.createSpy('writeFileSync'),
+    };
+
+    expect(preparePersistentSoftwareRendering(app, 'C:\\profile', 'win32', fileSystem)).toBe(true);
+    expect(app.disableHardwareAcceleration).toHaveBeenCalled();
+    expect(fileSystem.rmSync).not.toHaveBeenCalled();
+    expect(fileSystem.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it('leaves hardware acceleration unchanged outside Windows', () => {
+    const app = { disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration') };
+    const fileSystem = { existsSync: jasmine.createSpy('existsSync') };
+
+    expect(preparePersistentSoftwareRendering(app, '/profile', 'linux', fileSystem)).toBe(false);
+    expect(app.disableHardwareAcceleration).not.toHaveBeenCalled();
+    expect(fileSystem.existsSync).not.toHaveBeenCalled();
+  });
+
   it('disables acceleration and clears Chromium caches when the marker exists', () => {
     const app = { disableHardwareAcceleration: jasmine.createSpy('disableHardwareAcceleration') };
     const fileSystem = {
