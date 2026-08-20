@@ -25,6 +25,7 @@ import SoundRegistry from '../../registries/sound-registry';
 import * as ExtensionRegistry from '../../registries/extension-registry';
 import { localized } from '../../intl';
 import { DatabaseChangeRecord } from './database-change-record';
+import UnthreadedState from './unthreaded-state';
 
 interface IThreadMessageModelOrId {
   thread?: Thread;
@@ -253,6 +254,22 @@ class DraftStore extends MailspringStore {
     const resolved = await this._modelifyContext({ thread, threadId, message, messageId });
     if (!resolved.message || !resolved.thread) return;
 
+    // In a conversation, a quote acts as a reply to the newest real message even
+    // when the selected words came from an older message. In unthreaded mode the
+    // selected message is the reply target. Attribution below deliberately stays
+    // tied to resolved.message because that is who wrote the selected text.
+    let replyMessage = resolved.message;
+    if (!UnthreadedState.enabled()) {
+      const messages = await DatabaseStore.findAll<Message>(Message, {
+        threadId: resolved.thread.id,
+        draft: false,
+      })
+        .order(Message.attributes.date.descending())
+        .include(Message.attributes.body)
+        .limit(10);
+      replyMessage = messages.find((item) => !item.isHidden()) || replyMessage;
+    }
+
     // Prefer a mounted / preparing composer session. The draft can have a live
     // editor before MessageStore receives its database change, particularly when
     // the reply placeholder was just activated. Looking only in MessageStore in
@@ -271,7 +288,11 @@ class DraftStore extends MailspringStore {
     if (!draft) {
       const type =
         AppEnv.config.get('core.sending.defaultReplyType') === 'reply-all' ? 'reply-all' : 'reply';
-      draft = await DraftFactory.createDraftForReply({ ...resolved, type });
+      draft = await DraftFactory.createDraftForReply({
+        thread: resolved.thread,
+        message: replyMessage,
+        type,
+      });
       await this._finalizeAndPersistNewMessage(draft);
     }
 

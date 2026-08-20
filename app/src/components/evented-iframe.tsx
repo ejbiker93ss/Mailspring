@@ -19,6 +19,7 @@ import _ from 'underscore';
 import path from 'path';
 import fs from 'fs';
 import { buildSelectionQuoteHTML, buildSelectionQuotePlainText } from '../services/selection-quote';
+import { dismissAppContextMenu, showAppContextMenu } from './app-context-menu';
 
 const { rootURLForServer } = MailspringAPIRequest;
 
@@ -55,6 +56,7 @@ export class EventedIFrame extends React.Component<
 
   _regionId: string;
   _searchUsub: () => void;
+  _selectionMenuOpen = false;
 
   render() {
     const otherProps = Utils.fastOmit(this.props, EventedIFrame.ownPropKeys);
@@ -74,6 +76,7 @@ export class EventedIFrame extends React.Component<
   }
 
   componentWillUnmount() {
+    if (this._selectionMenuOpen) dismissAppContextMenu();
     this._unsubscribeFromIFrameEvents();
     if (this.props.searchable) {
       this._searchUsub();
@@ -187,6 +190,7 @@ export class EventedIFrame extends React.Component<
   }
 
   _onIFrameBlur = (_event: FocusEvent) => {
+    if (this._selectionMenuOpen) return;
     const node = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
     node.contentWindow.getSelection().empty();
   };
@@ -265,6 +269,13 @@ export class EventedIFrame extends React.Component<
     const node = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
     const nodeRect = node.getBoundingClientRect();
 
+    if (event.type === 'mouseup' && this._showSelectionQuoteActions(node, nodeRect)) {
+      // A completed selection belongs to the iframe. Do not replay this mouseup
+      // on the message card, where it can activate the reply placeholder.
+      event.stopPropagation();
+      return;
+    }
+
     const eventAttrs = {};
     for (const key of Object.keys(event)) {
       if (['webkitMovementX', 'webkitMovementY'].includes(key)) {
@@ -284,6 +295,46 @@ export class EventedIFrame extends React.Component<
       })
     );
   };
+
+  _showSelectionQuoteActions(node: HTMLIFrameElement, nodeRect: DOMRect) {
+    if (!this.props.onQuoteSelection || !node.contentWindow) return false;
+
+    const selection = node.contentWindow.getSelection();
+    if (!selection || selection.rangeCount === 0) return false;
+
+    const selectedText = selection.toString().trim();
+    if (!selectedText) return false;
+
+    const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
+    const quoteHTML = buildSelectionQuoteHTML(selectedText, this.props.selectionQuoteAuthor);
+    const quoteText = buildSelectionQuotePlainText(selectedText, this.props.selectionQuoteAuthor);
+    const { clipboard } = require('@electron/remote');
+
+    this._selectionMenuOpen = true;
+    showAppContextMenu(
+      [
+        {
+          label: localized('Quote'),
+          click: () => this.props.onQuoteSelection(selectedText),
+        },
+        {
+          label: localized('Copy Quote'),
+          click: () => clipboard.write({ text: quoteText, html: quoteHTML }),
+        },
+      ],
+      {
+        x: nodeRect.left + rangeRect.left + rangeRect.width / 2 - 66,
+        y: nodeRect.top + rangeRect.bottom + 6,
+      },
+      {
+        compact: true,
+        onDismiss: () => {
+          this._selectionMenuOpen = false;
+        },
+      }
+    );
+    return true;
+  }
 
   _onIFrameKeyEvent = (event: KeyboardEvent) => {
     if (event.metaKey || event.altKey || event.ctrlKey) {

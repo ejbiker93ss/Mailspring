@@ -11,6 +11,7 @@ interface AppContextMenuProps {
   items: AppContextMenuItem[];
   x: number;
   y: number;
+  compact?: boolean;
   onDismiss: () => void;
 }
 
@@ -67,7 +68,7 @@ class AppContextMenu extends React.Component<AppContextMenuProps, AppContextMenu
       >
         <div
           ref={(element) => (this.menuElement = element)}
-          className="app-context-menu"
+          className={`app-context-menu${this.props.compact ? ' compact' : ''}`}
           role="menu"
           tabIndex={-1}
           style={{ left: this.state.left, top: this.state.top }}
@@ -88,26 +89,38 @@ class AppContextMenu extends React.Component<AppContextMenuProps, AppContextMenu
 }
 
 let contextMenuContainer: HTMLDivElement | null = null;
+let contextMenuDismissCallback: (() => void) | null = null;
 
 export function dismissAppContextMenu() {
   if (!contextMenuContainer) return;
   ReactDOM.unmountComponentAtNode(contextMenuContainer);
   contextMenuContainer.remove();
   contextMenuContainer = null;
+  const callback = contextMenuDismissCallback;
+  contextMenuDismissCallback = null;
+  if (callback) callback();
 }
 
 export function showAppContextMenu(
   items: AppContextMenuItem[],
-  { x, y }: { x: number; y: number }
+  { x, y }: { x: number; y: number },
+  { compact = false, onDismiss }: { compact?: boolean; onDismiss?: () => void } = {}
 ) {
   dismissAppContextMenu();
   Actions.closePopover();
   contextMenuContainer = document.createElement('div');
   contextMenuContainer.className = 'app-context-menu-root';
   document.body.appendChild(contextMenuContainer);
+  contextMenuDismissCallback = onDismiss || null;
   const identifiedItems = items.map((item, index) => ({ ...item, id: `context-item-${index}` }));
   ReactDOM.render(
-    <AppContextMenu items={identifiedItems} x={x} y={y} onDismiss={dismissAppContextMenu} />,
+    <AppContextMenu
+      items={identifiedItems}
+      x={x}
+      y={y}
+      compact={compact}
+      onDismiss={dismissAppContextMenu}
+    />,
     contextMenuContainer
   );
 }

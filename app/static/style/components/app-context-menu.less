@@ -13,12 +13,18 @@
   background: @background-secondary;
   border: 1px solid @border-color-divider;
   border-radius: 8px;
-  box-shadow: 0 12px 32px fade(@black, 22%), 0 2px 8px fade(@black, 14%);
+  box-shadow:
+    0 12px 32px fade(@black, 22%),
+    0 2px 8px fade(@black, 14%);
   max-height: calc(100vh - 16px);
   min-width: 238px;
   overflow: hidden;
   padding: 5px;
   position: fixed;
+
+  &.compact {
+    min-width: 132px;
+  }
 
   &:focus {
     outline: none;

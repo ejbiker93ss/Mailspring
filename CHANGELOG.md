@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.16 (8/20/2026)
+
+Improvements:
+
+- Showed **Quote** and **Copy Quote** immediately after selecting text without opening or changing a composer until an action is clicked.
+- Made selection quotes reply to the newest message in threaded view while preserving exact-message replies in unthreaded view.
+
 ## 1.23.15 (8/20/2026)
 
 Bug Fixes:
