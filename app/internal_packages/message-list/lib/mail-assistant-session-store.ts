@@ -9,7 +9,7 @@ export interface StoredAssistantMessage extends AssistantChatMessage {
 
 export interface StoredAssistantAction {
   id: string;
-  name: 'create_email_draft' | 'create_calendar_event' | 'move_threads';
+  name: 'create_email_draft' | 'create_calendar_event' | 'move_threads' | 'mark_threads_read';
   arguments: Record<string, any>;
   status?: 'running' | 'done' | 'cancelled' | 'error';
   error?: string;

@@ -6,6 +6,7 @@ import {
   Calendar,
   CategoryStore,
   ChangeFolderTask,
+  ComponentRegistry,
   ContactStore,
   DatabaseStore,
   DraftFactory,
@@ -53,6 +54,7 @@ import {
   mailAssistantThreadHref,
   threadIdFromMailAssistantHref,
 } from './mail-assistant-email-links';
+import { mailAssistantDraftHTML } from './mail-assistant-draft';
 
 const snarkdown = require('snarkdown');
 
@@ -133,6 +135,8 @@ export default class MailAssistant extends React.Component<Record<string, never>
   static containerStyles = { order: 0, minWidth: 300, maxWidth: 400, flex: 1 };
 
   _unsubscribe: () => void;
+  _draftLifecycleUnsubscribers: Array<() => void> = [];
+  _materializingDraftActionIds = new Set<string>();
   _aliases: MailAssistantAliasMap = emptyAliasMap();
   _redactPersonalInfo = true;
   _sendGeneration = 0;
@@ -154,6 +158,17 @@ export default class MailAssistant extends React.Component<Record<string, never>
 
   async componentDidMount() {
     this._unsubscribe = MessageStore.listen(this._onThreadChange);
+    this._draftLifecycleUnsubscribers = [
+      Actions.draftDeliverySucceeded.listen(({ headerMessageId }) =>
+        this._finishEmbeddedDraft(headerMessageId, 'done')
+      ),
+      Actions.destroyDraft.listen((draft) =>
+        this._finishEmbeddedDraft(
+          typeof draft === 'string' ? draft : draft.headerMessageId,
+          'cancelled'
+        )
+      ),
+    ];
     this.setState({
       hasAPIKey: !!(await getMailAssistantAPIKey()),
       conversations: loadMailAssistantConversations(),
@@ -164,6 +179,20 @@ export default class MailAssistant extends React.Component<Record<string, never>
   componentWillUnmount() {
     this._abortController?.abort();
     if (this._unsubscribe) this._unsubscribe();
+    this._draftLifecycleUnsubscribers.forEach((unsubscribe) => unsubscribe());
+  }
+
+  componentDidUpdate(_prevProps: Record<string, never>, prevState: State) {
+    if (prevState.pendingActions === this.state.pendingActions) return;
+    this.state.pendingActions
+      .filter(
+        (action) =>
+          action.name === 'create_email_draft' &&
+          !action.arguments.headerMessageId &&
+          !action.status &&
+          !this._materializingDraftActionIds.has(action.id)
+      )
+      .forEach((action) => this._upgradeDraftAction(action));
   }
 
   _onThreadChange = () => {
@@ -313,6 +342,61 @@ export default class MailAssistant extends React.Component<Record<string, never>
     this.setState({ attachments: next });
   };
 
+  _materializeDraftAction = async (
+    action: AssistantToolCall,
+    aliases: MailAssistantAliasMap,
+    redactPersonalInfo: boolean
+  ) => {
+    if (action.name !== 'create_email_draft' || action.arguments.headerMessageId) return action;
+    const to = resolveAliases(action.arguments.to, aliases, !redactPersonalInfo);
+    const cc = resolveAliases(action.arguments.cc, aliases, !redactPersonalInfo);
+    const [toContacts, ccContacts] = await Promise.all([
+      ContactStore.parseContactsInString(to.join(', '), { skipNameLookup: true }),
+      ContactStore.parseContactsInString(cc.join(', '), { skipNameLookup: true }),
+    ]);
+    const draft = await DraftFactory.createDraft({
+      to: toContacts,
+      cc: ccContacts,
+      subject: action.arguments.subject,
+      body: mailAssistantDraftHTML(action.arguments.body),
+      plaintext: false,
+    });
+    const result = await DraftStore._finalizeAndPersistNewMessage(draft);
+    return {
+      ...action,
+      arguments: {
+        ...action.arguments,
+        headerMessageId: result.headerMessageId,
+      },
+    };
+  };
+
+  _upgradeDraftAction = async (action: PendingAction) => {
+    this._materializingDraftActionIds.add(action.id);
+    this.forceUpdate();
+    try {
+      const upgraded = await this._materializeDraftAction(
+        action,
+        this._aliases,
+        this._redactPersonalInfo
+      );
+      this.setState((state) => {
+        const pendingActions = state.pendingActions.map((candidate) =>
+          candidate.id === action.id ? { ...candidate, arguments: upgraded.arguments } : candidate
+        );
+        setTimeout(() => this._persist(state.messages, pendingActions), 0);
+        return { pendingActions };
+      });
+    } catch (error) {
+      this._updateAction(action.id, {
+        status: 'error',
+        error: error.message || String(error),
+      });
+    } finally {
+      this._materializingDraftActionIds.delete(action.id);
+    }
+  };
+
   _ask = async (requestedPrompt?: string, retry = false) => {
     const prompt = (requestedPrompt || this.state.prompt).trim();
     if (!prompt || this.state.loading) return;
@@ -393,9 +477,15 @@ export default class MailAssistant extends React.Component<Record<string, never>
         allowAllAccounts,
       });
       if (generation !== this._sendGeneration) return;
+      const toolCalls = await Promise.all(
+        response.toolCalls.map((action) =>
+          this._materializeDraftAction(action, aliases, redactPersonalInfo)
+        )
+      );
+      if (generation !== this._sendGeneration) return;
       const assistantText =
         response.text ||
-        (response.toolCalls.length ? localized('I prepared the following action for review.') : '');
+        (toolCalls.length ? localized('I prepared the following action for review.') : '');
       this.setState((state) => {
         const assistantMessageId = `assistant-${Date.now()}`;
         const messages = assistantText
@@ -410,7 +500,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
           : state.messages;
         const pendingActions = [
           ...state.pendingActions,
-          ...response.toolCalls.map((action) => ({
+          ...toolCalls.map((action) => ({
             ...action,
             afterMessageId: assistantMessageId,
           })),
@@ -484,8 +574,8 @@ export default class MailAssistant extends React.Component<Record<string, never>
           to: toContacts,
           cc: ccContacts,
           subject: action.arguments.subject,
-          body: action.arguments.body,
-          plaintext: true,
+          body: mailAssistantDraftHTML(action.arguments.body),
+          plaintext: false,
         });
         await DraftStore._finalizeAndPersistNewMessage(draft, { popout: true });
       } else if (action.name === 'create_calendar_event') {
@@ -567,6 +657,21 @@ export default class MailAssistant extends React.Component<Record<string, never>
         }
         tasks.forEach((task) => Actions.queueTask(task));
         await Promise.all(tasks.map((task) => TaskQueue.waitForPerformRemote(task)));
+      } else if (action.name === 'mark_threads_read') {
+        const threadIds = Array.isArray(action.arguments.threadIds)
+          ? action.arguments.threadIds.slice(0, 100)
+          : [];
+        const threads = await DatabaseStore.modelify<Thread>(Thread, threadIds);
+        if (!threadIds.length || threads.length !== threadIds.length) {
+          throw new Error(localized('Some proposed messages are no longer available.'));
+        }
+        const task = TaskFactory.taskForSettingUnread({
+          threads,
+          unread: false,
+          source: 'AI Assistant',
+        });
+        Actions.queueTask(task);
+        await TaskQueue.waitForPerformRemote(task);
       }
       this._updateAction(action.id, { status: 'done' });
     } catch (error) {
@@ -584,6 +689,18 @@ export default class MailAssistant extends React.Component<Record<string, never>
     });
   }
 
+  _finishEmbeddedDraft(
+    headerMessageId: string,
+    status: Extract<PendingAction['status'], 'done' | 'cancelled'>
+  ) {
+    const action = this.state.pendingActions.find(
+      (candidate) =>
+        candidate.name === 'create_email_draft' &&
+        candidate.arguments.headerMessageId === headerMessageId
+    );
+    if (action) this._updateAction(action.id, { status });
+  }
+
   _actionSummary(action: PendingAction) {
     if (action.name === 'create_email_draft') {
       return `${localized('Draft email')} · ${action.arguments.subject}`;
@@ -591,14 +708,50 @@ export default class MailAssistant extends React.Component<Record<string, never>
     if (action.name === 'move_threads') {
       return `${localized('Move messages')} · ${action.arguments.folderName}`;
     }
+    if (action.name === 'mark_threads_read') {
+      const count = (action.arguments.threadIds || []).length;
+      return localized(`Mark %@ messages as read`, count);
+    }
     return `${localized('Calendar event')} · ${action.arguments.title}`;
   }
 
   _renderAction(action: PendingAction) {
+    const hasEmbeddedDraft =
+      action.name === 'create_email_draft' && !!action.arguments.headerMessageId;
+    const showEmbeddedDraft = hasEmbeddedDraft && !action.status;
+    const isMaterializingDraft = this._materializingDraftActionIds.has(action.id);
+    const Composer = showEmbeddedDraft
+      ? ComponentRegistry.findComponentsMatching({ role: 'Composer' })[0]
+      : null;
     return (
-      <div className="mail-assistant-action" key={action.id}>
+      <div
+        className={`mail-assistant-action${
+          hasEmbeddedDraft ? ' mail-assistant-action-embedded-draft' : ''
+        }`}
+        key={action.id}
+      >
         <strong>{this._actionSummary(action)}</strong>
-        {action.name === 'create_email_draft' && <p>{action.arguments.body}</p>}
+        {showEmbeddedDraft && Composer && (
+          <div className="mail-assistant-inline-composer">
+            <div className="mail-assistant-inline-composer-label">
+              {localized('AI draft')} · {localized('Edit and send without leaving this chat')}
+            </div>
+            <Composer
+              headerMessageId={action.arguments.headerMessageId}
+              className="mail-assistant-composer"
+              mode="inline"
+            />
+          </div>
+        )}
+        {showEmbeddedDraft && !Composer && (
+          <div className="mail-assistant-action-error">
+            {localized('The composer is not available.')}
+          </div>
+        )}
+        {action.name === 'create_email_draft' && !hasEmbeddedDraft && (
+          <p>{action.arguments.body}</p>
+        )}
+        {isMaterializingDraft && <span>{localized('Preparing composer…')}</span>}
         {action.name === 'create_calendar_event' && (
           <div>
             <p>
@@ -625,8 +778,17 @@ export default class MailAssistant extends React.Component<Record<string, never>
             ))}
           </div>
         )}
+        {action.name === 'mark_threads_read' && (
+          <div className="mail-assistant-move-list">
+            {(action.arguments.threads || []).map((thread) => (
+              <div key={thread.id}>
+                <a href={mailAssistantThreadHref(thread.id)}>{thread.subject}</a>
+              </div>
+            ))}
+          </div>
+        )}
         {action.error && <div className="mail-assistant-action-error">{action.error}</div>}
-        {!action.status && (
+        {!action.status && !hasEmbeddedDraft && !isMaterializingDraft && (
           <div>
             <button className="btn btn-emphasis" onClick={() => this._executeAction(action)}>
               {localized('Confirm')}
@@ -643,7 +805,16 @@ export default class MailAssistant extends React.Component<Record<string, never>
         {action.status === 'done' && <span>{localized('Done')}</span>}
         {action.status === 'cancelled' && <span>{localized('Cancelled')}</span>}
         {action.status === 'error' && (
-          <button className="btn btn-emphasis" onClick={() => this._executeAction(action)}>
+          <button
+            className="btn btn-emphasis"
+            onClick={() => {
+              if (action.name === 'create_email_draft' && !action.arguments.headerMessageId) {
+                this._updateAction(action.id, { status: undefined, error: undefined });
+              } else {
+                this._executeAction(action);
+              }
+            }}
+          >
             {localized('Retry')}
           </button>
         )}

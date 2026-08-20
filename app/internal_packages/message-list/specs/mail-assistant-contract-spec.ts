@@ -1,5 +1,6 @@
 import {
   buildAssistantRequestMessages,
+  groundMarkReadProposal,
   groundMoveThreadProposal,
 } from '../lib/openai-mail-assistant-client';
 import { buildMailAssistantInstructions } from '../lib/mail-assistant-system-prompt';
@@ -10,6 +11,7 @@ import {
   mailAssistantThreadHref,
   threadIdFromMailAssistantHref,
 } from '../lib/mail-assistant-email-links';
+import { mailAssistantDraftHTML } from '../lib/mail-assistant-draft';
 
 describe('MailAssistantContract', () => {
   it('sends only the bounded recent conversation window', () => {
@@ -81,6 +83,26 @@ describe('MailAssistantContract', () => {
     ).toBe(null);
   });
 
+  it('grounds mark-read proposals only to threads the model actually saw', () => {
+    const knownThreads = new Map([
+      ['thread-1', { id: 'thread-1', subject: 'Known mail', accountId: 'focused' }],
+      ['other-thread', { id: 'other-thread', subject: 'Other account', accountId: 'other' }],
+    ]);
+    const proposal = groundMarkReadProposal(
+      { threadIds: ['thread-1', 'invented-thread', 'other-thread'] },
+      knownThreads,
+      { defaultAccountId: 'focused' }
+    );
+
+    expect(proposal.threadIds).toEqual(['thread-1']);
+    expect(proposal.threads[0].subject).toBe('Known mail');
+    expect(
+      groundMarkReadProposal({ threadIds: ['invented-thread'] }, knownThreads, {
+        defaultAccountId: 'focused',
+      })
+    ).toBe(null);
+  });
+
   it('anchors legacy proposal cards to the assistant turn that created them', () => {
     const conversation = anchorLegacyActions({
       id: 'chat-1',
@@ -120,5 +142,12 @@ describe('MailAssistantContract', () => {
       'thread/id 1'
     );
     expect(threadIdFromMailAssistantHref('https://example.com')).toBe(null);
+  });
+
+  it('converts AI draft text to safe rich-composer HTML', () => {
+    expect(mailAssistantDraftHTML('Hello\n\nWorld <script>')).toBe(
+      '<div>Hello</div><div><br></div><div>World &lt;script&gt;</div>'
+    );
+    expect(mailAssistantDraftHTML('')).toBe('<div><br></div>');
   });
 });

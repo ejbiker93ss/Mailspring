@@ -18,12 +18,15 @@ import url from 'url';
 import _ from 'underscore';
 import path from 'path';
 import fs from 'fs';
+import { buildSelectionQuoteHTML, buildSelectionQuotePlainText } from '../services/selection-quote';
 
 const { rootURLForServer } = MailspringAPIRequest;
 
 type EventedIFrameProps = {
   searchable?: boolean;
   onResize?: (...args: any[]) => any;
+  selectionQuoteAuthor?: string;
+  onQuoteSelection?: (text: string) => void;
 };
 
 /*
@@ -48,7 +51,7 @@ export class EventedIFrame extends React.Component<
 > {
   static displayName = 'EventedIFrame';
 
-  static ownPropKeys = ['searchable', 'onResize'];
+  static ownPropKeys = ['searchable', 'onResize', 'selectionQuoteAuthor', 'onQuoteSelection'];
 
   _regionId: string;
   _searchUsub: () => void;
@@ -406,12 +409,14 @@ export class EventedIFrame extends React.Component<
 
     // Menu actions for text
     let text = '';
+    let selectedText = '';
     const selection = (
       ReactDOM.findDOMNode(this) as HTMLIFrameElement
     ).contentDocument.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       text = range.toString();
+      selectedText = text.trim();
     }
     if (!text || text.length === 0) {
       text = (linkTarget != null ? linkTarget : (event.target as HTMLElement)).innerText;
@@ -424,6 +429,28 @@ export class EventedIFrame extends React.Component<
         textPreview = text.substr(0, 42) + '...';
       } else {
         textPreview = text;
+      }
+      if (selectedText && this.props.onQuoteSelection) {
+        const quoteHTML = buildSelectionQuoteHTML(selectedText, this.props.selectionQuoteAuthor);
+        const quoteText = buildSelectionQuotePlainText(
+          selectedText,
+          this.props.selectionQuoteAuthor
+        );
+        menu.append(
+          new MenuItem({
+            label: localized('Quote'),
+            click: () => this.props.onQuoteSelection(selectedText),
+          })
+        );
+        menu.append(
+          new MenuItem({
+            label: localized('Copy Quote'),
+            click() {
+              clipboard.write({ text: quoteText, html: quoteHTML });
+            },
+          })
+        );
+        menu.append(new MenuItem({ type: 'separator' }));
       }
       menu.append(
         new MenuItem({

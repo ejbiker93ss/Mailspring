@@ -1,5 +1,16 @@
 # Mailspring Changelog
 
+## 1.23.14 (8/20/2026)
+
+Improvements:
+
+- Added **Quote** and **Copy Quote** actions when right-clicking selected email text, with sender attribution and portable HTML styling inserted before the reply signature.
+- Embedded editable AI-generated email drafts directly in the Mail Assistant and added reviewable mark-as-read proposals.
+
+Bug Fixes:
+
+- Prevented Microsoft Graph synchronization from nesting SQLite transactions while inserting or updating messages.
+
 ## 1.23.13 (8/18/2026)
 
 Improvements:

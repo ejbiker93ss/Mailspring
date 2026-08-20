@@ -15,7 +15,7 @@ export interface AssistantChatMessage {
 
 export interface AssistantToolCall {
   id: string;
-  name: 'create_email_draft' | 'create_calendar_event' | 'move_threads';
+  name: 'create_email_draft' | 'create_calendar_event' | 'move_threads' | 'mark_threads_read';
   arguments: Record<string, any>;
 }
 
@@ -74,7 +74,48 @@ export function groundMoveThreadProposal(
   };
 }
 
+export function groundMarkReadProposal(
+  args: Record<string, any>,
+  knownThreads: Map<string, any>,
+  options: { defaultAccountId?: string; allowAllAccounts?: boolean }
+) {
+  const threads = (Array.isArray(args.threadIds) ? args.threadIds : [])
+    .map((id) => knownThreads.get(id))
+    .filter(
+      (thread) =>
+        thread &&
+        (options.allowAllAccounts ||
+          !options.defaultAccountId ||
+          thread.accountId === options.defaultAccountId)
+    )
+    .slice(0, 100);
+  if (!threads.length) return null;
+  return {
+    threadIds: threads.map((thread) => thread.id),
+    threads: threads.map((thread) => ({
+      id: thread.id,
+      subject: thread.subject || '(no subject)',
+      accountId: thread.accountId,
+    })),
+  };
+}
+
 const TOOLS = [
+  {
+    type: 'function',
+    name: 'mark_threads_read',
+    description:
+      'Propose marking known threads returned by search_mail or list_threads as read. This never changes mail immediately; Mailspring shows a confirmation card.',
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        threadIds: { type: 'array', items: { type: 'string' }, maxItems: 100 },
+      },
+      required: ['threadIds'],
+      additionalProperties: false,
+    },
+  },
   {
     type: 'function',
     name: 'move_threads',
@@ -424,12 +465,22 @@ export async function askMailAssistant(options: {
         item.type === 'function_call' &&
         (item.name === 'create_email_draft' ||
           item.name === 'create_calendar_event' ||
-          item.name === 'move_threads')
+          item.name === 'move_threads' ||
+          item.name === 'mark_threads_read')
     )
     .map((item) => {
       const args = JSON.parse(item.arguments || '{}');
       if (item.name === 'move_threads') {
         const grounded = groundMoveThreadProposal(args, knownThreads, knownFolders, options);
+        if (!grounded) return null;
+        return {
+          id: item.call_id,
+          name: item.name,
+          arguments: grounded,
+        };
+      }
+      if (item.name === 'mark_threads_read') {
+        const grounded = groundMarkReadProposal(args, knownThreads, options);
         if (!grounded) return null;
         return {
           id: item.call_id,

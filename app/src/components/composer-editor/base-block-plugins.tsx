@@ -95,11 +95,31 @@ export const BLOCK_CONFIG: {
   blockquote: {
     type: BLOCKQUOTE_TYPE,
     tagNames: ['blockquote'],
-    render: (props) => (
-      <blockquote {...props.attributes} spellCheck={false}>
-        {props.children}
-      </blockquote>
-    ),
+    render: (props) => {
+      const className = props.node.data['className'] || props.node.data.get('className');
+      const selectionQuote = className && className.includes('mailspring-selection-quote');
+      return (
+        <blockquote
+          {...props.attributes}
+          className={className}
+          spellCheck={false}
+          style={
+            selectionQuote
+              ? {
+                  margin: '12px 0',
+                  padding: '10px 14px',
+                  borderLeft: '4px solid #9aa0a6',
+                  backgroundColor: '#f3f4f6',
+                  color: '#2f3136',
+                  fontFamily: 'Arial, sans-serif',
+                }
+              : undefined
+          }
+        >
+          {props.children}
+        </blockquote>
+      );
+    },
     button: {
       iconClass: 'fa fa-quote-left',
       isActive: (value) => {

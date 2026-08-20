@@ -1,6 +1,11 @@
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import { DraftEditingSession } from './draft-editing-session';
+import {
+  buildSelectionQuoteHTML,
+  buildSelectionQuotePlainText,
+  insertSelectionQuote,
+} from '../../services/selection-quote';
 import DraftFactory, { ReplyType, ReplyBehavior } from './draft-factory';
 import DatabaseStore from './database-store';
 import { SendActionsStore } from './send-actions-store';
@@ -15,6 +20,7 @@ import { Message } from '../models/message';
 import * as Actions from '../actions';
 import TaskQueue from './task-queue';
 import MessageBodyProcessor from './message-body-processor';
+import { MessageStore } from './message-store';
 import SoundRegistry from '../../registries/sound-registry';
 import * as ExtensionRegistry from '../../registries/extension-registry';
 import { localized } from '../../intl';
@@ -47,6 +53,7 @@ class DraftStore extends MailspringStore {
     super();
     this.listenTo(DatabaseStore, this._onDataChanged);
     this.listenTo(Actions.composeReply, this._onComposeReply);
+    this.listenTo(Actions.quoteSelection, this._onQuoteSelection);
     this.listenTo(Actions.composeForward, this._onComposeForward);
     this.listenTo(Actions.composeAndSendForward, this._onComposeAndSendForward);
     this.listenTo(Actions.composePopoutDraft, this._onPopoutDraft);
@@ -231,6 +238,49 @@ class DraftStore extends MailspringStore {
     if (!resolved.message || !resolved.thread) return;
     const draft = await DraftFactory.createOrUpdateDraftForReply({ ...resolved, type, behavior });
     return this._finalizeAndPersistNewMessage(draft, { popout });
+  };
+
+  _onQuoteSelection = async ({
+    thread,
+    threadId,
+    message,
+    messageId,
+    text,
+  }: IThreadMessageModelOrId & { text: string }) => {
+    const selectedText = (text || '').trim();
+    if (!selectedText) return;
+
+    const resolved = await this._modelifyContext({ thread, threadId, message, messageId });
+    if (!resolved.message || !resolved.thread) return;
+
+    const existingDraft = MessageStore.items()
+      .filter((item) => item.draft && item.threadId === resolved.thread.id)
+      .pop();
+
+    let draft = existingDraft;
+    if (!draft) {
+      const type =
+        AppEnv.config.get('core.sending.defaultReplyType') === 'reply-all' ? 'reply-all' : 'reply';
+      draft = await DraftFactory.createDraftForReply({ ...resolved, type });
+      await this._finalizeAndPersistNewMessage(draft);
+    }
+
+    const session = await this.sessionForClientId(draft.headerMessageId);
+    const editableDraft = session.draft();
+    if (!editableDraft) return;
+
+    const author =
+      resolved.message.from && resolved.message.from[0]
+        ? resolved.message.from[0].displayName({ compact: true })
+        : undefined;
+    const quote = editableDraft.plaintext
+      ? `\n\n${buildSelectionQuotePlainText(selectedText, author)}\n\n`
+      : buildSelectionQuoteHTML(selectedText, author);
+    const body = editableDraft.plaintext
+      ? `${editableDraft.body || ''}${quote}`
+      : insertSelectionQuote(editableDraft.body, quote);
+
+    session.changes.add({ body, pristine: false });
   };
 
   _onComposeForward = async ({

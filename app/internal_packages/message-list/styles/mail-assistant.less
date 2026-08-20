@@ -405,6 +405,24 @@
   color: @color-error;
 }
 
+.mail-assistant-action-embedded-draft {
+  margin-right: -14px;
+  margin-left: -14px;
+  padding: 0;
+  overflow: hidden;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+
+  > strong,
+  > span,
+  > .mail-assistant-action-error {
+    display: block;
+    margin: 0;
+    padding: 9px 10px;
+  }
+}
+
 .mail-assistant-move-list {
   max-height: 150px;
   margin: 9px 0;
@@ -420,6 +438,83 @@
     color: @text-color-link;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+}
+
+.mail-assistant-inline-composer {
+  margin: 8px 0 0;
+  overflow: hidden;
+  border-top: 1px solid @border-color-divider;
+  border-radius: 0;
+  background: @background-primary;
+
+  .mail-assistant-inline-composer-label {
+    padding: 7px 10px;
+    border-bottom: 1px solid @border-color-divider;
+    color: @text-color-subtle;
+    font-size: @font-size-smaller;
+    font-weight: @font-weight-semi-bold;
+  }
+
+  .mail-assistant-composer.message-item-white-wrap.composer-outer-wrap {
+    min-height: 310px;
+    border: 0;
+    border-radius: 0;
+    background: @background-primary;
+    box-shadow: none;
+  }
+
+  .composer-centered.restrict-width {
+    max-width: none;
+  }
+
+  .composer-content-wrap {
+    min-height: 245px;
+  }
+
+  .RichEditor-root,
+  .composer-editor-plaintext textarea {
+    min-height: 125px;
+  }
+
+  .RichEditor-root {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .composer-editor-plaintext textarea,
+  .composer-subject input,
+  .composer-subject div[contenteditable],
+  .composer-participant-field.from-field {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .composer-participant-field {
+    .tokenizing-field-wrap {
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+
+    .content-container {
+      width: calc(~'100% - 20px');
+      margin-left: 10px;
+    }
+  }
+
+  .composer-participant-field:after,
+  .composer-subject:after {
+    width: calc(~'100% - 20px');
+    left: 10px;
+  }
+
+  .composer-footer-region {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .composer-action-bar-wrap {
+    border-radius: 0;
   }
 }
 

@@ -382,6 +382,14 @@ export const sendQuickReply = create('sendQuickReply', ActionScopeWindow);
 export const composeReply = create('composeReply', ActionScopeWindow);
 
 /*
+  Public: Insert selected message text as a styled quote in an existing draft for
+  the thread, or create a reply draft when the thread has no active composer.
+
+  *Scope: Window*
+  */
+export const quoteSelection = create('quoteSelection', ActionScopeWindow);
+
+/*
   Public: Create a new draft for forwarding the provided threadId and messageId. See
   {::composeReply} for parameters and behavior.
 

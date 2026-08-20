@@ -8,6 +8,7 @@ import {
   MessageStore,
   Message,
   Autolink,
+  Actions,
 } from 'mailspring-exports';
 import { adjustImages } from './adjust-images';
 import EmailFrameStylesStore from './email-frame-styles-store';
@@ -209,6 +210,18 @@ export default class EmailFrame extends React.Component<EmailFrameProps> {
       >
         <EventedIFrame
           searchable
+          selectionQuoteAuthor={
+            this.props.message.from && this.props.message.from[0]
+              ? this.props.message.from[0].displayName({ compact: true })
+              : undefined
+          }
+          onQuoteSelection={(text) =>
+            Actions.quoteSelection({
+              message: this.props.message,
+              threadId: this.props.message.threadId,
+              text,
+            })
+          }
           sandbox="allow-forms allow-same-origin"
           seamless={true}
           title={localized('Email message')}
