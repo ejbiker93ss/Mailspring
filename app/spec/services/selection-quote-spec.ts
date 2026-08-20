@@ -3,6 +3,8 @@ import {
   buildSelectionQuotePlainText,
   insertSelectionQuote,
 } from '../../src/services/selection-quote';
+import { convertFromHTML } from '../../src/components/composer-editor/conversion';
+import { hasNonTrailingBlockquote } from '../../src/components/composer-editor/base-block-plugins';
 
 describe('selection quotes', () => {
   it('escapes selected content and creates portable inline HTML', () => {
@@ -24,5 +26,11 @@ describe('selection quotes', () => {
 
   it('copies a readable plaintext quote shape', () => {
     expect(buildSelectionQuotePlainText('one\ntwo', 'Brian')).toBe('Brian wrote:\n> one\n> two');
+  });
+
+  it('treats a selected quote as visible authored content', () => {
+    const value = convertFromHTML(buildSelectionQuoteHTML('Readable quote', 'Dustin'));
+
+    expect(hasNonTrailingBlockquote(value)).toBe(true);
   });
 });

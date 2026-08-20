@@ -329,6 +329,12 @@ export function hasNonTrailingBlockquote(value: Value) {
     let found = false;
     for (const block of node.nodes.toArray()) {
       if (block.type === BLOCK_CONFIG.blockquote.type) {
+        const className = block.data && block.data.get('className');
+        // A quote explicitly inserted by the user is authored reply content, not
+        // the trailing quoted-message history that the composer hides by default.
+        if (className && className.includes('mailspring-selection-quote')) {
+          return true;
+        }
         found = true;
       } else if (found && block.text.length > 0) {
         return true;

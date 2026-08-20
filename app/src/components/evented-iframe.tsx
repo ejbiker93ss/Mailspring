@@ -252,6 +252,16 @@ export class EventedIFrame extends React.Component<
   }
 
   _onIFrameMouseEvent = (event: MouseEvent) => {
+    // The forwarded event is used for normal left-button drag / focus behavior in
+    // the parent document. Never forward secondary-button events: reconstructing
+    // them across the iframe boundary has historically made Chromium treat the
+    // right-click mouseup as a normal click, which can activate the thread's reply
+    // placeholder before the context-menu action is chosen.
+    if (event.type !== 'mousemove' && event.button !== 0) {
+      event.stopPropagation();
+      return;
+    }
+
     const node = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
     const nodeRect = node.getBoundingClientRect();
 

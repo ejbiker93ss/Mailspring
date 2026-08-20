@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.15 (8/20/2026)
+
+Bug Fixes:
+
+- Stopped right-clicking selected email text from opening an extra reply and reused an active thread composer when inserting the quote.
+- Kept selection quotes expanded and readable across light and dark composer themes while retaining portable outgoing HTML styling.
+
 ## 1.23.14 (8/20/2026)
 
 Improvements:

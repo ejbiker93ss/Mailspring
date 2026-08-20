@@ -55,6 +55,19 @@
   -webkit-margin-end: initial !important;
 }
 
+// Selection quotes carry fixed light-theme inline colors so they render reliably
+// after being sent. Override those colors only inside the live composer so the
+// quote remains legible in every Mailspring theme.
+.RichEditor-root blockquote.mailspring-selection-quote {
+  color: @text-color !important;
+  background: @background-off-primary !important;
+  border-left-color: @text-color-subtle !important;
+
+  * {
+    color: @text-color !important;
+  }
+}
+
 .RichEditor-root .link {
   color: @text-color-link;
   text-decoration: underline;

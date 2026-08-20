@@ -253,9 +253,19 @@ class DraftStore extends MailspringStore {
     const resolved = await this._modelifyContext({ thread, threadId, message, messageId });
     if (!resolved.message || !resolved.thread) return;
 
-    const existingDraft = MessageStore.items()
-      .filter((item) => item.draft && item.threadId === resolved.thread.id)
+    // Prefer a mounted / preparing composer session. The draft can have a live
+    // editor before MessageStore receives its database change, particularly when
+    // the reply placeholder was just activated. Looking only in MessageStore in
+    // that window creates a second draft and leaves two composers in the thread.
+    const activeDraft = Object.values(this._draftSessions)
+      .map((session) => session.draft())
+      .filter((item) => item && item.draft && item.threadId === resolved.thread.id)
       .pop();
+    const existingDraft =
+      activeDraft ||
+      MessageStore.items()
+        .filter((item) => item.draft && item.threadId === resolved.thread.id)
+        .pop();
 
     let draft = existingDraft;
     if (!draft) {
