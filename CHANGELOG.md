@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.18 (8/21/2026)
+
+Bug Fixes:
+
+- Kept earlier reply history collapsed when **Quote** creates a composer while leaving the selected quote visible.
+- Isolated MessageList tests from leaked workspace state so the complete GitHub Actions test run is deterministic.
+
 ## 1.23.17 (8/21/2026)
 
 Improvements:

@@ -28,9 +28,20 @@ describe('selection quotes', () => {
     expect(buildSelectionQuotePlainText('one\ntwo', 'Brian')).toBe('Brian wrote:\n> one\n> two');
   });
 
-  it('treats a selected quote as visible authored content', () => {
+  it('does not expand trailing reply history for a selected quote', () => {
     const value = convertFromHTML(buildSelectionQuoteHTML('Readable quote', 'Dustin'));
 
-    expect(hasNonTrailingBlockquote(value)).toBe(true);
+    expect(hasNonTrailingBlockquote(value)).toBe(false);
+  });
+
+  it('keeps trailing reply history collapsed when a selected quote follows it', () => {
+    const value = convertFromHTML(
+      `<div>Reply</div><blockquote>Previous messages</blockquote>${buildSelectionQuoteHTML(
+        'Readable quote',
+        'Dustin'
+      )}`
+    );
+
+    expect(hasNonTrailingBlockquote(value)).toBe(false);
   });
 });

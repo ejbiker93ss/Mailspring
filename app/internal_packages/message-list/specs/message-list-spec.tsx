@@ -9,6 +9,7 @@ import {
   Message,
   MessageStore,
   MailspringTestUtils,
+  WorkspaceStore,
 } from 'mailspring-exports';
 
 import MessageParticipants from '../lib/message-participants';
@@ -158,6 +159,10 @@ const testThread = new Thread({
 
 describe('MessageList', function () {
   beforeEach(function () {
+    // The full suite resets the dynamic Sheet registry between specs, so using
+    // WorkspaceStore.Sheet.Threads here can evaluate to the same undefined value
+    // as Sheet.Conversation and accidentally select conversation behavior.
+    spyOn(WorkspaceStore, 'rootSheet').andReturn({ id: 'Threads' } as any);
     MessageStore._items = [];
     (MessageStore as any)._threadId = null;
     spyOn(MessageStore, 'itemsLoading').andCallFake(() => false);
