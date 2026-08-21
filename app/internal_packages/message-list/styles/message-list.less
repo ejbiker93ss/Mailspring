@@ -958,6 +958,13 @@ body.platform-win32 {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  #message-list .message-item-wrap,
+  .message-participants {
+    transition: none;
+  }
+}
+
 //////////////////////////
 // sidebar-contact-card //
 //////////////////////////

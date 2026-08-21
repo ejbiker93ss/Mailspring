@@ -20,22 +20,6 @@ import { microsoftTeamsHostForId } from './microsoft-teams-connection';
 // Cache of calendar colors synced from CalDAV servers
 const calendarColorCache: Map<string, string> = new Map();
 
-// Cached theme text color - call invalidateThemeTextColorCache() on theme change
-let _themeTextColor: { r: number; g: number; b: number } | null | undefined = undefined;
-
-export function invalidateThemeTextColorCache() {
-  _themeTextColor = undefined;
-}
-
-function getThemeTextColor(): { r: number; g: number; b: number } | null {
-  if (_themeTextColor === undefined) {
-    const container = document.querySelector('.mailspring-calendar');
-    const color = container ? getComputedStyle(container).color : '';
-    _themeTextColor = (color ? parseColor(color) : null) ?? null;
-  }
-  return _themeTextColor;
-}
-
 // Version counter that increments when colors are updated - used to trigger re-renders
 let colorCacheVersion = 0;
 
@@ -184,46 +168,17 @@ export function calcEventColors(calendarId: string): {
 } {
   const baseColor = calcColor(calendarId);
   const parsed = parseColor(baseColor);
-
-  if (!parsed) {
-    // Fallback if color parsing fails
-    return {
-      background: baseColor,
-      band: baseColor,
-      text: 'inherit',
-    };
-  }
-
-  const { r, g, b } = parsed;
-
-  const textParsed = getThemeTextColor();
-  const themeTextLuminance = textParsed
-    ? (textParsed.r * 0.2126 + textParsed.g * 0.7152 + textParsed.b * 0.0722) / 255
-    : 0.5;
-  const isDarkTheme = themeTextLuminance > 0.55;
-  const visibilityTarget = isDarkTheme ? 255 : 0;
-
-  // Calendar providers often supply colors designed for a white background. Pull the solid
-  // accent toward the theme's high-contrast end so dark blues and similar colors remain visible.
-  const bandBoost = isDarkTheme ? 0.2 : 0.08;
-  const br = Math.round(r * (1 - bandBoost) + visibilityTarget * bandBoost);
-  const bg = Math.round(g * (1 - bandBoost) + visibilityTarget * bandBoost);
-  const bb = Math.round(b * (1 - bandBoost) + visibilityTarget * bandBoost);
-
-  // Keep titles recognizably calendar-colored while borrowing enough of the theme text color
-  // for reliable legibility. Previously the very low-opacity surface made these look washed out.
-  const colorWeight = 0.72;
-  const tr = textParsed ? Math.round(br * colorWeight + textParsed.r * (1 - colorWeight)) : br;
-  const tg = textParsed ? Math.round(bg * colorWeight + textParsed.g * (1 - colorWeight)) : bg;
-  const tb = textParsed ? Math.round(bb * colorWeight + textParsed.b * (1 - colorWeight)) : bb;
+  // Provider colors can include alpha. Strip it when possible so the event's
+  // contrast never changes with whatever happens to be behind it.
+  const solidColor = parsed ? `rgb(${parsed.r}, ${parsed.g}, ${parsed.b})` : baseColor;
+  const band = `color-mix(in srgb, ${solidColor} 78%, var(--calendar-event-text))`;
 
   return {
-    // A clearly tinted surface that still leaves the calendar grid visible.
-    background: `rgba(${br}, ${bg}, ${bb}, ${isDarkTheme ? 0.28 : 0.2})`,
-    // Strong, theme-adjusted color for bars, dots, and borders.
-    band: `rgb(${br}, ${bg}, ${bb})`,
-    // Calendar color mixed with theme text color for readability
-    text: `rgb(${tr}, ${tg}, ${tb})`,
+    // Opaque, theme-native colors keep contrast stable in both light and dark
+    // themes while retaining enough hue to identify the source calendar.
+    background: `color-mix(in srgb, ${band} 20%, var(--calendar-event-surface))`,
+    band,
+    text: `color-mix(in srgb, ${band} 12%, var(--calendar-event-text))`,
   };
 }
 

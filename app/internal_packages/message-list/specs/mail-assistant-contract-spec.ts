@@ -2,6 +2,7 @@ import {
   buildAssistantRequestMessages,
   groundMarkReadProposal,
   groundMoveThreadProposal,
+  groundTrashProposal,
 } from '../lib/openai-mail-assistant-client';
 import { buildMailAssistantInstructions } from '../lib/mail-assistant-system-prompt';
 import { resolveMailboxToolAccountId } from '../lib/mcp-mail-assistant-client';
@@ -101,6 +102,20 @@ describe('MailAssistantContract', () => {
         defaultAccountId: 'focused',
       })
     ).toBe(null);
+  });
+
+  it('grounds delete proposals only to threads the model actually saw', () => {
+    const knownThreads = new Map([
+      ['thread-1', { id: 'thread-1', subject: 'Delete me', accountId: 'focused' }],
+    ]);
+    const proposal = groundTrashProposal(
+      { threadIds: ['thread-1', 'invented-thread'] },
+      knownThreads,
+      { defaultAccountId: 'focused' }
+    );
+
+    expect(proposal.threadIds).toEqual(['thread-1']);
+    expect(proposal.threads[0].subject).toBe('Delete me');
   });
 
   it('anchors legacy proposal cards to the assistant turn that created them', () => {

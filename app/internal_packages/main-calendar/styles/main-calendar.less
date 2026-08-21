@@ -23,6 +23,8 @@
 
 .mail-calendar-sidebar {
   --compact-calendar-hour-height: 54px;
+  --calendar-event-surface: var(--fm-surface, @background-primary);
+  --calendar-event-text: @text-color;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -178,14 +180,14 @@
       }
 
       .weekday {
-        color: @text-color-very-subtle;
+        color: @text-color-subtle;
         font-weight: @font-weight-semi-bold;
       }
 
       .day {
         margin: 1px;
         border-radius: 50%;
-        color: @text-color-very-subtle;
+        color: color-mix(in srgb, @text-color 62%, @background-primary);
 
         &.cur-month {
           color: @text-color;
@@ -260,7 +262,7 @@
     align-items: flex-start;
     gap: 8px;
     border-bottom: 1px solid @border-color-divider;
-    color: @text-color-very-subtle;
+    color: @text-color-subtle;
     font-size: @font-size-small;
 
     > span {
@@ -277,9 +279,10 @@
 
     button {
       padding: 2px 5px;
+      border-left: 3px solid @accent-primary;
       border-radius: 4px;
-      color: @text-color-inverse;
-      background: @accent-primary;
+      color: @text-color;
+      background: var(--fm-accent-medium);
       font-size: 11px;
     }
   }
@@ -298,14 +301,14 @@
     right: 0;
     left: 0;
     height: var(--compact-calendar-hour-height);
-    border-top: 1px solid fade(@text-color, 7%);
+    border-top: 1px solid var(--fm-border);
 
     span {
       position: absolute;
       top: -8px;
       left: -45px;
       width: 40px;
-      color: @text-color-very-subtle;
+      color: @text-color-subtle;
       font-size: 11px;
       white-space: nowrap;
     }

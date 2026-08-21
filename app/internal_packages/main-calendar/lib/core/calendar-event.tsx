@@ -140,8 +140,9 @@ export class CalendarEvent extends React.Component<CalendarEventProps, CalendarE
       styles.backgroundColor = 'transparent';
       styles.borderColor = colors.band;
     } else if (this.props.event.isPending) {
-      // Pending events get a gray background with theme-colored left band
-      styles.backgroundColor = 'rgba(128, 128, 128, 0.15)';
+      // The hatch pattern communicates pending status; keep the same opaque,
+      // readable calendar surface beneath it.
+      styles.backgroundColor = colors.background;
     } else {
       // Apple Calendar-style: light pastel background
       styles.backgroundColor = colors.background;

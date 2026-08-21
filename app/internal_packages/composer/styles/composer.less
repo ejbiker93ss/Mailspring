@@ -702,6 +702,15 @@ body.platform-win32 {
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .action-bar-animation-wrap {
+      .composer-action-bar-plugins,
+      .action-bar-cover {
+        transition: none;
+      }
+    }
+  }
+
   .composer-content-wrap {
     padding: 0;
     flex: 1;

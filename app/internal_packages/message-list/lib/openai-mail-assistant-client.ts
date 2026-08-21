@@ -15,7 +15,12 @@ export interface AssistantChatMessage {
 
 export interface AssistantToolCall {
   id: string;
-  name: 'create_email_draft' | 'create_calendar_event' | 'move_threads' | 'mark_threads_read';
+  name:
+    | 'create_email_draft'
+    | 'create_calendar_event'
+    | 'move_threads'
+    | 'mark_threads_read'
+    | 'trash_threads';
   arguments: Record<string, any>;
 }
 
@@ -100,7 +105,30 @@ export function groundMarkReadProposal(
   };
 }
 
+export function groundTrashProposal(
+  args: Record<string, any>,
+  knownThreads: Map<string, any>,
+  options: { defaultAccountId?: string; allowAllAccounts?: boolean }
+) {
+  return groundMarkReadProposal(args, knownThreads, options);
+}
+
 const TOOLS = [
+  {
+    type: 'function',
+    name: 'trash_threads',
+    description:
+      "Propose deleting known threads returned by search_mail or list_threads by moving them to each account's Trash folder. This never changes mail immediately; Mailspring shows a confirmation card.",
+    strict: true,
+    parameters: {
+      type: 'object',
+      properties: {
+        threadIds: { type: 'array', items: { type: 'string' }, maxItems: 100 },
+      },
+      required: ['threadIds'],
+      additionalProperties: false,
+    },
+  },
   {
     type: 'function',
     name: 'mark_threads_read',
@@ -466,7 +494,8 @@ export async function askMailAssistant(options: {
         (item.name === 'create_email_draft' ||
           item.name === 'create_calendar_event' ||
           item.name === 'move_threads' ||
-          item.name === 'mark_threads_read')
+          item.name === 'mark_threads_read' ||
+          item.name === 'trash_threads')
     )
     .map((item) => {
       const args = JSON.parse(item.arguments || '{}');
@@ -481,6 +510,15 @@ export async function askMailAssistant(options: {
       }
       if (item.name === 'mark_threads_read') {
         const grounded = groundMarkReadProposal(args, knownThreads, options);
+        if (!grounded) return null;
+        return {
+          id: item.call_id,
+          name: item.name,
+          arguments: grounded,
+        };
+      }
+      if (item.name === 'trash_threads') {
+        const grounded = groundTrashProposal(args, knownThreads, options);
         if (!grounded) return null;
         return {
           id: item.call_id,

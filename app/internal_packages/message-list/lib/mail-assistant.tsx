@@ -672,6 +672,23 @@ export default class MailAssistant extends React.Component<Record<string, never>
         });
         Actions.queueTask(task);
         await TaskQueue.waitForPerformRemote(task);
+      } else if (action.name === 'trash_threads') {
+        const threadIds = Array.isArray(action.arguments.threadIds)
+          ? action.arguments.threadIds.slice(0, 100)
+          : [];
+        const threads = await DatabaseStore.modelify<Thread>(Thread, threadIds);
+        if (!threadIds.length || threads.length !== threadIds.length) {
+          throw new Error(localized('Some proposed messages are no longer available.'));
+        }
+        const tasks = TaskFactory.tasksForMovingToTrash({
+          threads,
+          source: 'AI Assistant',
+        });
+        if (!tasks.length) {
+          throw new Error(localized('No Trash folder is available for these messages.'));
+        }
+        tasks.forEach((task) => Actions.queueTask(task));
+        await Promise.all(tasks.map((task) => TaskQueue.waitForPerformRemote(task)));
       }
       this._updateAction(action.id, { status: 'done' });
     } catch (error) {
@@ -710,7 +727,13 @@ export default class MailAssistant extends React.Component<Record<string, never>
     }
     if (action.name === 'mark_threads_read') {
       const count = (action.arguments.threadIds || []).length;
-      return localized(`Mark %@ messages as read`, count);
+      return count === 1
+        ? localized('Mark 1 message as read')
+        : localized(`Mark %@ messages as read`, count);
+    }
+    if (action.name === 'trash_threads') {
+      const count = (action.arguments.threadIds || []).length;
+      return count === 1 ? localized('Delete 1 message') : localized(`Delete %@ messages`, count);
     }
     return `${localized('Calendar event')} · ${action.arguments.title}`;
   }
@@ -778,7 +801,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
             ))}
           </div>
         )}
-        {action.name === 'mark_threads_read' && (
+        {(action.name === 'mark_threads_read' || action.name === 'trash_threads') && (
           <div className="mail-assistant-move-list">
             {(action.arguments.threads || []).map((thread) => (
               <div key={thread.id}>

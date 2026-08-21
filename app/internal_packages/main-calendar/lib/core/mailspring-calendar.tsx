@@ -34,7 +34,6 @@ import {
   getEditableCalendars,
   showNoEditableCalendarsError,
   showReadOnlyCalendarError,
-  invalidateThemeTextColorCache,
 } from './calendar-helpers';
 import { Disposable } from 'rx-core';
 import { CalendarEventArgs } from './calendar-event-container';
@@ -161,7 +160,6 @@ export class MailspringCalendar extends React.Component<
     this._disposable = this._subscribeToCalendars();
     this._unlisten = Actions.focusCalendarEvent.listen(this._focusEvent);
     this._themeDisposable = AppEnv.themes.onDidChangeActiveThemes(() => {
-      invalidateThemeTextColorCache();
       this.setState((s) => ({ themeVersion: s.themeVersion + 1 }));
     });
   }

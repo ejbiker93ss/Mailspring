@@ -4,7 +4,7 @@ import { Actions } from 'mailspring-exports';
 import { Menu } from './menu';
 
 export type AppContextMenuItem =
-  | { id?: string; label: string; click: () => void }
+  | { id?: string; label: string; confirmation?: string; click: () => void }
   | { id?: string; type: 'separator' };
 
 interface AppContextMenuProps {
@@ -16,12 +16,14 @@ interface AppContextMenuProps {
 }
 
 interface AppContextMenuState {
+  confirmedItemId?: string;
   left: number;
   top: number;
 }
 
 class AppContextMenu extends React.Component<AppContextMenuProps, AppContextMenuState> {
   private menuElement?: HTMLDivElement;
+  private confirmationTimeout?: number;
 
   constructor(props: AppContextMenuProps) {
     super(props);
@@ -46,17 +48,30 @@ class AppContextMenu extends React.Component<AppContextMenuProps, AppContextMenu
   componentWillUnmount() {
     window.removeEventListener('blur', this.props.onDismiss);
     window.removeEventListener('resize', this.props.onDismiss);
+    window.clearTimeout(this.confirmationTimeout);
   }
 
   _select = (item: AppContextMenuItem) => {
     if ('type' in item) return;
-    this.props.onDismiss();
+    if (this.state.confirmedItemId) return;
+
     item.click();
+    if (item.confirmation) {
+      this.setState({ confirmedItemId: item.id });
+      this.confirmationTimeout = window.setTimeout(this.props.onDismiss, 900);
+    } else {
+      this.props.onDismiss();
+    }
   };
 
   _content = (item: AppContextMenuItem) => {
     if ('type' in item) return <Menu.Item key={item.id} divider />;
-    return <span className="primary">{item.label}</span>;
+    const confirmed = this.state.confirmedItemId === item.id;
+    return (
+      <span className={`primary${confirmed ? ' confirmation' : ''}`} aria-live="polite">
+        {confirmed ? item.confirmation : item.label}
+      </span>
+    );
   };
 
   render() {

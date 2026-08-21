@@ -9,6 +9,14 @@ type SidebarMode = 'day' | 'agenda';
 
 const AGENDA_MONTHS_IN_VIEW = 6;
 
+export function shouldAdvanceSelectedDate(
+  selectedDate: Moment,
+  previousNow: Moment,
+  nextNow: Moment
+) {
+  return !nextNow.isSame(previousNow, 'day') && selectedDate.isSame(previousNow, 'day');
+}
+
 interface CompactCalendarSidebarState {
   selectedDate: Moment;
   events: EventOccurrence[];
@@ -80,14 +88,35 @@ export class CompactCalendarSidebar extends React.Component<
 
   componentDidMount() {
     this.subscribeToDate(this.state.selectedDate);
-    this.clockInterval = window.setInterval(() => this.setState({ now: moment() }), 60 * 1000);
+    this.clockInterval = window.setInterval(this.updateClock, 60 * 1000);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
     window.requestAnimationFrame(this.scrollToRelevantTime);
   }
 
   componentWillUnmount() {
     this.eventSubscription?.dispose();
     if (this.clockInterval) window.clearInterval(this.clockInterval);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
   }
+
+  private updateClock = () => {
+    const now = moment();
+
+    if (shouldAdvanceSelectedDate(this.state.selectedDate, this.state.now, now)) {
+      const selectedDate = now.clone().startOf('day');
+      this.setState({ now, selectedDate }, () => {
+        this.subscribeToDate(selectedDate);
+        window.requestAnimationFrame(this.scrollToRelevantTime);
+      });
+      return;
+    }
+
+    this.setState({ now });
+  };
+
+  private onVisibilityChange = () => {
+    if (!document.hidden) this.updateClock();
+  };
 
   private subscribeToDate(date: Moment, mode: SidebarMode = this.state.mode) {
     this.eventSubscription?.dispose();
@@ -223,11 +252,23 @@ export class CompactCalendarSidebar extends React.Component<
         <div className="compact-all-day-row">
           <span>{localized('All-day')}</span>
           <div>
-            {allDay.map((event) => (
-              <button key={event.id} type="button" onClick={() => this.openCalendar(event)}>
-                {event.title}
-              </button>
-            ))}
+            {allDay.map((event) => {
+              const colors = calcEventColors(event.calendarId);
+              return (
+                <button
+                  key={event.id}
+                  type="button"
+                  style={{
+                    borderLeftColor: colors.band,
+                    backgroundColor: colors.background,
+                    color: colors.text,
+                  }}
+                  onClick={() => this.openCalendar(event)}
+                >
+                  {event.title}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="compact-hours-scroll" ref={(node) => (this.hoursScroll = node)}>

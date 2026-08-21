@@ -177,7 +177,7 @@ export class MonthViewEvent extends React.Component<MonthViewEventProps, MonthVi
       '--event-band-color'?: string;
       '--event-text-color'?: string;
     } = {
-      backgroundColor: event.isPending ? 'rgba(128, 128, 128, 0.15)' : colors.background,
+      backgroundColor: colors.background,
       '--event-band-color': colors.band,
       '--event-text-color': colors.text,
       cursor: this._getCursorStyle(),

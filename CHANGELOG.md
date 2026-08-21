@@ -1,5 +1,18 @@
 # Mailspring Changelog
 
+## 1.23.17 (8/21/2026)
+
+Improvements:
+
+- Made calendar events opaque and readable across dark, light, compact-day, and month views, with stronger grid and time-label contrast.
+- Advanced the compact calendar sidebar automatically at midnight and refreshed it when the app becomes visible again.
+- Kept the search field and adjacent toolbar actions fitted and usable in narrow message-list columns.
+- Added reviewable Mail Assistant proposals for moving selected messages to Trash.
+
+Bug Fixes:
+
+- Improved selection-quote menu feedback, composer spacing, and thread-card styling across themes.
+
 ## 1.23.16 (8/20/2026)
 
 Improvements:

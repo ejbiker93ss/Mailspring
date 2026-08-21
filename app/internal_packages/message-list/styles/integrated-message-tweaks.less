@@ -1,6 +1,9 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
+@thread-sent-accent: @color-success;
+@thread-received-accent: @accent-primary;
+
 .message-owner-status {
   display: none;
 }
@@ -38,8 +41,8 @@
 #message-list .message-item-wrap.sent-by-me .message-item-white-wrap {
   margin-left: 40px;
   margin-right: 10px;
-  border: 1px solid rgba(108, 212, 32, 0.2);
-  border-left: 3px solid #6cd420;
+  border: 1px solid color-mix(in srgb, @thread-sent-accent 20%, transparent);
+  border-left: 3px solid @thread-sent-accent;
   border-radius: 12px;
   max-width: calc(100% - 50px);
 }
@@ -47,8 +50,8 @@
 #message-list .message-item-wrap.collapsed.sent-by-me .message-item-white-wrap {
   margin-left: 40px;
   margin-right: 10px;
-  border: 1px solid rgba(108, 212, 32, 0.2);
-  border-left: 3px solid #6cd420;
+  border: 1px solid color-mix(in srgb, @thread-sent-accent 20%, transparent);
+  border-left: 3px solid @thread-sent-accent;
   border-radius: 12px;
   max-width: calc(100% - 50px);
 }
@@ -57,8 +60,8 @@
 #message-list .message-item-white-wrap.composer-outer-wrap.sent-by-me {
   margin-left: 40px;
   margin-right: 10px;
-  border: 1px solid rgba(108, 212, 32, 0.2);
-  border-left: 3px solid #6cd420;
+  border: 1px solid color-mix(in srgb, @thread-sent-accent 20%, transparent);
+  border-left: 3px solid @thread-sent-accent;
   border-radius: 12px;
   background: @background-primary;
   background-color: @background-primary;
@@ -67,8 +70,8 @@
 
 #message-list .message-item-wrap.sent-by-me .message-item-white-wrap.composer-outer-wrap.focused,
 #message-list .message-item-white-wrap.composer-outer-wrap.sent-by-me.focused {
-  border: 1px solid rgba(108, 212, 32, 0.2);
-  border-left: 3px solid #6cd420;
+  border: 1px solid color-mix(in srgb, @thread-sent-accent 20%, transparent);
+  border-left: 3px solid @thread-sent-accent;
   border-radius: 12px;
   background: @background-primary;
   background-color: @background-primary;
@@ -77,8 +80,8 @@
 #message-list .message-item-wrap.received-from-others .message-item-white-wrap {
   margin-left: 10px;
   margin-right: 40px;
-  border: 1px solid rgba(74, 144, 226, 0.2);
-  border-left: 3px solid #4a90e2;
+  border: 1px solid color-mix(in srgb, @thread-received-accent 20%, transparent);
+  border-left: 3px solid @thread-received-accent;
   border-radius: 12px;
   max-width: calc(100% - 50px);
 }
@@ -86,8 +89,8 @@
 #message-list .message-item-wrap.collapsed.received-from-others .message-item-white-wrap {
   margin-left: 10px;
   margin-right: 40px;
-  border: 1px solid rgba(74, 144, 226, 0.2);
-  border-left: 3px solid #4a90e2;
+  border: 1px solid color-mix(in srgb, @thread-received-accent 20%, transparent);
+  border-left: 3px solid @thread-received-accent;
   border-radius: 12px;
   max-width: calc(100% - 50px);
 }

@@ -319,6 +319,7 @@ export class EventedIFrame extends React.Component<
         },
         {
           label: localized('Copy Quote'),
+          confirmation: localized('Quote copied'),
           click: () => clipboard.write({ text: quoteText, html: quoteHTML }),
         },
       ],
