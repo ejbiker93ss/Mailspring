@@ -8,10 +8,12 @@ import { Flexbox } from './components/flexbox';
 import { InjectedComponentSet } from './components/injected-component-set';
 import { SheetDeclaration } from './flux/stores/workspace-store';
 import AppTabs from './app-tabs';
+import { Disposable } from 'rx-core';
 
 interface SheetContainerState {
   stack: SheetDeclaration[];
   mode: string;
+  windowType: string;
   error?: string;
 }
 
@@ -23,6 +25,7 @@ export default class SheetContainer extends React.Component<
 
   _toolbarComponents = {};
   unsubscribe?: () => void;
+  windowPropsDisposable?: Disposable;
   _scrollbarHideTimers = new Map<HTMLElement, number>();
 
   constructor(props) {
@@ -32,6 +35,7 @@ export default class SheetContainer extends React.Component<
 
   componentDidMount() {
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
+    this.windowPropsDisposable = AppEnv.onWindowPropsReceived(this._onWindowPropsReceived);
     document.addEventListener('scroll', this._onWorkspaceScroll, true);
   }
 
@@ -45,6 +49,9 @@ export default class SheetContainer extends React.Component<
   componentWillUnmount() {
     if (this.unsubscribe) {
       this.unsubscribe();
+    }
+    if (this.windowPropsDisposable) {
+      this.windowPropsDisposable.dispose();
     }
     document.removeEventListener('scroll', this._onWorkspaceScroll, true);
     this._scrollbarHideTimers.forEach((timer, element) => {
@@ -73,6 +80,7 @@ export default class SheetContainer extends React.Component<
     return {
       stack: WorkspaceStore.sheetStack(),
       mode: WorkspaceStore.layoutMode(),
+      windowType: AppEnv.getWindowType(),
     };
   }
 
@@ -85,6 +93,10 @@ export default class SheetContainer extends React.Component<
   };
 
   _onStoreChange = () => {
+    this.setState(this._getStateFromStores());
+  };
+
+  _onWindowPropsReceived = () => {
     this.setState(this._getStateFromStores());
   };
 
@@ -113,7 +125,7 @@ export default class SheetContainer extends React.Component<
     const topSheet = WorkspaceStore.topSheet();
     if (
       !toolbar ||
-      (process.platform === 'win32' && AppEnv.isComposerWindow()) ||
+      (process.platform === 'win32' && this.state.windowType === 'composer') ||
       WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Conversation ||
       topSheet === WorkspaceStore.Sheet.Preferences
     ) {
