@@ -231,12 +231,8 @@ export default {
           emailRenderMode: {
             type: 'string',
             default: 'light',
-            enum: ['theme', 'light', 'dark'],
-            enumLabels: [
-              localized('Match app theme'),
-              localized('Light email mode'),
-              localized('Dark email mode'),
-            ],
+            enum: ['light', 'dark'],
+            enumLabels: [localized('Light email mode'), localized('Dark email mode')],
             title: localized('Email body appearance'),
           },
           crossAccountDragEnabled: {

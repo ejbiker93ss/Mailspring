@@ -31,14 +31,14 @@ class EmailFrameStylesStore extends MailspringStore {
       this._styles += `\n${(accentSheet as HTMLElement).innerText}`;
     }
 
-    // Always retain Mailspring's core message typography and layout. A forced
-    // light/dark mode excludes only the active theme's message-frame CSS because
-    // theme filters can compose with the override and produce unreadable text or
-    // negative photographs.
+    // Always retain Mailspring's core message typography and layout, but never
+    // allow the active app theme to recolor message content. Theme filters can
+    // make ordinary dark email text unreadable and can turn photographs into
+    // negatives. Message appearance is controlled explicitly by light/dark mode.
     for (const sheet of Array.from(
       document.querySelectorAll('[source-path*="email-frame.less"]')
     )) {
-      if (mode === 'theme' || this._isCoreEmailFrameStylesheet(sheet)) {
+      if (this._isCoreEmailFrameStylesheet(sheet)) {
         this._styles += `\n${(sheet as HTMLElement).innerText}`;
       }
     }
@@ -48,8 +48,7 @@ class EmailFrameStylesStore extends MailspringStore {
   };
 
   _emailRenderMode() {
-    const mode = AppEnv.config.get(EMAIL_RENDER_MODE_KEY) || 'light';
-    return mode === 'light' || mode === 'dark' ? mode : 'theme';
+    return AppEnv.config.get(EMAIL_RENDER_MODE_KEY) === 'dark' ? 'dark' : 'light';
   }
 
   _isCoreEmailFrameStylesheet(sheet: Element) {

@@ -52,11 +52,12 @@ describe('EmailFrameStylesStore', () => {
     return store.styles();
   };
 
-  it('uses the active theme message styles in theme mode', () => {
+  it('keeps app theme frame styles out of legacy theme mode', () => {
     const styles = renderMode('theme');
 
-    expect(styles).toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
     expect(styles).toContain('body { font-family: test; color: #222; }');
+    expect(styles).toContain('color: #111 !important;');
     expect(styles).not.toContain('.ignore-in-parent-frame');
     expect(styles).toContain('--system-accent:');
   });
@@ -89,10 +90,11 @@ describe('EmailFrameStylesStore', () => {
     expect(styles).toContain('color: #111 !important;');
   });
 
-  it('falls back to theme mode for a legacy or invalid saved value', () => {
+  it('falls back to light mode for a legacy or invalid saved value', () => {
     const styles = renderMode('unexpected');
 
-    expect(styles).toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).toContain('color: #111 !important;');
   });
 
   it('corrects forwarded signature tables without a nesting-depth limit', () => {
