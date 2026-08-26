@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.20 (8/26/2026)
+
+Bug Fixes:
+
+- Matched composer autocomplete against recipient email-address prefixes from Sent history, ahead of display-name-only matches.
+
 ## 1.23.19 (8/26/2026)
 
 Bug Fixes:
