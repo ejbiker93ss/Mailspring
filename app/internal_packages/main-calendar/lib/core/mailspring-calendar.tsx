@@ -12,6 +12,7 @@ import {
   Event,
   SyncbackEventTask,
   ICSEventHelpers,
+  WorkspaceStore,
 } from 'mailspring-exports';
 import {
   ScrollRegion,
@@ -57,6 +58,7 @@ import { modifyEventWithRecurringSupport, EventTimeChangeOptions } from './recur
 const DISABLED_CALENDARS = 'mailspring.disabledCalendars';
 const CALENDAR_VIEW = 'mailspring.calendarView';
 const CALENDAR_LIST_VISIBLE = 'mailspring.calendarListVisible';
+export const CALENDAR_AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 const VIEWS = {
   [CalendarView.DAY]: DayView,
@@ -64,6 +66,10 @@ const VIEWS = {
   [CalendarView.MONTH]: MonthView,
   [CalendarView.AGENDA]: AgendaView,
 };
+
+export function calendarViewNeedsPeriodicRefresh(view: CalendarView): boolean {
+  return view === CalendarView.DAY || view === CalendarView.AGENDA;
+}
 
 export interface EventRendererProps {
   focusedEvent: FocusedEventInfo | null;
@@ -137,6 +143,8 @@ export class MailspringCalendar extends React.Component<
   _disposable?: Disposable;
   _themeDisposable?: { dispose(): void };
   _unlisten?: () => void;
+  _workspaceUnlisten?: () => void;
+  _calendarRefreshTimer?: number;
   _dataSource = new CalendarDataSource();
 
   constructor(props: MailspringCalendarProps) {
@@ -159,15 +167,29 @@ export class MailspringCalendar extends React.Component<
   componentDidMount() {
     this._disposable = this._subscribeToCalendars();
     this._unlisten = Actions.focusCalendarEvent.listen(this._focusEvent);
+    this._workspaceUnlisten = WorkspaceStore.listen(this._onWorkspaceChanged);
     this._themeDisposable = AppEnv.themes.onDidChangeActiveThemes(() => {
       this.setState((s) => ({ themeVersion: s.themeVersion + 1 }));
     });
+    document.addEventListener('visibilitychange', this._onVisibilityChange);
+    this._restartCalendarRefreshTimer();
+    this._refreshCalendarsIfVisible();
+  }
+
+  componentDidUpdate(_prevProps: MailspringCalendarProps, prevState: MailspringCalendarState) {
+    if (prevState.view !== this.state.view) {
+      this._restartCalendarRefreshTimer();
+      this._refreshCalendarsIfVisible();
+    }
   }
 
   componentWillUnmount() {
     // The component is unmounting, dispose subscriptions
     this._disposable?.dispose();
     this._themeDisposable?.dispose();
+    this._workspaceUnlisten?.();
+    document.removeEventListener('visibilitychange', this._onVisibilityChange);
+    this._clearCalendarRefreshTimer();
     if (this._unlisten) {
       this._unlisten();
     }
@@ -843,7 +865,49 @@ export class MailspringCalendar extends React.Component<
    * Refresh calendars by triggering a sync.
    */
   _onRefreshCalendars = () => {
-    AppEnv.mailsyncBridge.sendSyncMailNow();
+    AppEnv.mailsyncBridge.sendSyncCalendarNow();
+  };
+
+  _isCalendarVisible = () => {
+    if (document.hidden) return false;
+    return !AppEnv.isMainWindow() || WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Calendar;
+  };
+
+  _refreshCalendarsIfVisible = () => {
+    if (calendarViewNeedsPeriodicRefresh(this.state.view) && this._isCalendarVisible()) {
+      this._onRefreshCalendars();
+    }
+  };
+
+  _clearCalendarRefreshTimer = () => {
+    if (this._calendarRefreshTimer) {
+      window.clearInterval(this._calendarRefreshTimer);
+      this._calendarRefreshTimer = undefined;
+    }
+  };
+
+  _restartCalendarRefreshTimer = () => {
+    this._clearCalendarRefreshTimer();
+    if (calendarViewNeedsPeriodicRefresh(this.state.view)) {
+      this._calendarRefreshTimer = window.setInterval(
+        this._refreshCalendarsIfVisible,
+        CALENDAR_AUTO_REFRESH_INTERVAL_MS
+      );
+    }
+  };
+
+  _onVisibilityChange = () => {
+    if (!document.hidden) {
+      this._restartCalendarRefreshTimer();
+      this._refreshCalendarsIfVisible();
+    }
+  };
+
+  _onWorkspaceChanged = () => {
+    if (this._isCalendarVisible()) {
+      this._restartCalendarRefreshTimer();
+      this._refreshCalendarsIfVisible();
+    }
   };
 
   _shouldShowEmptyState() {
