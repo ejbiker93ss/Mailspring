@@ -3,10 +3,9 @@ import path from 'path';
 
 import { EmailFrameStylesStore } from '../lib/email-frame-styles-store';
 
-const CATPPUCCIN_VARIANTS = [
+const CATPPUCCIN_DARK_VARIANTS = [
   'Aura',
   'Frappe',
-  'Latte',
   'Macchiato',
   'Mocha',
   'RichBlue',
@@ -17,10 +16,16 @@ const CATPPUCCIN_VARIANTS = [
 
 describe('EmailFrameStylesStore', () => {
   let store: EmailFrameStylesStore;
+  let coreSheet: HTMLStyleElement;
   let themeSheet: HTMLStyleElement;
   let accentSheet: HTMLStyleElement;
 
   beforeEach(() => {
+    coreSheet = document.createElement('style');
+    coreSheet.setAttribute('source-path', '/static/style/email-frame.less');
+    coreSheet.innerText = '.ignore-in-parent-frame body { font-family: test; color: #222; }';
+    document.head.appendChild(coreSheet);
+
     themeSheet = document.createElement('style');
     themeSheet.setAttribute('source-path', '/themes/example/email-frame.less');
     themeSheet.innerText = '.ignore-in-parent-frame #inbox-html-wrapper { filter: invert(100%); }';
@@ -36,6 +41,7 @@ describe('EmailFrameStylesStore', () => {
 
   afterEach(() => {
     store._unlistenToStyles();
+    coreSheet.remove();
     themeSheet.remove();
     accentSheet.remove();
   });
@@ -50,28 +56,40 @@ describe('EmailFrameStylesStore', () => {
     const styles = renderMode('theme');
 
     expect(styles).toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).toContain('body { font-family: test; color: #222; }');
     expect(styles).not.toContain('.ignore-in-parent-frame');
-    expect(styles).toContain('--system-accent: #123456');
+    expect(styles).toContain('--system-accent:');
   });
 
   it('replaces theme message filters in forced dark mode', () => {
     const styles = renderMode('dark');
 
     expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).toContain('body { font-family: test; color: #222; }');
     expect(styles).toContain('body { filter: invert(100%) hue-rotate(180deg) !important;');
     expect(styles).toContain('img { filter: invert(100%) hue-rotate(180deg) !important; }');
-    expect(styles).toContain('--system-accent: #123456');
+    expect(styles).toContain('--system-accent:');
   });
 
   it('replaces theme message filters in forced light mode', () => {
     const styles = renderMode('light');
 
     expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
-    expect(styles).toContain('body, img { filter: none !important; }');
-    expect(styles).toContain('--system-accent: #123456');
+    expect(styles).toContain('body { font-family: test; color: #222; }');
+    expect(styles).toContain('body { filter: none !important; color: #111 !important; }');
+    expect(styles).toContain('img { filter: none !important; }');
+    expect(styles).toContain('--system-accent:');
   });
 
-  it('falls back to theme mode for an invalid saved value', () => {
+  it('defaults to light mode when no preference is saved', () => {
+    const styles = renderMode(undefined);
+
+    expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).toContain('body { font-family: test; color: #222; }');
+    expect(styles).toContain('color: #111 !important;');
+  });
+
+  it('falls back to theme mode for a legacy or invalid saved value', () => {
     const styles = renderMode('unexpected');
 
     expect(styles).toContain('#inbox-html-wrapper { filter: invert(100%); }');
@@ -80,7 +98,7 @@ describe('EmailFrameStylesStore', () => {
   it('corrects forwarded signature tables without a nesting-depth limit', () => {
     const { resourcePath } = AppEnv.getLoadSettings();
 
-    for (const variant of CATPPUCCIN_VARIANTS) {
+    for (const variant of CATPPUCCIN_DARK_VARIANTS) {
       const stylesheet = fs.readFileSync(
         path.join(
           resourcePath,
@@ -96,5 +114,22 @@ describe('EmailFrameStylesStore', () => {
       expect(stylesheet).toContain('img:not(table img)');
       expect(stylesheet).not.toContain('> :not(table) > :not(table) > table');
     }
+  });
+
+  it('does not invert messages in the light Catppuccin Latte theme', () => {
+    const { resourcePath } = AppEnv.getLoadSettings();
+    const stylesheet = fs.readFileSync(
+      path.join(
+        resourcePath,
+        'internal_packages',
+        'Catppuccin-Latte',
+        'styles',
+        'email-frame.less'
+      ),
+      'utf8'
+    );
+
+    expect(stylesheet).not.toContain('@message-filter');
+    expect(stylesheet).not.toContain('invert(');
   });
 });

@@ -36,7 +36,7 @@ class EmailRenderModeToggle extends React.Component<Record<string, never>, { mod
     }
   }
 
-  _mode = () => AppEnv.config.get(EMAIL_RENDER_MODE_KEY) || 'theme';
+  _mode = () => AppEnv.config.get(EMAIL_RENDER_MODE_KEY) || 'light';
 
   _isDark = () => {
     const mode = this.state.mode;

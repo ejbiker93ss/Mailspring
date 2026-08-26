@@ -230,7 +230,7 @@ export default {
           },
           emailRenderMode: {
             type: 'string',
-            default: 'theme',
+            default: 'light',
             enum: ['theme', 'light', 'dark'],
             enumLabels: [
               localized('Match app theme'),
