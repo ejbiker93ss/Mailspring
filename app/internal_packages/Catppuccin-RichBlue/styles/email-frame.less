@@ -23,11 +23,9 @@
 // meant to be read on a white background readible on a dark
 // background. At the same time, emails with a custom HTML formatting
 // are kept intact.
-// The broadly valid assumption is made here that in html table
-// emails the table is not nested deeper than 4 levels below the
-// inbox-html-wrapper. The only case I found so far where this
-// assumption is violated, is when tables become deeply nested
-// because of blockquotes in repleated forwards/replies.
+// Correct the outermost message table and standalone images at any nesting
+// depth. Forwarded and replied messages frequently add several wrappers;
+// structural selectors keep those wrappers from changing image colors.
 .ignore-in-parent-frame {
     #inbox-html-wrapper, #inbox-plain-wrapper {
 
@@ -41,10 +39,7 @@
         // Undo the color inversion for html tables, while
         // adding/restoring color elements for emails that
         // implicitly assume a white background.
-        > table,
-        > :not(table) > table,
-        > :not(table) > :not(table) > table,
-        > :not(table) > :not(table) > :not(table) > table {
+        table:not(table table) {
             padding: 10px;
             color: black;
             background: white !important;
@@ -56,11 +51,7 @@
 
         // Undo the color inversion for all images that are not
         // part of html tables.
-        > img,
-        > :not(table) > img,
-        > :not(table) > :not(table) > img,
-        > :not(table) > :not(table) > :not(table) > img,
-        > :not(table) > :not(table) > :not(table) > :not(table) img {
+        img:not(table img) {
             filter: @message-filter-undo;
         }
 
@@ -95,18 +86,11 @@ h1.print-subject,
 #message-list #inbox-html-wrapper {
     filter: unset;
 
-    > table,
-    > :not(table) > table,
-    > :not(table) > :not(table) > table,
-    > :not(table) > :not(table) > :not(table) > table {
+    table:not(table table) {
         filter: unset;
     }
 
-    > img,
-    > :not(table) > img,
-    > :not(table) > :not(table) > img,
-    > :not(table) > :not(table) > :not(table) > img,
-    > :not(table) > :not(table) > :not(table) > :not(table) img {
+    img:not(table img) {
         filter: unset;
     }
 }

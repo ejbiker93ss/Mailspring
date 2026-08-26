@@ -113,6 +113,7 @@ export default class SheetContainer extends React.Component<
     const topSheet = WorkspaceStore.topSheet();
     if (
       !toolbar ||
+      (process.platform === 'win32' && AppEnv.isComposerWindow()) ||
       WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Conversation ||
       topSheet === WorkspaceStore.Sheet.Preferences
     ) {

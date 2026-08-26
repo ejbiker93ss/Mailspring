@@ -1,0 +1,100 @@
+import fs from 'fs';
+import path from 'path';
+
+import { EmailFrameStylesStore } from '../lib/email-frame-styles-store';
+
+const CATPPUCCIN_VARIANTS = [
+  'Aura',
+  'Frappe',
+  'Latte',
+  'Macchiato',
+  'Mocha',
+  'RichBlue',
+  'RichGreen',
+  'RichPurple',
+  'RichRed',
+];
+
+describe('EmailFrameStylesStore', () => {
+  let store: EmailFrameStylesStore;
+  let themeSheet: HTMLStyleElement;
+  let accentSheet: HTMLStyleElement;
+
+  beforeEach(() => {
+    themeSheet = document.createElement('style');
+    themeSheet.setAttribute('source-path', '/themes/example/email-frame.less');
+    themeSheet.innerText = '.ignore-in-parent-frame #inbox-html-wrapper { filter: invert(100%); }';
+    document.head.appendChild(themeSheet);
+
+    accentSheet = document.createElement('style');
+    accentSheet.setAttribute('source-path', 'system-accent:dynamic');
+    accentSheet.innerText = ':root { --system-accent: #123456; }';
+    document.head.appendChild(accentSheet);
+
+    store = new EmailFrameStylesStore();
+  });
+
+  afterEach(() => {
+    store._unlistenToStyles();
+    themeSheet.remove();
+    accentSheet.remove();
+  });
+
+  const renderMode = (mode: string) => {
+    spyOn(AppEnv.config, 'get').andReturn(mode);
+    store._findStyles();
+    return store.styles();
+  };
+
+  it('uses the active theme message styles in theme mode', () => {
+    const styles = renderMode('theme');
+
+    expect(styles).toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).not.toContain('.ignore-in-parent-frame');
+    expect(styles).toContain('--system-accent: #123456');
+  });
+
+  it('replaces theme message filters in forced dark mode', () => {
+    const styles = renderMode('dark');
+
+    expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).toContain('body { filter: invert(100%) hue-rotate(180deg) !important;');
+    expect(styles).toContain('img { filter: invert(100%) hue-rotate(180deg) !important; }');
+    expect(styles).toContain('--system-accent: #123456');
+  });
+
+  it('replaces theme message filters in forced light mode', () => {
+    const styles = renderMode('light');
+
+    expect(styles).not.toContain('#inbox-html-wrapper { filter: invert(100%); }');
+    expect(styles).toContain('body, img { filter: none !important; }');
+    expect(styles).toContain('--system-accent: #123456');
+  });
+
+  it('falls back to theme mode for an invalid saved value', () => {
+    const styles = renderMode('unexpected');
+
+    expect(styles).toContain('#inbox-html-wrapper { filter: invert(100%); }');
+  });
+
+  it('corrects forwarded signature tables without a nesting-depth limit', () => {
+    const { resourcePath } = AppEnv.getLoadSettings();
+
+    for (const variant of CATPPUCCIN_VARIANTS) {
+      const stylesheet = fs.readFileSync(
+        path.join(
+          resourcePath,
+          'internal_packages',
+          `Catppuccin-${variant}`,
+          'styles',
+          'email-frame.less'
+        ),
+        'utf8'
+      );
+
+      expect(stylesheet).toContain('table:not(table table)');
+      expect(stylesheet).toContain('img:not(table img)');
+      expect(stylesheet).not.toContain('> :not(table) > :not(table) > table');
+    }
+  });
+});

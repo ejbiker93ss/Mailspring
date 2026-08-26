@@ -1,5 +1,13 @@
 # Mailspring Changelog
 
+## 1.23.19 (8/26/2026)
+
+Bug Fixes:
+
+- Restored correct image colors in forced email render modes and deeply nested forwarded messages.
+- Removed the duplicate Windows composer title row and restored fast preloaded composer windows.
+- Restored recipient autocomplete when contacts exist without legacy account rows.
+
 ## 1.23.18 (8/21/2026)
 
 Bug Fixes:

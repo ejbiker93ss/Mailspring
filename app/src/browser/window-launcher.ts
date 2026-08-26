@@ -46,14 +46,10 @@ export default class WindowLauncher {
     config: import('../config').default;
   }) {
     this._defaultWindowOpts = {
-      // The hot window becomes the main workspace first. On Windows it must
-      // therefore match the main workspace's custom frameless title bar.
+      // Secondary windows use native window chrome by default. Keeping the hot
+      // window on the same chrome lets composer windows reuse it instead of
+      // falling back to a full, cold renderer boot.
       frame: process.platform !== 'darwin',
-      titleBarStyle: process.platform === 'win32' ? 'hidden' : undefined,
-      titleBarOverlay:
-        process.platform === 'win32'
-          ? { color: '#111111', symbolColor: '#ffffff', height: 40 }
-          : undefined,
       toolbar: process.platform !== 'linux',
       hidden: false,
       devMode,

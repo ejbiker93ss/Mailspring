@@ -21,6 +21,7 @@ class EmailFrameStylesStore extends MailspringStore {
   }
 
   _findStyles = () => {
+    const mode = this._emailRenderMode();
     this._styles = '';
 
     // Include the system accent CSS variables so that var(--system-accent, ...)
@@ -30,18 +31,28 @@ class EmailFrameStylesStore extends MailspringStore {
       this._styles += `\n${(accentSheet as HTMLElement).innerText}`;
     }
 
-    for (const sheet of Array.from(
-      document.querySelectorAll('[source-path*="email-frame.less"]')
-    )) {
-      this._styles += `\n${(sheet as HTMLElement).innerText}`;
+    // A forced light/dark mode replaces the active theme's message-frame CSS.
+    // Layering both is unsafe because CSS filters compose across ancestors: a
+    // theme that already inverts the message can leave photographs with an odd
+    // number of inversions and render them as negatives.
+    if (mode === 'theme') {
+      for (const sheet of Array.from(
+        document.querySelectorAll('[source-path*="email-frame.less"]')
+      )) {
+        this._styles += `\n${(sheet as HTMLElement).innerText}`;
+      }
     }
     this._styles = this._styles.replace(/.ignore-in-parent-frame/g, '');
-    this._styles += this._emailRenderModeOverrideStyles();
+    this._styles += this._emailRenderModeOverrideStyles(mode);
     this.trigger();
   };
 
-  _emailRenderModeOverrideStyles() {
+  _emailRenderMode() {
     const mode = AppEnv.config.get(EMAIL_RENDER_MODE_KEY) || 'theme';
+    return mode === 'light' || mode === 'dark' ? mode : 'theme';
+  }
+
+  _emailRenderModeOverrideStyles(mode = this._emailRenderMode()) {
     if (mode === 'light') {
       return '\nbody, img { filter: none !important; }';
     }
@@ -71,4 +82,5 @@ class EmailFrameStylesStore extends MailspringStore {
   }
 }
 
+export { EmailFrameStylesStore };
 export default new EmailFrameStylesStore();
