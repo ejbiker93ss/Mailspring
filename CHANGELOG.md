@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.21 (8/26/2026)
+
+Bug Fixes:
+
+- Removed the stale in-app **New Message** title after a preloaded Windows window becomes a composer.
+
 ## 1.23.20 (8/26/2026)
 
 Bug Fixes:
