@@ -201,7 +201,6 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
     collapsed: boolean,
     collapsible: ((props: OutlineViewProps) => void) | undefined
   ) {
-    const collapseLabel = collapsed ? localized('Show') : localized('Hide');
     let style: CSSProperties = {};
     if (this.props.titleColor) {
       style = {
@@ -222,15 +221,10 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
         onDragStateChange={this._onDragStateChange}
         shouldAcceptDrop={this.props.shouldAcceptSectionDrop || (() => true)}
       >
-        <span style={style} className="text" title={this.props.title}>
-          {this.props.title}
-        </span>
-        {allowCreate ? this._renderCreateButton() : null}
         {collapsible ? (
-          <span
-            className="collapse-button"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="section-collapse-button"
             aria-expanded={!collapsed}
             aria-label={
               collapsed
@@ -238,16 +232,24 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
                 : localized('Collapse %@', this.props.title)
             }
             onClick={this._onCollapseToggled}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this._onCollapseToggled();
-              }
-            }}
           >
-            {collapseLabel}
+            <svg
+              className={`section-collapse-chevron${collapsed ? ' collapsed' : ''}`}
+              viewBox="0 0 12 12"
+              aria-hidden="true"
+            >
+              <path d="m3.5 4.5 2.5 3 2.5-3" />
+            </svg>
+            <span style={style} className="text" title={this.props.title}>
+              {this.props.title}
+            </span>
+          </button>
+        ) : (
+          <span style={style} className="text" title={this.props.title}>
+            {this.props.title}
           </span>
-        ) : null}
+        )}
+        {allowCreate ? this._renderCreateButton() : null}
       </DropZone>
     );
   }

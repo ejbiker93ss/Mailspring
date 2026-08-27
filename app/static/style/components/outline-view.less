@@ -27,10 +27,67 @@
     padding-right: @padding-xs-horizontal;
     letter-spacing: -0.2px;
 
-    span:first-child {
+    > span:first-child {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
+    }
+
+    .section-collapse-button {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+      display: flex;
+      flex: 1 1 auto;
+      font: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      min-width: 0;
+      padding: 0;
+      text-align: left;
+      text-transform: inherit;
+
+      .text {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &:hover {
+        color: @text-color-subtle;
+      }
+
+      &:focus-visible {
+        border-radius: 3px;
+        box-shadow: 0 0 0 2px fade(@accent-primary, 55%);
+        outline: none;
+      }
+    }
+
+    .section-collapse-chevron {
+      fill: none;
+      flex: 0 0 12px;
+      height: 12px;
+      margin-right: 4px;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.5;
+      transition: transform 120ms ease-out;
+      width: 12px;
+
+      &.collapsed {
+        transform: rotate(-90deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .section-collapse-chevron {
+        transition: none;
+      }
     }
 
     .add-item-button {
@@ -42,19 +99,10 @@
       }
       display: none;
     }
-
-    .collapse-button {
-      cursor: pointer;
-      display: none;
-      min-width: 30px;
-      margin-left: auto;
-      margin-right: 8px;
-    }
   }
 
   &:hover {
     .heading {
-      .collapse-button,
       .add-item-button {
         display: inherit;
       }
@@ -113,7 +161,10 @@
       font-weight: @font-weight-semi-bold;
       color: @count-color;
       margin-left: @padding-small-horizontal * 0.8;
-      box-shadow: 0 0.5px 0 @count-color, 0 -0.5px 0 @count-color, 0.5px 0 0 @count-color,
+      box-shadow:
+        0 0.5px 0 @count-color,
+        0 -0.5px 0 @count-color,
+        0.5px 0 0 @count-color,
         -0.5px 0 0 @count-color;
     }
     .item-count-box.alt-count {
