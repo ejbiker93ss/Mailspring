@@ -1,5 +1,12 @@
 # Mailspring Changelog
 
+## 1.23.23 (8/27/2026)
+
+Bug Fixes:
+
+- Prevented mailbox-collapse focus styling from breaking themes that use runtime accent colors.
+- Made **Reset Theme and Restart** restore bundled theme selections, clear compiled theme caches, and relaunch Mailspring without changing accounts, mail, plugins, or unrelated settings.
+
 ## 1.23.22 (8/27/2026)
 
 Improvements:
