@@ -1,5 +1,19 @@
 # Mailspring Changelog
 
+## 1.23.22 (8/27/2026)
+
+Improvements:
+
+- Refreshed calendars automatically after invite responses, periodically in active Day and Agenda views, and when the calendar crosses midnight.
+- Added invite response controls to calendar event details and collapsible mailbox sections to the account sidebar.
+- Matched the Windows composer title bar and Mail Assistant panel details to the active theme.
+
+Bug Fixes:
+
+- Kept email body colors readable and independent from application themes.
+- Restored the message-list unread filter and sort controls.
+- Handled long message-list searches and hover actions cleanly in narrow columns.
+
 ## 1.23.21 (8/26/2026)
 
 Bug Fixes:
