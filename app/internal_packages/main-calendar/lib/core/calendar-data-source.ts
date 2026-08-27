@@ -42,6 +42,10 @@ export interface EventOccurrence {
    * - Events where the current user is an attendee but hasn't accepted (NEEDS-ACTION or TENTATIVE)
    */
   isPending: boolean;
+  /** Participation status for the attendee identity owned by this Mailspring user. */
+  myParticipationStatus?: ParticipationStatus;
+  /** Normalized email address for that attendee identity. */
+  myAttendeeEmail?: string;
   isException: boolean;
   /**
    * For exception occurrences only: the Unix timestamp (seconds) of the **original**
@@ -176,6 +180,8 @@ export function occurrencesForEvents(
             isAllDay: end - start >= 86400 - 1,
             isCancelled: status.toUpperCase() === 'CANCELLED',
             isPending: isTentativeStatus || isAwaitingMyResponse,
+            myParticipationStatus: myAttendee?.partstat,
+            myAttendeeEmail: myAttendee?.email,
             isException: !!item.component?.getFirstPropertyValue('recurrence-id'),
             recurrenceIdStart: (() => {
               const rid = item.component?.getFirstPropertyValue('recurrence-id');
@@ -201,6 +207,8 @@ export function occurrencesForEvents(
           isAllDay: master.recurrenceEnd - master.recurrenceStart >= 86400 - 1,
           isCancelled: false,
           isPending: false,
+          myParticipationStatus: undefined,
+          myAttendeeEmail: undefined,
           isException: false,
           isRecurring: false,
           organizer: null,
@@ -262,6 +270,8 @@ export function occurrencesForEvents(
           isAllDay: occEnd - occStart >= 86400 - 1,
           isCancelled: status.toUpperCase() === 'CANCELLED',
           isPending: isTentativeStatus || isAwaitingMyResponse,
+          myParticipationStatus: myAttendee?.partstat,
+          myAttendeeEmail: myAttendee?.email,
           isException: true,
           recurrenceIdStart: ridValue ? (ridValue as any).toJSDate().getTime() / 1000 : undefined,
           isRecurring: true, // Exceptions are always from recurring series

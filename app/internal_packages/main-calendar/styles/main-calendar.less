@@ -645,6 +645,40 @@
       margin-right: auto;
       color: @color-error;
     }
+
+    &.event-popover-view-actions {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .event-rsvp-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      margin-left: auto;
+
+      > span {
+        color: @text-color-subtle;
+        margin-right: 2px;
+      }
+    }
+
+    .event-rsvp-button {
+      min-width: 0;
+
+      &.selected {
+        color: @text-color-inverse;
+        background-color: @accent-primary;
+        border-color: @accent-primary;
+      }
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.65;
+      }
+    }
   }
 
   // ============================================

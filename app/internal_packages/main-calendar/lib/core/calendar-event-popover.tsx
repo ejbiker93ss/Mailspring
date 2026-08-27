@@ -11,6 +11,7 @@ import {
   Autolink,
   ICSEventHelpers,
   CalendarUtils,
+  ICSParticipantStatus,
   SyncbackEventTask,
 } from 'mailspring-exports';
 import {
@@ -87,6 +88,8 @@ interface CalendarEventPopoverProps {
   isCalendarReadOnly?: boolean;
   /** Deletes this event through the owning calendar's syncback path. */
   onDelete?: () => void;
+  /** Sends the current attendee's response and updates the owning calendar event. */
+  onRSVP?: (status: ICSParticipantStatus) => Promise<void>;
 }
 
 interface CalendarEventPopoverState {
@@ -632,14 +635,27 @@ export class CalendarEventPopover extends React.Component<
     if (!this.props.isCalendarReadOnly && (this.state.editing || this.props.isNewEvent)) {
       return this.renderEditable();
     }
-    return <CalendarEventPopoverUnenditable {...this.props} onEdit={this.onEdit} />;
+    return <CalendarEventPopoverUneditable {...this.props} onEdit={this.onEdit} />;
   }
 }
 
-class CalendarEventPopoverUnenditable extends React.Component<
-  CalendarEventPopoverProps & { onEdit: () => void }
+interface CalendarEventPopoverUneditableState {
+  responseStatus: ICSParticipantStatus;
+  respondingStatus?: ICSParticipantStatus;
+}
+
+export class CalendarEventPopoverUneditable extends React.Component<
+  CalendarEventPopoverProps & { onEdit: () => void },
+  CalendarEventPopoverUneditableState
 > {
   descriptionRef = React.createRef<HTMLDivElement>();
+
+  constructor(props: CalendarEventPopoverProps & { onEdit: () => void }) {
+    super(props);
+    this.state = {
+      responseStatus: normalizeRSVPStatus(props.event.myParticipationStatus),
+    };
+  }
 
   renderTime() {
     const startMoment = moment(this.props.event.start * 1000);
@@ -659,8 +675,13 @@ class CalendarEventPopoverUnenditable extends React.Component<
     this.autolink();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: CalendarEventPopoverProps & { onEdit: () => void }) {
     this.autolink();
+    if (prevProps.event !== this.props.event) {
+      this.setState({
+        responseStatus: normalizeRSVPStatus(this.props.event.myParticipationStatus),
+      });
+    }
   }
 
   autolink() {
@@ -671,9 +692,30 @@ class CalendarEventPopoverUnenditable extends React.Component<
     });
   }
 
+  _onRSVP = async (status: ICSParticipantStatus) => {
+    if (!this.props.onRSVP || this.state.respondingStatus) return;
+    if (status === this.state.responseStatus) return;
+
+    this.setState({ respondingStatus: status });
+    try {
+      await this.props.onRSVP(status);
+      this.setState({ responseStatus: status, respondingStatus: undefined });
+    } catch (error) {
+      this.setState({ respondingStatus: undefined });
+      AppEnv.showErrorDialog({
+        title: localized('RSVP Failed'),
+        message:
+          error instanceof Error
+            ? error.message
+            : localized('Your response could not be sent. Please try again.'),
+      });
+    }
+  };
+
   render() {
-    const { event, onEdit, onDelete, isCalendarReadOnly } = this.props;
+    const { event, onEdit, onDelete, onRSVP, isCalendarReadOnly } = this.props;
     const { title, description, location, attendees } = event;
+    const canRSVP = !!onRSVP && !!event.organizer && !!event.myParticipationStatus;
 
     const notes = extractNotesFromDescription(description);
 
@@ -705,7 +747,12 @@ class CalendarEventPopoverUnenditable extends React.Component<
           <div className="label">{localized(`Invitees`)}: </div>
           <div className="invitees-list">
             {sortAttendeesByStatus(attendees).map((a, idx) => {
-              const partstat = a.partstat || 'NEEDS-ACTION';
+              const isCurrentUser =
+                !!event.myAttendeeEmail &&
+                a.email.toLowerCase() === event.myAttendeeEmail.toLowerCase();
+              const partstat = isCurrentUser
+                ? this.state.responseStatus
+                : a.partstat || 'NEEDS-ACTION';
               const questionMarkIcon = (
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                   <path
@@ -765,16 +812,53 @@ class CalendarEventPopoverUnenditable extends React.Component<
             <div ref={this.descriptionRef}>{notes}</div>
           </div>
         </ScrollRegion>
-        {onDelete && (
+        {(onDelete || canRSVP) && (
           <div className="event-popover-actions event-popover-view-actions">
-            <button className="btn event-delete-button" onClick={onDelete}>
-              {localized('Delete')}
-            </button>
+            {onDelete && (
+              <button className="btn event-delete-button" onClick={onDelete}>
+                {localized('Delete')}
+              </button>
+            )}
+            {canRSVP && (
+              <div className="event-rsvp-actions" role="group" aria-label={localized('Respond')}>
+                <span>{localized('Respond')}:</span>
+                {(
+                  [
+                    ['ACCEPTED', localized('Accept')],
+                    ['TENTATIVE', localized('Maybe')],
+                    ['DECLINED', localized('Decline')],
+                  ] as Array<[ICSParticipantStatus, string]>
+                ).map(([status, label]) => {
+                  const selected = this.state.responseStatus === status;
+                  const responding = this.state.respondingStatus === status;
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      className={`btn event-rsvp-button${selected ? ' selected' : ''}`}
+                      aria-pressed={selected}
+                      disabled={!!this.state.respondingStatus}
+                      onClick={() => this._onRSVP(status)}
+                    >
+                      {responding ? localized('Sending…') : label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
     );
   }
+}
+
+function normalizeRSVPStatus(status?: string): ICSParticipantStatus {
+  const normalized = status?.toUpperCase();
+  if (normalized === 'ACCEPTED' || normalized === 'TENTATIVE' || normalized === 'DECLINED') {
+    return normalized;
+  }
+  return 'NEEDS-ACTION';
 }
 
 function sortAttendeesByStatus(attendees: EventAttendee[]): EventAttendee[] {

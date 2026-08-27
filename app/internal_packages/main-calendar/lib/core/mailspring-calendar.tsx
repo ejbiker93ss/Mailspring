@@ -12,6 +12,9 @@ import {
   Event,
   SyncbackEventTask,
   ICSEventHelpers,
+  CalendarUtils,
+  EventRSVPTask,
+  ICSParticipantStatus,
   WorkspaceStore,
 } from 'mailspring-exports';
 import {
@@ -266,6 +269,7 @@ export class MailspringCalendar extends React.Component<
         event={eventModel}
         isCalendarReadOnly={isCalendarReadOnly}
         onDelete={isCalendarReadOnly ? undefined : () => this._confirmAndDeleteEvent(eventModel)}
+        onRSVP={(status) => this._respondToEvent(eventModel, status, isCalendarReadOnly)}
       />,
       {
         originRect: eventEl.getBoundingClientRect(),
@@ -448,6 +452,61 @@ export class MailspringCalendar extends React.Component<
 
     const deleted = await this._deleteEvent(occurrence);
     if (deleted) Actions.closePopover();
+  };
+
+  _respondToEvent = async (
+    occurrence: EventOccurrence,
+    status: ICSParticipantStatus,
+    isCalendarReadOnly: boolean
+  ) => {
+    const eventId = parseEventIdFromOccurrence(occurrence.id);
+    const event = await DatabaseStore.find<Event>(Event, eventId);
+    if (!event) {
+      throw new Error(
+        localized('The calendar event could not be found. Please refresh and try again.')
+      );
+    }
+
+    const { root, event: icsEvent } = CalendarUtils.parseICSString(event.ics);
+    const selfParticipant = CalendarUtils.selfParticipant(icsEvent, event.accountId);
+    if (!selfParticipant) {
+      throw new Error(localized('Your address is not listed as an attendee for this event.'));
+    }
+
+    const organizerEmail = CalendarUtils.emailFromParticipantURI(icsEvent.organizer);
+    if (!organizerEmail) {
+      throw new Error(localized('This event does not include a valid organizer address.'));
+    }
+
+    const responseTask = EventRSVPTask.forReplying({
+      accountId: event.accountId,
+      icsOriginalData: event.ics,
+      icsRSVPStatus: status,
+      to: organizerEmail,
+    });
+
+    // Writable calendars should record the response immediately as well as send
+    // the RFC-compliant reply. This removes pending styling without waiting for
+    // the organizer's server to echo the response back to this calendar.
+    if (!isCalendarReadOnly) {
+      const updatedEvent = event.clone();
+      const undoData = {
+        ics: event.ics,
+        recurrenceStart: event.recurrenceStart,
+        recurrenceEnd: event.recurrenceEnd,
+      };
+      selfParticipant.component.setParameter('partstat', status);
+      updatedEvent.ics = root.toString();
+      Actions.queueTask(
+        SyncbackEventTask.forUpdating({
+          event: updatedEvent,
+          undoData,
+          description: localized('Respond to invitation'),
+        })
+      );
+    }
+
+    Actions.queueTask(responseTask);
   };
 
   /**
