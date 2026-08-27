@@ -141,6 +141,20 @@
   padding-right: 6px;
 }
 
+// Let the assistant divider follow the inset, rounded panel instead of ending
+// abruptly at the sheet edge. The handle remains full height for easy resizing.
+.column-MessageListSidebar:has(.mail-assistant) {
+  border-left: 0 !important;
+
+  > .flexbox-handle-horizontal.flexbox-handle-left > div {
+    height: calc(100% - 12px);
+    margin-top: 6px;
+    border-radius: 999px;
+    background: @border-color-divider;
+    box-shadow: none !important;
+  }
+}
+
 // Sidebar columns do not have toolbar actions of their own. Some legacy
 // themes paint their empty toolbar regions as dark input-like rectangles.
 // Keep populated regions intact because global controls may move into them.
