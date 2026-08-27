@@ -30,6 +30,7 @@ import {
 } from './notification-ipc';
 import WindowsTaskbarManager from './windows-taskbar-manager';
 import { completeAccountSetup } from './complete-account-setup';
+import { resetThemeForRecovery } from './theme-recovery';
 
 let clipboard = null;
 
@@ -668,14 +669,26 @@ export default class Application extends EventEmitter {
 
       const buttonIndex = dialog.showMessageBoxSync({
         type: 'warning',
-        buttons: [localized('Reset Theme'), localized('Continue')],
+        buttons: [localized('Reset Theme and Restart'), localized('Continue')],
         defaultId: 0,
         message,
-        detail,
+        detail: `${detail}\n\n${localized(
+          'Reset Theme and Restart restores the bundled automatic, light, and dark themes, clears cached theme styles, and restarts Mailspring. Your accounts, mail, plugins, and other settings are not changed.'
+        )}`,
       });
       if (buttonIndex === 0) {
         userResetTheme = true;
-        this.config.set('core.theme', '');
+        const cacheClearErrors = resetThemeForRecovery(this.config, this.configDirPath);
+        if (cacheClearErrors.length > 0) {
+          console.warn(
+            'Theme preferences were reset, but some cached theme styles could not be removed.',
+            {
+              errors: cacheClearErrors.map((error) => error.message),
+            }
+          );
+        }
+        app.relaunch();
+        app.quit();
       }
     });
 
