@@ -43,7 +43,7 @@ interface ThreadSearchBarState {
   selectedIdx: number;
 }
 
-class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarState> {
+export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarState> {
   static displayName = 'ThreadSearchBar';
 
   _fieldEl: TokenizingContenteditable;
@@ -180,6 +180,11 @@ class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarSta
       this._onSearchQueryChanged(this._initialQueryForPerspective());
       window.requestAnimationFrame(() => this._fieldEl.focus());
     }
+  };
+
+  _onQuerySummaryMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    this._fieldEl.focus();
   };
 
   _onBlur = (e: React.FocusEvent) => {
@@ -323,6 +328,7 @@ class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarSta
 
     const showPlaceholder = !this.state.focused && !query;
     const showX = this.state.focused || !!(perspective as any).searchQuery;
+    const showQuerySummary = !this.state.focused && !!query;
 
     const suggestionsVisible = this.state.suggestions.length > 0 && this.state.focused;
 
@@ -358,17 +364,29 @@ class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarSta
             onClick={() => this._fieldEl.focus()}
           />
         )}
-        <TokenizingContenteditable
-          ref={(el) => (this._fieldEl = el)}
-          value={showPlaceholder ? this._placeholder() : query}
-          onKeyDown={this._onKeyDown}
-          onFocus={this._onFocus}
-          onBlur={this._onBlur}
-          onChange={this._onSearchQueryChanged}
-          aria-label={this._placeholder()}
-          role="searchbox"
-          aria-autocomplete="list"
-        />
+        <div className={`thread-search-query-region ${showQuerySummary ? 'showing-summary' : ''}`}>
+          <TokenizingContenteditable
+            ref={(el) => (this._fieldEl = el)}
+            value={showPlaceholder ? this._placeholder() : query}
+            onKeyDown={this._onKeyDown}
+            onFocus={this._onFocus}
+            onBlur={this._onBlur}
+            onChange={this._onSearchQueryChanged}
+            aria-label={this._placeholder()}
+            role="searchbox"
+            aria-autocomplete="list"
+          />
+          {showQuerySummary ? (
+            <div
+              className="thread-search-query-summary"
+              title={query}
+              aria-hidden="true"
+              onMouseDown={this._onQuerySummaryMouseDown}
+            >
+              <span className="thread-search-query-summary-text">{query}</span>
+            </div>
+          ) : null}
+        </div>
         {showX && (
           <RetinaImg
             name="searchclear.png"
