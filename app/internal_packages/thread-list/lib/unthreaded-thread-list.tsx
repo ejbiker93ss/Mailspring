@@ -15,6 +15,7 @@ import { Spinner, ScrollRegion } from 'mailspring-component-kit';
 import MailspringStore from 'mailspring-store';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
+import { filterAndSortVisibleItems } from './unthreaded-list-ordering';
 
 const { Message } = require('mailspring-exports');
 
@@ -220,6 +221,8 @@ export default class UnthreadedThreadList extends React.Component {
   _getState = () => ({
     enabled: UnthreadedState.enabled(),
     layout: UnthreadedState.layout(),
+    sortAscending: UnthreadedState.sortAscending(),
+    unreadOnly: UnthreadedState.unreadOnly(),
     items: visibleMessagesStore.items(),
     loading: visibleMessagesStore.loading(),
     selected: UnthreadedState.selected(),
@@ -229,7 +232,11 @@ export default class UnthreadedThreadList extends React.Component {
   });
 
   _onChange = () => {
-    this.setState(this._getState());
+    this.setState(this._getState(), () => {
+      if (this.state.enabled) {
+        UnthreadedState.ensureValidSelection(this._visibleItems());
+      }
+    });
   };
 
   _onSelect = (item, { expandThread = true } = {}) => {
@@ -275,14 +282,10 @@ export default class UnthreadedThreadList extends React.Component {
   }
 
   _visibleItems() {
-    const items = UnthreadedState.unreadOnly()
-      ? this.state.items.filter((item) => item.message.unread)
-      : this.state.items.slice();
-    const direction = UnthreadedState.sortAscending() ? 1 : -1;
-    return items.sort(
-      (a, b) =>
-        direction * (new Date(a.message.date).getTime() - new Date(b.message.date).getTime())
-    );
+    return filterAndSortVisibleItems(this.state.items, {
+      unreadOnly: this.state.unreadOnly,
+      sortAscending: this.state.sortAscending,
+    });
   }
 
   _groupedItems(items = this._visibleItems()) {
@@ -320,7 +323,7 @@ export default class UnthreadedThreadList extends React.Component {
       );
     });
 
-    const direction = UnthreadedState.sortAscending() ? 1 : -1;
+    const direction = this.state.sortAscending ? 1 : -1;
     groups.sort(
       (a, b) => direction * (new Date(a.latestDate).getTime() - new Date(b.latestDate).getTime())
     );
@@ -369,7 +372,7 @@ export default class UnthreadedThreadList extends React.Component {
       const key = this._sectionForDate(dateForEntry(entry));
       (buckets[key] || (buckets[key] = [])).push(entry);
     });
-    const keys = UnthreadedState.sortAscending() ? order.slice().reverse() : order;
+    const keys = this.state.sortAscending ? order.slice().reverse() : order;
     return keys
       .filter((key) => buckets[key] && buckets[key].length)
       .map((key) => ({ key, label: labels[key], entries: buckets[key] }));
@@ -587,9 +590,7 @@ export default class UnthreadedThreadList extends React.Component {
               : this._renderDateSections(groupedSections, (group) => this._renderGroup(group))}
             {!this.state.loading && visibleItems.length === 0 ? (
               <div className="unthreaded-list-empty">
-                {UnthreadedState.unreadOnly()
-                  ? localized('No unread messages')
-                  : localized('No messages')}
+                {this.state.unreadOnly ? localized('No unread messages') : localized('No messages')}
               </div>
             ) : null}
           </ScrollRegion>
