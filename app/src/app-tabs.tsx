@@ -3,6 +3,7 @@ import { localized, Actions, WorkspaceStore } from 'mailspring-exports';
 import { Thread } from './flux/models/thread';
 import { SheetDeclaration } from './flux/stores/workspace-store';
 import { AppNavigationMenu } from '../internal_packages/account-sidebar/lib/components/app-navigation-menu';
+import { electronHexColor, WINDOWS_TITLE_BAR_HEIGHT } from './windows-title-bar';
 
 type HomeTabId = 'Threads' | 'Kanban' | 'Calendar' | 'Contacts' | 'Activity';
 
@@ -26,34 +27,6 @@ const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
   { id: 'Contacts', label: 'Contacts' },
   { id: 'Activity', label: 'Activity' },
 ];
-
-// Electron's title-bar overlay accepts hex colors, while getComputedStyle()
-// returns theme colors as rgb()/rgba(). Passing the computed value through
-// unchanged makes Electron reject the update and retain the black bootstrap
-// fallback from the BrowserWindow constructor.
-const electronHexColor = (color: string): string | null => {
-  const hexMatch = color.match(/^#([\da-f]{6})(?:[\da-f]{2})?$/i);
-  if (hexMatch) return `#${hexMatch[1]}`;
-  const match = color.match(
-    /^rgba?\(\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)(?:\s*[,/]\s*(\d+(?:\.\d+)?%?))?\s*\)$/i
-  );
-
-  const channel = (value: string) =>
-    Math.max(0, Math.min(255, Math.round(Number(value))))
-      .toString(16)
-      .padStart(2, '0');
-  if (match) return `#${channel(match[1])}${channel(match[2])}${channel(match[3])}`;
-
-  // Chromium may preserve wide-gamut colors in computed styles. Electron's native title-bar
-  // overlay only needs opaque sRGB, so normalize color(srgb ...) values here as well.
-  const srgbMatch = color.match(
-    /^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*[\d.]+%?)?\)$/i
-  );
-  if (!srgbMatch) return null;
-  return `#${channel(String(Number(srgbMatch[1]) * 255))}${channel(
-    String(Number(srgbMatch[2]) * 255)
-  )}${channel(String(Number(srgbMatch[3]) * 255))}`;
-};
 
 /**
  * The app tab strip doubles as the draggable Windows title bar. Home tabs map
@@ -117,7 +90,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       AppEnv.getCurrentWindow().setTitleBarOverlay({
         color,
         symbolColor,
-        height: 40,
+        height: WINDOWS_TITLE_BAR_HEIGHT,
       });
     });
   };

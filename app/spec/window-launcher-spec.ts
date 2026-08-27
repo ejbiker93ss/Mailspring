@@ -17,7 +17,30 @@ describe('WindowLauncher hot window readiness', () => {
     expect(isHotWindowReady(undefined)).toBe(false);
   });
 
-  it('preloads Windows secondary windows with native chrome', () => {
+  it('preloads Windows secondary windows with composer-ready themed chrome', () => {
+    if (process.platform !== 'win32') return;
+
+    const launcher = new WindowLauncher({
+      devMode: false,
+      safeMode: false,
+      specMode: true,
+      resourcePath: '',
+      configDirPath: '',
+      onCreatedHotWindow: () => {},
+      config: { get: () => undefined } as any,
+    });
+    const options = launcher._hotWindowOpts();
+
+    expect(options.frame).toBe(true);
+    expect(options.titleBarStyle).toBe('hidden');
+    expect(options.titleBarOverlay).toEqual({
+      color: '#111111',
+      symbolColor: '#ffffff',
+      height: 40,
+    });
+  });
+
+  it('keeps the themed Windows composer compatible with the hot window', () => {
     if (process.platform !== 'win32') return;
 
     const launcher = new WindowLauncher({
@@ -30,9 +53,16 @@ describe('WindowLauncher hot window readiness', () => {
       config: { get: () => undefined } as any,
     });
     const options = launcher.createDefaultWindowOpts();
+    Object.assign(options, {
+      windowType: 'composer',
+      titleBarStyle: 'hidden',
+      titleBarOverlay: {
+        color: '#111111',
+        symbolColor: '#ffffff',
+        height: 40,
+      },
+    });
 
-    expect(options.frame).toBe(true);
-    expect(options.titleBarStyle).toBeUndefined();
-    expect(options.titleBarOverlay).toBeUndefined();
+    expect(launcher._mustUseColdWindow(options)).toBe(false);
   });
 });

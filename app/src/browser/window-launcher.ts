@@ -1,6 +1,7 @@
 import { isWaylandSession } from './is-wayland';
 import MailspringWindow from './mailspring-window';
 import { MailspringWindowSettings } from './mailspring-window';
+import { WINDOWS_COMPOSER_TITLE_BAR_OVERLAY } from '../windows-title-bar';
 
 const DEBUG_SHOW_HOT_WINDOW = process.env.SHOW_HOT_WINDOW === 'true';
 let winNum = 0;
@@ -95,11 +96,18 @@ export default class WindowLauncher {
       opts.windowType !== 'default'
     ) {
       if (options.frame == null) opts.frame = true;
-      // Do not leak the main workspace's native caption overlay into composer,
-      // onboarding, or preview windows. They keep their explicitly requested
-      // frame/title-bar behavior.
-      opts.titleBarStyle = options.titleBarStyle;
-      opts.titleBarOverlay = options.titleBarOverlay;
+      if (opts.windowType === 'composer') {
+        // The composer renders a theme-aware drag region beneath Windows'
+        // native caption buttons. Keep this identical to the preloaded hot
+        // window so opening a composer does not regress to a cold renderer.
+        opts.titleBarStyle = 'hidden';
+        opts.titleBarOverlay = WINDOWS_COMPOSER_TITLE_BAR_OVERLAY;
+      } else {
+        // Other secondary windows do not render the composer title bar and
+        // retain their explicitly requested native frame behavior.
+        opts.titleBarStyle = options.titleBarStyle;
+        opts.titleBarOverlay = options.titleBarOverlay;
+      }
     }
 
     let win;
@@ -194,8 +202,7 @@ export default class WindowLauncher {
   // a window has been setup. If we detect this case we have to bootup a
   // plain MailspringWindow instead of using a hot window.
   _mustUseColdWindow(opts) {
-    const { bootstrapScript, frame, titleBarStyle, titleBarOverlay } =
-      this.createDefaultWindowOpts();
+    const { bootstrapScript, frame, titleBarStyle, titleBarOverlay } = this._hotWindowOpts();
 
     const usesOtherBootstrap = opts.bootstrapScript !== bootstrapScript;
     const usesOtherFrame = !!opts.frame !== frame;
@@ -209,6 +216,10 @@ export default class WindowLauncher {
 
   _hotWindowOpts() {
     const hotWindowOpts = this.createDefaultWindowOpts();
+    if (process.platform === 'win32') {
+      hotWindowOpts.titleBarStyle = 'hidden';
+      hotWindowOpts.titleBarOverlay = WINDOWS_COMPOSER_TITLE_BAR_OVERLAY;
+    }
     hotWindowOpts.hidden = DEBUG_SHOW_HOT_WINDOW;
     return hotWindowOpts;
   }

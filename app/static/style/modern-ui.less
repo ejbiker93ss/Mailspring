@@ -160,7 +160,8 @@ button.btn,
 }
 
 // Window chrome and workspace
-.app-tab-bar {
+.app-tab-bar,
+.composer-window-titlebar {
   background: color-mix(in srgb, @background-secondary 93%, @background-primary 7%);
   border-bottom-color: var(--fm-border);
 }
@@ -638,6 +639,10 @@ mailspring-workspace .thread-list.thread-list-narrow {
     background: var(--fm-surface-raised);
     border-bottom-color: var(--fm-border);
   }
+}
+
+.composer-window-content .composer-full-window {
+  border-radius: 0;
 }
 
 // Contacts

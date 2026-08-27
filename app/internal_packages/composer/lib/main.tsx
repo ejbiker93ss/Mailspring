@@ -10,8 +10,85 @@ import {
   InflatesDraftClientId,
 } from 'mailspring-exports';
 import ComposerView from './composer-view';
+import { electronHexColor, WINDOWS_TITLE_BAR_HEIGHT } from '../../../src/windows-title-bar';
 
 const ComposerViewForDraftClientId = InflatesDraftClientId(ComposerView);
+
+class ComposerWindowTitleBar extends React.Component<{ title: string }, { title: string }> {
+  private titleBar = React.createRef<HTMLElement>();
+  private themeDisposable?: { dispose: () => void };
+  private nativeColorSyncTimers: number[] = [];
+
+  constructor(props) {
+    super(props);
+    this.state = { title: props.title };
+  }
+
+  componentDidMount() {
+    this.themeDisposable = AppEnv.themes.onDidChangeActiveThemes(this._queueNativeColorSync);
+    window.addEventListener('focus', this._queueNativeColorSync);
+    this._queueNativeColorSync();
+  }
+
+  componentWillUnmount() {
+    this.themeDisposable?.dispose();
+    window.removeEventListener('focus', this._queueNativeColorSync);
+    this.nativeColorSyncTimers.forEach((timer) => window.clearTimeout(timer));
+  }
+
+  setTitle(title: string) {
+    if (title !== this.state.title) this.setState({ title });
+  }
+
+  _queueNativeColorSync = () => {
+    if (process.platform !== 'win32') return;
+    this.nativeColorSyncTimers.forEach((timer) => window.clearTimeout(timer));
+    this.nativeColorSyncTimers = [0, 75, 300, 1000].map((delay) =>
+      window.setTimeout(this._syncNativeColors, delay)
+    );
+  };
+
+  _syncNativeColors = () => {
+    window.requestAnimationFrame(() => {
+      if (!this.titleBar.current) return;
+      const style = window.getComputedStyle(this.titleBar.current);
+      const color = electronHexColor(style.backgroundColor);
+      const symbolColor = electronHexColor(style.color);
+      if (!color || !symbolColor) return;
+      AppEnv.getCurrentWindow().setTitleBarOverlay({
+        color,
+        symbolColor,
+        height: WINDOWS_TITLE_BAR_HEIGHT,
+      });
+    });
+  };
+
+  _onDoubleClick = () => {
+    const win = AppEnv.getCurrentWindow();
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  };
+
+  render() {
+    return (
+      <header
+        ref={this.titleBar}
+        className="composer-window-titlebar"
+        onDoubleClick={this._onDoubleClick}
+      >
+        <span className="composer-window-app-mark" aria-hidden="true">
+          <svg viewBox="0 0 20 20">
+            <path d="M3.25 5.25h13.5v9.5H3.25z" />
+            <path d="m3.75 6 6.25 5 6.25-5" />
+          </svg>
+        </span>
+        <span className="composer-window-title" title={this.state.title}>
+          {this.state.title}
+        </span>
+      </header>
+    );
+  }
+}
 
 class ComposerWithWindowProps extends React.Component<
   Record<string, unknown>,
@@ -22,6 +99,8 @@ class ComposerWithWindowProps extends React.Component<
 
   _usub?: () => void;
   _composerComponent?: any;
+  _titleBar?: ComposerWindowTitleBar;
+  _windowTitle: string;
 
   constructor(props) {
     super(props);
@@ -38,9 +117,8 @@ class ComposerWithWindowProps extends React.Component<
 
     // Set the OS window title immediately based on the draft subject (if any)
     const subject = draft.subject && draft.subject.trim();
-    AppEnv.getCurrentWindow().setTitle(
-      subject || (newDraft ? localized('New Message') : localized('Message'))
-    );
+    this._windowTitle = subject || (newDraft ? localized('New Message') : localized('Message'));
+    AppEnv.getCurrentWindow().setTitle(this._windowTitle);
   }
 
   componentWillUnmount() {
@@ -63,9 +141,9 @@ class ComposerWithWindowProps extends React.Component<
       const d = session.draft();
       if (!d) return;
       const subject = d.subject && d.subject.trim();
-      AppEnv.getCurrentWindow().setTitle(
-        subject || (newDraft ? localized('New Message') : localized('Message'))
-      );
+      this._windowTitle = subject || (newDraft ? localized('New Message') : localized('Message'));
+      AppEnv.getCurrentWindow().setTitle(this._windowTitle);
+      this._titleBar?.setTitle(this._windowTitle);
     });
 
     AppEnv.displayWindow();
@@ -77,14 +155,26 @@ class ComposerWithWindowProps extends React.Component<
 
   render() {
     return (
-      <ComposerViewForDraftClientId
-        ref={(cm) => {
-          this._composerComponent = cm;
-        }}
-        onDraftReady={this._onDraftReady}
-        headerMessageId={this.state.headerMessageId}
-        className="composer-full-window"
-      />
+      <div className="composer-window-shell">
+        {process.platform === 'win32' ? (
+          <ComposerWindowTitleBar
+            ref={(titleBar) => {
+              this._titleBar = titleBar;
+            }}
+            title={this._windowTitle}
+          />
+        ) : null}
+        <div className="composer-window-content">
+          <ComposerViewForDraftClientId
+            ref={(cm) => {
+              this._composerComponent = cm;
+            }}
+            onDraftReady={this._onDraftReady}
+            headerMessageId={this.state.headerMessageId}
+            className="composer-full-window"
+          />
+        </div>
+      </div>
     );
   }
 
