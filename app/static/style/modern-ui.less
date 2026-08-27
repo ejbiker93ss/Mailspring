@@ -499,20 +499,20 @@ mailspring-workspace .thread-list.thread-list-narrow {
   .thread-list-narrow-actions {
     position: absolute;
     z-index: 4;
-    top: 5px;
-    right: 6px;
+    top: 50%;
+    right: 4px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    gap: 1px;
-    padding: 1px;
+    gap: 0;
+    padding: 2px;
     border: 1px solid fade(@text-color, 11%);
     border-radius: 7px;
     background: color-mix(in srgb, @background-primary 90%, @background-secondary 10%);
     box-shadow: 0 4px 12px fade(#000, 18%);
     opacity: 0;
     pointer-events: none;
-    transform: translateX(5px);
+    transform: translate(5px, -50%);
     transition:
       opacity 100ms ease,
       transform 100ms ease;
@@ -522,7 +522,7 @@ mailspring-workspace .thread-list.thread-list-narrow {
   .list-item:focus-within .thread-list-narrow-actions {
     opacity: 1;
     pointer-events: auto;
-    transform: translateX(0);
+    transform: translate(0, -50%);
   }
 
   .list-item:hover .thread-injected-timestamp,
@@ -532,6 +532,11 @@ mailspring-workspace .thread-list.thread-list-narrow {
   .list-item:hover .thread-icon-attachment,
   .list-item:focus-within .thread-icon-attachment {
     opacity: 0;
+  }
+
+  .list-item:hover .thread-info-column,
+  .list-item:focus-within .thread-info-column {
+    padding-right: 27px;
   }
 
   .thread-list-narrow-actions button {
