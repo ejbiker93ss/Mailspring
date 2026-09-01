@@ -9,7 +9,6 @@ import {
   CategoryStore,
   TaskFactory,
   MailboxPerspective,
-  Actions,
 } from 'mailspring-exports';
 import SearchQuerySubscription from './search-query-subscription';
 
@@ -36,30 +35,7 @@ class SearchMailboxPerspective extends MailboxPerspective {
   }
 
   emptyMessage() {
-    const inTrash = this.isSearchingTrash();
-
-    return (
-      <span>
-        {localized('No search results')}
-        {!inTrash && (
-          <div>
-            <a
-              className="btn"
-              style={{ fontWeight: 'normal' }}
-              onClick={() =>
-                Actions.searchQuerySubmitted(`${this.searchQuery} (in:trash OR in:spam)`)
-              }
-            >
-              {localized('Search messages in trash and spam')}
-            </a>
-          </div>
-        )}
-      </span>
-    );
-  }
-
-  isSearchingTrash() {
-    return /in: ?['"]?(trash|spam)/gi.test(this.searchQuery);
+    return <span>{localized('No search results')}</span>;
   }
 
   isEqual(other) {
@@ -67,15 +43,10 @@ class SearchMailboxPerspective extends MailboxPerspective {
   }
 
   threads() {
-    // If your query doesn't explicitly ask for results in trash or in spam, we exclude
-    // them to increase the quality of results, and a button in the empty state (above)
-    // allows you to switch to showing trash results.
-    let finalQuery = this.searchQuery.trim();
-    if (!this.isSearchingTrash()) {
-      finalQuery = `(${finalQuery}) NOT (in:trash OR in:spam)`;
-    }
-
-    return new SearchQuerySubscription(finalQuery, this.accountIds);
+    // Search exactly what the user entered. Applying an implicit thread-level Trash / Spam
+    // exclusion can hide valid Inbox messages when any other message in the conversation
+    // is deleted or marked as spam.
+    return new SearchQuerySubscription(this.searchQuery.trim(), this.accountIds);
   }
 
   canReceiveThreadsFromAccountIds() {

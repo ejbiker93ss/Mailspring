@@ -26,6 +26,7 @@ import * as ExtensionRegistry from '../../registries/extension-registry';
 import { localized } from '../../intl';
 import { DatabaseChangeRecord } from './database-change-record';
 import UnthreadedState from './unthreaded-state';
+import { DraftSendState, draftSendStateForDelay } from './draft-send-state';
 
 interface IThreadMessageModelOrId {
   thread?: Thread;
@@ -48,7 +49,7 @@ Section: Drafts
 */
 class DraftStore extends MailspringStore {
   _draftSessions: { [headerMessageId: string]: DraftEditingSession } = {};
-  _draftsSending: { [headerMessageId: string]: boolean } = {};
+  _draftsSending: { [headerMessageId: string]: DraftSendState | boolean } = {};
 
   constructor() {
     super();
@@ -56,6 +57,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.composeReply, this._onComposeReply);
     this.listenTo(Actions.quoteSelection, this._onQuoteSelection);
     this.listenTo(Actions.composeForward, this._onComposeForward);
+    this.listenTo(Actions.composeSendAgain, this._onComposeSendAgain);
     this.listenTo(Actions.composeAndSendForward, this._onComposeAndSendForward);
     this.listenTo(Actions.composePopoutDraft, this._onPopoutDraft);
     this.listenTo(Actions.composeNewBlankDraft, this._onPopoutBlankDraft);
@@ -113,7 +115,14 @@ class DraftStore extends MailspringStore {
   // Public: Look up the sending state of the given draft headerMessageId.
   // In popout windows the existance of the window is the sending state.
   isSendingDraft(headerMessageId: string) {
-    return this._draftsSending[headerMessageId] || false;
+    return !!this._draftsSending[headerMessageId];
+  }
+
+  sendStateForDraft(headerMessageId: string): DraftSendState | null {
+    const state = this._draftsSending[headerMessageId];
+    // Keep boolean compatibility for plugins and older tests that set this map directly.
+    if (state === true) return { phase: 'sending' };
+    return state || null;
   }
 
   _doneWithSession(session: DraftEditingSession) {
@@ -192,7 +201,7 @@ class DraftStore extends MailspringStore {
     // if the user has canceled an undo send, ensure we no longer show "sending..."
     // this is a fake status!
     for (const draft of drafts) {
-      if (this._draftsSending[draft.headerMessageId]) {
+      if (this.sendStateForDraft(draft.headerMessageId)?.phase === 'countdown') {
         const m = draft.metadataForPluginId('send-later') as any;
         if (m && m.isUndoSend && !m.expiration) {
           delete this._draftsSending[draft.headerMessageId];
@@ -330,6 +339,22 @@ class DraftStore extends MailspringStore {
     });
   };
 
+  _onComposeSendAgain = async ({
+    thread,
+    threadId,
+    message,
+    messageId,
+  }: IThreadMessageModelOrId) => {
+    const resolved = await this._modelifyContext({ thread, threadId, message, messageId });
+    if (!resolved.message) return;
+
+    const draft = await DraftFactory.createDraftForSendAgain(resolved.message);
+    return this._finalizeAndPersistNewMessage(draft, {
+      popout: true,
+      prepareNewDraft: false,
+    });
+  };
+
   _onComposeAndSendForward = async ({
     thread,
     threadId,
@@ -414,14 +439,19 @@ class DraftStore extends MailspringStore {
     return Promise.props(queries);
   }
 
-  async _finalizeAndPersistNewMessage(draft: Message, { popout }: { popout?: boolean } = {}) {
+  async _finalizeAndPersistNewMessage(
+    draft: Message,
+    { popout, prepareNewDraft = true }: { popout?: boolean; prepareNewDraft?: boolean } = {}
+  ) {
     // Give extensions an opportunity to perform additional setup to the draft
-    ExtensionRegistry.Composer.extensions().forEach((extension) => {
-      if (!extension.prepareNewDraft) {
-        return;
-      }
-      extension.prepareNewDraft({ draft });
-    });
+    if (prepareNewDraft) {
+      ExtensionRegistry.Composer.extensions().forEach((extension) => {
+        if (!extension.prepareNewDraft) {
+          return;
+        }
+        extension.prepareNewDraft({ draft });
+      });
+    }
 
     // Optimistically create a draft session and hand it the draft so that it
     // doesn't need to do a query for it a second from now when the composer wants it.
@@ -590,7 +620,16 @@ class DraftStore extends MailspringStore {
     const { delay = AppEnv.config.get('core.sending.undoSend'), actionKey = DefaultSendActionKey } =
       options;
 
-    this._draftsSending[headerMessageId] = true;
+    const previousSendState = this.sendStateForDraft(headerMessageId);
+    const sendStartedAt = Date.now();
+    this._draftsSending[headerMessageId] = draftSendStateForDelay(delay, sendStartedAt);
+
+    // The first send waits to notify until the latest editor changes are committed below.
+    // A delayed send is already visible, so notify immediately when it transitions to the
+    // real delivery phase.
+    if (previousSendState) {
+      this.trigger({ headerMessageId });
+    }
 
     const sendAction = SendActionsStore.sendActionForKey(actionKey);
     if (!sendAction) {
@@ -598,7 +637,7 @@ class DraftStore extends MailspringStore {
     }
 
     const sendLaterMetadataValue = delay > 0 && {
-      expiration: new Date(Date.now() + delay),
+      expiration: new Date(sendStartedAt + delay),
       isUndoSend: true,
       actionKey: actionKey,
     };

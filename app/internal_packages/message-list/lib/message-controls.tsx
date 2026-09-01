@@ -36,6 +36,11 @@ export default class MessageControls extends React.Component<MessageControlsProp
       image: 'ic-dropdown-forward.png',
       select: this._onForward,
     };
+    const sendAgain = {
+      name: localized('Send Again'),
+      image: 'ic-dropdown-forward.png',
+      select: this._onSendAgain,
+    };
 
     const showOriginal = {
       name: localized('Show Original'),
@@ -43,13 +48,19 @@ export default class MessageControls extends React.Component<MessageControlsProp
       select: this._onShowOriginal,
     };
 
+    const secondaryActions = [forward];
+    if (this.props.message.folder && this.props.message.folder.role === 'sent') {
+      secondaryActions.push(sendAgain);
+    }
+    secondaryActions.push(showOriginal);
+
     if (!this.props.message.canReplyAll()) {
-      return [reply, forward, showOriginal];
+      return [reply, ...secondaryActions];
     }
     const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
     return defaultReplyType === 'reply-all'
-      ? [replyAll, reply, forward, showOriginal]
-      : [reply, replyAll, forward, showOriginal];
+      ? [replyAll, reply, ...secondaryActions]
+      : [reply, replyAll, ...secondaryActions];
   }
 
   _dropdownMenu(items: Array<{ name: string; image: string; select: () => void }>) {
@@ -93,6 +104,11 @@ export default class MessageControls extends React.Component<MessageControlsProp
   _onForward = () => {
     const { thread, message } = this.props;
     Actions.composeForward({ thread, message });
+  };
+
+  _onSendAgain = () => {
+    const { thread, message } = this.props;
+    Actions.composeSendAgain({ threadId: thread.id, messageId: message.id });
   };
 
   _onDownloadEml = () => {

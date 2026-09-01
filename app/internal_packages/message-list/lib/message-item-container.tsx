@@ -22,7 +22,7 @@ interface MessageItemContainerProps {
 }
 
 interface MessageItemContainerState {
-  isSending: boolean;
+  sendState: ReturnType<typeof DraftStore.sendStateForDraft>;
 }
 
 export default class MessageItemContainer extends React.Component<
@@ -93,17 +93,24 @@ export default class MessageItemContainer extends React.Component<
 
   _getStateFromStores(props = this.props) {
     return {
-      isSending: DraftStore.isSendingDraft(props.message.headerMessageId),
+      sendState: DraftStore.sendStateForDraft(props.message.headerMessageId),
     };
   }
 
-  _renderMessage({ pending }: { pending: boolean }) {
+  _renderMessage({
+    pending,
+    sendState = null,
+  }: {
+    pending: boolean;
+    sendState?: ReturnType<typeof DraftStore.sendStateForDraft>;
+  }) {
     return (
       <MessageItem
         ref={(cm) => {
           this._messageComponent = cm;
         }}
         pending={pending}
+        sendState={sendState}
         thread={this.props.thread}
         message={this.props.message}
         messages={this.props.messages}
@@ -134,8 +141,8 @@ export default class MessageItemContainer extends React.Component<
   }
 
   render() {
-    if (this.state.isSending) {
-      return this._renderMessage({ pending: true });
+    if (this.state.sendState) {
+      return this._renderMessage({ pending: true, sendState: this.state.sendState });
     }
     if (this.props.message.draft && !this.props.collapsed) {
       return this._renderComposer();

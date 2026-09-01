@@ -3,9 +3,33 @@ import {
   rankOfRole,
   wrapInQuotes,
   getCurrentTokenAndTerm,
+  getThreadSuggestions,
 } from '../lib/search-bar-util';
+import { DatabaseStore, SearchQueryParser } from 'mailspring-exports';
 
 describe('search-bar-util', function () {
+  describe('getThreadSuggestions()', function () {
+    it('does not implicitly exclude trash or spam', async function () {
+      const query: any = {
+        structuredSearch: jasmine.createSpy('structuredSearch'),
+        order: jasmine.createSpy('order'),
+        limit: jasmine.createSpy('limit'),
+        background: jasmine.createSpy('background'),
+      };
+      query.structuredSearch.andReturn(query);
+      query.order.andReturn(query);
+      query.limit.andReturn(query);
+      query.background.andReturn(Promise.resolve([]));
+
+      spyOn(DatabaseStore, 'findAll').andReturn(query);
+      spyOn(SearchQueryParser, 'parse').andReturn({});
+
+      await getThreadSuggestions('chino', []);
+
+      expect(SearchQueryParser.parse).toHaveBeenCalledWith('subject:"chino"');
+    });
+  });
+
   describe('rankOfRole()', function () {
     it("returns 20 for 'inbox' (highest rank)", function () {
       expect(rankOfRole('inbox')).toBe(20);

@@ -616,9 +616,61 @@ body.platform-win32 {
       }
     }
 
-    .btn-send {
+    .button-dropdown.btn-send.btn-emphasis {
       margin-right: 10px;
       white-space: nowrap;
+      border-radius: var(--fm-radius-sm);
+
+      // Keep the primary composer action in the active theme instead of the
+      // legacy Windows-only blue treatment applied by button-dropdown.less.
+      .primary-item,
+      .secondary-picker,
+      .only-item {
+        position: relative;
+        left: auto;
+        right: auto;
+        border: 0;
+        background: @accent-primary;
+        box-shadow: none;
+        color: @text-color-inverse;
+
+        &:before {
+          content: none;
+        }
+
+        img.content-mask {
+          background-color: @text-color-inverse;
+        }
+
+        &:hover {
+          background: color-mix(in srgb, @accent-primary 88%, @text-color-inverse);
+          box-shadow: none;
+        }
+
+        &:active {
+          background: color-mix(in srgb, @accent-primary 84%, @background-primary);
+          box-shadow: none;
+        }
+
+        &:focus-visible {
+          z-index: 1;
+          outline: 2px solid color-mix(in srgb, @accent-primary 54%, @text-color-inverse);
+          outline-offset: 2px;
+        }
+      }
+
+      .primary-item {
+        border-radius: var(--fm-radius-sm) 0 0 var(--fm-radius-sm);
+      }
+
+      .secondary-picker {
+        border-left: 1px solid color-mix(in srgb, @text-color-inverse 24%, transparent);
+        border-radius: 0 var(--fm-radius-sm) var(--fm-radius-sm) 0;
+      }
+
+      .only-item {
+        border-radius: var(--fm-radius-sm);
+      }
     }
 
     .composer-attach-button-group {

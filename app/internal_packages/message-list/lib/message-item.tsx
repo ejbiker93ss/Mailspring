@@ -7,6 +7,7 @@ import {
   Actions,
   AttachmentStore,
   MessageStore,
+  DraftStore,
 } from 'mailspring-exports';
 import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'mailspring-component-kit';
 
@@ -14,6 +15,7 @@ import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
 import MessageTimestamp from './message-timestamp';
 import MessageControls from './message-controls';
+import SendProgressIndicator from './send-progress-indicator';
 
 interface MessageItemProps {
   thread: Thread;
@@ -21,6 +23,7 @@ interface MessageItemProps {
   messages: Message[];
   collapsed: boolean;
   pending: boolean;
+  sendState?: ReturnType<typeof DraftStore.sendStateForDraft>;
   isMostRecent: boolean;
   className: string;
 }
@@ -182,8 +185,8 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
           matching={{ role: 'MessageHeader' }}
           exposedProps={{ message: message, thread: thread, messages: messages }}
         />
-        <div className="pending-spinner" style={{ position: 'absolute', marginTop: -2 }}>
-          <RetinaImg width={18} name="sending-spinner.gif" mode={RetinaImg.Mode.ContentPreserve} />
+        <div className="pending-send-status">
+          {this.props.sendState && <SendProgressIndicator sendState={this.props.sendState} />}
         </div>
         <div className="message-header-right">
           <MessageTimestamp

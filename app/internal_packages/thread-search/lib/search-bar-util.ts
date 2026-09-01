@@ -28,9 +28,7 @@ export const wrapInQuotes = (s: string) => `"${s.replace(/"/g, '')}"`;
 
 export const getThreadSuggestions = async (term: string, accountIds: string[]) => {
   let dbQuery = DatabaseStore.findAll<Thread>(Thread)
-    .structuredSearch(
-      SearchQueryParser.parse(`subject:${wrapInQuotes(term)} NOT (in:trash OR in:spam)`)
-    )
+    .structuredSearch(SearchQueryParser.parse(`subject:${wrapInQuotes(term)}`))
     .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
     .limit(10);
 

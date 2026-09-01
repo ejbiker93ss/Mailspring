@@ -1,5 +1,18 @@
 # Mailspring Changelog
 
+## 1.23.24 (9/1/2026)
+
+Improvements:
+
+- Added **Send Again** for sent messages, opening an editable copy in a new composer.
+- Replaced the legacy sending image with an undo-send countdown and a modern delivery spinner.
+- Made the composer Send button follow the active theme's accent colors and rounded control styling.
+
+Bug Fixes:
+
+- Searched all matching messages without implicitly excluding conversations associated with Trash or Spam.
+- Trimmed stray whitespace from recipient email addresses before validation and sending.
+
 ## 1.23.23 (8/27/2026)
 
 Bug Fixes:
