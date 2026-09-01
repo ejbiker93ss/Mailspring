@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.25 (9/1/2026)
+
+Bug Fixes:
+
+- Made the undo-send countdown and delivery spinner readable across light, dark, and custom themes with a larger high-contrast status badge and explicit seconds label.
+
 ## 1.23.24 (9/1/2026)
 
 Improvements:

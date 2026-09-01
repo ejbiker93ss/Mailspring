@@ -80,7 +80,7 @@ export default class SendProgressIndicator extends React.Component<
           />
         </svg>
         <span className="send-progress-seconds" aria-hidden="true">
-          {seconds}
+          {seconds}s
         </span>
       </span>
     );

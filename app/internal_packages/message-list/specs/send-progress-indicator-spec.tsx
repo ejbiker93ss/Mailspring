@@ -15,7 +15,7 @@ describe('SendProgressIndicator', function () {
     );
 
     expect(remainingSendSeconds(startedAt + 5000, startedAt)).toBe(5);
-    expect(container.querySelector('.send-progress-seconds').textContent).toBe('5');
+    expect(container.querySelector('.send-progress-seconds').textContent).toBe('5s');
     expect(container.querySelector('.send-progress-indicator').getAttribute('aria-label')).toBe(
       'Sending in 5s'
     );

@@ -536,7 +536,7 @@ body.platform-win32 {
 
     .pending-send-status {
       position: absolute;
-      margin-top: -4px;
+      margin-top: -7px;
       transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
       opacity: 0;
@@ -545,22 +545,24 @@ body.platform-win32 {
     .send-progress-indicator {
       position: relative;
       display: inline-grid;
-      width: 24px;
-      height: 24px;
+      width: 30px;
+      height: 30px;
       place-items: center;
-      color: @accent-primary;
+      border-radius: 50%;
+      background: color-mix(in srgb, @text-color 9%, @background-primary);
+      color: color-mix(in srgb, @text-color 86%, @accent-primary);
 
       svg {
         display: block;
-        width: 24px;
-        height: 24px;
+        width: 30px;
+        height: 30px;
         overflow: visible;
         transform: rotate(-90deg);
       }
 
       circle {
         fill: none;
-        stroke-width: 2;
+        stroke-width: 2.2;
       }
 
       .send-progress-track {
@@ -582,7 +584,8 @@ body.platform-win32 {
         inset: 0;
         display: grid;
         place-items: center;
-        font-size: 9px;
+        color: @text-color;
+        font-size: 10px;
         font-weight: @font-weight-semi-bold;
         font-variant-numeric: tabular-nums;
         line-height: 1;
