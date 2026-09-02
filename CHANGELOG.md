@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.27 (9/2/2026)
+
+Bug Fixes:
+
+- Restored Outlook's **Ctrl+Q** and **Ctrl+U** read-state shortcuts by preventing disabled native menu items from consuming renderer-managed key commands.
+
 ## 1.23.26 (9/2/2026)
 
 Bug Fixes:

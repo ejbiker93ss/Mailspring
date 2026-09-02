@@ -289,6 +289,13 @@ export default class ApplicationMenu {
         };
         if (!/^application:/.test(item.command)) {
           item.metadata['windowSpecific'] = true;
+          // Renderer commands are context-sensitive and may have disabled menu
+          // items while another handler for the same command is active. Keep
+          // showing their shortcuts in the native menu, but let the renderer's
+          // keymap manager dispatch them so Electron cannot swallow the key.
+          if (process.platform !== 'darwin') {
+            item.registerAccelerator = false;
+          }
         }
       }
       if (item.submenu) {
