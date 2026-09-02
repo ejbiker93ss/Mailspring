@@ -7,6 +7,10 @@ import { Emitter, Disposable } from 'event-kit';
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
 
+interface KeymapLoadOptions {
+  replaceExistingCommands?: boolean;
+}
+
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
@@ -72,10 +76,16 @@ class KeymapFile {
   _disposable = null;
   _path: string;
   _manager: KeymapManager;
+  _replaceExistingCommands: boolean;
 
-  constructor(manager: KeymapManager, filePath: string) {
+  constructor(
+    manager: KeymapManager,
+    filePath: string,
+    { replaceExistingCommands = false }: KeymapLoadOptions = {}
+  ) {
     this._manager = manager;
     this._path = filePath;
+    this._replaceExistingCommands = replaceExistingCommands;
   }
 
   load = () => {
@@ -116,6 +126,10 @@ class KeymapFile {
 
   bindings() {
     return this._bindings;
+  }
+
+  replacesExistingCommands() {
+    return this._replaceExistingCommands;
   }
 }
 
@@ -219,12 +233,16 @@ export default class KeymapManager {
         'templates',
         `${templateFile}.json`
       );
-      this._removeTemplate = this.loadKeymap(templateKeymapPath);
+      // Templates describe a complete binding for each command they include.
+      // Commands omitted by the template continue to inherit the base keymap.
+      this._removeTemplate = this.loadKeymap(templateKeymapPath, {
+        replaceExistingCommands: true,
+      });
     }
   };
 
-  loadKeymap(filePath: string) {
-    const file = new KeymapFile(this, filePath);
+  loadKeymap(filePath: string, { replaceExistingCommands = false }: KeymapLoadOptions = {}) {
+    const file = new KeymapFile(this, filePath, { replaceExistingCommands });
     this._files.push(file);
     file.load();
 
@@ -259,7 +277,13 @@ export default class KeymapManager {
       const fileBindings = file.bindings();
       for (const command of Object.keys(fileBindings)) {
         const keystrokesArray = fileBindings[command];
-        this._bindingsCache[command] = (this._bindingsCache[command] || []).concat(keystrokesArray);
+        if (file.replacesExistingCommands()) {
+          this._bindingsCache[command] = keystrokesArray.slice();
+        } else {
+          this._bindingsCache[command] = (this._bindingsCache[command] || []).concat(
+            keystrokesArray
+          );
+        }
       }
     }
     if (this.userKeymap) {

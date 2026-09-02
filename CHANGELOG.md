@@ -1,5 +1,13 @@
 # Mailspring Changelog
 
+## 1.23.26 (9/2/2026)
+
+Bug Fixes:
+
+- Displayed calendar invite times from Windows and IANA time zones at the correct local time.
+- Positioned the undo-send countdown and delivery spinner in the message card's left gutter.
+- Made selected keymap templates replace conflicting base command bindings, so Outlook's **Ctrl+Q** marks messages as read instead of quitting Mailspring.
+
 ## 1.23.25 (9/1/2026)
 
 Bug Fixes:
