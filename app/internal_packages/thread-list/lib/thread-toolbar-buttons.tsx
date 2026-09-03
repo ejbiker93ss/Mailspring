@@ -341,12 +341,10 @@ export class ToggleUnreadButton extends React.Component<{ items: Thread[] }> {
 
     return (
       <BindGlobalCommands
-        key={key}
-        commands={
-          targetUnread
-            ? { 'core:mark-as-unread': () => this._onChangeUnread(true) }
-            : { 'core:mark-as-read': () => this._onChangeUnread(false) }
-        }
+        commands={{
+          'core:mark-as-read': () => this._onChangeUnread(false),
+          'core:mark-as-unread': () => this._onChangeUnread(true),
+        }}
       >
         <button
           tabIndex={-1}

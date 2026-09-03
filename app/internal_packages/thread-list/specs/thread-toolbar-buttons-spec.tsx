@@ -81,6 +81,22 @@ describe('ThreadToolbarButtons', function () {
       expect(Actions.queueTask).toHaveBeenCalled();
     });
 
+    it('handles both explicit read-state commands while mounted', function () {
+      const button = ReactDOM.findDOMNode(markUnreadBtn) as HTMLElement;
+      button.focus();
+
+      AppEnv.commands.dispatch('core:mark-as-read');
+      let commandArgs = (TaskFactory.taskForSettingUnread as any).mostRecentCall.args[0];
+      expect(commandArgs.threads).toEqual([thread]);
+      expect(commandArgs.unread).toBe(false);
+
+      AppEnv.commands.dispatch('core:mark-as-unread');
+      commandArgs = (TaskFactory.taskForSettingUnread as any).mostRecentCall.args[0];
+      expect(commandArgs.threads).toEqual([thread]);
+      expect(commandArgs.unread).toBe(true);
+      expect((Actions.queueTask as any).callCount).toBe(2);
+    });
+
     it('returns to the thread list', function () {
       spyOn(Actions, 'popSheet');
       ReactTestUtils.Simulate.click(ReactDOM.findDOMNode(markUnreadBtn) as HTMLElement);

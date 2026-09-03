@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.29 (9/3/2026)
+
+Bug Fixes:
+
+- Kept both Outlook read-state commands registered while a conversation is selected, so **Ctrl+Q** reliably marks it read and **Ctrl+U** reliably marks it unread.
+
 ## 1.23.28 (9/2/2026)
 
 Bug Fixes:
