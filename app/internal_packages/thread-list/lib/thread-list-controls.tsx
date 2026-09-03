@@ -65,6 +65,7 @@ export default class ThreadListControls extends React.Component<
         aria-label={localized('Message list controls')}
       >
         <button
+          type="button"
           className="thread-list-control"
           onClick={UnthreadedState.toggleSort}
           title={sortTitle}
@@ -73,6 +74,7 @@ export default class ThreadListControls extends React.Component<
           <ToolbarIcon name="sort" />
         </button>
         <button
+          type="button"
           className={`thread-list-control ${this.state.unreadOnly ? 'active' : ''}`}
           onClick={UnthreadedState.toggleUnreadOnly}
           title={unreadTitle}
@@ -82,6 +84,7 @@ export default class ThreadListControls extends React.Component<
           <ToolbarIcon name="unread" />
         </button>
         <button
+          type="button"
           className="thread-list-control"
           onClick={this._refresh}
           title={localized('Refresh')}

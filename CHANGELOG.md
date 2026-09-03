@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.31 (9/3/2026)
+
+Bug Fixes:
+
+- Made the message-list date sort and unread-only controls redraw the visible messages immediately.
+
 ## 1.23.30 (9/3/2026)
 
 Bug Fixes:

@@ -46,8 +46,11 @@ class VisibleMessagesStore extends MailspringStore {
     this._reload();
   }
 
-  items() {
-    return this._items;
+  visibleItems() {
+    return filterAndSortVisibleItems(this._items, {
+      unreadOnly: UnthreadedState.unreadOnly(),
+      sortAscending: UnthreadedState.sortAscending(),
+    });
   }
 
   loading() {
@@ -74,18 +77,32 @@ class VisibleMessagesStore extends MailspringStore {
   _getUnthreadedQueryState = () => ({
     enabled: UnthreadedState.enabled(),
     layout: UnthreadedState.layout(),
+    sortAscending: UnthreadedState.sortAscending(),
+    unreadOnly: UnthreadedState.unreadOnly(),
   });
 
   _onUnthreadedStateChanged = () => {
     const next = this._getUnthreadedQueryState();
+    const previous = this._unthreadedQueryState;
     if (
-      next.enabled === this._unthreadedQueryState.enabled &&
-      next.layout === this._unthreadedQueryState.layout
+      next.enabled === previous.enabled &&
+      next.layout === previous.layout &&
+      next.sortAscending === previous.sortAscending &&
+      next.unreadOnly === previous.unreadOnly
     ) {
       return;
     }
     this._unthreadedQueryState = next;
-    this._reload();
+
+    if (next.enabled !== previous.enabled || next.layout !== previous.layout) {
+      this._reload();
+      return;
+    }
+
+    // Sorting and unread filtering are local operations. Emit a data-source
+    // change with a newly derived array so the list redraws immediately even
+    // though the underlying query result did not change.
+    this.trigger();
   };
 
   _shouldIncludeMessage(message) {
@@ -223,7 +240,7 @@ export default class UnthreadedThreadList extends React.Component {
     layout: UnthreadedState.layout(),
     sortAscending: UnthreadedState.sortAscending(),
     unreadOnly: UnthreadedState.unreadOnly(),
-    items: visibleMessagesStore.items(),
+    visibleItems: visibleMessagesStore.visibleItems(),
     loading: visibleMessagesStore.loading(),
     selected: UnthreadedState.selected(),
     expandedThreads: this.state && this.state.expandedThreads ? this.state.expandedThreads : {},
@@ -282,10 +299,7 @@ export default class UnthreadedThreadList extends React.Component {
   }
 
   _visibleItems() {
-    return filterAndSortVisibleItems(this.state.items, {
-      unreadOnly: this.state.unreadOnly,
-      sortAscending: this.state.sortAscending,
-    });
+    return this.state.visibleItems;
   }
 
   _groupedItems(items = this._visibleItems()) {
