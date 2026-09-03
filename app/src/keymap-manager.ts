@@ -11,6 +11,9 @@ interface KeymapLoadOptions {
   replaceExistingCommands?: boolean;
 }
 
+const normalizePlatformKeystrokes = (keystrokes: string) =>
+  keystrokes.replace(/\bmod\b/g, process.platform === 'darwin' ? 'command' : 'ctrl');
+
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
@@ -253,13 +256,24 @@ export default class KeymapManager {
   }
 
   ensureKeystrokesRegistered(keystrokes: string) {
-    if (this._registered[keystrokes]) {
+    const platformKeystrokes = normalizePlatformKeystrokes(keystrokes);
+    if (this._registered[platformKeystrokes]) {
       return;
     }
-    this._registered[keystrokes] = true;
+    this._registered[platformKeystrokes] = true;
 
-    mousetrap.bind(keystrokes, () => {
-      for (const command of this._commandsCache[keystrokes] || []) {
+    mousetrap.bind(platformKeystrokes, () => {
+      const commands = this._commandsCache[platformKeystrokes] || [];
+
+      // Registrations outlive the keymap file that introduced them so users can
+      // switch templates without rebinding Mousetrap. If this keystroke is no
+      // longer active, leave the event untouched. Returning false for an empty
+      // registration would stop propagation without performing an action.
+      if (commands.length === 0) {
+        return;
+      }
+
+      for (const command of commands) {
         if (command.startsWith('application:')) {
           ipcRenderer.send('command', command);
         } else {
@@ -296,11 +310,12 @@ export default class KeymapManager {
     this._commandsCache = {};
     for (const command of Object.keys(this._bindingsCache)) {
       for (const keystrokes of this._bindingsCache[command]) {
-        if (!this._commandsCache[keystrokes]) {
-          this._commandsCache[keystrokes] = [];
+        const platformKeystrokes = normalizePlatformKeystrokes(keystrokes);
+        if (!this._commandsCache[platformKeystrokes]) {
+          this._commandsCache[platformKeystrokes] = [];
         }
-        if (!this._commandsCache[keystrokes].includes(command)) {
-          this._commandsCache[keystrokes].push(command);
+        if (!this._commandsCache[platformKeystrokes].includes(command)) {
+          this._commandsCache[platformKeystrokes].push(command);
         }
       }
     }

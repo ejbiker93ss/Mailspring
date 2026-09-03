@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.30 (9/3/2026)
+
+Bug Fixes:
+
+- Normalized platform shortcut aliases before registration so Outlook's **Ctrl+Q** and **Ctrl+U** reach the read-state commands instead of being consumed by competing `mod` bindings.
+
 ## 1.23.29 (9/3/2026)
 
 Bug Fixes:

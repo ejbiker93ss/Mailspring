@@ -15,7 +15,10 @@ describe('KeymapManager', function () {
     expect(manager.getBindingsForCommand('core:mark-as-read')).toEqual(['ctrl+q']);
     expect(manager.getBindingsForCommand('core:copy')).toEqual(['mod+c']);
     expect((manager as any)._commandsCache['ctrl+q']).toEqual(['core:mark-as-read']);
-    expect((manager as any)._commandsCache['ctrl+u']).toEqual(['core:mark-as-unread']);
+    expect((manager as any)._commandsCache['ctrl+u']).toEqual([
+      'contenteditable:underline',
+      'core:mark-as-unread',
+    ]);
 
     outlookKeymap.dispose();
     expect(manager.getBindingsForCommand('application:quit')).toEqual(['mod+q']);
