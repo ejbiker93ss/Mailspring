@@ -14,6 +14,8 @@ describe('KeymapManager', function () {
     expect(manager.getBindingsForCommand('application:quit')).toEqual(['alt+f4']);
     expect(manager.getBindingsForCommand('core:mark-as-read')).toEqual(['ctrl+q']);
     expect(manager.getBindingsForCommand('core:copy')).toEqual(['mod+c']);
+    expect((manager as any)._commandsCache['ctrl+q']).toEqual(['core:mark-as-read']);
+    expect((manager as any)._commandsCache['ctrl+u']).toEqual(['core:mark-as-unread']);
 
     outlookKeymap.dispose();
     expect(manager.getBindingsForCommand('application:quit')).toEqual(['mod+q']);
