@@ -89,6 +89,12 @@ describe('ModelQuery', function ModelQuerySpecs() {
     it('should return the query so it can be chained', () => {
       expect(this.q.order(this.o2)).toBe(this.q);
     });
+
+    it('should replace an existing ordering', () => {
+      this.q.order(this.o1);
+      expect(this.q.replaceOrder(this.o2)).toBe(this.q);
+      expect(this.q._orders).toEqual([this.o2]);
+    });
   });
 
   describe('include', () => {

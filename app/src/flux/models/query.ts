@@ -203,6 +203,15 @@ export default class ModelQuery<T extends Model | Model[]> {
     return this;
   }
 
+  // Public: Replace the query's complete sort order. This is useful when a
+  // caller is adapting a cloned query whose natural/default order has already
+  // been finalized into the clone.
+  replaceOrder(ordersOrOrder: SortOrder | SortOrder[]) {
+    this._assertNotFinalized();
+    this._orders = [];
+    return this.order(ordersOrOrder);
+  }
+
   // Public: Set the `singular` flag - only one model will be returned from the
   // query, and a `LIMIT 1` clause will be used.
   //

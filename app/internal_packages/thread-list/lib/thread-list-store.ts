@@ -5,20 +5,30 @@ import {
   Actions,
   Thread,
   QueryResultSet,
+  MutableQuerySubscription,
   WorkspaceStore,
   FocusedContentStore,
   FocusedPerspectiveStore,
 } from 'mailspring-exports';
 import { ListTabular, ListDataSource } from 'mailspring-component-kit';
 import ThreadListDataSource from './thread-list-data-source';
+import { queryWithThreadListOptions } from './thread-list-query-options';
+import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 
 class ThreadListStore extends MailspringStore {
   _dataSource?: ListDataSource;
   _dataSourceUnlisten: () => void;
+  _viewOptions: {
+    unthreadedEnabled: boolean;
+    sortAscending: boolean;
+    unreadOnly: boolean;
+  };
 
   constructor() {
     super();
+    this._viewOptions = this._getViewOptions();
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
+    this.listenTo(UnthreadedState, this._onViewOptionsChanged);
     this.createListDataSource();
   }
 
@@ -26,7 +36,28 @@ class ThreadListStore extends MailspringStore {
     return this._dataSource;
   };
 
-  createListDataSource = () => {
+  _getViewOptions = () => ({
+    unthreadedEnabled: UnthreadedState.enabled(),
+    sortAscending: UnthreadedState.sortAscending(),
+    unreadOnly: UnthreadedState.unreadOnly(),
+  });
+
+  _applyViewOptions = (subscription) => {
+    if (!subscription || UnthreadedState.enabled()) {
+      return subscription;
+    }
+
+    const query = queryWithThreadListOptions(subscription.query(), {
+      isSent: FocusedPerspectiveStore.current().isSent(),
+      sortAscending: UnthreadedState.sortAscending(),
+      unreadOnly: UnthreadedState.unreadOnly(),
+    });
+
+    (subscription as MutableQuerySubscription<Thread>).replaceQuery(query);
+    return subscription;
+  };
+
+  createListDataSource = ({ preserveFocus = false } = {}) => {
     if (typeof this._dataSourceUnlisten === 'function') {
       this._dataSourceUnlisten();
     }
@@ -36,7 +67,7 @@ class ThreadListStore extends MailspringStore {
       this._dataSource = null;
     }
 
-    const threadsSubscription = FocusedPerspectiveStore.current().threads();
+    const threadsSubscription = this._applyViewOptions(FocusedPerspectiveStore.current().threads());
     if (threadsSubscription) {
       this._dataSource = new ThreadListDataSource(threadsSubscription);
       this._dataSourceUnlisten = this._dataSource.listen(this._onDataChanged, this);
@@ -45,7 +76,9 @@ class ThreadListStore extends MailspringStore {
     }
 
     this.trigger(this);
-    Actions.setFocus({ collection: 'thread', item: null });
+    if (!preserveFocus) {
+      Actions.setFocus({ collection: 'thread', item: null });
+    }
   };
 
   selectionObservable = () => {
@@ -56,6 +89,27 @@ class ThreadListStore extends MailspringStore {
 
   _onPerspectiveChanged = () => {
     this.createListDataSource();
+  };
+
+  _onViewOptionsChanged = () => {
+    const next = this._getViewOptions();
+    const previous = this._viewOptions;
+    if (
+      next.unthreadedEnabled === previous.unthreadedEnabled &&
+      next.sortAscending === previous.sortAscending &&
+      next.unreadOnly === previous.unreadOnly
+    ) {
+      return;
+    }
+
+    this._viewOptions = next;
+    if (!next.unthreadedEnabled) {
+      this.createListDataSource({
+        preserveFocus:
+          next.unreadOnly === previous.unreadOnly &&
+          next.unthreadedEnabled === previous.unthreadedEnabled,
+      });
+    }
   };
 
   _onDataChanged = ({

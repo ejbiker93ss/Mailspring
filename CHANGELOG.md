@@ -1,5 +1,11 @@
 # Mailspring Changelog
 
+## 1.23.32 (9/3/2026)
+
+Bug Fixes:
+
+- Wired the message-list date sort and unread-only controls to the standard threaded-list database query.
+
 ## 1.23.31 (9/3/2026)
 
 Bug Fixes:
