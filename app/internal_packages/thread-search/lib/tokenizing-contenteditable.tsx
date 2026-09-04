@@ -46,6 +46,10 @@ export default class TokenizingContenteditable extends Component<TokenizingConte
     this._textEl.blur();
   };
 
+  value = () => {
+    return this._textEl.innerText.replace(/\s/g, ' ');
+  };
+
   resetScrollPosition = () => {
     const container = this._textEl && this._textEl.parentElement;
     if (!container) return;

@@ -31,6 +31,16 @@ describe('ThreadSearchBar', function () {
     expect(Actions.searchQueryChanged).toHaveBeenCalledWith(test);
   });
 
+  it('submits the current editor value when Enter follows input before props update', function () {
+    spyOn(Actions, 'searchQuerySubmitted');
+    const query = 'quarterly planning';
+
+    ReactTestUtils.Simulate.input(this.input, { target: { innerText: query } as any });
+    ReactTestUtils.Simulate.keyDown(this.input, { keyCode: 13 });
+
+    expect(Actions.searchQuerySubmitted).toHaveBeenCalledWith(query);
+  });
+
   it('shows long blurred queries as a complete, ellipsizable summary', function () {
     const query =
       'from:avery.long.email.address@example.com subject:"Quarterly production planning review"';

@@ -224,7 +224,10 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
       if (selected) {
         this._onChooseSuggestion(selected);
       } else {
-        this._onSubmitSearchQuery(this.props.query);
+        // The connected query prop can still contain the previous value when
+        // input and keydown are batched together. Submit what is actually in
+        // the editor so pressing Enter never searches for an empty/stale term.
+        this._onSubmitSearchQuery(this._fieldEl.value());
       }
     }
   };

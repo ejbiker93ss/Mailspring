@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.34 (9/4/2026)
+
+Bug Fixes:
+
+- Fixed search submissions occasionally using an empty or stale query when Enter immediately followed typing.
+
 ## 1.23.33 (9/4/2026)
 
 Changes:
