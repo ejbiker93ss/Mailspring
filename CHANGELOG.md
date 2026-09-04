@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.37 (9/4/2026)
+
+Changes:
+
+- Replaced the SummerMail application, installer, Start menu, and Linux icons with the new sunset-tree envelope artwork.
+
 ## 1.23.36 (9/4/2026)
 
 Bug Fixes:
