@@ -36,4 +36,16 @@ describe('ThreadListStore toolbar options', () => {
 
     expect(ThreadListStore.createListDataSource).toHaveBeenCalledWith({ preserveFocus: false });
   });
+
+  it('keeps deferred-query subscriptions connected while their query is being prepared', () => {
+    const subscription = {
+      query: jasmine.createSpy('query').andReturn(null),
+      replaceQuery: jasmine.createSpy('replaceQuery'),
+    };
+
+    const result = (ThreadListStore as any)._applyViewOptions(subscription);
+
+    expect(result).toBe(subscription);
+    expect(subscription.replaceQuery).not.toHaveBeenCalled();
+  });
 });

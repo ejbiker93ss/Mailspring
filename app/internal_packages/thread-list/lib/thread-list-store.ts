@@ -47,7 +47,16 @@ class ThreadListStore extends SummerMailStore {
       return subscription;
     }
 
-    const query = queryWithThreadListOptions(subscription.query(), {
+    // Some subscriptions, notably SearchQuerySubscription, install their query on
+    // the next event-loop turn. They still need to be connected to the list now so
+    // that their eventual result set is rendered. Trying to clone a null query here
+    // aborts the perspective switch and leaves the previous mailbox rows on screen.
+    const sourceQuery = subscription.query();
+    if (!sourceQuery) {
+      return subscription;
+    }
+
+    const query = queryWithThreadListOptions(sourceQuery, {
       isSent: FocusedPerspectiveStore.current().isSent(),
       sortAscending: UnthreadedState.sortAscending(),
       unreadOnly: UnthreadedState.unreadOnly(),

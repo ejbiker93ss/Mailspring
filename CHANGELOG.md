@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.40 (9/4/2026)
+
+Bug Fixes:
+
+- Fixed searches leaving the previous Inbox results visible when the search subscription was still preparing its database query.
+- Added a database migration and composite index for account-scoped search result ordering.
+
 ## 1.23.39 (9/4/2026)
 
 Bug Fixes:
