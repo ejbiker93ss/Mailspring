@@ -43,7 +43,7 @@ Assert-File $mailsync 'Development mailsync executable'
 Write-Host 'Fast UI development restart' -ForegroundColor Cyan
 Write-Host "Repository: $repoRoot"
 Write-Host 'Builds:     skipped (frontend package and native backend)'
-Write-Host 'Data:       Mailspring-dev'
+Write-Host 'Data:       SummerMail-dev'
 
 $running = @(Get-WorkspaceDevProcesses)
 if ($running.Count -gt 0) {

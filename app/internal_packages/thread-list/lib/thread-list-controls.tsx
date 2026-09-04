@@ -1,4 +1,4 @@
-import { React, localized } from 'mailspring-exports';
+import { React, localized } from 'summermail-exports';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 

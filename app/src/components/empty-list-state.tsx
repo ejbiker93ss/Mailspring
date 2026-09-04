@@ -8,8 +8,8 @@ import {
   MailboxPerspective,
   FolderSyncProgressStore,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
-import { SyncingListState } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { SyncingListState } from 'summermail-component-kit';
 
 const INBOX_ZERO_ANIMATIONS = ['gem', 'oasis', 'tron', 'airstrip', 'galaxy'];
 

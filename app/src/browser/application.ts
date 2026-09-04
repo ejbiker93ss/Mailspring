@@ -18,7 +18,7 @@ import AutoUpdateManager from './autoupdate-manager';
 import SystemAccentWatcher from './system-accent-watcher';
 import SystemTrayManager from './system-tray-manager';
 import { DefaultClientHelper } from '../default-client-helper';
-import MailspringProtocolHandler from './mailspring-protocol-handler';
+import SummerMailProtocolHandler from './summermail-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
 import moveToApplications from './move-to-applications';
 import { MailsyncProcess } from '../mailsync-process';
@@ -31,6 +31,18 @@ import {
 import WindowsTaskbarManager from './windows-taskbar-manager';
 import { completeAccountSetup } from './complete-account-setup';
 import { resetThemeForRecovery } from './theme-recovery';
+
+const openConfiguredWebsite = (environmentVariable: string, label: string) => {
+  const target = process.env[environmentVariable];
+  if (target && /^https?:\/\//i.test(target)) {
+    shell.openExternal(target);
+    return;
+  }
+  dialog.showMessageBox({
+    type: 'info',
+    message: `${label} is not configured for this build of SummerMail.`,
+  });
+};
 
 let clipboard = null;
 
@@ -50,7 +62,7 @@ export default class Application extends EventEmitter {
   configPersistenceManager: ConfigPersistenceManager;
   fileListCache: FileListCache;
   applicationMenu: ApplicationMenu;
-  mailspringProtocolHandler: MailspringProtocolHandler;
+  summermailProtocolHandler: SummerMailProtocolHandler;
   windowManager: WindowManager;
   autoUpdateManager: AutoUpdateManager;
   systemAccentWatcher: SystemAccentWatcher;
@@ -77,7 +89,7 @@ export default class Application extends EventEmitter {
     this.safeMode = safeMode;
 
     this.fileListCache = new FileListCache();
-    this.mailspringProtocolHandler = new MailspringProtocolHandler({
+    this.summermailProtocolHandler = new SummerMailProtocolHandler({
       configDirPath,
       resourcePath,
       safeMode,
@@ -93,13 +105,13 @@ export default class Application extends EventEmitter {
       let buttons = [localized('Quit')];
       if (err.toString().includes('ENOENT')) {
         message = localized(
-          `Mailspring could not find the mailsync process. If you're building Mailspring from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`
+          `SummerMail could not find the mailsync process. If you're building SummerMail from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`
         );
       } else if (err.toString().includes('spawn')) {
-        message = localized(`Mailspring could not spawn the mailsync process. %@`, err.toString());
+        message = localized(`SummerMail could not spawn the mailsync process. %@`, err.toString());
       } else {
         message = localized(
-          `We encountered a problem with your local email database. %@\n\nCheck that no other copies of Mailspring are running and click Rebuild to reset your local cache.`,
+          `We encountered a problem with your local email database. %@\n\nCheck that no other copies of SummerMail are running and click Rebuild to reset your local cache.`,
           err.toString()
         );
         buttons = [localized('Quit'), localized('Rebuild')];
@@ -184,9 +196,9 @@ export default class Application extends EventEmitter {
 
     if (process.platform === 'linux') {
       const helper = new DefaultClientHelper();
-      helper.registerForURLScheme('mailspring');
+      helper.registerForURLScheme('summermail');
     } else {
-      app.setAsDefaultProtocolClient('mailspring');
+      app.setAsDefaultProtocolClient('summermail');
     }
   }
 
@@ -276,7 +288,7 @@ export default class Application extends EventEmitter {
     if (!addedToDock && appPath.includes('/Applications/') && appPath.includes('.app/')) {
       const appBundlePath = appPath.split('.app/')[0];
       proc.exec(
-        `defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-type</key><string>file-tile</string><key>tile-data</key><dict><key>file-type</key><integer>41</integer><key>file-label</key><string>Mailspring</string><key>bundle-identifier</key><string>com.mailspring.mailspring</string><key>file-data</key><dict><key>_CFURLString</key><string>file://${appBundlePath}.app/</string><key>_CFURLStringType</key><integer>15</integer></dict></dict></dict>" && pkill "Dock"`
+        `defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-type</key><string>file-tile</string><key>tile-data</key><dict><key>file-type</key><integer>41</integer><key>file-label</key><string>SummerMail</string><key>bundle-identifier</key><string>com.summermail.summermail</string><key>file-data</key><dict><key>_CFURLString</key><string>file://${appBundlePath}.app/</string><key>_CFURLStringType</key><integer>15</integer></dict></dict></dict>" && pkill "Dock"`
       );
       this.config.set('addedToDock', true);
     }
@@ -321,7 +333,7 @@ export default class Application extends EventEmitter {
     if (hasAccount) {
       this.windowManager.ensureWindow(WindowManager.MAIN_WINDOW, {}, behavior);
     } else {
-      const title = localized('Welcome to Mailspring');
+      const title = localized('Welcome to SummerMail');
       this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, { title }, behavior);
     }
   }
@@ -413,8 +425,8 @@ export default class Application extends EventEmitter {
       app.quit();
     });
 
-    this.on('application:inspect', ({ x, y, MailspringWindow }) => {
-      const win = MailspringWindow || this.windowManager.focusedWindow();
+    this.on('application:inspect', ({ x, y, SummerMailWindow }) => {
+      const win = SummerMailWindow || this.windowManager.focusedWindow();
       if (!win) {
         return;
       }
@@ -428,7 +440,7 @@ export default class Application extends EventEmitter {
         onboarding.focus();
       } else {
         this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
-          title: localized('Welcome to Mailspring'),
+          title: localized('Welcome to SummerMail'),
           windowProps: {},
         });
       }
@@ -472,18 +484,15 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:view-help', () => {
-      const helpUrl = 'https://community.getmailspring.com/docs';
-      shell.openExternal(helpUrl);
+      openConfiguredWebsite('SUMMERMAIL_HELP_URL', 'Online help');
     });
 
     this.on('application:view-getting-started', () => {
-      const helpUrl = 'https://community.getmailspring.com/pub/quick-start-guide';
-      shell.openExternal(helpUrl);
+      openConfiguredWebsite('SUMMERMAIL_GETTING_STARTED_URL', 'The getting-started guide');
     });
 
     this.on('application:view-community', () => {
-      const helpUrl = 'https://community.getmailspring.com/';
-      shell.openExternal(helpUrl);
+      openConfiguredWebsite('SUMMERMAIL_COMMUNITY_URL', 'The community site');
     });
 
     this.on('application:open-preferences', () => {
@@ -673,7 +682,7 @@ export default class Application extends EventEmitter {
         defaultId: 0,
         message,
         detail: `${detail}\n\n${localized(
-          'Reset Theme and Restart restores the bundled automatic, light, and dark themes, clears cached theme styles, and restarts Mailspring. Your accounts, mail, plugins, and other settings are not changed.'
+          'Reset Theme and Restart restores the bundled automatic, light, and dark themes, clears cached theme styles, and restarts SummerMail. Your accounts, mail, plugins, and other settings are not changed.'
         )}`,
       });
       if (buttonIndex === 0) {
@@ -969,16 +978,16 @@ export default class Application extends EventEmitter {
   // Public: Executes the given command on the given window.
   //
   // command - The string representing the command.
-  // MailspringWindow - The {MailspringWindow} to send the command to.
+  // SummerMailWindow - The {SummerMailWindow} to send the command to.
   // args - The optional arguments to pass along.
-  sendCommandToWindow = (command, MailspringWindow, ...args) => {
+  sendCommandToWindow = (command, SummerMailWindow, ...args) => {
     console.log('sendCommandToWindow');
     console.log(command);
     if (this.emit(command, ...args)) {
       return;
     }
-    if (MailspringWindow) {
-      MailspringWindow.sendCommand(command, ...args);
+    if (SummerMailWindow) {
+      SummerMailWindow.sendCommand(command, ...args);
     } else {
       this.sendCommandToFirstResponder(command);
     }
@@ -1025,7 +1034,7 @@ export default class Application extends EventEmitter {
 
     if (parts.protocol === 'mailto:') {
       main.sendMessage('mailto', urlToOpen);
-    } else if (parts.protocol === 'mailspring:') {
+    } else if (parts.protocol === 'summermail:' || parts.protocol === 'mailspring:') {
       // Handle notification action URLs from Windows toast notifications
       // These URLs are triggered when users click buttons on Windows toast notifications
       // since Windows toast XML with activationType="background" doesn't work reliably with Electron
@@ -1055,7 +1064,7 @@ export default class Application extends EventEmitter {
     }
   }
 
-  // Opens up a new {MailspringWindow} to run specs within.
+  // Opens up a new {SummerMailWindow} to run specs within.
   //
   // options -
   //   :exitWhenDone - A Boolean that, if true, will close the window upon
@@ -1086,9 +1095,9 @@ export default class Application extends EventEmitter {
       );
     }
 
-    // Important: Use .mailspring-spec instead of .mailspring-mail to avoid overwriting the
+    // Important: Use .summermail-spec instead of .summermail-mail to avoid overwriting the
     // user's real email config!
-    const configDirPath = path.join(app.getPath('home'), '.mailspring-spec');
+    const configDirPath = path.join(app.getPath('home'), '.summermail-spec');
 
     specWindowOptions.resourcePath = resourcePath;
     specWindowOptions.configDirPath = configDirPath;

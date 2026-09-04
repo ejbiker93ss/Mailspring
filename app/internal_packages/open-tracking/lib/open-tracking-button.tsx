@@ -4,9 +4,9 @@ import {
   DraftEditingSession,
   localized,
   APIError,
-  MailspringAPIRequest,
-} from 'mailspring-exports';
-import { MetadataComposerToggleButton } from 'mailspring-component-kit';
+  SummerMailAPIRequest,
+} from 'summermail-exports';
+import { MetadataComposerToggleButton } from 'summermail-component-kit';
 import { PLUGIN_ID, PLUGIN_NAME } from './open-tracking-constants';
 
 type Props = { draft: Message; session: DraftEditingSession };
@@ -14,7 +14,7 @@ type Props = { draft: Message; session: DraftEditingSession };
 function errorMessage(error: Error) {
   if (
     error instanceof APIError &&
-    MailspringAPIRequest.TimeoutErrorCodes.includes(error.statusCode)
+    SummerMailAPIRequest.TimeoutErrorCodes.includes(error.statusCode)
   ) {
     return localized(
       `Open tracking does not work offline. Please re-enable when you come back online.`
@@ -32,7 +32,7 @@ const OpenTrackingButtonInner: React.FC<Props> = ({ draft, session }) => {
   }
   return (
     <MetadataComposerToggleButton
-      iconUrl="mailspring://open-tracking/assets/icon-composer-eye@2x.png"
+      iconUrl="summermail://open-tracking/assets/icon-composer-eye@2x.png"
       pluginId={PLUGIN_ID}
       pluginName={PLUGIN_NAME}
       metadataEnabledValue={{ open_count: 0, open_data: [] }}

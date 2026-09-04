@@ -11,7 +11,7 @@ export class McpHttpServer {
 
   private _createServer(): McpServer {
     const server = new McpServer({
-      name: 'mailspring',
+      name: 'summermail',
       version: '1.0.0',
     });
     registerTools(server);

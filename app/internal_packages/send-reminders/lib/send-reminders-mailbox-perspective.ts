@@ -4,7 +4,7 @@ import {
   MailboxPerspective,
   MutableQuerySubscription,
   DatabaseStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import { PLUGIN_ID } from './send-reminders-constants';
 

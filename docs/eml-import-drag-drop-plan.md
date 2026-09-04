@@ -3,13 +3,13 @@
 ## Overview
 
 Allow users to drag `.eml` files from their desktop/file manager onto a folder
-in the Mailspring sidebar to upload those messages to the remote mail server via
+in the SummerMail sidebar to upload those messages to the remote mail server via
 IMAP APPEND. This is the natural complement to the EML export feature.
 
 ## Motivation
 
-Users have requested a way to import email messages into Mailspring without
-needing an external client like Thunderbird. Since Mailspring already supports
+Users have requested a way to import email messages into SummerMail without
+needing an external client like Thunderbird. Since SummerMail already supports
 dragging threads between folders in the sidebar, extending the drop handler to
 accept native `.eml` files is a natural fit.
 
@@ -72,7 +72,7 @@ export class AppendMessageTask extends Task {
 }
 ```
 
-Register in `mailspring-exports.js` and `.d.ts`.
+Register in `summermail-exports.js` and `.d.ts`.
 
 ### 2. Extend Sidebar Drop Handlers
 
@@ -83,7 +83,7 @@ Modify `shouldAcceptDrop` to also accept native file drops:
 ```typescript
 shouldAcceptDrop(item, event) {
   // Existing thread-move logic
-  if (event.dataTransfer.types.includes('mailspring-threads-data')) {
+  if (event.dataTransfer.types.includes('summermail-threads-data')) {
     // ... existing checks ...
   }
 
@@ -104,7 +104,7 @@ Modify `onDrop` to handle file drops:
 ```typescript
 onDrop(item, event) {
   // Existing thread-move path
-  const jsonString = event.dataTransfer.getData('mailspring-threads-data');
+  const jsonString = event.dataTransfer.getData('summermail-threads-data');
   if (jsonString) {
     // ... existing logic ...
     return;
@@ -137,7 +137,7 @@ Block drops on virtual/system perspectives that don't map to real IMAP folders:
 
 The `category.role` check handles this (same pattern as folder export).
 
-## Backend Changes (Mailspring-Sync)
+## Backend Changes (SummerMail-Sync)
 
 ### 1. New Task Handler: `AppendMessageTask`
 

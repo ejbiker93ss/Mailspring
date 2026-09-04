@@ -118,7 +118,7 @@ const TOOLS = [
     type: 'function',
     name: 'trash_threads',
     description:
-      "Propose deleting known threads returned by search_mail or list_threads by moving them to each account's Trash folder. This never changes mail immediately; Mailspring shows a confirmation card.",
+      "Propose deleting known threads returned by search_mail or list_threads by moving them to each account's Trash folder. This never changes mail immediately; SummerMail shows a confirmation card.",
     strict: true,
     parameters: {
       type: 'object',
@@ -133,7 +133,7 @@ const TOOLS = [
     type: 'function',
     name: 'mark_threads_read',
     description:
-      'Propose marking known threads returned by search_mail or list_threads as read. This never changes mail immediately; Mailspring shows a confirmation card.',
+      'Propose marking known threads returned by search_mail or list_threads as read. This never changes mail immediately; SummerMail shows a confirmation card.',
     strict: true,
     parameters: {
       type: 'object',
@@ -148,7 +148,7 @@ const TOOLS = [
     type: 'function',
     name: 'move_threads',
     description:
-      'Propose moving known threads returned by search_mail or list_threads to a folder returned by list_folders. This never moves mail immediately; Mailspring shows a confirmation card.',
+      'Propose moving known threads returned by search_mail or list_threads to a folder returned by list_folders. This never moves mail immediately; SummerMail shows a confirmation card.',
     strict: true,
     parameters: {
       type: 'object',
@@ -165,7 +165,7 @@ const TOOLS = [
     type: 'function',
     name: 'list_accounts',
     description:
-      'List the email accounts the user has allowed the local Mailspring MCP server to access.',
+      'List the email accounts the user has allowed the local SummerMail MCP server to access.',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
   },
   {

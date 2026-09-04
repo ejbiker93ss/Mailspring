@@ -5,8 +5,8 @@ import {
   Message,
   MessageWithEditorState,
   localized,
-} from 'mailspring-exports';
-import { ComposerEditor } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { ComposerEditor } from 'summermail-component-kit';
 
 import { buildThreadSummaryTranscript } from '../../message-list/lib/ai-summary-client';
 import { summarizeMailText } from '../../message-list/lib/openai-mail-assistant-client';

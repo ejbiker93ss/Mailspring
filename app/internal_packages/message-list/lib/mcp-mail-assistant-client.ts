@@ -5,7 +5,7 @@ import {
   Message,
   SearchQueryParser,
   Thread,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import {
   checkAccountAccess,
   checkFolderAccess,
@@ -52,7 +52,7 @@ function serializeAssistantThreadSummary(
   if (!summary) return null;
   return {
     ...summary,
-    mailspringLink: mailAssistantThreadHref(thread.id),
+    summermailLink: mailAssistantThreadHref(thread.id),
     participants: (thread.participants || []).map((contact) => ({
       name: contact.name,
       email: contact.email,
@@ -163,5 +163,5 @@ export async function callMailboxReadTool(
     .order(Message.attributes.date.ascending());
   const detail = serializeThreadDetail(thread, messages);
   if (!detail) throw new Error(`Thread '${args.threadId}' not found`);
-  return json({ ...detail, mailspringLink: mailAssistantThreadHref(thread.id) });
+  return json({ ...detail, summermailLink: mailAssistantThreadHref(thread.id) });
 }

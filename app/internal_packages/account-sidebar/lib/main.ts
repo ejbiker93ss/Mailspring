@@ -1,4 +1,4 @@
-import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { ComponentRegistry, WorkspaceStore } from 'summermail-exports';
 import AccountSidebar from './components/account-sidebar';
 import { activateMboxExportRunner, deactivateMboxExportRunner } from './mbox-export-runner';
 

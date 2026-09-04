@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { localized, Actions, Message, Thread } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { localized, Actions, Message, Thread } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import OpenTrackingMessagePopover from './open-tracking-message-popover';
 import { PLUGIN_ID } from './open-tracking-constants';
 
@@ -82,7 +82,7 @@ export default class OpenTrackingIcon extends React.Component<{
       >
         <RetinaImg
           className={opened ? 'opened' : 'unopened'}
-          url="mailspring://open-tracking/assets/icon-tracking-opened@2x.png"
+          url="summermail://open-tracking/assets/icon-tracking-opened@2x.png"
           mode={RetinaImg.Mode.ContentIsMask}
           aria-hidden="true"
         />

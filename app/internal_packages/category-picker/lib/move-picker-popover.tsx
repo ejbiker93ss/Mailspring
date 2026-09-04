@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Menu, RetinaImg, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
+import { Menu, RetinaImg, LabelColorizer, BoldedSearchResult } from 'summermail-component-kit';
 import {
   Utils,
   localized,
@@ -14,8 +14,8 @@ import {
   ChangeFolderTask,
   ChangeLabelsTask,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
-import { Categories } from 'mailspring-observables';
+} from 'summermail-exports';
+import { Categories } from 'summermail-observables';
 import { CategoryData } from './types';
 
 interface MovePickerPopoverProps {

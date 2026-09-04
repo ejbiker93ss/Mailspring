@@ -1,5 +1,5 @@
 import SheetContainer from '../src/sheet-container';
-import { WorkspaceStore } from 'mailspring-exports';
+import { WorkspaceStore } from 'summermail-exports';
 
 describe('SheetContainer hot window transitions', () => {
   it('re-renders with the composer window type before showing a reused hot window', () => {

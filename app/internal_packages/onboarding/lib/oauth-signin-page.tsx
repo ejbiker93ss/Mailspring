@@ -1,7 +1,7 @@
 import { shell } from 'electron';
 import React from 'react';
-import { localized, localizedReactFragment, Account } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { localized, localizedReactFragment, Account } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import http from 'http';
 import url from 'url';
 
@@ -90,7 +90,7 @@ export default class OAuthSignInPage extends React.Component<
       AppEnv.showErrorDialog({
         title: localized('Unable to Start Local Server'),
         message: localized(
-          `To listen for the Gmail Oauth response, Mailspring needs to start a webserver on port ${LOCAL_SERVER_PORT}. Please go back and try linking your account again. If this error persists, use the IMAP/SMTP option with a Gmail App Password.\n\n%@`,
+          `To listen for the Gmail Oauth response, SummerMail needs to start a webserver on port ${LOCAL_SERVER_PORT}. Please go back and try linking your account again. If this error persists, use the IMAP/SMTP option with a Gmail App Password.\n\n%@`,
           err
         ),
       });
@@ -163,7 +163,7 @@ export default class OAuthSignInPage extends React.Component<
       return (
         <div>
           <h2>{localized('Successfully connected to %@!', this.props.serviceName)}</h2>
-          <h3>{localized('Adding your account to Mailspring…')}</h3>
+          <h3>{localized('Adding your account to SummerMail…')}</h3>
         </div>
       );
     }

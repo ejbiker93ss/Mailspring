@@ -59,9 +59,13 @@ export default class AutoUpdateManager extends EventEmitter {
       }
     }
 
-    let host = `updates.getmailspring.com`;
+    let host = process.env.SUMMERMAIL_UPDATE_HOST;
     if (this.config.get('env') === 'staging') {
-      host = `updates-staging.getmailspring.com`;
+      host = process.env.SUMMERMAIL_UPDATE_STAGING_HOST;
+    }
+    if (!host) {
+      this.feedURL = '';
+      return;
     }
 
     this.feedURL = `https://${host}/check/${params.platform}/${params.arch}/${params.version}/${params.id}/${params.channel}`;
@@ -87,6 +91,10 @@ export default class AutoUpdateManager extends EventEmitter {
       this.setState(ErrorState);
     });
 
+    if (!this.feedURL) {
+      this.setState(UnsupportedState);
+      return;
+    }
     autoUpdater.setFeedURL(this.feedURL);
 
     autoUpdater.on('checking-for-update', () => {
@@ -164,6 +172,18 @@ export default class AutoUpdateManager extends EventEmitter {
 
   check({ hidePopups }: { hidePopups?: boolean } = {}) {
     this.updateFeedURL();
+    if (!this.feedURL) {
+      this.setState(UnsupportedState);
+      if (!hidePopups) {
+        dialog.showMessageBox({
+          type: 'info',
+          buttons: [localized('OK')],
+          icon: this.dialogIcon(),
+          message: localized('Updates are not configured for this build of SummerMail.'),
+        });
+      }
+      return;
+    }
     if (!hidePopups) {
       autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
       autoUpdater.once('error', this.onUpdateError);
@@ -180,7 +200,7 @@ export default class AutoUpdateManager extends EventEmitter {
       global.application.resourcePath,
       'static',
       'images',
-      'mailspring.png'
+      'summermail.png'
     );
     if (!fs.existsSync(iconPath)) return undefined;
     return nativeImage.createFromPath(iconPath);
@@ -194,7 +214,7 @@ export default class AutoUpdateManager extends EventEmitter {
       icon: this.dialogIcon(),
       message: localized('No update available.'),
       title: localized('No update available.'),
-      detail: localized(`You're running the latest version of Mailspring (%@).`, this.version),
+      detail: localized(`You're running the latest version of SummerMail (%@).`, this.version),
     });
   };
 

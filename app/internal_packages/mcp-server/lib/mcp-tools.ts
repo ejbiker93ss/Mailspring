@@ -20,7 +20,7 @@ import {
   TaskQueue,
   Actions,
   SearchQueryParser,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import {
   checkAccessLevel,
   checkAccountAccess,
@@ -202,7 +202,7 @@ export function registerTools(server: McpServer) {
   defineTool(
     server,
     'list_accounts',
-    'List all email accounts configured in Mailspring',
+    'List all email accounts configured in SummerMail',
     {},
     'read',
     async () => {

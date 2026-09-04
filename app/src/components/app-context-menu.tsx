@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Actions } from 'mailspring-exports';
+import { Actions } from 'summermail-exports';
 import { Menu } from './menu';
 
 export type AppContextMenuItem =

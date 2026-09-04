@@ -1,4 +1,4 @@
-import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { ComponentRegistry, WorkspaceStore } from 'summermail-exports';
 import MailKanban from './mail-kanban';
 
 export function activate() {

@@ -1,4 +1,4 @@
-import { Account } from 'mailspring-exports';
+import { Account } from 'summermail-exports';
 
 export const SIDEBAR_ACCOUNT_ORDER_CONFIG_KEY = 'core.workspace.sidebarAccountOrder';
 export const SIDEBAR_FOLDER_ORDER_CONFIG_KEY = 'core.workspace.sidebarFolderOrderByAccount';

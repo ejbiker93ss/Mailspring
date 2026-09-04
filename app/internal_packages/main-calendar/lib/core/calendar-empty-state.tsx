@@ -1,5 +1,5 @@
 import React from 'react';
-import { Account, Actions, localized } from 'mailspring-exports';
+import { Account, Actions, localized } from 'summermail-exports';
 
 export function CalendarEmptyState({ accounts = [] }: { accounts?: Account[] }) {
   const configuredAccounts = accounts.filter((account) => account.settings.caldav_host);
@@ -31,7 +31,7 @@ export function CalendarEmptyState({ accounts = [] }: { accounts?: Account[] }) 
                 'No calendars were discovered. For SmarterMail, confirm WebDAV service access is enabled for this user and that the URL and app password match the WebDAV card in SmarterMail.'
               )
             : localized(
-                'None of your connected accounts provide calendars. Mailspring supports calendars from Gmail and other providers with CalDAV support.'
+                'None of your connected accounts provide calendars. SummerMail supports calendars from Gmail and other providers with CalDAV support.'
               )}
         </p>
         <div className="calendar-empty-state-actions">

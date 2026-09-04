@@ -1,5 +1,5 @@
 // Import the functions under test directly from the source file.
-// We use a relative path because the plugin is not registered in mailspring-exports.
+// We use a relative path because the plugin is not registered in summermail-exports.
 import {
   isPastDate,
   canMoveEvent,

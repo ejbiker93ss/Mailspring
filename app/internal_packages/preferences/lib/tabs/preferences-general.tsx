@@ -1,7 +1,7 @@
 /* eslint global-require: 0*/
 import React from 'react';
 import fs from 'fs';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 import ConfigSchemaItem from './config-schema-item';
 import WorkspaceSection from './workspace-section';
 import SendingSection from './sending-section';

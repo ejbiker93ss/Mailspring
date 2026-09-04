@@ -1,12 +1,12 @@
 import crypto from 'crypto';
 import http from 'http';
 import { shell } from 'electron';
-import { Account, KeyManager, localized } from 'mailspring-exports';
+import { Account, KeyManager, localized } from 'summermail-exports';
 
 import { LOCAL_SERVER_PORT, O365_CLIENT_ID } from '../../../onboarding/lib/onboarding-constants';
 
 export const MICROSOFT_TEAMS_CONNECTION_ID = 'microsoft-teams-graph';
-export const MICROSOFT_TEAMS_CONNECTION_CONFIG_KEY = 'mailspring.microsoftTeamsConnection';
+export const MICROSOFT_TEAMS_CONNECTION_CONFIG_KEY = 'summermail.microsoftTeamsConnection';
 const MICROSOFT_TEAMS_REFRESH_TOKEN_KEY = 'microsoft-teams-graph-refresh-token';
 const REDIRECT_URI = `http://localhost:${LOCAL_SERVER_PORT}/desktop`;
 export const MICROSOFT_TEAMS_GRAPH_SCOPES = [
@@ -193,15 +193,15 @@ export async function connectMicrosoftTeams(): Promise<MicrosoftTeamsConnection>
   };
   await KeyManager.replacePassword(MICROSOFT_TEAMS_REFRESH_TOKEN_KEY, tokens.refresh_token);
   AppEnv.config.set(MICROSOFT_TEAMS_CONNECTION_CONFIG_KEY, connection);
-  AppEnv.config.set('mailspring.teamsHostAccountId', connection.id);
+  AppEnv.config.set('summermail.teamsHostAccountId', connection.id);
   return connection;
 }
 
 export async function disconnectMicrosoftTeams(): Promise<void> {
   await KeyManager.deletePassword(MICROSOFT_TEAMS_REFRESH_TOKEN_KEY);
   AppEnv.config.set(MICROSOFT_TEAMS_CONNECTION_CONFIG_KEY, null);
-  if (AppEnv.config.get('mailspring.teamsHostAccountId') === MICROSOFT_TEAMS_CONNECTION_ID) {
-    AppEnv.config.set('mailspring.teamsHostAccountId', null);
+  if (AppEnv.config.get('summermail.teamsHostAccountId') === MICROSOFT_TEAMS_CONNECTION_ID) {
+    AppEnv.config.set('summermail.teamsHostAccountId', null);
   }
 }
 

@@ -56,21 +56,21 @@ jobs:
 
       - name: Sync Artifacts to S3
         run: |
-          aws s3 sync app/dist/ "s3://mailspring-builds/client/$(git rev-parse --short=8 HEAD)/linux-arm64" \
+          aws s3 sync app/dist/ "s3://summermail-builds/client/$(git rev-parse --short=8 HEAD)/linux-arm64" \
             --acl public-read \
             --exclude "*" --include "*.deb" --include "*.rpm"
 
       - name: Upload DEB artifact for testing
         uses: actions/upload-artifact@v4
         with:
-          name: mailspring-arm64-deb
+          name: summermail-arm64-deb
           path: app/dist/*.deb
           retention-days: 1
 
       - name: Upload RPM artifact for testing
         uses: actions/upload-artifact@v4
         with:
-          name: mailspring-arm64-rpm
+          name: summermail-arm64-rpm
           path: app/dist/*.rpm
           retention-days: 1
 
@@ -89,7 +89,7 @@ jobs:
       - name: Download DEB artifact
         uses: actions/download-artifact@v4
         with:
-          name: mailspring-arm64-deb
+          name: summermail-arm64-deb
           path: app/dist/
 
       - uses: snapcore/action-build@v1
@@ -112,13 +112,13 @@ jobs:
       - name: Download DEB artifact
         uses: actions/download-artifact@v4
         with:
-          name: mailspring-arm64-deb
+          name: summermail-arm64-deb
 
       - name: Test installation on Ubuntu ${{ matrix.ubuntu_version }} (arm64)
         run: |
           docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace ubuntu:${{ matrix.ubuntu_version }} bash -c "
             set -e
-            echo '=== Testing Mailspring ARM64 installation on Ubuntu ${{ matrix.ubuntu_version }} ==='
+            echo '=== Testing SummerMail ARM64 installation on Ubuntu ${{ matrix.ubuntu_version }} ==='
 
             cd /workspace
             export DEBIAN_FRONTEND=noninteractive
@@ -128,39 +128,39 @@ jobs:
             apt-get install -f -y
             apt-get install -y xvfb file
 
-            dpkg -l | grep mailspring || (echo '✗ Mailspring package not installed' && exit 1)
-            which mailspring || (echo '✗ mailspring binary not found in PATH' && exit 1)
+            dpkg -l | grep summermail || (echo '✗ SummerMail package not installed' && exit 1)
+            which summermail || (echo '✗ summermail binary not found in PATH' && exit 1)
 
             echo 'Installed files:'
-            dpkg -L mailspring | head -20
+            dpkg -L summermail | head -20
 
             echo 'Verifying ARM64 binary...'
-            file /usr/share/mailspring/mailspring | grep -iE 'aarch64|arm'
+            file /usr/share/summermail/summermail | grep -iE 'aarch64|arm'
             echo '✓ ARM64 binary confirmed'
 
-            echo 'Running mailspring --version...'
-            xvfb-run -a mailspring --version --no-sandbox > /tmp/version.txt 2>&1 || true
+            echo 'Running summermail --version...'
+            xvfb-run -a summermail --version --no-sandbox > /tmp/version.txt 2>&1 || true
             cat /tmp/version.txt
 
             if grep -qE '[0-9]+\.[0-9]+\.[0-9]+' /tmp/version.txt; then
-              echo '✓ mailspring --version passed on Ubuntu ${{ matrix.ubuntu_version }} arm64'
+              echo '✓ summermail --version passed on Ubuntu ${{ matrix.ubuntu_version }} arm64'
             else
-              echo '✗ mailspring --version failed on Ubuntu ${{ matrix.ubuntu_version }} arm64'
+              echo '✗ summermail --version failed on Ubuntu ${{ matrix.ubuntu_version }} arm64'
               exit 1
             fi
 
             # Verify mailsync binary exists
-            if [ -f /usr/share/mailspring/mailsync ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/mailsync
-            elif [ -f /usr/share/mailspring/mailsync.bin ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/mailsync.bin
-            elif [ -f /usr/share/mailspring/resources/app.asar.unpacked/mailsync ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/resources/app.asar.unpacked/mailsync
-            elif [ -f /usr/share/mailspring/resources/app.asar.unpacked/mailsync.bin ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/resources/app.asar.unpacked/mailsync.bin
+            if [ -f /usr/share/summermail/mailsync ]; then
+              MAILSYNC_PATH=/usr/share/summermail/mailsync
+            elif [ -f /usr/share/summermail/mailsync.bin ]; then
+              MAILSYNC_PATH=/usr/share/summermail/mailsync.bin
+            elif [ -f /usr/share/summermail/resources/app.asar.unpacked/mailsync ]; then
+              MAILSYNC_PATH=/usr/share/summermail/resources/app.asar.unpacked/mailsync
+            elif [ -f /usr/share/summermail/resources/app.asar.unpacked/mailsync.bin ]; then
+              MAILSYNC_PATH=/usr/share/summermail/resources/app.asar.unpacked/mailsync.bin
             else
               echo '✗ mailsync binary not found'
-              ls -la /usr/share/mailspring/ | head -30
+              ls -la /usr/share/summermail/ | head -30
               exit 1
             fi
 
@@ -179,7 +179,7 @@ jobs:
               exit 1
             fi
 
-            echo '✓ Mailspring ARM64 installation test passed on Ubuntu ${{ matrix.ubuntu_version }}'
+            echo '✓ SummerMail ARM64 installation test passed on Ubuntu ${{ matrix.ubuntu_version }}'
           "
 
   test-fedora:
@@ -192,53 +192,53 @@ jobs:
       - name: Download RPM artifact
         uses: actions/download-artifact@v4
         with:
-          name: mailspring-arm64-rpm
+          name: summermail-arm64-rpm
 
       - name: Test installation on Fedora ${{ matrix.fedora_version }} (arm64)
         run: |
           docker run --rm --platform linux/arm64 -v ${{ github.workspace }}:/workspace fedora:${{ matrix.fedora_version }} bash -c "
             set -e
-            echo '=== Testing Mailspring ARM64 installation on Fedora ${{ matrix.fedora_version }} ==='
+            echo '=== Testing SummerMail ARM64 installation on Fedora ${{ matrix.fedora_version }} ==='
 
             cd /workspace
             dnf install -y xorg-x11-server-Xvfb which alsa-lib
 
             dnf install -y *.rpm
 
-            rpm -q mailspring || (echo '✗ Mailspring package not installed' && exit 1)
-            which mailspring || (echo '✗ mailspring binary not found in PATH' && exit 1)
+            rpm -q summermail || (echo '✗ SummerMail package not installed' && exit 1)
+            which summermail || (echo '✗ summermail binary not found in PATH' && exit 1)
 
             echo 'Installed files:'
-            rpm -ql mailspring | head -20
+            rpm -ql summermail | head -20
 
-            echo 'Running mailspring --version...'
-            xvfb-run -a mailspring --version --no-sandbox > /tmp/version.txt 2>&1 || true
+            echo 'Running summermail --version...'
+            xvfb-run -a summermail --version --no-sandbox > /tmp/version.txt 2>&1 || true
             cat /tmp/version.txt
 
             if grep -qE '[0-9]+\.[0-9]+\.[0-9]+' /tmp/version.txt; then
-              echo '✓ mailspring --version passed on Fedora ${{ matrix.fedora_version }} arm64'
+              echo '✓ summermail --version passed on Fedora ${{ matrix.fedora_version }} arm64'
             else
-              echo '✗ mailspring --version failed on Fedora ${{ matrix.fedora_version }} arm64'
+              echo '✗ summermail --version failed on Fedora ${{ matrix.fedora_version }} arm64'
               exit 1
             fi
 
             # Verify mailsync binary exists
-            if [ -f /usr/share/mailspring/mailsync ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/mailsync
-            elif [ -f /usr/share/mailspring/mailsync.bin ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/mailsync.bin
-            elif [ -f /usr/share/mailspring/resources/app.asar.unpacked/mailsync ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/resources/app.asar.unpacked/mailsync
-            elif [ -f /usr/share/mailspring/resources/app.asar.unpacked/mailsync.bin ]; then
-              MAILSYNC_PATH=/usr/share/mailspring/resources/app.asar.unpacked/mailsync.bin
-            elif [ -f /usr/local/share/mailspring/mailsync ]; then
-              MAILSYNC_PATH=/usr/local/share/mailspring/mailsync
-            elif [ -f /usr/local/share/mailspring/mailsync.bin ]; then
-              MAILSYNC_PATH=/usr/local/share/mailspring/mailsync.bin
+            if [ -f /usr/share/summermail/mailsync ]; then
+              MAILSYNC_PATH=/usr/share/summermail/mailsync
+            elif [ -f /usr/share/summermail/mailsync.bin ]; then
+              MAILSYNC_PATH=/usr/share/summermail/mailsync.bin
+            elif [ -f /usr/share/summermail/resources/app.asar.unpacked/mailsync ]; then
+              MAILSYNC_PATH=/usr/share/summermail/resources/app.asar.unpacked/mailsync
+            elif [ -f /usr/share/summermail/resources/app.asar.unpacked/mailsync.bin ]; then
+              MAILSYNC_PATH=/usr/share/summermail/resources/app.asar.unpacked/mailsync.bin
+            elif [ -f /usr/local/share/summermail/mailsync ]; then
+              MAILSYNC_PATH=/usr/local/share/summermail/mailsync
+            elif [ -f /usr/local/share/summermail/mailsync.bin ]; then
+              MAILSYNC_PATH=/usr/local/share/summermail/mailsync.bin
             else
               echo '✗ mailsync binary not found'
-              rpm -ql mailspring | grep -i mailsync || echo 'No mailsync found in package'
-              ls -la /usr/share/mailspring/ | head -30
+              rpm -ql summermail | grep -i mailsync || echo 'No mailsync found in package'
+              ls -la /usr/share/summermail/ | head -30
               exit 1
             fi
 
@@ -257,5 +257,5 @@ jobs:
               exit 1
             fi
 
-            echo '✓ Mailspring ARM64 installation test passed on Fedora ${{ matrix.fedora_version }}'
+            echo '✓ SummerMail ARM64 installation test passed on Fedora ${{ matrix.fedora_version }}'
           "

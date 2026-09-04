@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 
-import { Contact } from 'mailspring-exports';
-import { KeyCommandsRegion, TokenizingTextField, Menu } from 'mailspring-component-kit';
+import { Contact } from 'summermail-exports';
+import { KeyCommandsRegion, TokenizingTextField, Menu } from 'summermail-component-kit';
 
 class CustomToken extends React.Component<{ token: any }> {
   render() {
@@ -18,18 +18,18 @@ class CustomSuggestion extends React.Component<{ item: any }> {
 
 const participant1 = new Contact({
   id: '1',
-  email: 'ben@mailspring.com',
+  email: 'ben@summermail.com',
 });
 const participant2 = new Contact({
   id: '2',
-  email: 'burgers@mailspring.com',
-  name: 'Mailspring Burger Basket',
+  email: 'burgers@summermail.com',
+  name: 'SummerMail Burger Basket',
   hidden: false,
   source: 'mail',
 });
 const participant3 = new Contact({
   id: '3',
-  email: 'evan@mailspring.com',
+  email: 'evan@summermail.com',
   name: 'Evan',
 });
 const participant4 = new Contact({
@@ -194,9 +194,9 @@ describe('TokenizingTextField', function () {
       tokenEl.dispatchEvent(dragStartEvt);
 
       expect(dragStartEventData).toEqual({
-        'mailspring-token-items':
-          '[{"id":"2","name":"Mailspring Burger Basket","h":false,"s":"mail","email":"burgers@mailspring.com","gis":[],"__cls":"Contact"}]',
-        'text/plain': 'Mailspring Burger Basket <burgers@mailspring.com>',
+        'summermail-token-items':
+          '[{"id":"2","name":"SummerMail Burger Basket","h":false,"s":"mail","email":"burgers@summermail.com","gis":[],"__cls":"Contact"}]',
+        'text/plain': 'SummerMail Burger Basket <burgers@summermail.com>',
       });
 
       const dropDataTransfer = {

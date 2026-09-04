@@ -1,6 +1,6 @@
 import React from 'react';
-import { Account, Contact, AccountStore, ContactGroup } from 'mailspring-exports';
-import { ContactProfilePhoto, RetinaImg } from 'mailspring-component-kit';
+import { Account, Contact, AccountStore, ContactGroup } from 'summermail-exports';
+import { ContactProfilePhoto, RetinaImg } from 'summermail-component-kit';
 import * as Icons from './SVGIcons';
 import { Store } from './Store';
 import { ContactBase, ContactInteractorMetadata } from './ContactInfoMapping';

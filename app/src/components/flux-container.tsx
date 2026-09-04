@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utils } from 'mailspring-exports';
+import { Utils } from 'summermail-exports';
 
 type FluxContainerProps<T> = {
   stores: any[];

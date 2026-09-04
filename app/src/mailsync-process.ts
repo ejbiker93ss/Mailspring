@@ -10,7 +10,7 @@ import os from 'os';
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import { localized } from './intl';
-import { IIdentity, Account } from 'mailspring-exports';
+import { IIdentity, Account } from 'summermail-exports';
 
 import {
   GMAIL_CLIENT_ID,
@@ -30,8 +30,7 @@ export const LocalizedErrorStrings = {
     'Connection Error - Unable to connect to the server / port you provided.'
   ),
   ErrorInvalidAccount: localized(
-    'This account is invalid or Mailspring could not find the Inbox or All Mail folder. %@',
-    'http://support.getmailspring.com/hc/en-us/articles/115001881912'
+    'This account is invalid or SummerMail could not find the Inbox or All Mail folder.'
   ),
   ErrorTLSNotAvailable: localized('TLS Not Available'),
   ErrorParse: localized('Parsing Error'),
@@ -77,13 +76,12 @@ export const LocalizedErrorStrings = {
     'Sorry, your SMTP server does not support basic username / password authentication.'
   ),
   ErrorIdentityMissingFields: localized(
-    'Your Mailspring ID is missing required fields - you may need to reset Mailspring. %@',
-    'http://support.getmailspring.com/hc/en-us/articles/115002012491'
+    'Your SummerMail ID is missing required fields - you may need to reset SummerMail.'
   ),
 };
 
 // LocalizedErrorStrings codes that, despite being "classified" by mailsync,
-// can also indicate a genuine Mailspring defect rather than a server/user
+// can also indicate a genuine SummerMail defect rather than a server/user
 // condition - a malformed-response parser regression, or corrupted local
 // identity state. These should keep reaching error reporting instead of
 // being treated as expected, user-actionable failures.
@@ -166,7 +164,7 @@ export class MailsyncProcess extends EventEmitter {
       IDENTITY_SERVER: 'unknown',
     };
     if (process.type === 'renderer') {
-      const rootURLForServer = require('./flux/mailspring-api-request').rootURLForServer;
+      const rootURLForServer = require('./flux/summermail-api-request').rootURLForServer;
       env.IDENTITY_SERVER = rootURLForServer('identity');
     }
 
@@ -297,7 +295,7 @@ export class MailsyncProcess extends EventEmitter {
             // Errors mailsync explicitly classified (bad credentials, unreachable
             // server, TLS/certificate problems, provider-side rate limits, etc.)
             // describe the mail server or the user's settings, not a bug in
-            // Mailspring - except for the ambiguous codes above, which we still
+            // SummerMail - except for the ambiguous codes above, which we still
             // want reported if they occur. Callers that report unexpected errors
             // to Sentry (e.g. oauth-signin-page's error handler) check this flag
             // to avoid flooding error tracking with expected, user-actionable
@@ -462,7 +460,7 @@ export class MailsyncProcess extends EventEmitter {
 
   sendMessage(json) {
     if (!Utils) {
-      Utils = require('mailspring-exports').Utils;
+      Utils = require('summermail-exports').Utils;
     }
     console.log(`Sending to mailsync ${this.account ? this.account.id : '?'}`, json);
     const msg = `${JSON.stringify(json)}\n`;

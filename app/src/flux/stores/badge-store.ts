@@ -1,11 +1,11 @@
 /* eslint global-require:0 */
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import { AccountStore } from './account-store';
 import ThreadCountsStore from './thread-counts-store';
 import CategoryStore from './category-store';
 
-class BadgeStore extends MailspringStore {
+class BadgeStore extends SummerMailStore {
   private _unread: number;
   private _total: number;
 

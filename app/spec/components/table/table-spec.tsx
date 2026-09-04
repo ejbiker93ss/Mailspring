@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
-import { Table, TableRow, TableCell } from 'mailspring-component-kit';
+import { Table, TableRow, TableCell } from 'summermail-component-kit';
 import { testDataSource } from '../../fixtures/table-data';
 
 afterEach(cleanup);

@@ -1,4 +1,4 @@
-import { Account, Contact, CategoryStore } from 'mailspring-exports';
+import { Account, Contact, CategoryStore } from 'summermail-exports';
 
 describe('Account', function () {
   describe('constructor defaults', function () {

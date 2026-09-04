@@ -1,4 +1,4 @@
-import { Contact, Message, Thread } from 'mailspring-exports';
+import { Contact, Message, Thread } from 'summermail-exports';
 
 import {
   buildAliasMap,

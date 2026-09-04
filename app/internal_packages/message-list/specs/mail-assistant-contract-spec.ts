@@ -151,7 +151,7 @@ describe('MailAssistantContract', () => {
       [{ id: 'thread/id 1', subject: 'Quarterly plan' }]
     );
 
-    expect(markdown).toContain('[Quarterly plan](#mailspring-thread=thread%2Fid%201)');
+    expect(markdown).toContain('[Quarterly plan](#summermail-thread=thread%2Fid%201)');
     expect(markdown).toContain('`[Quarterly plan](https://example.com)`');
     expect(threadIdFromMailAssistantHref(mailAssistantThreadHref('thread/id 1'))).toBe(
       'thread/id 1'

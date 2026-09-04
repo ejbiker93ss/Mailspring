@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Message } from 'mailspring-exports';
+import { localized, Message } from 'summermail-exports';
 
 import AutoloadImagesStore from './autoload-images-store';
 import * as Actions from './autoload-images-actions';

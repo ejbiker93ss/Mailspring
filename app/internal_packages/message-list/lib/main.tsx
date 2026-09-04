@@ -8,7 +8,7 @@ import {
   ExtensionRegistry,
   PreferencesUIStore,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import { MessageListHiddenMessagesToggle } from './message-list-hidden-messages-toggle';
 import MessageList from './message-list';

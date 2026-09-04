@@ -104,7 +104,7 @@ test('creating a template persists it as an HTML file and renaming updates the f
   // clicking elsewhere changes the selected template before blur fires.
   await executeInRenderer(electronApp, `
     (function() {
-      var Actions = require('mailspring-exports').Actions;
+      var Actions = require('summermail-exports').Actions;
       Actions.renameTemplate('Untitled', 'My Test Template');
     })()
   `);

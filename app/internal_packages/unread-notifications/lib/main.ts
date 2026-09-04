@@ -10,7 +10,7 @@ import {
   localized,
   DatabaseChangeRecord,
   TaskFactory,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 const WAIT_FOR_CHANGES_DELAY = 400;
 

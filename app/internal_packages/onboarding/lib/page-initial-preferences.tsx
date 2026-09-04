@@ -1,8 +1,8 @@
 import React from 'react';
 import path from 'path';
 import fs from 'fs';
-import { RetinaImg, Flexbox, ConfigPropContainer } from 'mailspring-component-kit';
-import { localized, AccountStore, Account } from 'mailspring-exports';
+import { RetinaImg, Flexbox, ConfigPropContainer } from 'summermail-component-kit';
+import { localized, AccountStore, Account } from 'summermail-exports';
 import NewsletterSignup from './newsletter-signup';
 
 // NOTE: Temporarily copied from preferences module
@@ -183,7 +183,7 @@ class InitialPreferencesPage extends React.Component<
     }
     return (
       <div className="page opaque" style={{ width: 900, height: 620 }}>
-        <h1 style={{ paddingTop: 100 }}>{localized(`Welcome to Mailspring`)}</h1>
+        <h1 style={{ paddingTop: 100 }}>{localized(`Welcome to SummerMail`)}</h1>
         <h4 style={{ marginBottom: 60 }}>{localized(`Let's set things up to your liking.`)}</h4>
         <ConfigPropContainer>
           <InitialPreferencesOptions account={this.state.account} />

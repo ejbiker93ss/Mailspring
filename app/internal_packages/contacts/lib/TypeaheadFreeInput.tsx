@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu } from 'mailspring-component-kit';
+import { Menu } from 'summermail-component-kit';
 
 interface TypeaheadFreeInputProps extends React.HTMLProps<HTMLInputElement> {
   suggestions: string[];

@@ -1,6 +1,6 @@
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import React from 'react';
-import { AccountStore, Account, Actions, KeyManager } from 'mailspring-exports';
+import { AccountStore, Account, Actions, KeyManager } from 'summermail-exports';
 import { ipcRenderer } from 'electron';
 import AccountErrorNotification from '../lib/items/account-error-notif';
 

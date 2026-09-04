@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utils } from 'mailspring-exports';
+import { Utils } from 'summermail-exports';
 
 class SendingProgressBar extends React.Component<{ progress: number }> {
   render() {

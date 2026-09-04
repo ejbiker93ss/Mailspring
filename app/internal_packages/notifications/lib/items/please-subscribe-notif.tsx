@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, Actions, AccountStore, IdentityStore, IIdentity } from 'mailspring-exports';
-import { Notification } from 'mailspring-component-kit';
+import { localized, Actions, AccountStore, IdentityStore, IIdentity } from 'summermail-exports';
+import { Notification } from 'summermail-component-kit';
 
 export default class PleaseSubscribeNotification extends React.Component<
   Record<string, unknown>,
@@ -34,10 +34,10 @@ export default class PleaseSubscribeNotification extends React.Component<
 
     let msg = null;
     if (stripePlan === 'Basic' && accountCount > 4) {
-      msg = localized(`Please consider paying for Mailspring Pro!`);
+      msg = localized(`Please consider paying for SummerMail Pro!`);
     }
     if (stripePlan !== stripePlanEffective) {
-      msg = localized(`We're having trouble billing your Mailspring subscription.`);
+      msg = localized(`We're having trouble billing your SummerMail subscription.`);
     }
 
     return { msg };

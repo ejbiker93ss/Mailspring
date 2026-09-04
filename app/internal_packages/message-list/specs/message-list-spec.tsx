@@ -8,9 +8,9 @@ import {
   Folder,
   Message,
   MessageStore,
-  MailspringTestUtils,
+  SummerMailTestUtils,
   WorkspaceStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import MessageParticipants from '../lib/message-participants';
 import MessageItemContainer from '../lib/message-item-container';
@@ -190,7 +190,7 @@ describe('MessageList', function () {
       MessageStore._expandItemsToDefault();
       MessageStore.trigger(MessageStore);
       this.messageList.setState({ currentThread: testThread });
-      MailspringTestUtils.loadKeymap('keymaps/base');
+      SummerMailTestUtils.loadKeymap('keymaps/base');
     });
 
     it('renders all the correct number of messages', function () {

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install dependencies
 npm install
 
-# Run the app in development mode (uses --dev flag, data stored in Mailspring-dev folder)
+# Run the app in development mode (uses --dev flag, data stored in SummerMail-dev folder)
 npm start
 
 # Run with specific language locale
@@ -32,7 +32,7 @@ npm run build
 
 ## Architecture Overview
 
-Mailspring is an Electron-based email client written in TypeScript with React. It uses a plugin architecture where features are implemented as internal packages.
+SummerMail is an Electron-based email client written in TypeScript with React. It uses a plugin architecture where features are implemented as internal packages.
 
 ### Key Directories
 
@@ -42,7 +42,7 @@ Mailspring is an Electron-based email client written in TypeScript with React. I
   - `components/` - Reusable React UI components
   - `services/` - Application services (search, sanitization, etc.)
   - `registries/` - Extension registries (components, extensions, database objects)
-  - `global/` - Global exports (`mailspring-exports`, `mailspring-component-kit`)
+  - `global/` - Global exports (`summermail-exports`, `summermail-component-kit`)
 
 - **`app/internal_packages/`** - Built-in plugins implementing features (composer, message-list, thread-list, preferences, themes, etc.)
 
@@ -53,8 +53,8 @@ Mailspring is an Electron-based email client written in TypeScript with React. I
 ### Core Modules
 
 **Global exports for plugins:**
-- `mailspring-exports` - Core APIs: Actions, Stores, Models, Tasks, Utils, database access
-- `mailspring-component-kit` - Reusable UI components
+- `summermail-exports` - Core APIs: Actions, Stores, Models, Tasks, Utils, database access
+- `summermail-component-kit` - Reusable UI components
 
 **Flux Architecture:**
 - **Models** (`flux/models/`) - Data models: Message, Thread, Contact, Account, Folder, Label, etc.
@@ -73,7 +73,7 @@ Each plugin in `internal_packages/` has:
 
 ## Core Data Flow: Sync Engine, Tasks, and Observable Database
 
-**Important:** The UI is read-only with respect to the database. All database modifications happen in the C++ sync engine (Mailspring-Sync). The Electron app requests changes via Tasks, and the sync engine streams entity changes back to create a real-time UI.
+**Important:** The UI is read-only with respect to the database. All database modifications happen in the C++ sync engine (SummerMail-Sync). The Electron app requests changes via Tasks, and the sync engine streams entity changes back to create a real-time UI.
 
 ### Sync Engine Communication (`mailsync-process.ts`, `mailsync-bridge.ts`)
 
@@ -84,7 +84,7 @@ The sync engine is a separate C++ process spawned per account:
 
 ```
 ┌─────────────────┐         stdin (JSON)          ┌──────────────────┐
-│   Electron UI   │ ──────────────────────────────▶│  Mailspring-Sync │
+│   Electron UI   │ ──────────────────────────────▶│  SummerMail-Sync │
 │  (TypeScript)   │                                │      (C++)       │
 │                 │ ◀────────────────────────────── │                  │
 └─────────────────┘    stdout (JSON deltas)        └──────────────────┘
@@ -201,8 +201,8 @@ UI Updates ← QuerySubscription ← DatabaseStore.trigger() ← stdout deltas
 
 - Hot reload is available via `CTRL+R` (Windows/Linux) or `CMD+R` (macOS)
 - Dev tools accessible via Menu > Developer > Toggle Developer Tools
-- In dev tools console, `$m` provides access to `mailspring-exports` for debugging
-- Dev mode data is stored separately (e.g., `~/.config/Mailspring-dev/` on Linux)
+- In dev tools console, `$m` provides access to `summermail-exports` for debugging
+- Dev mode data is stored separately (e.g., `~/.config/SummerMail-dev/` on Linux)
 
 ## Claude Hooks
 

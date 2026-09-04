@@ -8,7 +8,7 @@ import {
   Actions,
   ChangeRoleMappingTask,
   Folder,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import CategorySelection from './category-selection';
 

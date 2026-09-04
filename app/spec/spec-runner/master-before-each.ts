@@ -6,7 +6,7 @@ import {
   ComponentRegistry,
   MailboxPerspective,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import Config from '../../src/config';
 import * as configUtils from '../../src/config-utils';
 import TimeOverride from './time-override';

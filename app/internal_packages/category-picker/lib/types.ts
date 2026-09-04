@@ -1,4 +1,4 @@
-import { Category } from 'mailspring-exports';
+import { Category } from 'summermail-exports';
 
 export type CategoryData = {
   id?: string;

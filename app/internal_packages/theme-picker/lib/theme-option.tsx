@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import fs from 'fs';
 import path from 'path';
 
-import { EventedIFrame } from 'mailspring-component-kit';
+import { EventedIFrame } from 'summermail-component-kit';
 import Package from '../../../src/package';
 import LessCompileCache from '../../../src/compile-cache-less';
 

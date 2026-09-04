@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
 
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 import { escapeHTML } from 'underscore.string';
 
 const { app, BrowserWindow, dialog } = require('@electron/remote');
@@ -33,7 +33,7 @@ export default class PrintWindow {
       <!DOCTYPE html>
       <html>
         <head>
-          <meta http-equiv="Content-Security-Policy" content="default-src * mailspring:; frame-src 'none'; script-src 'self' chrome-extension://react-developer-tools; style-src * 'unsafe-inline' mailspring:; img-src * data: mailspring: file:; object-src none; media-src none; manifest-src none;">
+          <meta http-equiv="Content-Security-Policy" content="default-src * summermail:; frame-src 'none'; script-src 'self' chrome-extension://react-developer-tools; style-src * 'unsafe-inline' summermail:; img-src * data: summermail: file:; object-src none; media-src none; manifest-src none;">
           <meta charset="utf-8">
           ${styleTags}
           <link rel="stylesheet" type="text/css" href="${pathToFileURL(stylesPath).href}">
@@ -108,7 +108,7 @@ export default class PrintWindow {
         AppEnv.showErrorDialog({
           title: localized('Save as PDF Failed'),
           message: localized(
-            'Mailspring could not generate the PDF. Please try again. If the problem persists, try printing to a PDF printer instead.\n\nError: %@',
+            'SummerMail could not generate the PDF. Please try again. If the problem persists, try printing to a PDF printer instead.\n\nError: %@',
             err.message
           ),
         });

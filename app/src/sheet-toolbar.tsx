@@ -3,7 +3,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { localized, isRTL, Actions, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { localized, isRTL, Actions, ComponentRegistry, WorkspaceStore } from 'summermail-exports';
 import { SheetDeclaration } from './flux/stores/workspace-store';
 import { Flexbox } from './components/flexbox';
 import { RetinaImg } from './components/retina-img';

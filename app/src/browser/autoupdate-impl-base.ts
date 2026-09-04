@@ -3,7 +3,7 @@ import https from 'https';
 import { shell } from 'electron';
 import url from 'url';
 
-const FALLBACK_DOWNLOAD_URL = 'https://getmailspring.com/download';
+const FALLBACK_DOWNLOAD_URL = process.env.SUMMERMAIL_DOWNLOAD_URL;
 
 function safeHttpUrl(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -113,6 +113,12 @@ export default class AutoupdateImplBase extends EventEmitter {
 
   /* Public: Install the update. */
   quitAndInstall() {
-    shell.openExternal(safeHttpUrl(this.lastRetrievedUpdateURL) ?? FALLBACK_DOWNLOAD_URL);
+    const downloadURL =
+      safeHttpUrl(this.lastRetrievedUpdateURL) ?? safeHttpUrl(FALLBACK_DOWNLOAD_URL);
+    if (downloadURL) {
+      shell.openExternal(downloadURL);
+    } else {
+      this.emitError(new Error('No SummerMail download URL is configured.'));
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { RegExpUtils, DOMUtils } from 'mailspring-exports';
+import { RegExpUtils, DOMUtils } from 'summermail-exports';
 
 function _matchesAnyRegexp(text, regexps) {
   for (const excludeRegexp of regexps) {
@@ -88,7 +88,7 @@ export function Autolink(
       },
     ],
     ['tel:', RegExpUtils.phoneRegex({ aggressive: options.telAggressiveMatch })],
-    ['', RegExpUtils.mailspringCommandRegex()],
+    ['', RegExpUtils.summermailCommandRegex()],
     ['', RegExpUtils.urlRegex()],
   ];
 

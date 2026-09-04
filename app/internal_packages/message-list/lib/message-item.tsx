@@ -8,8 +8,8 @@ import {
   AttachmentStore,
   MessageStore,
   DraftStore,
-} from 'mailspring-exports';
-import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'summermail-component-kit';
 
 import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';

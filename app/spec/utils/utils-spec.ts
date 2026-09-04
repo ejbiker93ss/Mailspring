@@ -44,7 +44,7 @@ describe('Utils', function () {
           new Contact({
             id: 'local-a',
             name: 'Juan',
-            email: 'juan@mailspring.com',
+            email: 'juan@summermail.com',
             accountId: '1',
             hidden: false,
             source: 'mail',
@@ -52,7 +52,7 @@ describe('Utils', function () {
           new Contact({
             id: 'local-b',
             name: 'Ben',
-            email: 'ben@mailspring.com',
+            email: 'ben@summermail.com',
             accountId: '1',
             hidden: false,
             source: 'mail',
@@ -64,7 +64,7 @@ describe('Utils', function () {
 
     it('should serialize and de-serialize models correctly', function () {
       const expectedString =
-        '[{"id":"local-1","aid":"1","metadata":[],"subject":"Test 1234","categories":[],"participants":[{"id":"local-a","aid":"1","name":"Juan","h":false,"s":"mail","email":"juan@mailspring.com","gis":[],"__cls":"Contact"},{"id":"local-b","aid":"1","name":"Ben","h":false,"s":"mail","email":"ben@mailspring.com","gis":[],"__cls":"Contact"}],"__cls":"Thread"}]';
+        '[{"id":"local-1","aid":"1","metadata":[],"subject":"Test 1234","categories":[],"participants":[{"id":"local-a","aid":"1","name":"Juan","h":false,"s":"mail","email":"juan@summermail.com","gis":[],"__cls":"Contact"},{"id":"local-b","aid":"1","name":"Ben","h":false,"s":"mail","email":"ben@summermail.com","gis":[],"__cls":"Contact"}],"__cls":"Thread"}]';
 
       const jsonString = JSON.stringify([this.testThread]);
       expect(jsonString).toEqual(expectedString);
@@ -76,7 +76,7 @@ describe('Utils', function () {
       const b = { id: 'ThreadsToProcess', json: [this.testThread] };
       const jsonString = JSON.stringify(b);
       const expectedString =
-        '{"id":"ThreadsToProcess","json":[{"id":"local-1","aid":"1","metadata":[],"subject":"Test 1234","categories":[],"participants":[{"id":"local-a","aid":"1","name":"Juan","h":false,"s":"mail","email":"juan@mailspring.com","gis":[],"__cls":"Contact"},{"id":"local-b","aid":"1","name":"Ben","h":false,"s":"mail","email":"ben@mailspring.com","gis":[],"__cls":"Contact"}],"__cls":"Thread"}]}';
+        '{"id":"ThreadsToProcess","json":[{"id":"local-1","aid":"1","metadata":[],"subject":"Test 1234","categories":[],"participants":[{"id":"local-a","aid":"1","name":"Juan","h":false,"s":"mail","email":"juan@summermail.com","gis":[],"__cls":"Contact"},{"id":"local-b","aid":"1","name":"Ben","h":false,"s":"mail","email":"ben@summermail.com","gis":[],"__cls":"Contact"}],"__cls":"Thread"}]}';
 
       expect(jsonString).toEqual(expectedString);
       const revived = JSON.parse(jsonString, Utils.modelTypesReviver);

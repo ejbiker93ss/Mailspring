@@ -6,7 +6,7 @@ import {
   MailImportantIcon,
   InjectedComponent,
   InjectedComponentSet,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 
 import {
   localized,
@@ -16,7 +16,7 @@ import {
   Utils,
   DateUtils,
   Thread,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import { ThreadArchiveQuickAction, ThreadTrashQuickAction } from './thread-list-quick-actions';
 import ThreadListParticipants from './thread-list-participants';

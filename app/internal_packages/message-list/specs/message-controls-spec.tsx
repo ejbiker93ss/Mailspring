@@ -1,4 +1,4 @@
-import { Actions, Contact, Folder, Message, Thread } from 'mailspring-exports';
+import { Actions, Contact, Folder, Message, Thread } from 'summermail-exports';
 
 import MessageControls from '../lib/message-controls';
 

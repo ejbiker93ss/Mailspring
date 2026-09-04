@@ -20,7 +20,7 @@
     "url": ""
   },
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "windowTypes": {
     "default": true,

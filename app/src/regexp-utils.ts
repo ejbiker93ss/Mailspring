@@ -73,8 +73,8 @@ const RegExpUtils = {
     return new RegExp(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i);
   },
 
-  mailspringCommandRegex() {
-    return new RegExp(/mailspring:\S+/i);
+  summermailCommandRegex() {
+    return new RegExp(/summermail:\S+/i);
   },
 
   // Test cases: https://regex101.com/r/pD7iS5/4
@@ -112,10 +112,10 @@ const RegExpUtils = {
       '(',
       // This OR block matches any TLD if the URL includes a scheme, and only
       // the top ten TLDs if the scheme is omitted.
-      // YES - https://getmailspring.ai
+      // YES - https://example.ai
       // YES - https://10.2.3.1
-      // YES - getmailspring.com
-      // NO  - getmailspring.ai
+      // YES - example.com
+      // NO  - example.invalidtld
       '(',
       // scheme, ala https:// (mandatory)
       '([A-Za-z]{3,9}:(?:\\/\\/))',
@@ -212,7 +212,7 @@ const RegExpUtils = {
     return new RegExp(/(<a.*?href\s*?=\s*?['"])((?!mailto).+?)(['"].*?>)([\s\S]*?)(<\/a>)/gim);
   },
 
-  mailspringSignatureRegex() {
+  summermailSignatureRegex() {
     return /<signature id="([A-Za-z0-9-/\\]+)">[^]*<\/signature>/;
   },
 
@@ -222,7 +222,7 @@ const RegExpUtils = {
   },
 
   // Regex that matches our link tracking urls, surrounded by quotes
-  // ("link.getmailspring.com...?redirect=")
+  // Match the legacy hosted link-tracking redirect format.
   // Test cases: https://regex101.com/r/rB4fO4/3
   // Returns the following capturing groups
   // 1.The redirect url: the actual url you want to visit by clicking a url

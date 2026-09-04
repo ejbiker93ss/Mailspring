@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { localized, Account } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { localized, Account } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import AccountProviders from './account-providers';
 
 class AccountOnboardingSuccess extends Component<{ account: Account }> {
@@ -28,7 +28,7 @@ class AccountOnboardingSuccess extends Component<{ account: Account }> {
               providerConfig.displayNameShort || providerConfig.displayName
             )}
           </h2>
-          <h3>{localized('Adding your account to Mailspring…')}</h3>
+          <h3>{localized('Adding your account to SummerMail…')}</h3>
         </div>
       </div>
     );

@@ -13,14 +13,14 @@ import {
   CalendarUtils,
   ICSParticipantStatus,
   SyncbackEventTask,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import {
   DatePicker,
   RetinaImg,
   ScrollRegion,
   TabGroupRegion,
   TimePicker,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 import { EventAttendeesInput } from './event-attendees-input';
 import { EventOccurrence, EventAttendee } from './calendar-data-source';
 import { EventPropertyRow } from './event-property-row';
@@ -128,7 +128,7 @@ export class CalendarEventPopover extends React.Component<
     const { description, start, end, location, attendees, title, isAllDay } = this.props.event;
 
     const microsoftHosts = getMicrosoftTeamsHosts(this.props.accounts || []);
-    const preferredTeamsHostId = AppEnv.config.get('mailspring.teamsHostAccountId');
+    const preferredTeamsHostId = AppEnv.config.get('summermail.teamsHostAccountId');
     this.state = {
       description,
       start,
@@ -511,7 +511,7 @@ export class CalendarEventPopover extends React.Component<
                 value={teamsHostAccountId}
                 onChange={(event) => {
                   const accountId = event.target.value;
-                  AppEnv.config.set('mailspring.teamsHostAccountId', accountId);
+                  AppEnv.config.set('summermail.teamsHostAccountId', accountId);
                   this.updateField('teamsHostAccountId', accountId);
                 }}
               >

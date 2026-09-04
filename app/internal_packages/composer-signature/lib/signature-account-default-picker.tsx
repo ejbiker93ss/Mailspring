@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, Actions, IAliasSet, ISignature, IDefaultSignatures } from 'mailspring-exports';
-import { MultiselectDropdown } from 'mailspring-component-kit';
+import { localized, Actions, IAliasSet, ISignature, IDefaultSignatures } from 'summermail-exports';
+import { MultiselectDropdown } from 'summermail-component-kit';
 
 interface SignatureAccountDefaultPickerProps {
   defaults: IDefaultSignatures;

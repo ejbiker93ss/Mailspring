@@ -5,7 +5,7 @@ import {
   SearchQueryParser,
   Thread,
   ContactStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 // start of string or preceding whitespace
 // a known token
@@ -16,8 +16,7 @@ import {
 export const TokenAndTermRegexp = () =>
   /(^|\s)(i[ns]?|s[iu]?[nb]?[cj]?e?c?t?|fr?o?m?|to?|ha?s?|be?f?o?r?e?|af?t?e?r?)(?::? ?$|: ?("[^"]*"?|[^\s]+))/gi;
 
-export const LearnMoreURL =
-  'https://community.getmailspring.com/t/search-with-advanced-gmail-style-queries/153';
+export const LearnMoreURL = process.env.SUMMERMAIL_HELP_URL || '';
 
 export const rankOfRole = (role: string) => {
   const rank = ['inbox', 'important', 'snoozed', 'sent', 'all', 'spam', 'trash'].indexOf(role);

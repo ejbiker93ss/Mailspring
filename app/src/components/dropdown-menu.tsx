@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
-import { RetinaImg } from 'mailspring-component-kit';
+import { RetinaImg } from 'summermail-component-kit';
 import { Menu, MenuProps } from './menu';
 
 const Attachment = {

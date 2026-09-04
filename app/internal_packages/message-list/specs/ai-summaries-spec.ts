@@ -1,9 +1,9 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { Contact, Message } from 'mailspring-exports';
+import { Contact, Message } from 'summermail-exports';
 import { buildThreadSummaryTranscript } from '../lib/ai-summary-client';
-import { ComposerSupport } from 'mailspring-component-kit';
+import { ComposerSupport } from 'summermail-component-kit';
 import { convertFromHTML } from '../../../src/components/composer-editor/conversion';
 import {
   AiSummaryStore,

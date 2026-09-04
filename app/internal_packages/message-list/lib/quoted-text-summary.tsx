@@ -1,5 +1,5 @@
 import React from 'react';
-import { AccountStore, Message, localized } from 'mailspring-exports';
+import { AccountStore, Message, localized } from 'summermail-exports';
 import { AiSummaryMarkdown } from './ai-summary-markdown';
 import { generateQuotedSummary } from './ai-summary-client';
 import { getAiSummaryStore, AiSummaryScope } from './ai-summary-store';

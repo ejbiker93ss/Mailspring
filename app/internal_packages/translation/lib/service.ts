@@ -3,10 +3,10 @@ import {
   QuotedHTMLTransformer,
   localized,
   Actions,
-  MailspringAPIRequest,
+  SummerMailAPIRequest,
   RegExpUtils,
   FeatureLexicon,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 export const TranslatePopupOptions = {
   English: 'en',
@@ -122,9 +122,9 @@ export const AllLanguages = {
 export const TranslationsUsedLexicon: FeatureLexicon = {
   headerText: localized('All Translations Used'),
   rechargeText: `${localized(
-    'You can translate up to %1$@ emails each %2$@ with Mailspring Basic.'
+    'You can translate up to %1$@ emails each %2$@ with SummerMail Basic.'
   )} ${localized('Upgrade to Pro today!')}`,
-  iconUrl: 'mailspring://translation/assets/ic-translation-modal@2x.png',
+  iconUrl: 'summermail://translation/assets/ic-translation-modal@2x.png',
 };
 
 function forEachTranslatableText(doc: Document, callback: (el: Node, text: string) => void) {
@@ -236,7 +236,7 @@ export async function translateMessageBody(
 
     let response = null;
     try {
-      response = await MailspringAPIRequest.makeRequest({
+      response = await SummerMailAPIRequest.makeRequest({
         server: 'identity',
         method: 'POST',
         path: `/api/translate`,

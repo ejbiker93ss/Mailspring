@@ -1,7 +1,7 @@
 import _ from 'underscore';
 
-import { Thread } from 'mailspring-exports';
-import { ListTabular } from 'mailspring-component-kit';
+import { Thread } from 'summermail-exports';
+import { ListTabular } from 'summermail-component-kit';
 
 const ListDataSource = ListTabular.DataSource;
 const ListSelection = ListTabular.Selection;

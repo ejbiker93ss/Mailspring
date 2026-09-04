@@ -1,4 +1,4 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import {
   Rx,
   Message,
@@ -10,10 +10,10 @@ import {
   FocusedPerspectiveStore,
   DatabaseStore,
   QueryResultSet,
-} from 'mailspring-exports';
-import { ListTabular, ListDataSource } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { ListTabular, ListDataSource } from 'summermail-component-kit';
 
-class DraftListStore extends MailspringStore {
+class DraftListStore extends SummerMailStore {
   constructor() {
     super();
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);

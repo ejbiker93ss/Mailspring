@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {},
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "syncInit": true,
   "windowTypes": {

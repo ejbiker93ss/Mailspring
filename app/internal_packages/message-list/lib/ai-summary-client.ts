@@ -1,4 +1,4 @@
-import { Message } from 'mailspring-exports';
+import { Message } from 'summermail-exports';
 import { buildAliasMap, redactText } from './mail-assistant-privacy';
 import { summarizeMailText } from './openai-mail-assistant-client';
 

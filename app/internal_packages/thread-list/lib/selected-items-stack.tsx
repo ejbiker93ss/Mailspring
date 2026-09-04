@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import React, { Component } from 'react';
-import { ListensToObservable } from 'mailspring-component-kit';
-import { localized } from 'mailspring-exports';
+import { ListensToObservable } from 'summermail-component-kit';
+import { localized } from 'summermail-exports';
 import ThreadListStore from './thread-list-store';
 
 function getObservable() {

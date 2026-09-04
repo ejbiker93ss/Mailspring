@@ -4,7 +4,7 @@ import {
   Actions,
   AccountStore,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import { ContactPerspectivesList } from './ContactPerspectivesList';
 import { ContactDetailToolbar } from './ContactDetailToolbar';
 import { AddContactToolbar } from './AddContactToolbar';

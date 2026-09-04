@@ -1,6 +1,6 @@
 import React from 'react';
 import { RetinaImg } from './retina-img';
-import { Label } from 'mailspring-exports';
+import { Label } from 'summermail-exports';
 
 type MailLabelProps = {
   label: {

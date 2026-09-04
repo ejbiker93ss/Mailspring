@@ -1,6 +1,6 @@
 import React from 'react';
-import { AccountStore } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { AccountStore } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import * as OnboardingActions from './onboarding-actions';
 
 const PageTopBar = (props: { pageDepth: number; allowMoveBack?: boolean }) => {

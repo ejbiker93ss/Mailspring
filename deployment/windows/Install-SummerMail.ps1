@@ -13,14 +13,14 @@ function Show-InstallerError {
 
     [System.Windows.Forms.MessageBox]::Show(
         $Message,
-        'Mailspring Installer',
+        'SummerMail Installer',
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
 }
 
 function New-InstallerForm {
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = 'Installing Mailspring'
+    $form.Text = 'Installing SummerMail'
     $form.StartPosition = 'CenterScreen'
     $form.FormBorderStyle = 'FixedDialog'
     $form.MaximizeBox = $false
@@ -31,7 +31,7 @@ function New-InstallerForm {
     $form.BackColor = [System.Drawing.Color]::FromArgb(248, 250, 252)
 
     $titleLabel = New-Object System.Windows.Forms.Label
-    $titleLabel.Text = 'Mailspring'
+    $titleLabel.Text = 'SummerMail'
     $titleLabel.Font = New-Object System.Drawing.Font('Segoe UI Semibold', 16)
     $titleLabel.Location = New-Object System.Drawing.Point(24, 22)
     $titleLabel.AutoSize = $true
@@ -89,13 +89,13 @@ $ui = $null
 try {
     $shareRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
     $manifestPath = Join-Path $shareRoot 'release.json'
-    $sourceInstaller = Join-Path $shareRoot 'MailspringSetup.exe'
+    $sourceInstaller = Join-Path $shareRoot 'SummerMailSetup.exe'
 
     if (-not (Test-Path -LiteralPath $manifestPath)) {
         throw "Release manifest is missing: $manifestPath"
     }
     if (-not (Test-Path -LiteralPath $sourceInstaller)) {
-        throw "Mailspring installer is missing: $sourceInstaller"
+        throw "SummerMail installer is missing: $sourceInstaller"
     }
 
     $release = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
@@ -105,12 +105,12 @@ try {
 
     $ui = New-InstallerForm
     $ui.Form.Show()
-    Update-InstallerUi -Ui $ui -Percent 12 -Status "Preparing Mailspring $($release.version)..."
+    Update-InstallerUi -Ui $ui -Percent 12 -Status "Preparing SummerMail $($release.version)..."
 
-    $localRoot = Join-Path $env:LOCALAPPDATA 'MSSE\Mailspring\Downloads'
+    $localRoot = Join-Path $env:LOCALAPPDATA 'MSSE\SummerMail\Downloads'
     $localRelease = Join-Path $localRoot $release.version
     New-Item -ItemType Directory -Path $localRelease -Force | Out-Null
-    $localInstaller = Join-Path $localRelease 'MailspringSetup.exe'
+    $localInstaller = Join-Path $localRelease 'SummerMailSetup.exe'
     $partialInstaller = "$localInstaller.partial"
 
     Update-InstallerUi -Ui $ui -Percent 35 -Status 'Downloading the installer to this PC...'
@@ -127,8 +127,8 @@ try {
         Update-InstallerUi -Ui $ui -Percent 100 -Status 'Download complete.'
         Start-Sleep -Milliseconds 500
         [System.Windows.Forms.MessageBox]::Show(
-            "Mailspring $($release.version) was downloaded to:`n$localInstaller",
-            'Mailspring Installer',
+            "SummerMail $($release.version) was downloaded to:`n$localInstaller",
+            'SummerMail Installer',
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
         return
@@ -139,7 +139,7 @@ try {
     $ui.Form.TopMost = $false
     $installerProcess.WaitForExit()
 
-    Update-InstallerUi -Ui $ui -Percent 100 -Status 'Mailspring is ready.'
+    Update-InstallerUi -Ui $ui -Percent 100 -Status 'SummerMail is ready.'
     Start-Sleep -Milliseconds 600
 } catch {
     Show-InstallerError -Message $_.Exception.Message

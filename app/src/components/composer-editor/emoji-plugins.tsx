@@ -1,6 +1,6 @@
 import React from 'react';
 import * as NodeEmoji from 'node-emoji';
-import { Actions } from 'mailspring-exports';
+import { Actions } from 'summermail-exports';
 import { Editor, Mark } from 'slate';
 import {
   Rule,
@@ -83,7 +83,7 @@ For the moment, I don't care.
 This component doesn't get much in the way of props. It reads /all/ of it's
 state (emoji to display, current selection, etc.) from the EMOJI_TYPING_TYPE
 mark. Storing the state in the document is a bit odd but worked very well in
-the last Mailspring editor.
+the last SummerMail editor.
 */
 function FloatingEmojiPicker({ editor, value }: ComposerEditorPluginTopLevelComponentProps) {
   if (!value.selection.isFocused) return null;

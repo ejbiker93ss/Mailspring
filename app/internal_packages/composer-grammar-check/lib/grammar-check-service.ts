@@ -1,4 +1,4 @@
-import { MailspringAPIRequest } from 'mailspring-exports';
+import { SummerMailAPIRequest } from 'summermail-exports';
 
 export interface GrammarError {
   offset: number;
@@ -118,7 +118,7 @@ export class LanguageToolBackend implements GrammarCheckBackend {
 
     let data: LanguageToolResponse;
     try {
-      data = await MailspringAPIRequest.makeRequest({
+      data = await SummerMailAPIRequest.makeRequest({
         server: 'identity',
         method: 'POST',
         path: '/api/grammar/check',

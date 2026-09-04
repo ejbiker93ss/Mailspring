@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Actions, TaskFactory, ExtensionRegistry } from 'mailspring-exports';
+import { localized, Actions, TaskFactory, ExtensionRegistry } from 'summermail-exports';
 import { ThreadWithMessagesMetadata } from './types';
 
 function nonDraftMessages(thread: ThreadWithMessagesMetadata) {

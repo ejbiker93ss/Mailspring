@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import * as Actions from '../actions';
 import { CrossAccountMoveFolderTask } from '../tasks/cross-account-move-folder-task';
 import { ChangeFolderTask } from '../tasks/change-folder-task';
@@ -9,7 +9,7 @@ import DatabaseStore from './database-store';
 import CategoryStore from './category-store';
 import TaskQueue from './task-queue';
 
-class CrossAccountTransferStore extends MailspringStore {
+class CrossAccountTransferStore extends SummerMailStore {
   private _advancing = new Set<string>();
   private _reportedErrors = new Set<string>();
 
@@ -135,7 +135,7 @@ class CrossAccountTransferStore extends MailspringStore {
     const detail = task.error ? JSON.stringify(task.error) : 'Unknown error';
     AppEnv.showErrorDialog({
       title: 'Cross-Account Transfer Failed',
-      message: `Mailspring failed while ${step}. The source mail was not deleted.\n\n${detail}`,
+      message: `SummerMail failed while ${step}. The source mail was not deleted.\n\n${detail}`,
     });
   }
 

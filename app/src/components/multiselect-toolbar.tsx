@@ -1,4 +1,4 @@
-import { Utils, localized } from 'mailspring-exports';
+import { Utils, localized } from 'summermail-exports';
 import React from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 

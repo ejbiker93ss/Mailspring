@@ -8,8 +8,8 @@ import {
   SyncbackMetadataTask,
   TaskQueue,
   SendDraftTask,
-} from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import { PLUGIN_ID } from './send-later-constants';
 
 const { DATE_FORMAT_SHORT } = DateUtils;

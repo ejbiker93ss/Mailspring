@@ -5,8 +5,8 @@ import {
   localized,
   localizedReactFragment,
   IIdentity,
-} from 'mailspring-exports';
-import { OpenIdentityPageButton, RetinaImg } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { OpenIdentityPageButton, RetinaImg } from 'summermail-component-kit';
 import { shell, ipcRenderer } from 'electron';
 
 class RefreshButton extends React.Component<Record<string, unknown>, { refreshing: boolean }> {
@@ -47,15 +47,15 @@ class RefreshButton extends React.Component<Record<string, unknown>, { refreshin
 
 const ProTourFeatures = [
   {
-    link: 'https://community.getmailspring.com/t/add-reminders-to-sent-messages/157',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `icon-composer-reminders.png`,
     title: localized(`Follow-up reminders`),
     text: localized(
-      `Never forget to follow up! Mailspring reminds you if your messages haven't received replies.`
+      `Never forget to follow up! SummerMail reminds you if your messages haven't received replies.`
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/view-contact-and-company-profiles/159',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `toolbar-person-sidebar.png`,
     title: localized(`Rich contact profiles`),
     text: localized(
@@ -63,7 +63,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/read-receipts-link-tracking-and-activity-reports/162',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `icon-composer-eye.png`,
     title: localized(`Read Receipts`),
     text: localized(
@@ -71,7 +71,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/reply-faster-with-email-templates/167',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `toolbar-templates.png`,
     title: localized(`Mail Templates`),
     text: localized(
@@ -79,7 +79,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/read-receipts-link-tracking-and-activity-reports/162',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `icon-composer-linktracking.png`,
     title: localized(`Link tracking`),
     text: localized(
@@ -87,7 +87,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/schedule-messages-to-send-later/158',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `icon-composer-sendlater.png`,
     title: localized(`Send Later`),
     text: localized(
@@ -95,7 +95,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/view-contact-and-company-profiles/159',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `icon-composer-reminders.png`,
     title: localized(`Company overviews`),
     text: localized(
@@ -103,7 +103,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/snooze-emails-to-handle-them-later/161',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `toolbar-snooze.png`,
     title: localized(`Snooze messages`),
     text: localized(
@@ -111,7 +111,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/read-receipts-link-tracking-and-activity-reports/162',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `icon-toolbar-activity.png`,
     title: localized(`Mailbox insights`),
     text: localized(
@@ -119,7 +119,7 @@ const ProTourFeatures = [
     ),
   },
   {
-    link: 'https://community.getmailspring.com/t/automatically-translate-incoming-email/166',
+    link: process.env.SUMMERMAIL_HELP_URL || '#',
     icon: `pro-feature-translation.png`,
     title: localized(`Automatic Translation`),
     text: localized(
@@ -168,7 +168,7 @@ class PreferencesIdentity extends React.Component<
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div className="basic-explanation" style={{ display: 'flex' }}>
               {localizedReactFragment(
-                `You are not signed in to Mailspring. Link the app to a free Mailspring ID to use great free features like send later and snoozing, or upgrade to Mailspring Pro for unlimited message translation and more.`
+                `You are not signed in to SummerMail. Link the app to a free SummerMail ID to use great free features like send later and snoozing, or upgrade to SummerMail Pro for unlimited message translation and more.`
               )}
               <div
                 className="btn btn-emphasis"
@@ -176,33 +176,37 @@ class PreferencesIdentity extends React.Component<
                 style={{ verticalAlign: 'top', flexShrink: 0, marginLeft: 30 }}
               >
                 <RetinaImg name="ic-upgrade.png" mode={RetinaImg.Mode.ContentIsMask} />{' '}
-                {localized(`Setup Mailspring ID`)}
+                {localized(`Setup SummerMail ID`)}
               </div>
             </div>
           </div>
         </div>
         <div className="row padded" style={{ paddingTop: 0 }}>
-          <ExploreMailspringPro />
+          <ExploreSummerMailPro />
         </div>
       </>
     );
   }
 
   _renderBasicPlan() {
-    const onLearnMore = () => shell.openExternal('https://getmailspring.com/pro');
+    const onLearnMore = () => {
+      if (process.env.SUMMERMAIL_FEATURES_URL) {
+        shell.openExternal(process.env.SUMMERMAIL_FEATURES_URL);
+      }
+    };
     return (
       <div className="row padded">
         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
           <div className="basic-explanation">
             {localizedReactFragment(
               `You are using %@, which is free! You can try pro features like snooze, send later, read receipts and reminders a few times a week.`,
-              <strong>{localized('Mailspring Basic')}</strong>
+              <strong>{localized('SummerMail Basic')}</strong>
             )}
             {process.platform === 'linux' && (
               <span>
                 {localizedReactFragment(
-                  `Mailspring is independent %@ software, and subscription revenue allows us spend time maintaining and improving the product.`,
-                  <a href="https://github.com/Foundry376/Mailspring/">{localized('open source')}</a>
+                  `SummerMail is independent %@ software, and subscription revenue allows us spend time maintaining and improving the product.`,
+                  <span>{localized('open source')}</span>
                 )}
               </span>
             )}
@@ -210,9 +214,9 @@ class PreferencesIdentity extends React.Component<
             <br />
             {localizedReactFragment(
               `Upgrade to %@ to use all these great features permanently:`,
-              <a onClick={onLearnMore}>{localized('Mailspring Pro')}</a>
+              <a onClick={onLearnMore}>{localized('SummerMail Pro')}</a>
             )}
-            <ExploreMailspringSmall />
+            <ExploreSummerMailSmall />
           </div>
           <div className="subscription-actions">
             <div className="pro-feature-ring">
@@ -221,7 +225,7 @@ class PreferencesIdentity extends React.Component<
               <div className="period">{localized('Monthly')}</div>
             </div>
             <OpenIdentityPageButton
-              label={localized('Get Mailspring Pro')}
+              label={localized('Get SummerMail Pro')}
               path="/payment"
               source="Preferences Billing"
               campaign="Dashboard"
@@ -230,7 +234,7 @@ class PreferencesIdentity extends React.Component<
             />
           </div>
         </div>
-        <ExploreMailspringPro />
+        <ExploreSummerMailPro />
       </div>
     );
   }
@@ -241,7 +245,7 @@ class PreferencesIdentity extends React.Component<
     const unpaidNote = effectivePlanName !== planName && (
       <p>
         {localized(
-          `Note: Due to issues with your most recent payment, you've been temporarily downgraded to Mailspring %@. Click 'Billing' below to correct the issue.`,
+          `Note: Due to issues with your most recent payment, you've been temporarily downgraded to SummerMail %@. Click 'Billing' below to correct the issue.`,
           effectivePlanName
         )}
       </p>
@@ -253,14 +257,12 @@ class PreferencesIdentity extends React.Component<
             `Thank you for using %@ and supporting independent software. Get the most out of your subscription: explore pro features below or visit the %@ to learn more about reminders, templates, activity insights, and more.`,
             <strong
               style={{ textTransform: 'capitalize' }}
-            >{`Mailspring ${planDisplayName}`}</strong>,
-            <a href="https://community.getmailspring.com/docs?topic=241">
-              {localized(`Help Center`)}
-            </a>
+            >{`SummerMail ${planDisplayName}`}</strong>,
+            <span>{localized(`Help Center`)}</span>
           )}
           {unpaidNote}
         </div>
-        <ExploreMailspringPro />
+        <ExploreSummerMailPro />
         <div style={{ paddingTop: 15 }}>
           <OpenIdentityPageButton
             label={localized('Manage Billing')}
@@ -293,7 +295,7 @@ class PreferencesIdentity extends React.Component<
   }
 }
 
-const ExploreMailspringSmall: React.FunctionComponent = () => (
+const ExploreSummerMailSmall: React.FunctionComponent = () => (
   <div className="features">
     <ul>
       <li>
@@ -382,9 +384,9 @@ const ExploreMailspringSmall: React.FunctionComponent = () => (
   </div>
 );
 
-const ExploreMailspringPro: React.FunctionComponent = () => (
+const ExploreSummerMailPro: React.FunctionComponent = () => (
   <>
-    <div className="feature-explore-title">{localized('Explore Mailspring Pro')}</div>
+    <div className="feature-explore-title">{localized('Explore SummerMail Pro')}</div>
     <div className="feature-explore-grid">
       {ProTourFeatures.map((item) => (
         <a key={item.title} className="feature" href={item.link}>
@@ -408,7 +410,7 @@ const ExploreMailspringPro: React.FunctionComponent = () => (
 
 const IdentitySummary: React.FunctionComponent<{ identity: IIdentity }> = (props) => {
   const { firstName, lastName, emailAddress } = props.identity;
-  const logout = () => Actions.logoutMailspringIdentity();
+  const logout = () => Actions.logoutSummerMailIdentity();
   return (
     <div className="row padded">
       <div className="identity-info">

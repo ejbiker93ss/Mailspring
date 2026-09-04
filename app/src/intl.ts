@@ -24,7 +24,7 @@ const RTL_LANGS = [
   'yi' /* 'ייִדיש', Yiddish */,
 ];
 
-// For now, we only default to a localized version of Mailspring if the translations
+// For now, we only default to a localized version of SummerMail if the translations
 // have been manually reviewed by a contributor. We have Google translations in /tons/
 // of languages but in many languages the translations are poor.
 const VERIFIED_LANGS = [
@@ -163,7 +163,7 @@ const LANG_NAMES = {
 const systemLocale =
   process.type === 'renderer' ? window.navigator.language : require('electron').app.getLocale();
 
-// The locale Mailspring will default to. We do not default to unverified translations
+// The locale SummerMail will default to. We do not default to unverified translations
 const automaticLocale =
   VERIFIED_LANGS.includes(systemLocale) || VERIFIED_LANGS.includes(systemLocale.split('-').shift())
     ? systemLocale

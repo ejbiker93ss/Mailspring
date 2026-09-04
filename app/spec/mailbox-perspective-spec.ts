@@ -5,7 +5,7 @@ import {
   Label,
   Folder,
   CategoryStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 describe('MailboxPerspective', function mailboxPerspective() {
   beforeEach(() => {

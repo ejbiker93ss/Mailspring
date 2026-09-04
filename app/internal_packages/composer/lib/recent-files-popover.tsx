@@ -1,6 +1,6 @@
 import React from 'react';
-import { Actions, localized, RecentFiles, RecentLocalFile } from 'mailspring-exports';
-import { Menu } from 'mailspring-component-kit';
+import { Actions, localized, RecentFiles, RecentLocalFile } from 'summermail-exports';
+import { Menu } from 'summermail-component-kit';
 
 interface RecentFilesPopoverProps {
   headerMessageId: string;

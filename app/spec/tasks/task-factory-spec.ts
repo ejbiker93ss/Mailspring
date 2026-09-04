@@ -6,7 +6,7 @@ import {
   Thread,
   ChangeFolderTask,
   ChangeLabelsTask,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 describe('TaskFactory', function taskFactory() {
   beforeEach(() => {

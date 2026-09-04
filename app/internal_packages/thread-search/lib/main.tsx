@@ -4,8 +4,8 @@ import {
   localized,
   ComponentRegistry,
   WorkspaceStore,
-} from 'mailspring-exports';
-import { HasTutorialTip } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { HasTutorialTip } from 'summermail-component-kit';
 
 import ThreadSearchBar from './thread-search-bar';
 

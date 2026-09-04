@@ -1,9 +1,9 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import { SendDraftTask } from '../tasks/send-draft-task';
 import { SyncbackDraftTask } from '../tasks/syncback-draft-task';
 import TaskQueue from './task-queue';
 
-class OutboxStore extends MailspringStore {
+class OutboxStore extends SummerMailStore {
   _tasks = [];
 
   constructor() {

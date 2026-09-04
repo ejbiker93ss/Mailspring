@@ -60,7 +60,7 @@ describe('marshalMessage', () => {
 
   it('is byte-identical to the reference dbus-next output', () => {
     // Golden capture of the on-the-wire bytes dbus-next produces for
-    // Update('application://Mailspring.desktop', {count: Int64(5), count-visible: true})
+    // Update('application://SummerMail.desktop', {count: Int64(5), count-visible: true})
     // with serial 1. Guards the hand-rolled marshaller against regressions.
     const expected =
       '6c04000164000000010000008400000001016f002d0000002f636f6d2f63616e6f6e6963616c2f' +
@@ -101,7 +101,7 @@ describe('emitLauncherEntryBadge', () => {
     const saved = process.env.DBUS_SESSION_BUS_ADDRESS;
     // A path that cannot connect — the failure surfaces asynchronously via the
     // socket 'error' handler and must never break the synchronous emit call.
-    process.env.DBUS_SESSION_BUS_ADDRESS = 'unix:path=/nonexistent/mailspring-spec.sock';
+    process.env.DBUS_SESSION_BUS_ADDRESS = 'unix:path=/nonexistent/summermail-spec.sock';
     expect(() => emitLauncherEntryBadge(7)).not.toThrow();
     expect(() => emitLauncherEntryBadge(0)).not.toThrow();
     if (saved !== undefined) process.env.DBUS_SESSION_BUS_ADDRESS = saved;

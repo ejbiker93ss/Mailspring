@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "./lib/main",
   "title": "MCP Server",
-  "description": "Expose Mailspring data via the Model Context Protocol",
+  "description": "Expose SummerMail data via the Model Context Protocol",
   "license": "GPL-3.0",
   "private": true,
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "windowTypes": {
     "default": true

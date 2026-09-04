@@ -1,4 +1,4 @@
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 
 export const OPEN_TRACKING_ID = 'open-tracking';
 export const LINK_TRACKING_ID = 'link-tracking';

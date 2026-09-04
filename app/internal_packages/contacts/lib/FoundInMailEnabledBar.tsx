@@ -1,6 +1,6 @@
 import React from 'react';
-import { ListensToFluxStore } from 'mailspring-component-kit';
-import { localized } from 'mailspring-exports';
+import { ListensToFluxStore } from 'summermail-component-kit';
+import { localized } from 'summermail-exports';
 
 import { Store, ContactsPerspective } from './Store';
 
@@ -42,7 +42,7 @@ class FoundInMailEnabledBarWithData extends React.Component<FoundInMailEnabledBa
       <div className="found-in-mail-enabled-bar">
         <div className="notice">
           {localized(
-            `Contacts you've emailed appear here and Mailspring can suggest them when composing new messages.`
+            `Contacts you've emailed appear here and SummerMail can suggest them when composing new messages.`
           )}
         </div>
         <div className="btn" onClick={this._onToggle}>

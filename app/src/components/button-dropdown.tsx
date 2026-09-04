@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
 import { RetinaImg } from './retina-img';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 import classnames from 'classnames';
 
 type ButtonDropdownState = {

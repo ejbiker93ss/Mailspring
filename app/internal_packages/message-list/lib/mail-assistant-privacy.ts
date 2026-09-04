@@ -1,4 +1,4 @@
-import { Message, Thread } from 'mailspring-exports';
+import { Message, Thread } from 'summermail-exports';
 
 export interface MailAssistantAliasMap {
   aliasesByEmail: Map<string, string>;

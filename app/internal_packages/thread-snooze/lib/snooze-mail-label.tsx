@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { localized, FocusedPerspectiveStore, Thread } from 'mailspring-exports';
-import { RetinaImg, MailLabel } from 'mailspring-component-kit';
+import { localized, FocusedPerspectiveStore, Thread } from 'summermail-exports';
+import { RetinaImg, MailLabel } from 'summermail-component-kit';
 import { PLUGIN_ID } from './snooze-constants';
 import { snoozedUntilMessage } from './snooze-utils';
 

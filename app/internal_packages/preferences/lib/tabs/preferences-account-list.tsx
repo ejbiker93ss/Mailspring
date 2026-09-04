@@ -1,6 +1,6 @@
 import React, { Component, CSSProperties } from 'react';
-import { localized, Account } from 'mailspring-exports';
-import { RetinaImg, Flexbox, EditableList } from 'mailspring-component-kit';
+import { localized, Account } from 'summermail-exports';
+import { RetinaImg, Flexbox, EditableList } from 'summermail-component-kit';
 import classnames from 'classnames';
 
 interface PreferencesAccountListProps {

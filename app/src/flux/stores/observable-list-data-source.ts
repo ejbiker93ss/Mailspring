@@ -1,4 +1,4 @@
-import { ListTabular } from 'mailspring-component-kit';
+import { ListTabular } from 'summermail-component-kit';
 import { Disposable } from 'event-kit';
 
 /**

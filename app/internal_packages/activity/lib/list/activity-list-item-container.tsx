@@ -1,6 +1,6 @@
 import React from 'react';
-import { DisclosureTriangle, Flexbox, RetinaImg } from 'mailspring-component-kit';
-import { localized, DateUtils } from 'mailspring-exports';
+import { DisclosureTriangle, Flexbox, RetinaImg } from 'summermail-component-kit';
+import { localized, DateUtils } from 'summermail-exports';
 
 import ActivityEventStore from '../activity-event-store';
 import { configForPluginId } from '../plugin-helpers';

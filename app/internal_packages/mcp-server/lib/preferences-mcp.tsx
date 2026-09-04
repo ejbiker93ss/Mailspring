@@ -4,14 +4,14 @@ import os from 'os';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import React from 'react';
-import { localized } from 'mailspring-exports';
-import { Switch, RetinaImg } from 'mailspring-component-kit';
+import { localized } from 'summermail-exports';
+import { Switch, RetinaImg } from 'summermail-component-kit';
 import McpServerManager from './mcp-server-manager';
 import PreferencesMcpAccounts from './preferences-mcp-accounts';
 import PreferencesMcpAudit from './preferences-mcp-audit';
 
 const execFileAsync = promisify(execFile);
-const CLAUDE_CODE_MCP_NAME = 'mailspring-mcp';
+const CLAUDE_CODE_MCP_NAME = 'summermail-mcp';
 
 interface State {
   enabled: boolean;
@@ -25,7 +25,7 @@ interface State {
   claudeStatus: string | null;
   codexStatus: string | null;
   claudeCodeStatus: string | null;
-  // Set true once the user has successfully added Mailspring to any AI tool;
+  // Set true once the user has successfully added SummerMail to any AI tool;
   // reveals the "Try It!" example prompt beneath the Quick Setup buttons.
   tryItVisible: boolean;
   tryItCopied: boolean;
@@ -77,7 +77,7 @@ export default class PreferencesMcp extends React.Component<Record<string, never
 
   _tryItPrompt() {
     return localized(
-      'Read the threads in my inbox using Mailspring - what should I prioritize? Draft a reply to the most important message.'
+      'Read the threads in my inbox using SummerMail - what should I prioritize? Draft a reply to the most important message.'
     );
   }
 
@@ -160,7 +160,7 @@ export default class PreferencesMcp extends React.Component<Record<string, never
       }
 
       if (!config.mcpServers) config.mcpServers = {};
-      config.mcpServers.mailspring = {
+      config.mcpServers.summermail = {
         command: 'npx',
         args: [
           'mcp-remote@latest',
@@ -200,14 +200,14 @@ export default class PreferencesMcp extends React.Component<Record<string, never
       }
 
       const block = [
-        `[mcp_servers.mailspring]`,
+        `[mcp_servers.summermail]`,
         `url = "http://127.0.0.1:${this.state.port}/mcp"`,
         `http_headers = { "Authorization" = "Bearer ${this.state.token}" }`,
       ].join('\n');
 
-      // Replace existing mailspring block or append
+      // Replace existing summermail block or append
       // eslint-disable-next-line no-useless-escape
-      const sectionRe = /\[mcp_servers\.mailspring\][^\[]*/s;
+      const sectionRe = /\[mcp_servers\.summermail\][^\[]*/s;
       if (sectionRe.test(content)) {
         content = content.replace(sectionRe, block + '\n\n');
       } else {
@@ -358,7 +358,7 @@ export default class PreferencesMcp extends React.Component<Record<string, never
                   <h6>{localized('Quick Setup')}</h6>
                   <p className="mcp-description">
                     {localized(
-                      "Add Mailspring to your AI tools with one click. This writes the connection details to each tool's config file."
+                      "Add SummerMail to your AI tools with one click. This writes the connection details to each tool's config file."
                     )}
                   </p>
                   <div className="mcp-quick-setup">

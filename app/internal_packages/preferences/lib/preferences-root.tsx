@@ -6,8 +6,8 @@ import {
   KeyCommandsRegion,
   ListensToFluxStore,
   ConfigPropContainer,
-} from 'mailspring-component-kit';
-import { PreferencesUIStore } from 'mailspring-exports';
+} from 'summermail-component-kit';
+import { PreferencesUIStore } from 'summermail-exports';
 import PreferencesTabsBar from './preferences-tabs-bar';
 
 const stopPropagation = (e: CustomEvent) => {

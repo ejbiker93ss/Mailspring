@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { localized, Task, TaskQueue, GetManyRFC2822Task, MboxUtils } from 'mailspring-exports';
+import { localized, Task, TaskQueue, GetManyRFC2822Task, MboxUtils } from 'summermail-exports';
 
 /*
  * Finishes mbox folder exports. The sync engine's half of an export (fetching
@@ -162,7 +162,7 @@ async function sweep() {
       failedThisSession.add(id);
       AppEnv.showErrorDialog(
         localized(
-          'Could not write the mbox file. The export will finish the next time Mailspring launches; the messages fetched so far remain in %@.',
+          'Could not write the mbox file. The export will finish the next time SummerMail launches; the messages fetched so far remain in %@.',
           outputDir
         )
       );

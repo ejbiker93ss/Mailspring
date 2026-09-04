@@ -6,7 +6,7 @@
   "description": "Follows the system light/dark theme preference",
   "license": "GPL-3.0",
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "private": true
 }

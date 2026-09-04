@@ -44,8 +44,8 @@ jobs:
 
       - name: Setup Provisioning Profile
         run: |
-          echo "APPLE_PROVISIONING_PROFILE_PATH=${{ runner.temp }}/Mailspring.provisionprofile" >> $GITHUB_ENV
-          echo $APPLE_PROVISIONING_PROFILE_B64 | base64 --decode > "${{ runner.temp }}/Mailspring.provisionprofile"
+          echo "APPLE_PROVISIONING_PROFILE_PATH=${{ runner.temp }}/SummerMail.provisionprofile" >> $GITHUB_ENV
+          echo $APPLE_PROVISIONING_PROFILE_B64 | base64 --decode > "${{ runner.temp }}/SummerMail.provisionprofile"
         env:
           APPLE_PROVISIONING_PROFILE_B64: ${{ secrets.APPLE_PROVISIONING_PROFILE_B64 }}
 
@@ -74,10 +74,10 @@ jobs:
       - name: Rename artifacts
         if: matrix.arch == 'arm64'
         run: |
-          mv app/dist/Mailspring.zip app/dist/Mailspring-AppleSilicon.zip
+          mv app/dist/SummerMail.zip app/dist/SummerMail-AppleSilicon.zip
 
       - name: Sync artifacts to S3 bucket
         run: |
-          aws s3 sync app/dist/ "s3://mailspring-builds/client/$(git rev-parse --short=8 HEAD)/osx" \
+          aws s3 sync app/dist/ "s3://summermail-builds/client/$(git rev-parse --short=8 HEAD)/osx" \
             --acl public-read \
             --exclude "*" --include *.zip

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck -- Ported legacy plugin module; compiled by the first-party TypeScript pipeline.
-import { React } from 'mailspring-exports';
+import { React } from 'summermail-exports';
 
 const STYLE_ID = 'ejbiker93ss-sticky-thread-header-styles';
 const ROOT_CLASS = 'ejbiker93ss-sticky-thread-header';

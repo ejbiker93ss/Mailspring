@@ -8,7 +8,7 @@ import {
   AccountStore,
   SoundRegistry,
   NativeNotifications,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import { Notifier } from '../lib/main';
 

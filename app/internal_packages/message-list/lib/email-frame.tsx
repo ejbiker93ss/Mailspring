@@ -1,4 +1,4 @@
-import { EventedIFrame } from 'mailspring-component-kit';
+import { EventedIFrame } from 'summermail-component-kit';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {
@@ -9,7 +9,7 @@ import {
   Message,
   Autolink,
   Actions,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import { adjustImages } from './adjust-images';
 import EmailFrameStylesStore from './email-frame-styles-store';
 

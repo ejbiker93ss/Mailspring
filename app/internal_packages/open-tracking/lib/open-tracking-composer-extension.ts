@@ -1,4 +1,4 @@
-import { ComposerExtension, FeatureUsageStore, Message, Contact } from 'mailspring-exports';
+import { ComposerExtension, FeatureUsageStore, Message, Contact } from 'summermail-exports';
 
 import { PLUGIN_ID, PLUGIN_URL } from './open-tracking-constants';
 import { OpenTrackingMetadata } from './types';

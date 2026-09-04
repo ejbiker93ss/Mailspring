@@ -4,9 +4,9 @@ import classnames from 'classnames';
 import React from 'react';
 
 import { calcColor } from './calendar-helpers';
-import { Calendar, Account } from 'mailspring-exports';
+import { Calendar, Account } from 'summermail-exports';
 
-const DISABLED_CALENDARS = 'mailspring.disabledCalendars';
+const DISABLED_CALENDARS = 'summermail.disabledCalendars';
 
 function renderCalendarToggles(calendars: Calendar[], disabledCalendars: string[]) {
   return calendars.map((calendar) => {

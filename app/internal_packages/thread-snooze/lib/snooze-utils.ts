@@ -11,7 +11,7 @@ import {
   DraftFactory,
   SendDraftTask,
   Thread,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 export function snoozedUntilMessage(snoozeDate: string | null, now: Moment = moment()) {
   let message = localized('Snoozed');
@@ -60,10 +60,10 @@ export async function markUnreadOrResurfaceThreads(threads: Thread[], source: st
     // send a hidden email that will mark the thread as unread and bring it
     // to the top of your inbox in any mail client
     const body = `
-    <strong>${localized('Mailspring Reminder')}:</strong> ${localized(
-      'This thread has been moved to the top of your inbox by Mailspring.'
+    <strong>${localized('SummerMail Reminder')}:</strong> ${localized(
+      'This thread has been moved to the top of your inbox by SummerMail.'
     )}</p>
-    <p>--${localized('The Mailspring Team')}</p>`;
+    <p>--${localized('The SummerMail Team')}</p>`;
 
     for (const thread of threads) {
       const draft = await DraftFactory.createDraftForResurfacing(thread, null, body);

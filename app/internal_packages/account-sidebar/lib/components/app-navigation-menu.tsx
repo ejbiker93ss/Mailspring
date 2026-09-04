@@ -1,6 +1,6 @@
 import React from 'react';
 import { ipcRenderer, shell } from 'electron';
-import { AccountStore, Actions, localized, WorkspaceStore } from 'mailspring-exports';
+import { AccountStore, Actions, localized, WorkspaceStore } from 'summermail-exports';
 
 type IconName =
   | 'mail'

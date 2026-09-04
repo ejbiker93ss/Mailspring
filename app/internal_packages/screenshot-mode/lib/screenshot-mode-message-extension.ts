@@ -1,4 +1,4 @@
-import { MessageViewExtension } from 'mailspring-exports';
+import { MessageViewExtension } from 'summermail-exports';
 import * as ScreenshotMode from './main';
 
 export default class ScreenshotModeMessageExtension extends MessageViewExtension {

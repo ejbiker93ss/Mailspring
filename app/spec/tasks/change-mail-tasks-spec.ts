@@ -5,8 +5,8 @@ import {
   Thread,
   Folder,
   Label,
-  Event as MailspringEvent,
-} from 'mailspring-exports';
+  Event as SummerMailEvent,
+} from 'summermail-exports';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -26,8 +26,8 @@ function makeThread(id: string, accountId: string, folders: Folder[] = []): Thre
   return t;
 }
 
-function makeEvent(overrides: Partial<MailspringEvent> = {}): MailspringEvent {
-  return new MailspringEvent({
+function makeEvent(overrides: Partial<SummerMailEvent> = {}): SummerMailEvent {
+  return new SummerMailEvent({
     id: 'event-id-1',
     accountId: 'test-account-id',
     calendarId: 'calendar-id-1',

@@ -1,4 +1,4 @@
-import { Event, Contact } from 'mailspring-exports';
+import { Event, Contact } from 'summermail-exports';
 
 describe('Event', function () {
   describe('isRecurrenceException()', function () {

@@ -62,7 +62,7 @@ class DraftFactory {
       version: 0,
       unread: false,
       starred: false,
-      headerMessageId: `${crypto.randomUUID().toUpperCase()}@getmailspring.com`,
+      headerMessageId: `${crypto.randomUUID().toUpperCase()}@summermail.invalid`,
       from: [account.defaultMe()],
       date: new Date(),
       draft: true,
@@ -306,7 +306,7 @@ class DraftFactory {
     }
 
     return this.createDraft({
-      from: [new Contact({ email: account.emailAddress, name: `${account.name} via Mailspring` })],
+      from: [new Contact({ email: account.emailAddress, name: `${account.name} via SummerMail` })],
       to: [account.defaultMe()],
       cc: [],
       pristine: false,

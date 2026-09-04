@@ -16,13 +16,13 @@ import {
   EventRSVPTask,
   ICSParticipantStatus,
   WorkspaceStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import {
   ScrollRegion,
   ResizableRegion,
   KeyCommandsRegion,
   MiniMonthView,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 import { CalendarMenuCommands } from '../calendar-menu-commands';
 import { DayView } from './day-view';
 import { WeekView } from './week-view';
@@ -58,9 +58,9 @@ import {
 import { showRecurringEventDialog } from './recurring-event-dialog';
 import { modifyEventWithRecurringSupport, EventTimeChangeOptions } from './recurring-event-actions';
 
-const DISABLED_CALENDARS = 'mailspring.disabledCalendars';
-const CALENDAR_VIEW = 'mailspring.calendarView';
-const CALENDAR_LIST_VISIBLE = 'mailspring.calendarListVisible';
+const DISABLED_CALENDARS = 'summermail.disabledCalendars';
+const CALENDAR_VIEW = 'summermail.calendarView';
+const CALENDAR_LIST_VISIBLE = 'summermail.calendarListVisible';
 export const CALENDAR_AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 const VIEWS = {
@@ -82,7 +82,7 @@ export interface EventRendererProps {
   onEventFocused: (event: EventOccurrence) => void;
 }
 
-export interface MailspringCalendarViewProps extends EventRendererProps {
+export interface SummerMailCalendarViewProps extends EventRendererProps {
   dataSource: CalendarDataSource;
   disabledCalendars: string[];
   focusedMoment: Moment;
@@ -111,11 +111,11 @@ export interface MailspringCalendarViewProps extends EventRendererProps {
 }
 
 /*
- * Mailspring Calendar
+ * SummerMail Calendar
  */
-interface MailspringCalendarProps {}
+interface SummerMailCalendarProps {}
 
-interface MailspringCalendarState {
+interface SummerMailCalendarState {
   view: CalendarView;
   selectedEvents: EventOccurrence[];
   focusedEvent: FocusedEventInfo | null;
@@ -130,11 +130,11 @@ interface MailspringCalendarState {
   themeVersion: number;
 }
 
-export class MailspringCalendar extends React.Component<
-  MailspringCalendarProps,
-  MailspringCalendarState
+export class SummerMailCalendar extends React.Component<
+  SummerMailCalendarProps,
+  SummerMailCalendarState
 > {
-  static displayName = 'MailspringCalendar';
+  static displayName = 'SummerMailCalendar';
 
   static DayView = DayView;
   static WeekView = WeekView;
@@ -150,7 +150,7 @@ export class MailspringCalendar extends React.Component<
   _calendarRefreshTimer?: number;
   _dataSource = new CalendarDataSource();
 
-  constructor(props: MailspringCalendarProps) {
+  constructor(props: SummerMailCalendarProps) {
     super(props);
     this.state = {
       calendars: [],
@@ -179,7 +179,7 @@ export class MailspringCalendar extends React.Component<
     this._refreshCalendarsIfVisible();
   }
 
-  componentDidUpdate(_prevProps: MailspringCalendarProps, prevState: MailspringCalendarState) {
+  componentDidUpdate(_prevProps: SummerMailCalendarProps, prevState: SummerMailCalendarState) {
     if (prevState.view !== this.state.view) {
       this._restartCalendarRefreshTimer();
       this._refreshCalendarsIfVisible();
@@ -1017,7 +1017,7 @@ export class MailspringCalendar extends React.Component<
         hasSelectedEvents={this.state.selectedEvents.length > 0}
       >
         <KeyCommandsRegion
-          className="mailspring-calendar"
+          className="summermail-calendar"
           localHandlers={{
             'core:remove-from-view': this._onDeleteSelectedEvents,
             'calendar:move-event-up': () => this._onMoveSelectedEvent('up', false),

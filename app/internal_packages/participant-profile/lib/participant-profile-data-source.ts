@@ -1,5 +1,5 @@
-import { MailspringAPIRequest, Utils } from 'mailspring-exports';
-const { makeRequest } = MailspringAPIRequest;
+import { SummerMailAPIRequest, Utils } from 'summermail-exports';
+const { makeRequest } = SummerMailAPIRequest;
 
 const CACHE_SIZE = 200;
 const CACHE_INDEX_KEY = 'pp-cache-v3-keys';

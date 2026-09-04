@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import path from 'path';
-import { File } from 'mailspring-exports';
+import { File } from 'summermail-exports';
 import { ipcRenderer } from 'electron';
 import { ensureHeicPreview, isHeicExtension, isHeicFilePath } from './heic-preview';
 

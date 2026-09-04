@@ -12,11 +12,11 @@ import {
   CategoryStore,
   FocusedPerspectiveStore,
   MailboxPerspective,
-  MailspringTestUtils,
+  SummerMailTestUtils,
   TaskQueue,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
-import { Categories } from 'mailspring-observables';
+import { Categories } from 'summermail-observables';
 
 describe('MovePickerPopover', function () {
   beforeEach(() => (CategoryStore._categoryCache = {}));
@@ -45,7 +45,7 @@ describe('MovePickerPopover', function () {
       accountId: TEST_ACCOUNT_ID,
     });
 
-    const observable = MailspringTestUtils.mockObservable(
+    const observable = SummerMailTestUtils.mockObservable(
       [this.inboxCategory, this.archiveCategory, this.userCategory],
       {}
     );

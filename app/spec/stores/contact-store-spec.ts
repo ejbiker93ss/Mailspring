@@ -51,13 +51,13 @@ xdescribe('ContactStore', function () {
 
   describe('when searching for a contact', function () {
     beforeEach(function () {
-      this.c1 = new Contact({ name: '', email: '1test@mailspring.com', refs: 7 });
-      this.c2 = new Contact({ name: 'First', email: '2test@mailspring.com', refs: 6 });
-      this.c3 = new Contact({ name: 'First Last', email: '3test@mailspring.com', refs: 5 });
-      this.c4 = new Contact({ name: 'Fit', email: 'fit@mailspring.com', refs: 4 });
-      this.c5 = new Contact({ name: 'Fins', email: 'fins@mailspring.com', refs: 3 });
-      this.c6 = new Contact({ name: 'Fill', email: 'fill@mailspring.com', refs: 2 });
-      this.c7 = new Contact({ name: 'Fin', email: 'fin@mailspring.com', refs: 1 });
+      this.c1 = new Contact({ name: '', email: '1test@summermail.com', refs: 7 });
+      this.c2 = new Contact({ name: 'First', email: '2test@summermail.com', refs: 6 });
+      this.c3 = new Contact({ name: 'First Last', email: '3test@summermail.com', refs: 5 });
+      this.c4 = new Contact({ name: 'Fit', email: 'fit@summermail.com', refs: 4 });
+      this.c5 = new Contact({ name: 'Fins', email: 'fins@summermail.com', refs: 3 });
+      this.c6 = new Contact({ name: 'Fill', email: 'fill@summermail.com', refs: 2 });
+      this.c7 = new Contact({ name: 'Fin', email: 'fin@summermail.com', refs: 1 });
     });
 
     it('can find by first name', function () {
@@ -133,7 +133,7 @@ xdescribe('ContactStore', function () {
       expect(
         ContactStore.isValidContact({
           name: 'Ben',
-          email: 'ben@mailspring.com',
+          email: 'ben@summermail.com',
         } as unknown as Contact)
       ).toBe(false));
 
@@ -144,24 +144,24 @@ xdescribe('ContactStore', function () {
   describe('parseContactsInString', function () {
     const testCases = {
       // Single contact test cases
-      'evan@mailspring.com': [
-        new Contact({ name: 'evan@mailspring.com', email: 'evan@mailspring.com' }),
+      'evan@summermail.com': [
+        new Contact({ name: 'evan@summermail.com', email: 'evan@summermail.com' }),
       ],
       'Evan Morikawa': [],
-      "'evan@mailspring.com'": [
-        new Contact({ name: 'evan@mailspring.com', email: 'evan@mailspring.com' }),
+      "'evan@summermail.com'": [
+        new Contact({ name: 'evan@summermail.com', email: 'evan@summermail.com' }),
       ],
-      '"evan@mailspring.com"': [
-        new Contact({ name: 'evan@mailspring.com', email: 'evan@mailspring.com' }),
+      '"evan@summermail.com"': [
+        new Contact({ name: 'evan@summermail.com', email: 'evan@summermail.com' }),
       ],
-      "'evan@mailspring.com": [
-        new Contact({ name: "'evan@mailspring.com", email: "'evan@mailspring.com" }),
+      "'evan@summermail.com": [
+        new Contact({ name: "'evan@summermail.com", email: "'evan@summermail.com" }),
       ],
-      'Evan Morikawa <evan@mailspring.com>': [
-        new Contact({ name: 'Evan Morikawa', email: 'evan@mailspring.com' }),
+      'Evan Morikawa <evan@summermail.com>': [
+        new Contact({ name: 'Evan Morikawa', email: 'evan@summermail.com' }),
       ],
-      'Evan Morikawa (evan@mailspring.com)': [
-        new Contact({ name: 'Evan Morikawa', email: 'evan@mailspring.com' }),
+      'Evan Morikawa (evan@summermail.com)': [
+        new Contact({ name: 'Evan Morikawa', email: 'evan@summermail.com' }),
       ],
       'spang (Christine Spang) <noreply+phabricator@nilas.com>': [
         new Contact({ name: 'spang (Christine Spang)', email: 'noreply+phabricator@nilas.com' }),
@@ -172,32 +172,32 @@ xdescribe('ContactStore', function () {
       'spang "Christine Spang" <noreply+phabricator@nilas.com>': [
         new Contact({ name: 'spang "Christine Spang"', email: 'noreply+phabricator@nilas.com' }),
       ],
-      'Evan (evan@mailspring.com)': [new Contact({ name: 'Evan', email: 'evan@mailspring.com' })],
-      '"Michael" (mg@mailspring.com)': [
-        new Contact({ name: 'Michael', email: 'mg@mailspring.com' }),
+      'Evan (evan@summermail.com)': [new Contact({ name: 'Evan', email: 'evan@summermail.com' })],
+      '"Michael" (mg@summermail.com)': [
+        new Contact({ name: 'Michael', email: 'mg@summermail.com' }),
       ],
-      'announce-uc.1440659566.kankcagcmaacemjlnoma-security=mailspring.com@lists.openwall.com': [
+      'announce-uc.1440659566.kankcagcmaacemjlnoma-security=summermail.com@lists.openwall.com': [
         new Contact({
-          name: 'announce-uc.1440659566.kankcagcmaacemjlnoma-security=mailspring.com@lists.openwall.com',
+          name: 'announce-uc.1440659566.kankcagcmaacemjlnoma-security=summermail.com@lists.openwall.com',
           email:
-            'announce-uc.1440659566.kankcagcmaacemjlnoma-security=mailspring.com@lists.openwall.com',
+            'announce-uc.1440659566.kankcagcmaacemjlnoma-security=summermail.com@lists.openwall.com',
         }),
       ],
 
       // Multiple contact test cases
-      'Evan Morikawa <evan@mailspring.com>, Ben <ben@mailspring.com>': [
-        new Contact({ name: 'Evan Morikawa', email: 'evan@mailspring.com' }),
-        new Contact({ name: 'Ben', email: 'ben@mailspring.com' }),
+      'Evan Morikawa <evan@summermail.com>, Ben <ben@summermail.com>': [
+        new Contact({ name: 'Evan Morikawa', email: 'evan@summermail.com' }),
+        new Contact({ name: 'Ben', email: 'ben@summermail.com' }),
       ],
-      'Evan Morikawa <evan@mailspring.com>; Ben <ben@mailspring.com>': [
-        new Contact({ name: 'Evan Morikawa', email: 'evan@mailspring.com' }),
-        new Contact({ name: 'Ben', email: 'ben@mailspring.com' }),
+      'Evan Morikawa <evan@summermail.com>; Ben <ben@summermail.com>': [
+        new Contact({ name: 'Evan Morikawa', email: 'evan@summermail.com' }),
+        new Contact({ name: 'Ben', email: 'ben@summermail.com' }),
       ],
-      'mark@mailspring.com\nGleb (gleb@mailspring.com)\rEvan Morikawa <evan@mailspring.com>, spang (Christine Spang) <noreply+phabricator@nilas.com>':
+      'mark@summermail.com\nGleb (gleb@summermail.com)\rEvan Morikawa <evan@summermail.com>, spang (Christine Spang) <noreply+phabricator@nilas.com>':
         [
-          new Contact({ name: '', email: 'mark@mailspring.com' }),
-          new Contact({ name: 'Gleb', email: 'gleb@mailspring.com' }),
-          new Contact({ name: 'Evan Morikawa', email: 'evan@mailspring.com' }),
+          new Contact({ name: '', email: 'mark@summermail.com' }),
+          new Contact({ name: 'Gleb', email: 'gleb@summermail.com' }),
+          new Contact({ name: 'Evan Morikawa', email: 'evan@summermail.com' }),
           new Contact({ name: 'spang (Christine Spang)', email: 'noreply+phabricator@nilas.com' }),
         ],
     };

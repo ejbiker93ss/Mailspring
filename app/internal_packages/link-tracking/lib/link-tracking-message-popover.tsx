@@ -1,6 +1,6 @@
 import React from 'react';
-import { Message, localized, DateUtils } from 'mailspring-exports';
-import { Flexbox } from 'mailspring-component-kit';
+import { Message, localized, DateUtils } from 'summermail-exports';
+import { Flexbox } from 'summermail-component-kit';
 import { pluckByEmail } from '../../activity/lib/activity-event-store';
 import { LinkTrackingMetadata } from './types';
 

@@ -1,6 +1,6 @@
 import path from 'path';
 import { ipcRenderer } from 'electron';
-import { BadgeStore } from 'mailspring-exports';
+import { BadgeStore } from 'summermail-exports';
 
 // Must be absolute real system path
 // https://github.com/atom/electron/issues/1299
@@ -71,7 +71,7 @@ class SystemTrayIconStore {
   _dark = () => {
     if (process.platform === 'win32') {
       // nativeTheme is accessed via @electron/remote; guard against the remote
-      // object being GC'd during window teardown (Sentry MAILSPRING-CLIENT-49).
+      // object being GC'd during window teardown (Sentry SUMMERMAIL-CLIENT-49).
       try {
         return nativeTheme.shouldUseDarkColors ? '-dark' : '';
       } catch {

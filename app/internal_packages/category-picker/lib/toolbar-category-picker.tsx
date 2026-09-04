@@ -6,8 +6,8 @@ import {
   WorkspaceStore,
   SheetDepthContext,
   Thread,
-} from 'mailspring-exports';
-import { RetinaImg, KeyCommandsRegion, RovingTabIndexToolbar } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { RetinaImg, KeyCommandsRegion, RovingTabIndexToolbar } from 'summermail-component-kit';
 
 import MovePickerPopover from './move-picker-popover';
 import LabelPickerPopover from './label-picker-popover';

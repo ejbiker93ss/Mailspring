@@ -6,7 +6,7 @@ import {
   FeatureUsageStore,
   SyncbackMetadataTask,
   DraftEditingSession,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import { PLUGIN_ID, THREAD_PLUGIN_ID } from './send-reminders-constants';
 
@@ -30,9 +30,9 @@ async function incrementMetadataUse(model: Thread | Message, expiration: Date | 
     await FeatureUsageStore.markUsedOrUpgrade(PLUGIN_ID, {
       headerText: localized('All Reminders Used'),
       rechargeText: `${localized(
-        `You can add reminders to %1$@ emails each %2$@ with Mailspring Basic.`
+        `You can add reminders to %1$@ emails each %2$@ with SummerMail Basic.`
       )} ${localized('Upgrade to Pro today!')}`,
-      iconUrl: 'mailspring://send-reminders/assets/ic-send-reminders-modal@2x.png',
+      iconUrl: 'summermail://send-reminders/assets/ic-send-reminders-modal@2x.png',
     });
   } catch (error) {
     if (error instanceof FeatureUsageStore.NoProAccessError) {

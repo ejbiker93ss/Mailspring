@@ -1,5 +1,5 @@
 import React from 'react';
-import { KeyManager, localized } from 'mailspring-exports';
+import { KeyManager, localized } from 'summermail-exports';
 import {
   connectMicrosoftTeams,
   disconnectMicrosoftTeams,
@@ -139,7 +139,7 @@ export default class PreferencesMailAssistant extends React.Component<
           <p>
             {this.state.hasManagedKey
               ? localized(
-                  'Your organization provides the OpenAI API credential through the Windows environment. Mailspring does not save it.'
+                  'Your organization provides the OpenAI API credential through the Windows environment. SummerMail does not save it.'
                 )
               : localized(
                   'Your API key is encrypted using the same operating-system credential storage as your mail passwords.'
@@ -251,7 +251,7 @@ export default class PreferencesMailAssistant extends React.Component<
           <h2>{localized('Microsoft Teams meetings')}</h2>
           <p>
             {localized(
-              'Connect Microsoft through Graph to create Teams links and phone dial-in details. This connection does not use IMAP or SMTP and does not add the Microsoft mailbox to Mailspring.'
+              'Connect Microsoft through Graph to create Teams links and phone dial-in details. This connection does not use IMAP or SMTP and does not add the Microsoft mailbox to SummerMail.'
             )}
           </p>
           {this.state.teamsConnection ? (

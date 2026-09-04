@@ -17,7 +17,7 @@ export function getMenuTemplate(platform: string, application: Application) {
       type: 'separator',
     },
     {
-      label: localized('Quit Mailspring'),
+      label: localized('Quit SummerMail'),
       click: () => application.emit('application:quit'),
     },
   ];
@@ -25,7 +25,7 @@ export function getMenuTemplate(platform: string, application: Application) {
   template.unshift({
     label:
       platform === 'win32'
-        ? `${localized('Open')} Mailspring`
+        ? `${localized('Open')} SummerMail`
         : `${localized('Open')} ${localized('Inbox')}`,
     click: () => application.emit('application:show-main-window'),
   });

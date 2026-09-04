@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import vCard from 'vcf';
-import { Contact, SyncbackContactTask, Actions, AccountStore, localized } from 'mailspring-exports';
+import { Contact, SyncbackContactTask, Actions, AccountStore, localized } from 'summermail-exports';
 import { parse, fromVCF } from './ContactInfoMapping';
 import { formatDisplayName, serializeBirthday, serializeAddress } from './VCFHelpers';
 

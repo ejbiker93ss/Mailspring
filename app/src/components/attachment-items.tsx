@@ -144,7 +144,7 @@ export class AttachmentItem extends Component<AttachmentItemProps> {
       // same as the last component of the filePath URL, or the download fails.
       const downloadURL = `${contentType}:${path.basename(filePath)}:file://${filePath}`;
       event.dataTransfer.setData('DownloadURL', downloadURL);
-      event.dataTransfer.setData('text/mailspring-file-url', downloadURL);
+      event.dataTransfer.setData('text/summermail-file-url', downloadURL);
       const el = this._fileIconComponent;
       if (!el) return;
       const rect = el.getBoundingClientRect();

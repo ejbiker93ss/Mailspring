@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
 
-import MTestUtils from '../../../spec/mailspring-test-utils';
+import MTestUtils from '../../../spec/summermail-test-utils';
 import { CalendarEventPopoverUneditable } from '../lib/core/calendar-event-popover';
 import { EventOccurrence } from '../lib/core/calendar-data-source';
 

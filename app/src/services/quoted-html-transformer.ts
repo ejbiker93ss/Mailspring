@@ -19,7 +19,7 @@ const looksLikeTrackingPixel = (img) => {
 };
 
 class QuotedHTMLTransformer {
-  annotationClass = 'mailspring-quoted-text-segment';
+  annotationClass = 'summermail-quoted-text-segment';
 
   extractQuotedText(html: string) {
     const doc = this._parseHTML(html || '');

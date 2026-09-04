@@ -8,7 +8,7 @@ import {
   EmptyListState,
   FluxContainer,
   SyncingListState,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 
 import {
   Actions,
@@ -25,7 +25,7 @@ import {
   Thread,
   TaskFactory,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import * as ThreadListColumns from './thread-list-columns';
 import ThreadListScrollTooltip from './thread-list-scroll-tooltip';
@@ -242,8 +242,8 @@ class ThreadList extends React.Component<
 
     const canvas = CanvasUtils.canvasForDragging('threads', data.threadIds.length);
     event.dataTransfer.setDragImage(canvas, 10, 10);
-    event.dataTransfer.setData('mailspring-threads-data', JSON.stringify(data));
-    event.dataTransfer.setData(`mailspring-accounts=${data.accountIds.join(',')}`, '1');
+    event.dataTransfer.setData('summermail-threads-data', JSON.stringify(data));
+    event.dataTransfer.setData(`summermail-accounts=${data.accountIds.join(',')}`, '1');
   };
 
   _onDragEnd = (event: React.DragEvent) => {};

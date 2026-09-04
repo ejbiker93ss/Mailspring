@@ -5,7 +5,7 @@ import {
   getCurrentTokenAndTerm,
   getThreadSuggestions,
 } from '../lib/search-bar-util';
-import { DatabaseStore, SearchQueryParser } from 'mailspring-exports';
+import { DatabaseStore, SearchQueryParser } from 'summermail-exports';
 
 describe('search-bar-util', function () {
   describe('getThreadSuggestions()', function () {

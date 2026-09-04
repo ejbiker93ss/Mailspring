@@ -150,7 +150,7 @@ const displayNotification = (
     };
     if (process.platform === 'win32') {
       // On Windows with toastXml + activationType="protocol", clicks are routed through
-      // the OS protocol handler (mailspring:// URLs) rather than Electron's Activated callback,
+      // the OS protocol handler (summermail:// URLs) rather than Electron's Activated callback,
       // but this event still fires first. It seems worth handling it in case the protocol handler
       // fails, since it's a big of a fragile approach, but we need to wait and let the event arrive
       // from the second-instance that is launched to handle the URL.

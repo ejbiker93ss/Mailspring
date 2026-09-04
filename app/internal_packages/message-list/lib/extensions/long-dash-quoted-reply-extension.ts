@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck -- Ported legacy plugin module; compiled by the first-party TypeScript pipeline.
-import { MessageViewExtension } from 'mailspring-exports';
+import { MessageViewExtension } from 'summermail-exports';
 
 /* ===================== Helpers ===================== */
 

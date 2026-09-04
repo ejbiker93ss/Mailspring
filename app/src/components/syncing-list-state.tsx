@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actions, localized } from 'mailspring-exports';
+import { Actions, localized } from 'summermail-exports';
 
 function SyncingListState(props: { empty?: boolean }) {
   let message = localized('Looking for more messages');

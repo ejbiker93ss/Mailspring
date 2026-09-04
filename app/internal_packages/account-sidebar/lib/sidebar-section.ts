@@ -12,7 +12,7 @@ import {
   ExtensionRegistry,
   RegExpUtils,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import SidebarItem, {
   configuredFavoriteFolders,

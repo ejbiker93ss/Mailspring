@@ -4,7 +4,7 @@ import {
   FeatureUsageStore,
   Message,
   Contact,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import { PLUGIN_ID, PLUGIN_URL } from './link-tracking-constants';
 
 function forEachATagInBody(

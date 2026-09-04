@@ -1,0 +1,60 @@
+Windows Registry Editor Version 5.00
+
+[{{HKEY_ROOT}}\SOFTWARE\Classes\SummerMail.Url.mailto]
+"FriendlyTypeName"="SummerMail Url"
+
+[{{HKEY_ROOT}}\SOFTWARE\Classes\SummerMail.Url.mailto\shell]
+
+[{{HKEY_ROOT}}\SOFTWARE\Classes\SummerMail.Url.mailto\shell\open]
+
+[{{HKEY_ROOT}}\SOFTWARE\Classes\SummerMail.Url.mailto\shell\open\command]
+@="\"{{PATH_TO_ROOT_FOLDER}}\\Update.exe\" --processStart summermail.exe --process-start-args %1"
+
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail]
+@="SummerMail"
+"LocalizedString"="@{{PATH_TO_ROOT_FOLDER}}\\Update.exe,-123"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\DefaultIcon]
+@="{{PATH_TO_APP_FOLDER}}\\summermail.exe,1"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Capabilities]
+"ApplicationName"="SummerMail"
+"ApplicationDescription"="A fast, modern mail client designed to help you boost your productivity."
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Capabilities\StartMenu]
+"Mail"="SummerMail"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Capabilities\URLAssociations]
+"mailto"="SummerMail.Url.mailto"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Protocols]
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Protocols\mailto]
+@="URL:MailTo Protocol"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Protocols\mailto\DefaultIcon]
+@="{{PATH_TO_APP_FOLDER}}\\summermail.exe,1"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Protocols\mailto\shell]
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Protocols\mailto\shell\open]
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\Protocols\mailto\shell\open\command]
+@="\"{{PATH_TO_ROOT_FOLDER}}\\Update.exe\" --processStart summermail.exe --process-start-args %1"
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\shell]
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\shell\open]
+
+[{{HKEY_ROOT}}\SOFTWARE\Clients\Mail\SummerMail\shell\open\command]
+@="\"{{PATH_TO_ROOT_FOLDER}}\\Update.exe\" --processStart summermail.exe"
+
+[{{HKEY_ROOT}}\SOFTWARE\RegisteredApplications]
+"SummerMail"="Software\\Clients\\Mail\\SummerMail\\Capabilities"
+
+
+[HKEY_CURRENT_USER\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache]
+"{{PATH_TO_ROOT_FOLDER}}\\Update.exe"="SummerMail"
+"{{PATH_TO_ROOT_FOLDER}}\\Update.exe.FriendlyAppName"="SummerMail"
+"{{PATH_TO_ROOT_FOLDER}}\\Update.exe.ApplicationCompany"="SummerMail"

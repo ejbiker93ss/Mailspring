@@ -42,7 +42,7 @@ async function setThemeAndLayout(theme: string, layout: string) {
     electronApp,
     `(function() {
       AppEnv.config.set('core.theme', '${theme}');
-      var WorkspaceStore = require('mailspring-exports').WorkspaceStore;
+      var WorkspaceStore = require('summermail-exports').WorkspaceStore;
       WorkspaceStore._onSelectLayoutMode('${layout}');
     })()`
   );

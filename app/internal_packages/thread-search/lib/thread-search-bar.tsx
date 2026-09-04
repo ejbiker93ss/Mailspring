@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ListensToFluxStore, RetinaImg, KeyCommandsRegion } from 'mailspring-component-kit';
+import { ListensToFluxStore, RetinaImg, KeyCommandsRegion } from 'summermail-component-kit';
 import {
   localized,
   Actions,
@@ -7,7 +7,7 @@ import {
   WorkspaceStore,
   MailboxPerspective,
   AccountStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import SearchStore from './search-store';
 import TokenizingContenteditable from './tokenizing-contenteditable';
 

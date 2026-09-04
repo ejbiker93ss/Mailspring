@@ -3,9 +3,9 @@ import { shell } from 'electron';
 import ReactDOM from 'react-dom';
 import classnames from 'classnames';
 import networkErrors from 'chromium-net-errors';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 
-import { rootURLForServer } from '../flux/mailspring-api-request';
+import { rootURLForServer } from '../flux/summermail-api-request';
 import { RetinaImg } from './retina-img';
 import { Disposable } from 'event-kit';
 
@@ -178,7 +178,7 @@ export default class Webview extends React.Component<WebviewProps, WebviewState>
 
     if (httpResponseCode >= 400) {
       const error = localized(
-        `Could not reach Mailspring. Please try again or contact support@getmailspring.com if the issue persists. (%@: %@)`,
+        `Could not reach SummerMail. Please try again. (%@: %@)`,
         navigatedUrl,
         httpResponseCode
       );

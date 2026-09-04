@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
-import { SelectableTableCell, SelectableTableRow, SelectableTable } from 'mailspring-component-kit';
+import { SelectableTableCell, SelectableTableRow, SelectableTable } from 'summermail-component-kit';
 import { selection, cellProps, rowProps, tableProps, testDataSource } from '../fixtures/table-data';
 
 afterEach(cleanup);

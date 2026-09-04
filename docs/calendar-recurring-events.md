@@ -1,6 +1,6 @@
 # Calendar Recurring Events: Implementation Guide
 
-This document explains how Mailspring displays, stores, and edits recurring calendar events, including exception handling. It is intended for developers working on the `main-calendar` package or the `Mailspring-Sync` C++ engine.
+This document explains how SummerMail displays, stores, and edits recurring calendar events, including exception handling. It is intended for developers working on the `main-calendar` package or the `SummerMail-Sync` C++ engine.
 
 ---
 
@@ -119,7 +119,7 @@ The master event is PUTted to its existing CalDAV href. All occurrences change.
 
 ### "This Occurrence Only" Path (`_saveOccurrenceException`)
 
-Per RFC 4791 §4.1, exception VEVENTs with the same UID must share the same CalDAV resource as their master. Mailspring embeds the exception inline in the master VCALENDAR:
+Per RFC 4791 §4.1, exception VEVENTs with the same UID must share the same CalDAV resource as their master. SummerMail embeds the exception inline in the master VCALENDAR:
 
 1. Call `ICSEventHelpers.createRecurrenceException(masterIcs, originalOccurrenceStart, newStart, newEnd, isAllDay)`.
 2. This returns:

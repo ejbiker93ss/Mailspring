@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { RetinaImg, BindGlobalCommands, RovingTabIndexToolbar } from 'mailspring-component-kit';
+import { RetinaImg, BindGlobalCommands, RovingTabIndexToolbar } from 'summermail-component-kit';
 import {
   localized,
   Actions,
@@ -10,7 +10,7 @@ import {
   CategoryStore,
   FocusedContentStore,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import ThreadListStore from './thread-list-store';
 

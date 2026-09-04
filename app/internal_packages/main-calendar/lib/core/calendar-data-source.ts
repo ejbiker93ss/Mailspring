@@ -8,7 +8,7 @@ import {
   AndCompositeMatcher,
   OrCompositeMatcher,
   Contact,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import IcalExpander from 'ical-expander';
 
 /** Participation status values from iCalendar spec */
@@ -42,7 +42,7 @@ export interface EventOccurrence {
    * - Events where the current user is an attendee but hasn't accepted (NEEDS-ACTION or TENTATIVE)
    */
   isPending: boolean;
-  /** Participation status for the attendee identity owned by this Mailspring user. */
+  /** Participation status for the attendee identity owned by this SummerMail user. */
   myParticipationStatus?: ParticipationStatus;
   /** Normalized email address for that attendee identity. */
   myAttendeeEmail?: string;

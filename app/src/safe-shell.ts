@@ -7,7 +7,7 @@ import { shell } from 'electron';
 // when a caller doesn't add its own `.catch`, it surfaces as an unhandled
 // promise rejection that Sentry reports with no stacktrace and no way to
 // tell which of our many `shell.openExternal` call sites, or what URL, was
-// involved (see MAILSPRING-CLIENT-6E).
+// involved (see SUMMERMAIL-CLIENT-6E).
 //
 // We capture the caller's stack synchronously (before the async native call
 // runs) and attach it to the error if it doesn't already have one, then

@@ -144,11 +144,12 @@ module.exports = ErrorLogger = (function () {
     if (process.type === 'renderer') {
       return;
     }
+    const submitURL = process.env.SUMMERMAIL_CRASH_REPORT_URL || '';
     require('electron').crashReporter.start({
-      productName: 'Mailspring',
-      companyName: 'Mailspring',
-      submitURL: `https://id.getmailspring.com/report-crash?ver=${appVersion}&platform=${process.platform}`,
-      uploadToServer: true,
+      productName: 'SummerMail',
+      companyName: 'SummerMail',
+      submitURL,
+      uploadToServer: Boolean(submitURL),
       autoSubmit: true,
       extra: {
         ver: appVersion,

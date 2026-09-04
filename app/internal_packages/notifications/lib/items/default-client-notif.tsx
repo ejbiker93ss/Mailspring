@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, DefaultClientHelper } from 'mailspring-exports';
-import { Notification } from 'mailspring-component-kit';
+import { localized, DefaultClientHelper } from 'summermail-exports';
+import { Notification } from 'summermail-component-kit';
 import { IDisposable } from 'rx-core';
 
 const SETTINGS_KEY = 'mailto.prompted-about-default';
@@ -57,7 +57,7 @@ export default class DefaultClientNotification extends React.Component<
             buttons: [localized('OK')],
             message: localized('Could not set as default mail client'),
             detail: localized(
-              'Mailspring could not find the xdg-mime utility. Please install the xdg-utils package using your system package manager (e.g. apt install xdg-utils) and try again from Preferences > General.'
+              'SummerMail could not find the xdg-mime utility. Please install the xdg-utils package using your system package manager (e.g. apt install xdg-utils) and try again from Preferences > General.'
             ),
           });
         } else {
@@ -78,7 +78,7 @@ export default class DefaultClientNotification extends React.Component<
     }
     return (
       <Notification
-        title={localized('Would you like to make Mailspring your default mail client?')}
+        title={localized('Would you like to make SummerMail your default mail client?')}
         priority="1"
         icon="volstead-defaultclient.png"
         actions={[

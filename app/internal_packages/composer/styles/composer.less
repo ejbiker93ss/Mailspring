@@ -57,8 +57,8 @@
 
 // Selection quotes carry fixed light-theme inline colors so they render reliably
 // after being sent. Override those colors only inside the live composer so the
-// quote remains legible in every Mailspring theme.
-.RichEditor-root blockquote.mailspring-selection-quote {
+// quote remains legible in every SummerMail theme.
+.RichEditor-root blockquote.summermail-selection-quote {
   color: @text-color !important;
   background: @background-off-primary !important;
   border-left-color: @text-color-subtle !important;
@@ -955,7 +955,7 @@ body.platform-win32 {
     }
 
     .hiding-quoted-text {
-      blockquote:not(.mailspring-selection-quote) {
+      blockquote:not(.summermail-selection-quote) {
         height: 0;
         overflow: hidden;
         padding: 0;

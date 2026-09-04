@@ -1,4 +1,4 @@
-import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { ComponentRegistry, WorkspaceStore } from 'summermail-exports';
 
 import ThreadList from './thread-list';
 import UnthreadedThreadList from './unthreaded-thread-list';

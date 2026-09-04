@@ -6,9 +6,9 @@ import {
   SyncbackContactTask,
   AccountStore,
   ContactGroup,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import { isEqual } from 'underscore';
-import { FocusContainer, ListensToFluxStore, ScrollRegion } from 'mailspring-component-kit';
+import { FocusContainer, ListensToFluxStore, ScrollRegion } from 'summermail-component-kit';
 import { parse, ContactBase, ContactInteractorMetadata, apply } from './ContactInfoMapping';
 import { ContactDetailRead } from './ContactDetailRead';
 import { ContactDetailEdit } from './ContactDetailEdit';

@@ -1,4 +1,4 @@
-import { RetinaImg } from 'mailspring-component-kit';
+import { RetinaImg } from 'summermail-component-kit';
 
 import React from 'react';
 import fs from 'fs';
@@ -15,7 +15,7 @@ import {
   Event,
   EventRSVPTask,
   DatabaseStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import ICAL from 'ical.js';
 import { eventTimeInZone } from './event-time-utils';
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Utils, Contact } from 'mailspring-exports';
-import { AccountColorBar } from 'mailspring-component-kit';
+import { Utils, Contact } from 'summermail-exports';
+import { AccountColorBar } from 'summermail-component-kit';
 import { ThreadWithMessagesMetadata } from './types';
 
 function getTokensFromMessages(thread: ThreadWithMessagesMetadata) {

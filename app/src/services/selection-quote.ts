@@ -11,7 +11,7 @@ export function buildSelectionQuoteHTML(text: string, author?: string) {
 
   // Inline styles are intentional: class-based styling is stripped by many email clients.
   return (
-    `<blockquote class="mailspring-selection-quote" ` +
+    `<blockquote class="summermail-selection-quote" ` +
     `style="margin:12px 0;padding:10px 14px;border-left:4px solid #9aa0a6;` +
     `background-color:#f3f4f6;color:#2f3136;font-family:Arial,sans-serif;">` +
     `<div style="margin:0 0 6px;color:#5f6368;font-size:12px;">` +

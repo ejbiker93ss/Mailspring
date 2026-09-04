@@ -9,7 +9,7 @@
   "scripts": {
   },
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "windowTypes": {
     "default": true,

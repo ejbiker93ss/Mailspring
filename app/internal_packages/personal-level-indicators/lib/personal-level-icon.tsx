@@ -1,6 +1,6 @@
 import React from 'react';
-import { Thread } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { Thread } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 
 const StaticEmptyIndicator = <div className="personal-level-icon" />;
 
@@ -13,7 +13,7 @@ export default class PersonalLevelIcon extends React.Component<{ thread: Thread 
     return (
       <div className="personal-level-icon">
         <RetinaImg
-          url={`mailspring://personal-level-indicators/assets/PLI-Level${level}@2x.png`}
+          url={`summermail://personal-level-indicators/assets/PLI-Level${level}@2x.png`}
           mode={RetinaImg.Mode.ContentDark}
         />
       </div>

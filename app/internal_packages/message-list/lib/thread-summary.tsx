@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AccountStore, Message, Thread, localized } from 'mailspring-exports';
+import { AccountStore, Message, Thread, localized } from 'summermail-exports';
 import { AiSummaryMarkdown } from './ai-summary-markdown';
 import { generateThreadSummary } from './ai-summary-client';
 import { getAiSummaryStore, AiSummaryScope, StoredThreadSummary } from './ai-summary-store';

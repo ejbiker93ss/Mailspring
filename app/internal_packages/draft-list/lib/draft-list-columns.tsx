@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, Utils, Message } from 'mailspring-exports';
-import { InjectedComponentSet, ListTabular } from 'mailspring-component-kit';
+import { localized, Utils, Message } from 'summermail-exports';
+import { InjectedComponentSet, ListTabular } from 'summermail-component-kit';
 
 function snippet(html: string) {
   if (!(html && typeof html === 'string')) {

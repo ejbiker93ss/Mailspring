@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, AccountStore, CategoryStore } from 'mailspring-exports';
-import { DisclosureTriangle } from 'mailspring-component-kit';
+import { localized, AccountStore, CategoryStore } from 'summermail-exports';
+import { DisclosureTriangle } from 'summermail-component-kit';
 
 interface AccountConfig {
   enabled: boolean;

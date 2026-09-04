@@ -1,6 +1,6 @@
 import React from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import { localized, WorkspaceStore } from 'mailspring-exports';
+import { localized, WorkspaceStore } from 'summermail-exports';
 
 import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, DefaultClientHelper, SystemStartService } from 'mailspring-exports';
+import { localized, DefaultClientHelper, SystemStartService } from 'summermail-exports';
 import { shell } from 'electron';
 
 import ConfigSchemaItem from './config-schema-item';
@@ -59,14 +59,12 @@ class DefaultMailClientItem extends React.Component<
             onClick={() => {
               if (process.platform === 'win32') {
                 helper.registerForURLScheme('mailto');
-              } else {
-                shell.openExternal(
-                  'https://community.getmailspring.com/t/choose-mailspring-as-the-default-mail-client-on-linux/191'
-                );
+              } else if (process.env.SUMMERMAIL_HELP_URL) {
+                shell.openExternal(process.env.SUMMERMAIL_HELP_URL);
               }
             }}
           >
-            {localized('Use Mailspring as default mail client')}
+            {localized('Use SummerMail as default mail client')}
           </div>
         </div>
       );
@@ -80,7 +78,7 @@ class DefaultMailClientItem extends React.Component<
           checked={this.state.defaultClient}
           onChange={this.toggleDefaultMailClient}
         />
-        <label htmlFor="default-client">{localized('Use Mailspring as default mail client')}</label>
+        <label htmlFor="default-client">{localized('Use SummerMail as default mail client')}</label>
       </div>
     );
   }
@@ -184,7 +182,7 @@ const WorkspaceSection = (props: { config: any; configSchema: any }) => {
       {process.platform === 'linux' && (
         <div className="platform-note">
           {localized(
-            `"Launch on system start" only works in XDG-compliant desktop environments. To enable the Mailspring icon in the system tray, you may need to install libappindicator or libayatana-appindicator.`
+            `"Launch on system start" only works in XDG-compliant desktop environments. To enable the SummerMail icon in the system tray, you may need to install libappindicator or libayatana-appindicator.`
           )}
         </div>
       )}

@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import React, { CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
-import { Utils, isRTL } from 'mailspring-exports';
+import { Utils, isRTL } from 'summermail-exports';
 import classNames from 'classnames';
 import ScrollbarTicks from './scrollbar-ticks';
 

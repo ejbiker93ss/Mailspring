@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Utils } from 'mailspring-exports';
+import { localized, Utils } from 'summermail-exports';
 
 export class SyncbackActivity extends React.Component<{ tasks: any[] }> {
   shouldComponentUpdate(nextProps: { tasks: any[] }, nextState: Record<string, never>) {

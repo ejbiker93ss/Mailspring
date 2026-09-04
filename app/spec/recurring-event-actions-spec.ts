@@ -1,8 +1,8 @@
-import { Actions, ICSEventHelpers, CalendarUtils, SyncbackEventTask } from 'mailspring-exports';
-import { Event as MailspringEvent } from '../src/flux/models/event';
+import { Actions, ICSEventHelpers, CalendarUtils, SyncbackEventTask } from 'summermail-exports';
+import { Event as SummerMailEvent } from '../src/flux/models/event';
 
 // Import the functions under test directly from the source file.
-// We use a relative path because the plugin is not registered in mailspring-exports.
+// We use a relative path because the plugin is not registered in summermail-exports.
 import {
   modifySimpleEvent,
   createOccurrenceException,
@@ -85,8 +85,8 @@ END:VCALENDAR`;
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeEvent(ics: string, overrides: Partial<MailspringEvent> = {}): MailspringEvent {
-  return new MailspringEvent({
+function makeEvent(ics: string, overrides: Partial<SummerMailEvent> = {}): SummerMailEvent {
+  return new SummerMailEvent({
     id: 'event-id-1',
     accountId: 'account-id-1',
     calendarId: 'calendar-id-1',

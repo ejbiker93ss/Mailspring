@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 import Templates from './templates';
 
 export default class SignatureTemplatePicker extends React.Component<{

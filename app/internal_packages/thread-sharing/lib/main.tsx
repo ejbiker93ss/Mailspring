@@ -7,11 +7,11 @@ import {
   Actions,
   AttachmentStore,
   SyncbackMetadataTask,
-  MailspringAPIRequest,
+  SummerMailAPIRequest,
   QuotedHTMLTransformer,
   ComponentRegistry,
   DatabaseChangeRecord,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import plugin from '../package.json';
 import ThreadSharingButton from './thread-sharing-button';
@@ -103,7 +103,7 @@ export const syncThreadToWeb = async (thread: Thread) => {
       if (data.length === 0) {
         throw new Error(`File ${filePath} is not on disk.`);
       }
-      const link = await MailspringAPIRequest.postStaticAsset({
+      const link = await SummerMailAPIRequest.postStaticAsset({
         filename: `${file.id}/${file.displayName()}`,
         blob: new Blob([new Uint8Array(data)], { type: 'application/octet-stream' }),
       });
@@ -118,7 +118,7 @@ export const syncThreadToWeb = async (thread: Thread) => {
   const { firstName, lastName, emailAddress } = identity;
 
   // next, post the JSON for the entire thread
-  await MailspringAPIRequest.postStaticAsset({
+  await SummerMailAPIRequest.postStaticAsset({
     filename: metadata.key,
     blob: JSON.stringify({
       thread: thread,
@@ -145,7 +145,7 @@ export const syncThreadToWeb = async (thread: Thread) => {
 
 export const unsyncThread = async (thread: Thread) => {
   const metadata = thread.metadataForPluginId(PLUGIN_ID) || {};
-  await MailspringAPIRequest.postStaticAsset({
+  await SummerMailAPIRequest.postStaticAsset({
     filename: metadata.key,
     blob: JSON.stringify({ shared: false }),
   });

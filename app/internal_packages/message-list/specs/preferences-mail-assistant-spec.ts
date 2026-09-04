@@ -1,4 +1,4 @@
-import { KeyManager } from 'mailspring-exports';
+import { KeyManager } from 'summermail-exports';
 
 import {
   getMailAssistantAPIKey,

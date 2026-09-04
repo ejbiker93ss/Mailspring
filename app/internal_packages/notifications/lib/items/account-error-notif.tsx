@@ -1,7 +1,7 @@
-import { shell, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import React from 'react';
-import { localized, Account, AccountStore, Actions, KeyManager } from 'mailspring-exports';
-import { Notification } from 'mailspring-component-kit';
+import { localized, Account, AccountStore, Actions, KeyManager } from 'summermail-exports';
+import { Notification } from 'summermail-component-kit';
 
 export default class AccountErrorNotification extends React.Component<
   Record<string, unknown>,
@@ -32,22 +32,6 @@ export default class AccountErrorNotification extends React.Component<
   componentWillUnmount() {
     this.unlisten();
   }
-
-  _onContactSupport = (erroredAccount: Account) => {
-    let url = 'https://support.getmailspring.com/hc/en-us/requests/new';
-    if (erroredAccount) {
-      url += `?email=${encodeURIComponent(erroredAccount.emailAddress)}`;
-      const { syncError } = erroredAccount;
-      if (syncError != null) {
-        url += `&subject=${encodeURIComponent('Sync Error')}`;
-        const description = encodeURIComponent(
-          `Sync Error:\n\`\`\`\n${JSON.stringify(syncError, null, 2)}\n\`\`\``
-        );
-        url += `&description=${description}`;
-      }
-    }
-    shell.openExternal(url);
-  };
 
   _onReconnect = async (account: Account) => {
     ipcRenderer.send('command', 'application:add-account', {

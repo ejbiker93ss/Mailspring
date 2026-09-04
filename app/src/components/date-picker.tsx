@@ -1,8 +1,8 @@
 import moment from 'moment';
 import classnames from 'classnames';
 import React from 'react';
-import { DateUtils } from 'mailspring-exports';
-import { MiniMonthView, TabGroupContext } from 'mailspring-component-kit';
+import { DateUtils } from 'summermail-exports';
+import { MiniMonthView, TabGroupContext } from 'summermail-component-kit';
 
 type DatePickerProps = {
   value?: number;

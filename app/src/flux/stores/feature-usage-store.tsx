@@ -1,5 +1,5 @@
 import Rx from 'rx-lite';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import * as Actions from '../actions';
 import { IdentityStore, EMPTY_FEATURE_USAGE, IIdentity } from './identity-store';
 import { SendFeatureUsageEventTask } from '../tasks/send-feature-usage-event-task';
@@ -23,7 +23,7 @@ export interface FeatureLexicon {
  *
  * The final schema looks like (Feb 7, 2017):
  *
- * MailspringID = {
+ * SummerMailID = {
  *   ...
  *   "featureUsage": {
  *     "snooze": {
@@ -51,7 +51,7 @@ export interface FeatureLexicon {
  * Valid periods are:
  * 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'unlimited'
  */
-class _FeatureUsageStore extends MailspringStore {
+class _FeatureUsageStore extends SummerMailStore {
   NoProAccessError = NoProAccessError;
   _disp: Rx.Disposable;
 

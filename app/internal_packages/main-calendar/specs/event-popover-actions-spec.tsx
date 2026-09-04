@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
 
-import MTestUtils from '../../../spec/mailspring-test-utils';
+import MTestUtils from '../../../spec/summermail-test-utils';
 import { EventPopoverActions } from '../lib/core/event-popover-actions';
 
 describe('EventPopoverActions', () => {

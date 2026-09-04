@@ -1,7 +1,7 @@
 const https = require('https');
 const querystring = require('querystring');
 
-import { Account, KeyManager, localized } from 'mailspring-exports';
+import { Account, KeyManager, localized } from 'summermail-exports';
 import {
   getMicrosoftTeamsGraphAccessToken,
   MicrosoftTeamsHost,

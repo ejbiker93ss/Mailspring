@@ -5,7 +5,7 @@
 The layout hierarchy:
 
 ```
-<mailspring-workspace>
+<summermail-workspace>
   SheetContainer (sheet-container.tsx)
     <Flexbox direction="column">           (renders as <div>)
       "sheet-toolbar" <div>               → toolbar bar across the top

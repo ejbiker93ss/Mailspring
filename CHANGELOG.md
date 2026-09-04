@@ -1,4 +1,12 @@
-# Mailspring Changelog
+# SummerMail Changelog
+
+## 1.23.33 (9/4/2026)
+
+Changes:
+
+- Rebranded the desktop application, packages, protocols, installer, deployment tooling, and native sync engine as SummerMail.
+- Added non-destructive migration for existing profiles plus compatibility for legacy links, plugins, helper folders, and reminder messages.
+- Moved Windows company deployment publishing to the new `SummerMail` share without changing the existing deployment.
 
 ## 1.23.32 (9/3/2026)
 

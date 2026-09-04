@@ -1,12 +1,12 @@
 import _ from 'underscore';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import { AccountStore } from './account-store';
 import WorkspaceStore from './workspace-store';
 import { MailboxPerspective } from '../../mailbox-perspective';
 import CategoryStore from './category-store';
 import * as Actions from '../actions';
 
-class FocusedPerspectiveStore extends MailspringStore {
+class FocusedPerspectiveStore extends SummerMailStore {
   _current = MailboxPerspective.forNothing();
   _initialized = false;
 

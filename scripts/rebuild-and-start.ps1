@@ -15,12 +15,12 @@ $syncProject = Join-Path $syncRoot 'Windows\mailsync.vcxproj'
 $syncOutput = Join-Path $syncRoot 'Windows\Release\mailsync.exe'
 $appRoot = Join-Path $repoRoot 'app'
 $appSync = Join-Path $appRoot 'mailsync.exe'
-$appDist = Join-Path $appRoot 'dist\Mailspring-win32-x64'
-$appExecutable = Join-Path $appDist 'Mailspring.exe'
+$appDist = Join-Path $appRoot 'dist\SummerMail-win32-x64'
+$appExecutable = Join-Path $appDist 'SummerMail.exe'
 $packagedSync = Join-Path $appDist 'resources\app.asar.unpacked\mailsync.exe'
 $frontendBuild = Join-Path $appRoot 'build\build.js'
 $vcpkgInstalled = Join-Path $syncRoot 'vcpkg_installed\x86-windows'
-$buildLogDirectory = Join-Path $repoRoot 'node_modules\.cache\mailspring-build\logs'
+$buildLogDirectory = Join-Path $repoRoot 'node_modules\.cache\summermail-build\logs'
 
 function Write-Step([string]$message) {
   Write-Host "`n==> $message" -ForegroundColor Cyan
@@ -67,7 +67,7 @@ function Stop-WorkspaceBuild {
   if (-not (Test-Path -LiteralPath $appDist)) { return }
   $distPrefix = [System.IO.Path]::GetFullPath($appDist).TrimEnd('\') + '\'
 
-  Get-Process Mailspring, mailsync -ErrorAction SilentlyContinue | ForEach-Object {
+  Get-Process SummerMail, mailsync -ErrorAction SilentlyContinue | ForEach-Object {
     try {
       $processPath = $_.Path
       if ($processPath -and [System.IO.Path]::GetFullPath($processPath).StartsWith(
@@ -136,7 +136,7 @@ if (-not $SkipFrontend) {
   }
 }
 
-Assert-File $appExecutable 'Packaged Mailspring executable'
+Assert-File $appExecutable 'Packaged SummerMail executable'
 Assert-File $packagedSync 'Packaged mailsync executable'
 
 if (-not $SkipBackend) {
@@ -150,10 +150,10 @@ if (-not $SkipBackend) {
 }
 
 if (-not $NoStart) {
-  Write-Step 'Launching rebuilt Mailspring'
+  Write-Step 'Launching rebuilt SummerMail'
   Stop-WorkspaceBuild
   $process = Start-Process -FilePath $appExecutable -WorkingDirectory $appDist -PassThru
-  Write-Host "Started Mailspring (PID $($process.Id))"
+  Write-Host "Started SummerMail (PID $($process.Id))"
 }
 
 Write-Host "`nBuild workflow completed successfully." -ForegroundColor Green

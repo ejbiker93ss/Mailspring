@@ -1,6 +1,6 @@
 import React from 'react';
-import { RetinaImg } from 'mailspring-component-kit';
-import { localized } from 'mailspring-exports';
+import { RetinaImg } from 'summermail-component-kit';
+import { localized } from 'summermail-exports';
 
 const EMAIL_RENDER_MODE_KEY = 'core.reading.emailRenderMode';
 

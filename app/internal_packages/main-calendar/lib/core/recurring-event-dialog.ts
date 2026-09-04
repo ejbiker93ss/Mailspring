@@ -1,4 +1,4 @@
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 
 export type RecurringEventChoice = 'this-occurrence' | 'all-occurrences' | 'cancel';
 

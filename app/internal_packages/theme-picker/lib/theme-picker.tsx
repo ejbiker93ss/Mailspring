@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { Flexbox, ScrollRegion } from 'mailspring-component-kit';
-import { localized } from 'mailspring-exports';
+import { Flexbox, ScrollRegion } from 'summermail-component-kit';
+import { localized } from 'summermail-exports';
 import {
   AUTOMATIC_THEME_NAME,
   LIGHT_THEME_NAME,
@@ -174,10 +174,7 @@ class ThemePicker extends React.Component<
             </Flexbox>
           </ScrollRegion>
           <div className="create-theme">
-            <a
-              href="https://github.com/Foundry376/Mailspring-Theme-Starter"
-              style={{ color: '#3187e1' }}
-            >
+            <a href={process.env.SUMMERMAIL_THEME_STARTER_URL || '#'} style={{ color: '#3187e1' }}>
               {localized('Create a Theme')}
             </a>
           </div>

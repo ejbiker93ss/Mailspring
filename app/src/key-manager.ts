@@ -1,5 +1,5 @@
 import { localized } from './intl';
-import { Account } from 'mailspring-exports';
+import { Account } from 'summermail-exports';
 
 interface KeySet {
   [key: string]: string;
@@ -105,7 +105,7 @@ class KeyManager {
       try {
         raw = await safeStorage.decryptString(Buffer.from(encryptedCredentials, 'utf-8'));
       } catch (err) {
-        console.error('Mailspring encountered an error reading passwords from the keychain.');
+        console.error('SummerMail encountered an error reading passwords from the keychain.');
         console.error(err);
       }
     }
@@ -121,12 +121,12 @@ class KeyManager {
       const platformHint =
         process.platform === 'linux'
           ? localized(
-              ' On Linux, Mailspring requires a secret service such as GNOME Keyring or KWallet. Please ensure one is installed and running, then restart Mailspring.'
+              ' On Linux, SummerMail requires a secret service such as GNOME Keyring or KWallet. Please ensure one is installed and running, then restart SummerMail.'
             )
           : '';
       throw new Error(
         localized(
-          `Mailspring could not store your password securely because encryption is not available on this system.`
+          `SummerMail could not store your password securely because encryption is not available on this system.`
         ) + platformHint
       );
     }
@@ -135,21 +135,11 @@ class KeyManager {
   }
 
   _reportFatalError(err: Error) {
-    const clickedButton = require('@electron/remote').dialog.showMessageBoxSync({
+    require('@electron/remote').dialog.showMessageBoxSync({
       type: 'error',
-      buttons: [localized('Mailspring Help'), localized('Quit')],
-      message:
-        err.message ||
-        localized(
-          `Mailspring could not store your password securely. For more information, visit %@`,
-          'https://community.getmailspring.com/t/password-management-error/199'
-        ),
+      buttons: [localized('Quit')],
+      message: err.message || localized(`SummerMail could not store your password securely.`),
     });
-
-    if (clickedButton == 0) {
-      const shell = require('electron').shell;
-      shell.openExternal('https://community.getmailspring.com/t/password-management-error/199');
-    }
 
     // tell the app to exit and rethrow the error to ensure code relying
     // on the passwords being saved never runs (saving identity for example).

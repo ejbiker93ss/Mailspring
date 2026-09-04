@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import { localized } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { localized } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import {
   UnsubscribeOption,
   UnsubscribeResult,

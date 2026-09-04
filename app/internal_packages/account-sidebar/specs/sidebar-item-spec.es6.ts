@@ -1,4 +1,4 @@
-import { Folder, Actions, CategoryStore, ThreadCountsStore } from 'mailspring-exports';
+import { Folder, Actions, CategoryStore, ThreadCountsStore } from 'summermail-exports';
 import SidebarItem, {
   configuredFavoriteFolders,
   FAVORITE_FOLDERS_CONFIG_KEY,

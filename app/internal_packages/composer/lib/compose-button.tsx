@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, Actions } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { localized, Actions } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 
 export default class ComposeButton extends React.Component {
   static displayName = 'ComposeButton';

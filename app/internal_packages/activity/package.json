@@ -7,7 +7,7 @@
     "url": ""
   },
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
 
   "isOptional": true,

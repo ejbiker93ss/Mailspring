@@ -117,17 +117,17 @@ export default class AppEnvConstructor {
     this.windowEventHandler = new WindowEventHandler();
 
     // We extend observables with our own methods. This happens on
-    // require of mailspring-observables
-    require('mailspring-observables');
+    // require of summermail-observables
+    require('summermail-observables');
 
-    // Mailspring exports is designed to provide a lazy-loaded set of globally
-    // accessible objects to all packages. Upon require, mailspring-exports will
+    // SummerMail exports is designed to provide a lazy-loaded set of globally
+    // accessible objects to all packages. Upon require, summermail-exports will
     // fill the StoreRegistry, and DatabaseObjectRegistries
     // with various constructors.
     //
     // We initialize all of the stores loaded into the StoreRegistry once
     // the window starts loading.
-    require('mailspring-exports');
+    require('summermail-exports');
 
     const ActionBridge = require('./flux/action-bridge').default;
     this.actionBridge = new ActionBridge(ipcRenderer);
@@ -135,9 +135,9 @@ export default class AppEnvConstructor {
     const MailsyncBridge = require('./flux/mailsync-bridge').default;
     this.mailsyncBridge = new MailsyncBridge();
 
-    process.title = `Mailspring ${this.getWindowType()}`;
+    process.title = `SummerMail ${this.getWindowType()}`;
     this.onWindowPropsReceived(() => {
-      process.title = `Mailspring ${this.getWindowType()}`;
+      process.title = `SummerMail ${this.getWindowType()}`;
     });
 
     // Shortcut phased out in April 2026, remove in June/July 2026
@@ -167,13 +167,13 @@ export default class AppEnvConstructor {
       'Start Menu',
       'Programs',
       'Startup',
-      'Mailspring.lnk'
+      'SummerMail.lnk'
     );
     const fs = require('fs');
     const exists = fs.existsSync(shortcutPath);
     if (exists) {
       fs.unlink(shortcutPath, () => {});
-      const { SystemStartService } = require('mailspring-exports');
+      const { SystemStartService } = require('summermail-exports');
       const service = new SystemStartService();
       service.configureToLaunchOnSystemStart();
     }
@@ -392,7 +392,7 @@ export default class AppEnvConstructor {
     return this.getLoadSettings().isSpec;
   }
 
-  // Public: Get the version of Mailspring.
+  // Public: Get the version of SummerMail.
   //
   // Returns the version text {String}.
   private appVersion;
@@ -409,7 +409,7 @@ export default class AppEnvConstructor {
     return !/\w{7}/.test(this.getVersion());
   }
 
-  // Public: Get the directory path to Mailspring's configuration area.
+  // Public: Get the directory path to SummerMail's configuration area.
   getConfigDirPath() {
     return this.getLoadSettings().configDirPath;
   }
@@ -433,7 +433,7 @@ export default class AppEnvConstructor {
   }
 
   /*
-  Section: Managing The Mailspring Window
+  Section: Managing The SummerMail Window
   */
 
   // Essential: Close the current window.
@@ -856,7 +856,7 @@ export default class AppEnvConstructor {
 
   initializeReactRoot() {
     // Put state back into sheet-container? Restore app state here
-    const item = document.createElement('mailspring-workspace');
+    const item = document.createElement('summermail-workspace');
     item.setAttribute('id', 'sheet-container');
     item.setAttribute('class', 'sheet-container');
     item.setAttribute('tabIndex', '-1');
@@ -945,8 +945,8 @@ export default class AppEnvConstructor {
       detail: message,
     });
     if (result === 1) {
-      const { Actions } = require('mailspring-exports');
-      const { CodeSnippet } = require('mailspring-component-kit');
+      const { Actions } = require('summermail-exports');
+      const { CodeSnippet } = require('summermail-component-kit');
       Actions.openModal({
         component: CodeSnippet({ intro: message, code: detail, className: 'error-details' }),
         width: 500,
@@ -1004,9 +1004,9 @@ export default class AppEnvConstructor {
   //
   // Note: If you return false to cancel the window close, you /must/ perform
   // work and then call finishUnload. We do not support cancelling quit!
-  // https://phab.mailspring.com/D1932#inline-11722
+  // Preserve the historical initialization order expected by package activation.
   //
-  // Also see logic in browser/MailspringWindow::handleEvents where we listen
+  // Also see logic in browser/SummerMailWindow::handleEvents where we listen
   // to the browserWindow.on 'close' event to catch "unclosable" windows.
   onBeforeUnload(callback) {
     return this.windowEventHandler.addUnloadCallback(callback);

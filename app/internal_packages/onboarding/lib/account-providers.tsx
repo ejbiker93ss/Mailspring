@@ -1,4 +1,4 @@
-import { localized, localizedReactFragment, React } from 'mailspring-exports';
+import { localized, localizedReactFragment, React } from 'summermail-exports';
 
 const AccountProviders = [
   {
@@ -16,10 +16,7 @@ const AccountProviders = [
         <strong>{localized('Note')}:</strong>{' '}
         {localizedReactFragment(
           "Office 365 accounts require IMAP and Authenticated SMTP to be enabled. Your organization's admin may need to enable these in the Microsoft 365 Admin Center. %@",
-          <a
-            style={{ fontWeight: 600 }}
-            href="https://community.getmailspring.com/t/connecting-mailspring-to-microsoft-office-365-and-outlook-com/14394"
-          >
+          <a style={{ fontWeight: 600 }} href={process.env.SUMMERMAIL_HELP_URL || '#'}>
             {localized('Learn more')}
           </a>
         )}
@@ -36,7 +33,7 @@ const AccountProviders = [
       <span>
         <strong>{localized('Important')}:</strong>{' '}
         {localizedReactFragment(
-          'Yahoo requires that you create a unique app password for email apps like Mailspring. Follow %@ to create one and then paste it below.',
+          'Yahoo requires that you create a unique app password for email apps like SummerMail. Follow %@ to create one and then paste it below.',
           <a
             style={{ fontWeight: 600 }}
             href="https://help.yahoo.com/kb/SLN15241.html?guccounter=1"
@@ -59,10 +56,7 @@ const AccountProviders = [
         <strong>{localized('Note')}:</strong>{' '}
         {localizedReactFragment(
           'If you have trouble connecting, you may need to enable IMAP and SMTP access in your Microsoft account settings. %@',
-          <a
-            style={{ fontWeight: 600 }}
-            href="https://community.getmailspring.com/t/connecting-mailspring-to-microsoft-office-365-and-outlook-com/14394"
-          >
+          <a style={{ fontWeight: 600 }} href={process.env.SUMMERMAIL_HELP_URL || '#'}>
             {localized('Learn more')}
           </a>
         )}
@@ -79,7 +73,7 @@ const AccountProviders = [
       <span>
         <strong>{localized('Important')}:</strong>{' '}
         {localizedReactFragment(
-          'iCloud requires that you create a unique app password for email apps like Mailspring. Follow %@ to create one and then paste it below.',
+          'iCloud requires that you create a unique app password for email apps like SummerMail. Follow %@ to create one and then paste it below.',
           <a style={{ fontWeight: 600 }} href="https://support.apple.com/en-us/HT204397">
             {localized('these instructions')}
           </a>
@@ -97,7 +91,7 @@ const AccountProviders = [
       <span>
         <strong>{localized('Important')}:</strong>{' '}
         {localizedReactFragment(
-          'FastMail requires that you create a unique app password of type IMAP for email apps like Mailspring. Follow %@ to create one and then paste it below.',
+          'FastMail requires that you create a unique app password of type IMAP for email apps like SummerMail. Follow %@ to create one and then paste it below.',
           <a
             style={{ fontWeight: 600 }}
             href="https://www.fastmail.com/help/clients/apppassword.html"
@@ -120,7 +114,7 @@ const AccountProviders = [
         <br />
         <strong>{localized('Important')}:</strong>{' '}
         {localizedReactFragment(
-          'GMX requires that you %@ before using email clients like Mailspring.',
+          'GMX requires that you %@ before using email clients like SummerMail.',
           <a style={{ fontWeight: 600 }} href="https://support.gmx.com/pop-imap/toggle.html">
             {localized('enable IMAP')}
           </a>
@@ -138,7 +132,7 @@ const AccountProviders = [
       <span>
         <strong>{localized('Important')}:</strong>{' '}
         {localizedReactFragment(
-          'You must %@ and you may need to %@ to connect to your Yandex account. If you use two-factor auth, you must create an %@ for Mailspring.',
+          'You must %@ and you may need to %@ to connect to your Yandex account. If you use two-factor auth, you must create an %@ for SummerMail.',
           <a style={{ fontWeight: 600 }} href="https://mail.yandex.com/#setup/client">
             {localized('enable IMAP')}
           </a>,

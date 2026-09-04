@@ -6,9 +6,9 @@ A search across the entire `app/` directory for `aria-` and `role=` in `.tsx` fi
 
 ## How `localized()` Works
 
-Import path: `import { localized } from 'mailspring-exports';`
+Import path: `import { localized } from 'summermail-exports';`
 
-Implemented in `/home/user/Mailspring/app/src/intl.ts`. Supports simple strings and printf-style substitution: `localized('Mark as %@', fragment)`. All ARIA label strings facing users **must** be wrapped in `localized()` so they translate correctly. Standard ARIA role identifiers (`"listbox"`, `"option"`, etc.) are HTML-standard and do **not** need localization.
+Implemented in `/home/user/SummerMail/app/src/intl.ts`. Supports simple strings and printf-style substitution: `localized('Mark as %@', fragment)`. All ARIA label strings facing users **must** be wrapped in `localized()` so they translate correctly. Standard ARIA role identifiers (`"listbox"`, `"option"`, etc.) are HTML-standard and do **not** need localization.
 
 ## Architecture Observations
 

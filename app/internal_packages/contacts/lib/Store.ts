@@ -5,11 +5,11 @@ import {
   ContactGroup,
   ContactBook,
   MutableQuerySubscription,
-} from 'mailspring-exports';
-import MailspringStore from 'mailspring-store';
-import { ListTabular } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import SummerMailStore from 'summermail-store';
+import { ListTabular } from 'summermail-component-kit';
 
-class ContactsWindowStore extends MailspringStore {
+class ContactsWindowStore extends SummerMailStore {
   _perspective: ContactsPerspective = { type: 'unified' };
   _listSource = new ListTabular.DataSource.DumbArrayDataSource<Contact>();
 

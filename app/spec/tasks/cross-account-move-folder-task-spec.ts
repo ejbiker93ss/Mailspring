@@ -1,4 +1,4 @@
-import { CrossAccountMoveFolderTask, Folder, Thread } from 'mailspring-exports';
+import { CrossAccountMoveFolderTask, Folder, Thread } from 'summermail-exports';
 
 describe('CrossAccountMoveFolderTask', () => {
   const source = new Thread({ id: 'thread-1', accountId: 'source' });

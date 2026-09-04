@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import _ from 'underscore';
-import { AccountStore, Thread, Contact, Message } from 'mailspring-exports';
+import { AccountStore, Thread, Contact, Message } from 'summermail-exports';
 import ThreadListParticipants, { getTokens } from '../lib/thread-list-participants';
 
 describe('ThreadListParticipants', function () {

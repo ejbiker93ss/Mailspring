@@ -2,7 +2,7 @@ import React from 'react';
 import DraftStore from '../flux/stores/draft-store';
 import * as Actions from '../flux/actions';
 import * as Utils from '../flux/models/utils';
-import { Message, DraftEditingSession } from 'mailspring-exports';
+import { Message, DraftEditingSession } from 'summermail-exports';
 
 function InflatesDraftClientId(
   ComposedComponent

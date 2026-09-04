@@ -1,10 +1,10 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import fs from 'fs';
 import path from 'path';
-import { Utils, Message, MessageBodyProcessor, CategoryStore } from 'mailspring-exports';
+import { Utils, Message, MessageBodyProcessor, CategoryStore } from 'summermail-exports';
 import * as AutoloadImagesActions from './autoload-images-actions';
 
-class AutoloadImagesStore extends MailspringStore {
+class AutoloadImagesStore extends SummerMailStore {
   _whitelistEmails = {};
   _whitelistMessageIds = {};
   _whitelistEmailsPath = path.join(AppEnv.getConfigDirPath(), 'autoload-images-whitelist.txt');

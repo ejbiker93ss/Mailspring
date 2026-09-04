@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 
 type SendState = { phase: 'countdown'; startedAt: number; sendAt: number } | { phase: 'sending' };
 

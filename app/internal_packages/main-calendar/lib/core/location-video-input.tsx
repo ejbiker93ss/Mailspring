@@ -1,6 +1,6 @@
 import React from 'react';
-import { RetinaImg } from 'mailspring-component-kit';
-import { localized } from 'mailspring-exports';
+import { RetinaImg } from 'summermail-component-kit';
+import { localized } from 'summermail-exports';
 
 interface LocationVideoInputProps {
   value: string; // Current location value

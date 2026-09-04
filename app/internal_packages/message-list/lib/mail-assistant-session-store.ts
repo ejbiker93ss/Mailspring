@@ -1,4 +1,4 @@
-import { AccountStore } from 'mailspring-exports';
+import { AccountStore } from 'summermail-exports';
 import type { AssistantChatMessage } from './openai-mail-assistant-client';
 
 export interface StoredAssistantMessage extends AssistantChatMessage {
@@ -41,7 +41,7 @@ function ownerKey() {
 }
 
 function storageKey(kind: 'conversations' | 'draft') {
-  return `mailspring.mailAssistant.${kind}.${ownerKey()}`;
+  return `summermail.mailAssistant.${kind}.${ownerKey()}`;
 }
 
 export function loadMailAssistantConversations(): MailAssistantConversation[] {

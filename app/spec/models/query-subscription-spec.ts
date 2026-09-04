@@ -255,7 +255,7 @@ describe('QuerySubscription', function QuerySubscriptionSpecs() {
 
   describe('_fetchRange', () => {
     it('should reset _set instead of throwing when actual results do not reach the existing set', () => {
-      // Regression test for MAILSPRING-CLIENT-1A / MAILSPRING-CLIENT-17:
+      // Regression test for SUMMERMAIL-CLIENT-1A / SUMMERMAIL-CLIENT-17:
       // When _set covers {50,70} and a fetch for range {30,50} returns only 16
       // results (rangeIdsEnd = 46 < _offset = 50), contiguity must be checked
       // against the actual results length, not the requested limit. Otherwise

@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Utils, Actions, GetManyRFC2822Task } from 'mailspring-exports';
+import { localized, Utils, Actions, GetManyRFC2822Task } from 'summermail-exports';
 
 export class ExportActivity extends React.Component<{ tasks: any[] }> {
   shouldComponentUpdate(nextProps: { tasks: any[] }, nextState: Record<string, never>) {

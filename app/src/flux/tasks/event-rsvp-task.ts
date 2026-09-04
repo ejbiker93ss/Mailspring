@@ -9,7 +9,7 @@ import {
   DatabaseStore,
   Message,
   Actions,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 export class EventRSVPTask extends Task {
   ics: string;

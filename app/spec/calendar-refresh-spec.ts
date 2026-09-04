@@ -1,8 +1,8 @@
 import { CalendarView } from '../internal_packages/main-calendar/lib/core/calendar-constants';
 import {
   calendarViewNeedsPeriodicRefresh,
-  MailspringCalendar,
-} from '../internal_packages/main-calendar/lib/core/mailspring-calendar';
+  SummerMailCalendar,
+} from '../internal_packages/main-calendar/lib/core/summermail-calendar';
 import { EventRSVPTask } from '../src/flux/tasks/event-rsvp-task';
 
 describe('Calendar refresh behavior', () => {
@@ -14,7 +14,7 @@ describe('Calendar refresh behavior', () => {
   });
 
   it('uses calendar sync for the manual refresh command', () => {
-    const calendar = new MailspringCalendar({});
+    const calendar = new SummerMailCalendar({});
     spyOn(AppEnv.mailsyncBridge, 'sendSyncCalendarNow');
 
     calendar._onRefreshCalendars();
@@ -23,7 +23,7 @@ describe('Calendar refresh behavior', () => {
   });
 
   it('refreshes a visible day or agenda view but not other views', () => {
-    const calendar = new MailspringCalendar({});
+    const calendar = new SummerMailCalendar({});
     spyOn(calendar, '_isCalendarVisible').andReturn(true);
     const refreshSpy = spyOn(calendar, '_onRefreshCalendars');
 
@@ -38,7 +38,7 @@ describe('Calendar refresh behavior', () => {
   });
 
   it('does not refresh a hidden calendar view', () => {
-    const calendar = new MailspringCalendar({});
+    const calendar = new SummerMailCalendar({});
     (calendar.state as any).view = CalendarView.DAY;
     spyOn(calendar, '_isCalendarVisible').andReturn(false);
     spyOn(calendar, '_onRefreshCalendars');

@@ -10,7 +10,7 @@ import {
   localized,
   Rx,
   Thread,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import MessageList from '../../message-list/lib/message-list';
 
 const CONFIG_KEY = 'mail-kanban.lanesByAccount';
@@ -203,7 +203,7 @@ export default class MailKanban extends React.Component<Record<string, never>, S
 
     let threadId = this.state.draggingThreadId;
     let sourceFolderId = this.state.draggingSourceFolderId;
-    const payload = event.dataTransfer.getData('mailspring-threads-data');
+    const payload = event.dataTransfer.getData('summermail-threads-data');
     if (payload) {
       try {
         const parsed = JSON.parse(payload);
@@ -252,14 +252,14 @@ export default class MailKanban extends React.Component<Record<string, never>, S
         event.stopPropagation();
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData(
-          'mailspring-threads-data',
+          'summermail-threads-data',
           JSON.stringify({
             threadIds: [thread.id],
             accountIds: [thread.accountId],
             sourceFolderId: sourceFolder.id,
           })
         );
-        event.dataTransfer.setData(`mailspring-accounts=${thread.accountId}`, '1');
+        event.dataTransfer.setData(`summermail-accounts=${thread.accountId}`, '1');
         event.dataTransfer.setData('text/plain', thread.id);
         this.setState({
           draggingThreadId: thread.id,

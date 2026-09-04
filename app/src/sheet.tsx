@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react';
 
-import { localized, Utils, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { localized, Utils, ComponentRegistry, WorkspaceStore } from 'summermail-exports';
 import { InjectedComponentSet } from './components/injected-component-set';
 import { ResizableRegion } from './components/resizable-region';
 import { Flexbox } from './components/flexbox';

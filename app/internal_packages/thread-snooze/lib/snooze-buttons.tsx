@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Actions, FocusedPerspectiveStore, Thread } from 'mailspring-exports';
-import { RetinaImg, BindGlobalCommands, RovingTabIndexToolbar } from 'mailspring-component-kit';
+import { Actions, FocusedPerspectiveStore, Thread } from 'summermail-exports';
+import { RetinaImg, BindGlobalCommands, RovingTabIndexToolbar } from 'summermail-component-kit';
 import SnoozePopover from './snooze-popover';
 
 interface BoundingRect {

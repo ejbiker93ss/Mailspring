@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { Account, localized, localizedReactFragment, RegExpUtils } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { Account, localized, localizedReactFragment, RegExpUtils } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import { buildO365AccountFromAuthResponse, buildO365AuthURL } from './onboarding-helpers';
 
 import OAuthSignInPage from './oauth-signin-page';

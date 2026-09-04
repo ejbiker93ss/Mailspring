@@ -3,7 +3,7 @@ function escapeHTML(value: string) {
 }
 
 // AI draft bodies are plain text. Convert them into safe block-level HTML so
-// Mailspring can use its normal rich composer without interpreting generated
+// SummerMail can use its normal rich composer without interpreting generated
 // text as markup.
 export function mailAssistantDraftHTML(value: unknown) {
   const text = String(value || '').replace(/\r\n?/g, '\n');

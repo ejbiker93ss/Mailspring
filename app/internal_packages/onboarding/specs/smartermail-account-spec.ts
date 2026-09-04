@@ -1,4 +1,4 @@
-import { Account } from 'mailspring-exports';
+import { Account } from 'summermail-exports';
 import { buildSmarterMailAccount, normalizeSmarterMailServerURL } from '../lib/onboarding-helpers';
 
 describe('SmarterMail account setup', () => {

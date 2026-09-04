@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actions, FocusedContactsStore, Contact } from 'mailspring-exports';
+import { Actions, FocusedContactsStore, Contact } from 'summermail-exports';
 
 const SPLIT_KEY = '---splitvalue---';
 

@@ -1,6 +1,6 @@
 import _ from 'underscore';
 import React, { Component, CSSProperties } from 'react';
-import { Utils, Model } from 'mailspring-exports';
+import { Utils, Model } from 'summermail-exports';
 import ReactDOM from 'react-dom';
 
 import { ScrollRegion, ScrollRegionProps } from './scroll-region';

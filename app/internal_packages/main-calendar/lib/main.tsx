@@ -1,7 +1,7 @@
 import React from 'react';
-import { WorkspaceStore, ComponentRegistry, Actions, localized } from 'mailspring-exports';
+import { WorkspaceStore, ComponentRegistry, Actions, localized } from 'summermail-exports';
 import { QuickEventButton } from './quick-event-button';
-import { MailspringCalendar } from './core/mailspring-calendar';
+import { SummerMailCalendar } from './core/summermail-calendar';
 import { EventSearchBar } from './core/event-search-bar';
 
 const Notice = () =>
@@ -95,7 +95,7 @@ export function activate() {
     adjustMenus();
   }
 
-  ComponentRegistry.register(MailspringCalendar, {
+  ComponentRegistry.register(SummerMailCalendar, {
     location: AppEnv.isMainWindow()
       ? WorkspaceStore.Location.CalendarMain
       : WorkspaceStore.Location.Center,
@@ -116,7 +116,7 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(MailspringCalendar);
+  ComponentRegistry.unregister(SummerMailCalendar);
   ComponentRegistry.unregister(QuickEventButton);
   ComponentRegistry.unregister(EventSearchBar);
   commandDisposable?.dispose();

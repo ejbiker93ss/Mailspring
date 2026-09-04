@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck -- Ported legacy plugin module; compiled by the first-party TypeScript pipeline.
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 
-class UnthreadedState extends MailspringStore {
+class UnthreadedState extends SummerMailStore {
   constructor() {
     super();
     this._enabled = this._loadEnabled();
     this._layout = this._loadLayout();
-    this._sortAscending = this._loadBoolean('mailspring-unthreaded:sort-ascending', false);
-    this._unreadOnly = this._loadBoolean('mailspring-unthreaded:unread-only', false);
+    this._sortAscending = this._loadBoolean('summermail-unthreaded:sort-ascending', false);
+    this._unreadOnly = this._loadBoolean('summermail-unthreaded:unread-only', false);
     this._selected = null;
   }
 
@@ -23,7 +23,7 @@ class UnthreadedState extends MailspringStore {
 
   _loadEnabled() {
     try {
-      const value = window.localStorage.getItem('mailspring-unthreaded:enabled');
+      const value = window.localStorage.getItem('summermail-unthreaded:enabled');
       return value === null ? true : value === 'true';
     } catch (err) {
       return true;
@@ -32,7 +32,7 @@ class UnthreadedState extends MailspringStore {
 
   _loadLayout() {
     try {
-      const value = window.localStorage.getItem('mailspring-unthreaded:layout');
+      const value = window.localStorage.getItem('summermail-unthreaded:layout');
       return value === 'ungrouped' ? 'ungrouped' : 'grouped';
     } catch (err) {
       return 'grouped';
@@ -67,7 +67,7 @@ class UnthreadedState extends MailspringStore {
     this._sortAscending = !this._sortAscending;
     try {
       window.localStorage.setItem(
-        'mailspring-unthreaded:sort-ascending',
+        'summermail-unthreaded:sort-ascending',
         String(this._sortAscending)
       );
     } catch (err) {
@@ -79,7 +79,7 @@ class UnthreadedState extends MailspringStore {
   toggleUnreadOnly = () => {
     this._unreadOnly = !this._unreadOnly;
     try {
-      window.localStorage.setItem('mailspring-unthreaded:unread-only', String(this._unreadOnly));
+      window.localStorage.setItem('summermail-unthreaded:unread-only', String(this._unreadOnly));
     } catch (err) {
       // localStorage may be unavailable in restricted renderer contexts.
     }
@@ -92,7 +92,7 @@ class UnthreadedState extends MailspringStore {
     }
     this._enabled = enabled;
     try {
-      window.localStorage.setItem('mailspring-unthreaded:enabled', String(enabled));
+      window.localStorage.setItem('summermail-unthreaded:enabled', String(enabled));
     } catch (err) {
       // localStorage may be unavailable in restricted renderer contexts.
     }
@@ -110,7 +110,7 @@ class UnthreadedState extends MailspringStore {
     }
     this._layout = nextLayout;
     try {
-      window.localStorage.setItem('mailspring-unthreaded:layout', nextLayout);
+      window.localStorage.setItem('summermail-unthreaded:layout', nextLayout);
     } catch (err) {
       // localStorage may be unavailable in restricted renderer contexts.
     }

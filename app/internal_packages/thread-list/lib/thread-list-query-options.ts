@@ -1,4 +1,4 @@
-import { Thread } from 'mailspring-exports';
+import { Thread } from 'summermail-exports';
 import ModelQuery from '../../../src/flux/models/query';
 
 export interface ThreadListQueryOptions {

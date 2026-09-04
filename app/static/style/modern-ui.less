@@ -18,7 +18,7 @@
   --fm-shadow-md: 0 8px 24px rgba(10, 12, 20, 0.1), 0 2px 6px rgba(10, 12, 20, 0.05);
 }
 
-mailspring-workspace {
+summermail-workspace {
   --thread-list-item-height-narrow: 72px;
 }
 
@@ -37,28 +37,28 @@ body {
 
 // Native workspace scrollbars keep their hit area but remain visually hidden
 // until SheetContainer marks the scrolling element active.
-mailspring-workspace * {
+summermail-workspace * {
   scrollbar-color: transparent transparent;
 }
 
-mailspring-workspace *::-webkit-scrollbar {
+summermail-workspace *::-webkit-scrollbar {
   width: 9px;
   height: 9px;
   background: transparent;
 }
 
-mailspring-workspace *::-webkit-scrollbar-track,
-mailspring-workspace *::-webkit-scrollbar-corner {
+summermail-workspace *::-webkit-scrollbar-track,
+summermail-workspace *::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-mailspring-workspace *::-webkit-scrollbar-button {
+summermail-workspace *::-webkit-scrollbar-button {
   display: none;
   width: 0;
   height: 0;
 }
 
-mailspring-workspace *::-webkit-scrollbar-thumb {
+summermail-workspace *::-webkit-scrollbar-thumb {
   min-height: 28px;
   border: 2px solid transparent;
   border-radius: 999px;
@@ -66,11 +66,11 @@ mailspring-workspace *::-webkit-scrollbar-thumb {
   background-clip: content-box;
 }
 
-mailspring-workspace *.scrollbar-active {
+summermail-workspace *.scrollbar-active {
   scrollbar-color: fade(@text-color, 38%) transparent;
 }
 
-mailspring-workspace *.scrollbar-active::-webkit-scrollbar-thumb {
+summermail-workspace *.scrollbar-active::-webkit-scrollbar-thumb {
   background-color: fade(@text-color, 38%);
 }
 
@@ -365,7 +365,7 @@ button.btn,
 // Modern cards for the standard narrow / threaded inbox. This is the list
 // rendered in the normal three-pane mail layout (separate from the optional
 // individual-message view styled by unthreaded.less).
-mailspring-workspace .thread-list.thread-list-narrow {
+summermail-workspace .thread-list.thread-list-narrow {
   .list-rows {
     background: @background-primary;
   }
@@ -739,7 +739,7 @@ mailspring-workspace .thread-list.thread-list-narrow {
 }
 
 // Calendar
-.mailspring-calendar {
+.summermail-calendar {
   background: @background-primary;
 
   .calendar-header,

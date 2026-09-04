@@ -21,7 +21,7 @@ import { Label } from './flux/models/label';
 import { Folder } from './flux/models/folder';
 import { Task } from './flux/tasks/task';
 import * as Actions from './flux/actions';
-import { QuerySubscription } from 'mailspring-exports';
+import { QuerySubscription } from 'summermail-exports';
 
 let WorkspaceStore = null;
 let ChangeStarredTask = null;

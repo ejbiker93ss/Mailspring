@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
-import { Table, EditableTableCell, EditableTable } from 'mailspring-component-kit';
+import { Table, EditableTableCell, EditableTable } from 'summermail-component-kit';
 import { cellProps, tableProps } from '../fixtures/table-data';
 
 describe('EditableTable Components', function describeBlock() {

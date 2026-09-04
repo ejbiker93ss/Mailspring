@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Account, RegExpUtils } from 'mailspring-exports';
+import { localized, Account, RegExpUtils } from 'summermail-exports';
 
 import CreatePageForForm from './decorators/create-page-for-form';
 import FormField from './form-field';

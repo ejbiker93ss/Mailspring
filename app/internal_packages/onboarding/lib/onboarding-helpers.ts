@@ -8,8 +8,8 @@ import {
   IdentityStore,
   MailsyncProcess,
   localized,
-} from 'mailspring-exports';
-import MailspringProviderSettings from './mailspring-provider-settings.json';
+} from 'summermail-exports';
+import SummerMailProviderSettings from './summermail-provider-settings.json';
 import MailcoreProviderSettings from './mailcore-provider-settings.json';
 import dns from 'dns';
 import {
@@ -142,12 +142,12 @@ export async function expandAccountWithCommonSettings(account: Account) {
   // this matches the acccount type presets ("yahoo") and common domains against
   // data derived from Thunderbirds ISPDB.
   let mstemplate =
-    MailspringProviderSettings[domain] || MailspringProviderSettings[account.provider];
+    SummerMailProviderSettings[domain] || SummerMailProviderSettings[account.provider];
   if (mstemplate) {
     if (mstemplate.alias) {
-      mstemplate = MailspringProviderSettings[mstemplate.alias];
+      mstemplate = SummerMailProviderSettings[mstemplate.alias];
     }
-    console.log(`Using Mailspring Template: ${JSON.stringify(mstemplate, null, 2)}`);
+    console.log(`Using SummerMail Template: ${JSON.stringify(mstemplate, null, 2)}`);
   } else {
     console.log(`Using Fallback Template`);
     mstemplate = {
@@ -203,7 +203,7 @@ export async function expandAccountWithCommonSettings(account: Account) {
   // on protonmail by default Folders set as container folder
   const containerFolderDefault = AccountStore.containerFolderDefaultGetter();
   if (
-    containerFolderDefault !== 'Mailspring' &&
+    containerFolderDefault !== 'SummerMail' &&
     (populated.settings.container_folder === '' ||
       populated.settings.container_folder === undefined)
   ) {
@@ -335,7 +335,7 @@ export async function buildMicrosoftAccountFromAuthResponse(
   // smtp_verification: 'login' keeps the account-add test from sending a test email:
   // reading a shared mailbox must not require send rights, and the test email would be
   // visible to every member of the mailbox. create_helper_folders: false keeps the
-  // sync engine from provisioning "Mailspring/Snoozed" in the shared mailbox, which
+  // sync engine from provisioning "SummerMail/Snoozed" in the shared mailbox, which
   // would also be visible to every member (snoozing is unavailable in that account).
   const settings: any = {
     refresh_client_id: O365_CLIENT_ID,

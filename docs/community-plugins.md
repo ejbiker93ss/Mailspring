@@ -1,6 +1,6 @@
-# Community Plugins for Mailspring
+# Community Plugins for SummerMail
 
-This document lists known third-party plugins for Mailspring found on GitHub.
+This document lists known third-party plugins for SummerMail found on GitHub.
 
 ## Official Resources
 
@@ -54,7 +54,7 @@ This document lists known third-party plugins for Mailspring found on GitHub.
 
 ## Alternative Backends & Forks
 
-These projects modify or replace Mailspring's backend services:
+These projects modify or replace SummerMail's backend services:
 
 | Repository | Description | Stars |
 |------------|-------------|-------|
@@ -79,8 +79,8 @@ To create your own plugin, see:
 ### Plugin Installation
 
 Plugins should be copied or symlinked to:
-- **macOS**: `~/Library/Application Support/Mailspring/packages/`
-- **Linux**: `~/.config/Mailspring/packages/`
-- **Windows**: `%APPDATA%/Mailspring/packages/`
+- **macOS**: `~/Library/Application Support/SummerMail/packages/`
+- **Linux**: `~/.config/SummerMail/packages/`
+- **Windows**: `%APPDATA%/SummerMail/packages/`
 
-You can find this directory by going to **Developer > Show Mailsync Logs** in Mailspring.
+You can find this directory by going to **Developer > Show Mailsync Logs** in SummerMail.

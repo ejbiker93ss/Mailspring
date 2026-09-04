@@ -31,6 +31,6 @@ export class DestroyModelTask extends Task {
   }
 
   getModelConstructor() {
-    return require('mailspring-exports')[this.modelName];
+    return require('summermail-exports')[this.modelName];
   }
 }

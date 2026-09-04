@@ -3,8 +3,8 @@ import { ListTabular, ListTabularProps, ListTabularColumn } from './list-tabular
 import { Spinner } from './spinner';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Utils, WorkspaceStore, localized } from 'mailspring-exports';
-import { KeyCommandsRegion } from 'mailspring-component-kit';
+import { Utils, WorkspaceStore, localized } from 'summermail-exports';
+import { KeyCommandsRegion } from 'summermail-component-kit';
 
 import MultiselectListInteractionHandler from './multiselect-list-interaction-handler';
 import MultiselectSplitInteractionHandler from './multiselect-split-interaction-handler';

@@ -1,7 +1,7 @@
 import React from 'react';
 import moment, { Moment } from 'moment';
 import classnames from 'classnames';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 
 interface MiniMonthViewProps {
   value: Moment;

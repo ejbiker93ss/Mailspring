@@ -1,4 +1,4 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import { Editor, Value, Block } from 'slate';
 
 import RegExpUtils from '../../regexp-utils';
@@ -184,7 +184,7 @@ that display Draft objects or allow for interactive editing of Drafts.
 
 Section: Drafts
 */
-export class DraftEditingSession extends MailspringStore {
+export class DraftEditingSession extends SummerMailStore {
   static DraftChangeSet = DraftChangeSet;
 
   _draft: MessageWithEditorState = null;
@@ -264,7 +264,7 @@ export class DraftEditingSession extends MailspringStore {
     }
 
     let cleaned = QuotedHTMLTransformer.removeQuotedHTML(this._draft.body.trim());
-    const sigIndex = cleaned.search(RegExpUtils.mailspringSignatureRegex());
+    const sigIndex = cleaned.search(RegExpUtils.summermailSignatureRegex());
     cleaned = sigIndex > -1 ? cleaned.substr(0, sigIndex) : cleaned;
 
     const signatureIndex = cleaned.indexOf('<signature>');
@@ -332,7 +332,7 @@ export class DraftEditingSession extends MailspringStore {
     }
 
     let cleaned = QuotedHTMLTransformer.removeQuotedHTML(this._draft.body.trim());
-    const sigIndex = cleaned.search(RegExpUtils.mailspringSignatureRegex());
+    const sigIndex = cleaned.search(RegExpUtils.summermailSignatureRegex());
     cleaned = sigIndex > -1 ? cleaned.substr(0, sigIndex) : cleaned;
 
     const signatureIndex = cleaned.indexOf('<signature>');

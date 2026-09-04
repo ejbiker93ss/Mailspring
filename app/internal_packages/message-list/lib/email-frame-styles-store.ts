@@ -1,8 +1,8 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 
 const EMAIL_RENDER_MODE_KEY = 'core.reading.emailRenderMode';
 
-class EmailFrameStylesStore extends MailspringStore {
+class EmailFrameStylesStore extends SummerMailStore {
   _styles?: string;
   _mutationObserver: MutationObserver;
   _configDisposable?: { dispose: () => void };
@@ -31,7 +31,7 @@ class EmailFrameStylesStore extends MailspringStore {
       this._styles += `\n${(accentSheet as HTMLElement).innerText}`;
     }
 
-    // Always retain Mailspring's core message typography and layout, but never
+    // Always retain SummerMail's core message typography and layout, but never
     // allow the active app theme to recolor message content. Theme filters can
     // make ordinary dark email text unreadable and can turn photographs into
     // negatives. Message appearance is controlled explicitly by light/dark mode.

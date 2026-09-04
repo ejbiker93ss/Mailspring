@@ -6,8 +6,8 @@ import {
   SendActionsStore,
   SoundRegistry,
   Message,
-} from 'mailspring-exports';
-import { Menu, RetinaImg, ButtonDropdown } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { Menu, RetinaImg, ButtonDropdown } from 'summermail-component-kit';
 
 interface SendActionButtonProps {
   tabIndex: number;

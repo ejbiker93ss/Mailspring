@@ -3,7 +3,7 @@
 // This is a simple package to notify N1 users if an email is a potential
 // phishing scam.
 
-// You can access Mailspring dependencies by requiring 'mailspring-exports'
+// You can access SummerMail dependencies by requiring 'summermail-exports'
 import React from 'react';
 import {
   // The ComponentRegistry manages all React components in N1.
@@ -11,7 +11,7 @@ import {
   // A `Store` is a Flux component which contains all business logic and data
   // models to be consumed by React components to render markup.
   MessageStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 class PhishingIndicator extends React.Component<{ thread: object }> {
   // Adding a @displayName to a React component helps for debugging.

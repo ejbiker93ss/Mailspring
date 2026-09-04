@@ -5,9 +5,9 @@ import {
   Message,
   DraftEditingSession,
   FeatureUsageStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
-import { Menu, RetinaImg } from 'mailspring-component-kit';
+import { Menu, RetinaImg } from 'summermail-component-kit';
 import { TranslatePopupOptions, translateMessageBody, TranslationsUsedLexicon } from './service';
 
 type Props = { draft: Message; session: DraftEditingSession };
@@ -62,7 +62,7 @@ const TranslateComposerButtonInner: React.FC<Props> = ({ draft, session }) => {
     >
       <RetinaImg
         mode={RetinaImg.Mode.ContentIsMask}
-        url="mailspring://translation/assets/icon-composer-translate@2x.png"
+        url="summermail://translation/assets/icon-composer-translate@2x.png"
       />
       &nbsp;
       <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
@@ -70,7 +70,7 @@ const TranslateComposerButtonInner: React.FC<Props> = ({ draft, session }) => {
   );
 };
 // Our render method doesn't use the provided `draft`, and the draft changes
-// constantly (on every keystroke!). Memoizing on `session` keeps Mailspring fast.
+// constantly (on every keystroke!). Memoizing on `session` keeps SummerMail fast.
 export const TranslateComposerButton = React.memo(
   TranslateComposerButtonInner,
   (prev, next) => prev.session === next.session

@@ -1,5 +1,5 @@
-import { localized, Actions, ComponentRegistry, GrammarCheckPluginAPI } from 'mailspring-exports';
-import { HasTutorialTip } from 'mailspring-component-kit';
+import { localized, Actions, ComponentRegistry, GrammarCheckPluginAPI } from 'summermail-exports';
+import { HasTutorialTip } from 'summermail-component-kit';
 import { GrammarCheckToggle } from './grammar-check-toggle';
 import { GrammarCheckStore } from './grammar-check-store';
 
@@ -9,7 +9,7 @@ const { setGrammarCheckStore, clearGrammarCheckStore, cleanupDraft, clearAllGram
 const GrammarCheckToggleWithTip = HasTutorialTip(GrammarCheckToggle, {
   title: localized('Check your grammar'),
   instructions: localized(
-    "Enable grammar checking to find writing issues as you compose. Text is sent to Mailspring's LanguageTool service and is not stored."
+    "Enable grammar checking to find writing issues as you compose. Text is sent to SummerMail's LanguageTool service and is not stored."
   ),
 });
 

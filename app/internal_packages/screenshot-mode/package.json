@@ -6,7 +6,7 @@
   "license": "Proprietary",
   "private": true,
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "windowTypes": {
     "all": true

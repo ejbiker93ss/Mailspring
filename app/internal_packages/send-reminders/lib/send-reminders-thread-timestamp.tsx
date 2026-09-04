@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { RetinaImg } from 'mailspring-component-kit';
+import { RetinaImg } from 'summermail-component-kit';
 import moment from 'moment';
 
-import { Thread, localized, FocusedPerspectiveStore } from 'mailspring-exports';
+import { Thread, localized, FocusedPerspectiveStore } from 'summermail-exports';
 import { updateReminderMetadata } from './send-reminders-utils';
 import { PLUGIN_ID } from './send-reminders-constants';
 

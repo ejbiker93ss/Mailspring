@@ -1,6 +1,6 @@
 import React from 'react';
-import { Message, localized, PropTypes, Thread } from 'mailspring-exports';
-import { RetinaImg, BindGlobalCommands } from 'mailspring-component-kit';
+import { Message, localized, PropTypes, Thread } from 'summermail-exports';
+import { RetinaImg, BindGlobalCommands } from 'summermail-component-kit';
 
 function unsubscribe(message) {
   //

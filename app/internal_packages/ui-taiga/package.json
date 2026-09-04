@@ -3,10 +3,10 @@
   "displayName": "Taiga",
   "theme": "ui",
   "version": "0.2.8",
-  "description": "A clean, Mailbox-inspired theme for Mailspring.",
+  "description": "A clean, Mailbox-inspired theme for SummerMail.",
   "license": "GPL-3.0",
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "private": true
 }

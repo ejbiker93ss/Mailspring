@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, getAvailableLanguages } from 'mailspring-exports';
+import { localized, getAvailableLanguages } from 'summermail-exports';
 
 const LanguageSection = ({ config }: { config?: any; configSchema?: any }) => {
   const { automatic, current, verified, experimental } = getAvailableLanguages();

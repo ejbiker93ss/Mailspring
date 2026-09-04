@@ -1,4 +1,4 @@
-import { AccountStore, CategoryStore } from 'mailspring-exports';
+import { AccountStore, CategoryStore } from 'summermail-exports';
 
 export const SETTINGS_BUNDLE_FORMAT = 'flashmail-settings';
 export const SETTINGS_BUNDLE_VERSION = 1;

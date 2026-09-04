@@ -5,7 +5,7 @@ import {
   ComponentRegistry,
   ExtensionRegistry,
   MailboxPerspective,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import Root from './root';
 

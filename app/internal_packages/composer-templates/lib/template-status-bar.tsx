@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Message, MessageWithEditorState } from 'mailspring-exports';
+import { localized, Message, MessageWithEditorState } from 'summermail-exports';
 
 class TemplateStatusBar extends React.Component<{ draft: MessageWithEditorState }> {
   static displayName = 'TemplateStatusBar';

@@ -1,4 +1,4 @@
-import { AccountStore, CategoryStore } from 'mailspring-exports';
+import { AccountStore, CategoryStore } from 'summermail-exports';
 import {
   createSettingsBundle,
   sanitizedSettings,

@@ -7,7 +7,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { Actions } from 'mailspring-exports';
+import { Actions } from 'summermail-exports';
 
 import ThreadSearchBar, {
   ThreadSearchBar as ThreadSearchBarComponent,

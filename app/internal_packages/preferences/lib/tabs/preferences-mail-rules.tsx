@@ -9,7 +9,7 @@ import {
   AccountStore,
   MailRulesStore,
   MailRulesTemplates,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import {
   Flexbox,
@@ -17,7 +17,7 @@ import {
   RetinaImg,
   ScrollRegion,
   ScenarioEditor,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 
 const { ActionTemplatesForAccount, ConditionTemplatesForAccount } = MailRulesTemplates;
 
@@ -109,7 +109,7 @@ class PreferencesMailRules extends React.Component<
     if (this.state.rules.length === 0) {
       AppEnv.showErrorDialog(
         localized(
-          "You haven't created any mail rules. To get started, define a new rule above and tell Mailspring how to process your inbox."
+          "You haven't created any mail rules. To get started, define a new rule above and tell SummerMail how to process your inbox."
         )
       );
       return;

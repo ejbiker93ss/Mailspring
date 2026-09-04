@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 import { AuditEntry, getAuditLog, clearAuditLog, onAuditLogChanged } from './mcp-tools';
 
 interface State {

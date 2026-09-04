@@ -12,8 +12,8 @@ import {
   IAliasSet,
   InlineStyleTransformer,
   SanitizeTransformer,
-} from 'mailspring-exports';
-import { Flexbox, EditableList } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { Flexbox, EditableList } from 'summermail-component-kit';
 
 import { ResolveSignatureData, RenderSignatureData, DataShape } from './constants';
 import SignatureAccountDefaultPicker from './signature-account-default-picker';

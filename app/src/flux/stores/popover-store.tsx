@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import * as Actions from '../actions';
 import FixedPopover from '../../components/fixed-popover';
 
-const CONTAINER_ID = 'mailspring-popover-container';
+const CONTAINER_ID = 'summermail-popover-container';
 
 function createContainer(id) {
   const element = document.createElement(id);
@@ -12,7 +12,7 @@ function createContainer(id) {
   return element;
 }
 
-class PopoverStore extends MailspringStore {
+class PopoverStore extends SummerMailStore {
   isOpen = false;
   container: HTMLElement;
 

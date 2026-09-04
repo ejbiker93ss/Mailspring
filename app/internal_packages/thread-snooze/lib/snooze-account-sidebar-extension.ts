@@ -1,4 +1,4 @@
-import { localized, MailboxPerspective } from 'mailspring-exports';
+import { localized, MailboxPerspective } from 'summermail-exports';
 
 export const name = 'SnoozeAccountSidebarExtension';
 

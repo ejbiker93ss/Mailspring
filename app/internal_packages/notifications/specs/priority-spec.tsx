@@ -1,6 +1,6 @@
 import { render, cleanup, act } from '@testing-library/react';
-import { ComponentRegistry, React } from 'mailspring-exports';
-import { Notification } from 'mailspring-component-kit';
+import { ComponentRegistry, React } from 'summermail-exports';
+import { Notification } from 'summermail-component-kit';
 
 import NotifWrapper from '../lib/notif-wrapper';
 

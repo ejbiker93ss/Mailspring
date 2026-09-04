@@ -4,8 +4,8 @@ import {
   DropdownMenu,
   LabelColorizer,
   BoldedSearchResult,
-} from 'mailspring-component-kit';
-import { localized, Label, Utils, imapUtf7 } from 'mailspring-exports';
+} from 'summermail-component-kit';
+import { localized, Label, Utils, imapUtf7 } from 'summermail-exports';
 
 interface CategorySelectionProps {
   allowLabels: boolean;

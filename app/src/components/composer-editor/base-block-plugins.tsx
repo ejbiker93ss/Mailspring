@@ -5,7 +5,7 @@ import EditList from '@bengotow/slate-edit-list';
 import AutoReplace from 'slate-auto-replace';
 import When from 'slate-when';
 
-import { MessageWithEditorState } from 'mailspring-exports';
+import { MessageWithEditorState } from 'summermail-exports';
 import { BuildToggleButton, IEditorToolbarConfigItem } from './toolbar-component-factories';
 import { ComposerEditorPlugin } from './types';
 
@@ -97,7 +97,7 @@ export const BLOCK_CONFIG: {
     tagNames: ['blockquote'],
     render: (props) => {
       const className = props.node.data['className'] || props.node.data.get('className');
-      const selectionQuote = className && className.includes('mailspring-selection-quote');
+      const selectionQuote = className && className.includes('summermail-selection-quote');
       return (
         <blockquote
           {...props.attributes}
@@ -332,7 +332,7 @@ export function hasNonTrailingBlockquote(value: Value) {
         const className = block.data && block.data.get('className');
         // Selection quotes remain visible through a targeted composer style, but
         // they must not expand the trailing quoted-message history around them.
-        if (className && className.includes('mailspring-selection-quote')) {
+        if (className && className.includes('summermail-selection-quote')) {
           continue;
         }
         found = true;
@@ -416,7 +416,7 @@ export function hideQuotedTextByDefault(draft: MessageWithEditorState) {
 
 // plugins
 
-const MailspringBaseBlockPlugin: ComposerEditorPlugin = {
+const SummerMailBaseBlockPlugin: ComposerEditorPlugin = {
   toolbarComponents: Object.values(BLOCK_CONFIG)
     .filter((config) => config.button)
     .map(BuildToggleButton),
@@ -461,7 +461,7 @@ const MailspringBaseBlockPlugin: ComposerEditorPlugin = {
 const plugins: ComposerEditorPlugin[] = [
   // Base implementation of BLOCK_CONFIG block types,
   // the "block" toolbar section, and serialization
-  MailspringBaseBlockPlugin,
+  SummerMailBaseBlockPlugin,
 
   // Return creates soft newlines in code blocks
   When({

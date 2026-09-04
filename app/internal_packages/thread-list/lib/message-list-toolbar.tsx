@@ -1,6 +1,6 @@
 import React from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import { Rx, FocusedContentStore, Thread } from 'mailspring-exports';
+import { Rx, FocusedContentStore, Thread } from 'summermail-exports';
 import ThreadListStore from './thread-list-store';
 import InjectsToolbarButtons, { ToolbarRole } from './injects-toolbar-buttons';
 

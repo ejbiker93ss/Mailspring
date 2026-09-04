@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import DatabaseStore from './database-store';
 import { Thread } from '../models/thread';
 
@@ -9,7 +9,7 @@ interface ThreadCountRow {
   total: number;
 }
 
-class ThreadCountsStore extends MailspringStore {
+class ThreadCountsStore extends SummerMailStore {
   _counts = {};
 
   constructor() {

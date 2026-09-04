@@ -1,4 +1,4 @@
-import { localized, PreferencesUIStore } from 'mailspring-exports';
+import { localized, PreferencesUIStore } from 'summermail-exports';
 import McpServerManager from './mcp-server-manager';
 
 let preferencesTab: any = null;

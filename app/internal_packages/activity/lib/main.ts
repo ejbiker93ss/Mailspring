@@ -4,8 +4,8 @@ import {
   WorkspaceStore,
   Actions,
   ExtensionRegistry,
-} from 'mailspring-exports';
-import { HasTutorialTip } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { HasTutorialTip } from 'summermail-component-kit';
 
 import ActivityMailboxPerspective from './activity-mailbox-perspective';
 import ActivityEventStore from './activity-event-store';

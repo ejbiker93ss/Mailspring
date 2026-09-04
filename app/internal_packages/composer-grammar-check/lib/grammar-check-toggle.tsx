@@ -5,8 +5,8 @@ import {
   DraftEditingSession,
   GrammarCheckPluginAPI,
   FeatureUsageStore,
-} from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 import {
   GrammarCheckStore,
   GRAMMAR_CHECK_FEATURE_ID,
@@ -107,7 +107,7 @@ export class GrammarCheckToggle extends React.Component<{
         )}
         <span className="grammar-check-icon-wrap">
           <RetinaImg
-            url="mailspring://composer-grammar-check/assets/icon-composer-grammar@2x.png"
+            url="summermail://composer-grammar-check/assets/icon-composer-grammar@2x.png"
             mode={RetinaImg.Mode.ContentIsMask}
             aria-hidden="true"
           />

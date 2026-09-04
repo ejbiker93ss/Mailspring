@@ -66,7 +66,7 @@ export interface RecurrenceInfo {
 export function generateUID(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 15);
-  return `${timestamp}-${random}@mailspring`;
+  return `${timestamp}-${random}@summermail`;
 }
 
 /**
@@ -299,7 +299,7 @@ export function createICSString(options: CreateEventOptions): string {
 
   // Create VCALENDAR component
   const calendar = new ical.Component(['vcalendar', [], []]);
-  calendar.updatePropertyWithValue('prodid', '-//Mailspring//Calendar//EN');
+  calendar.updatePropertyWithValue('prodid', '-//SummerMail//Calendar//EN');
   calendar.updatePropertyWithValue('version', '2.0');
   calendar.updatePropertyWithValue('calscale', 'GREGORIAN');
 

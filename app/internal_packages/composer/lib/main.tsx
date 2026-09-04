@@ -8,7 +8,7 @@ import {
   WorkspaceStore,
   ComponentRegistry,
   InflatesDraftClientId,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import ComposerView from './composer-view';
 import { electronHexColor, WINDOWS_TITLE_BAR_HEIGHT } from '../../../src/windows-title-bar';
 

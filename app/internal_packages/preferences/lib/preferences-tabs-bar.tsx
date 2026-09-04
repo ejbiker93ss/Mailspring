@@ -2,8 +2,8 @@ import React from 'react';
 import fs from 'fs';
 import classNames from 'classnames';
 
-import { RetinaImg } from 'mailspring-component-kit';
-import { Actions, PreferencesUIStoreTab, Utils, localized } from 'mailspring-exports';
+import { RetinaImg } from 'summermail-component-kit';
+import { Actions, PreferencesUIStoreTab, Utils, localized } from 'summermail-exports';
 
 interface PreferencesTabItemProps {
   selection: {

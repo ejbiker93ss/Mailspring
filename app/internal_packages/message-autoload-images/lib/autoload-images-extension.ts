@@ -1,4 +1,4 @@
-import { MessageViewExtension } from 'mailspring-exports';
+import { MessageViewExtension } from 'summermail-exports';
 import AutoloadImagesStore from './autoload-images-store';
 
 export default class AutoloadImagesExtension extends MessageViewExtension {

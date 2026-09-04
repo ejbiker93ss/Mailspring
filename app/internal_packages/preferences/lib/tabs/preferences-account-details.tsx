@@ -1,15 +1,15 @@
 /* eslint global-require: 0 */
 import fs from 'fs';
 import React, { Component } from 'react';
-import { shell, ipcRenderer } from 'electron';
-import { EditableList } from 'mailspring-component-kit';
+import { ipcRenderer } from 'electron';
+import { EditableList } from 'summermail-component-kit';
 import {
   localized,
   RegExpUtils,
   KeyManager,
   Account,
   AccountAutoaddress,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 interface AutoaddressControlProps {
   autoaddress: AccountAutoaddress;
@@ -228,10 +228,6 @@ class PreferencesAccountDetails extends Component<
     });
   };
 
-  _onContactSupport = () => {
-    shell.openExternal('https://support.getmailspring.com/hc/en-us/requests/new');
-  };
-
   _onShowErrorDetails = async () => {
     const { id, syncState, settings, provider } = this.props.account;
     const filepath = require('path').join(
@@ -242,7 +238,7 @@ class PreferencesAccountDetails extends Component<
     try {
       const logs = await AppEnv.mailsyncBridge.tailClientLog(id);
       const result = [
-        `Mailspring Version: ${AppEnv.getVersion()}`,
+        `SummerMail Version: ${AppEnv.getVersion()}`,
         `Platform: ${process.platform}`,
         `Account State: ${syncState}`,
         `Account Provider: ${provider}`,
@@ -297,7 +293,7 @@ class PreferencesAccountDetails extends Component<
       case Account.SYNC_STATE_AUTH_FAILED:
         return this._renderErrorDetail(
           localized(
-            `Mailspring can no longer authenticate with %@. The password or authentication may have changed.`,
+            `SummerMail can no longer authenticate with %@. The password or authentication may have changed.`,
             account.emailAddress
           ),
           [
@@ -308,7 +304,7 @@ class PreferencesAccountDetails extends Component<
       case Account.SYNC_STATE_ERROR:
         return this._renderErrorDetail(
           localized(
-            `Mailspring encountered errors syncing this account. Crash reports have been sent to the Mailspring team and we'll work to fix these errors in the next release.`
+            `SummerMail encountered errors syncing this account. Crash reports have been sent to the SummerMail team and we'll work to fix these errors in the next release.`
           ),
           [
             { text: localized('Reconnect'), action: this._onReconnect },

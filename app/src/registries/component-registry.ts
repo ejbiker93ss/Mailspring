@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import { SheetToolbarDeclaration } from '../flux/stores/workspace-store';
 
 type LocationDescriptor = { id: string } | SheetToolbarDeclaration;
@@ -15,12 +15,12 @@ export interface ComponentRegistryDescriptor {
 
 /**
 Public: The ComponentRegistry maintains an index of React components registered
-by Mailspring packages. Components can use {InjectedComponent} and {InjectedComponentSet}
+by SummerMail packages. Components can use {InjectedComponent} and {InjectedComponentSet}
 to dynamically render components registered with the ComponentRegistry.
 
 Section: Stores
 */
-class ComponentRegistry extends MailspringStore {
+class ComponentRegistry extends SummerMailStore {
   _registry: {
     [displayName: string]: {
       modes?: string[];
@@ -34,7 +34,7 @@ class ComponentRegistry extends MailspringStore {
 
   // Public: Register a new component with the Component Registry.
   // Typically, packages call this method from their main `activate` method
-  // to extend the Mailspring user interface, and call the corresponding `unregister`
+  // to extend the SummerMail user interface, and call the corresponding `unregister`
   // method in `deactivate`.
   //
   // * `component` {Object} A React Component with a `displayName`

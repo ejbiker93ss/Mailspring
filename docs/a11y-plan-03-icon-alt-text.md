@@ -210,7 +210,7 @@ Used in ~5 places (send action, message controls, signature picker, template pic
 
 **Step 1:** Check for `eslint-plugin-jsx-a11y`:
 ```bash
-grep "jsx-a11y" /home/user/Mailspring/package.json
+grep "jsx-a11y" /home/user/SummerMail/package.json
 ```
 
 **Step 2:** Enable relevant `jsx-a11y` rules in `.eslintrc`:

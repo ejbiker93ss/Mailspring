@@ -4,7 +4,7 @@ import * as Immutable from 'immutable';
 import { Editor, Value, Operation, Range, Block, Text, Point } from 'slate';
 import { Editor as SlateEditorComponent, EditorProps, Plugin } from 'slate-react';
 import { clipboard as ElectronClipboard } from 'electron';
-import { InlineStyleTransformer, SanitizeTransformer } from 'mailspring-exports';
+import { InlineStyleTransformer, SanitizeTransformer } from 'summermail-exports';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
@@ -61,7 +61,7 @@ function getDocumentBrokenReason(value: Value): string | null {
 // rather than guessing a replacement. If we don't repair it here, the very next
 // keystroke crashes deep inside Slate's `deleteExpandedAtRange` (`Point.moveTo` calling
 // `.equals` on a null path) with "Cannot read properties of null (reading 'equals')"
-// (MAILSPRING-CLIENT-1E).
+// (SUMMERMAIL-CLIENT-1E).
 //
 // NOTE: a fully-unset-but-focused selection isn't unique to this bug — slate-react's
 // own `AfterPlugin.onFocus` intentionally calls `editor.deselect().focus()` on every
@@ -484,7 +484,7 @@ export function handleFilePasted(event: ClipboardEvent, onFileReceived: (path: s
   if (event.clipboardData.items.length === 0) {
     return false;
   }
-  // See https://github.com/Foundry376/Mailspring/pull/2104 - if you right-click + Copy Image in Chrome,
+  // If you right-click + Copy Image in Chrome,
   // the image file is item 1, not item 0. We want to prefer the files whenever one is present.
   for (const i in event.clipboardData.items) {
     const item = event.clipboardData.items[i];
@@ -502,7 +502,7 @@ export function handleFilePasted(event: ClipboardEvent, onFileReceived: (path: s
       const reader = new FileReader();
       reader.addEventListener('loadend', () => {
         const buffer = Buffer.from(new Uint8Array(reader.result as any));
-        const tmpFolder = path.join(os.tmpdir(), `-mailspring-attachment-${crypto.randomUUID()}`);
+        const tmpFolder = path.join(os.tmpdir(), `-summermail-attachment-${crypto.randomUUID()}`);
         const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
         fs.mkdir(tmpFolder, () => {
           fs.writeFile(tmpPath, buffer, () => {

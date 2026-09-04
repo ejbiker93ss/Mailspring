@@ -1,8 +1,8 @@
 import React from 'react';
 import { Store, ContactsPerspective } from './Store';
-import { localized, Actions, AccountStore } from 'mailspring-exports';
+import { localized, Actions, AccountStore } from 'summermail-exports';
 import * as Icons from './SVGIcons';
-import { ListensToFluxStore, BindGlobalCommands } from 'mailspring-component-kit';
+import { ListensToFluxStore, BindGlobalCommands } from 'summermail-component-kit';
 import { showGPeopleReadonlyNotice } from './GoogleSupport';
 
 interface AddContactToolbarProps {

@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import {
   Actions,
   Account,
@@ -10,7 +10,7 @@ import {
   FocusedPerspectiveStore,
   CategoryStore,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import SidebarSection from './sidebar-section';
 import * as SidebarActions from './sidebar-actions';
@@ -32,7 +32,7 @@ const Sections = {
   User: 'User',
 };
 
-class SidebarStore extends MailspringStore {
+class SidebarStore extends SummerMailStore {
   _sections: {
     Standard: ISidebarSection;
     User: ISidebarSection[];

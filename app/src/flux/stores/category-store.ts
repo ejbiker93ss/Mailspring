@@ -1,5 +1,5 @@
-import { Categories } from 'mailspring-observables';
-import MailspringStore from 'mailspring-store';
+import { Categories } from 'summermail-observables';
+import SummerMailStore from 'summermail-store';
 import { AccountStore } from './account-store';
 import { Account } from '../models/account';
 import { Category } from '../models/category';
@@ -20,7 +20,7 @@ const asAccountId = (a: Account | string) => {
   return a instanceof Account ? a.id : a;
 };
 
-class CategoryStore extends MailspringStore {
+class CategoryStore extends SummerMailStore {
   _categoryCache = {};
   _standardCategories: { [accountId: string]: Array<Folder | Label> } = {};
   _userCategories: { [accountId: string]: Array<Folder | Label> } = {};

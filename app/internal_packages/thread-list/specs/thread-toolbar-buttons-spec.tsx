@@ -7,7 +7,7 @@ import {
   CategoryStore,
   TaskFactory,
   MailboxPerspective,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import {
   ToggleStarredButton,
   ToggleUnreadButton,

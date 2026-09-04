@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import URL from 'url';
-import { localized } from 'mailspring-exports';
+import { localized } from 'summermail-exports';
 import ReactDOMServer from 'react-dom/server';
 import Templates from './templates';
 

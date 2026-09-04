@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ButtonDropdown, Menu } from 'mailspring-component-kit';
+import { ButtonDropdown, Menu } from 'summermail-component-kit';
 
 type MultiselectDropdownProps = {
   className?: string;

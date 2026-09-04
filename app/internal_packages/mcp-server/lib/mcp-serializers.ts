@@ -1,4 +1,4 @@
-import type { Thread, Message, Category, Contact } from 'mailspring-exports';
+import type { Thread, Message, Category, Contact } from 'summermail-exports';
 import { isThreadAllowed, isMessageAllowed } from './mcp-access-control';
 
 // Authorization + output-shaping, combined. Every thread/message that leaves

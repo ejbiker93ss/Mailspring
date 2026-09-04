@@ -1,5 +1,5 @@
 import React from 'react';
-import { VirtualDOMUtils } from 'mailspring-exports';
+import { VirtualDOMUtils } from 'summermail-exports';
 
 import SearchMatch from './search-match';
 import UnifiedDOMParser from './unified-dom-parser';

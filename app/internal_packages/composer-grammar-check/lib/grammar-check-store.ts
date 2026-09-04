@@ -1,5 +1,5 @@
-import MailspringStore from 'mailspring-store';
-import { localized, FeatureUsageStore, IdentityStore } from 'mailspring-exports';
+import SummerMailStore from 'summermail-store';
+import { localized, FeatureUsageStore, IdentityStore } from 'summermail-exports';
 import { GrammarError, LanguageToolBackend, UsageExceededError } from './grammar-check-service';
 
 export const GRAMMAR_CHECK_FEATURE_ID = 'grammar-check';
@@ -7,9 +7,9 @@ export const GRAMMAR_CHECK_FEATURE_ID = 'grammar-check';
 export const GRAMMAR_CHECK_UPGRADE_LEXICON = {
   headerText: localized('All used up!'),
   rechargeText: localized(
-    'You can grammar check %1$@ drafts each %2$@ with Mailspring Basic. Upgrade to Pro for unlimited grammar checking.'
+    'You can grammar check %1$@ drafts each %2$@ with SummerMail Basic. Upgrade to Pro for unlimited grammar checking.'
   ),
-  iconUrl: 'mailspring://composer-grammar-check/assets/ic-modal-image@2x.png',
+  iconUrl: 'summermail://composer-grammar-check/assets/ic-modal-image@2x.png',
 };
 
 interface BlockCheckResult {
@@ -17,7 +17,7 @@ interface BlockCheckResult {
   errors: GrammarError[];
 }
 
-class _GrammarCheckStore extends MailspringStore {
+class _GrammarCheckStore extends SummerMailStore {
   private _enabled = false;
   private _checking: Map<string, boolean> = new Map();
   private _errorsByDraft: Map<string, Map<string, BlockCheckResult>> = new Map();

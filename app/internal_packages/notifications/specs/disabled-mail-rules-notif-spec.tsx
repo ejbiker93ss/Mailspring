@@ -1,6 +1,6 @@
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import React from 'react';
-import { AccountStore, Account, Actions, MailRulesStore } from 'mailspring-exports';
+import { AccountStore, Account, Actions, MailRulesStore } from 'summermail-exports';
 import DisabledMailRulesNotification from '../lib/items/disabled-mail-rules-notif';
 
 describe('DisabledMailRulesNotification', function DisabledMailRulesNotifTests() {

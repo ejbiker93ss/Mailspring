@@ -8,8 +8,8 @@ import {
   TaskQueue,
   CategoryStore,
   ChangeFolderTask,
-} from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 
 export default class MessageOwnerStatus extends React.Component {
   static displayName = 'MessageOwnerStatus';

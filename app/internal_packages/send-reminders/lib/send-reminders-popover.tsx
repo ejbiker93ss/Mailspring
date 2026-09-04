@@ -1,7 +1,7 @@
 import React from 'react';
 import moment from 'moment';
-import { localized, DateUtils } from 'mailspring-exports';
-import { DatePickerPopover } from 'mailspring-component-kit';
+import { localized, DateUtils } from 'summermail-exports';
+import { DatePickerPopover } from 'summermail-component-kit';
 
 const SendRemindersOptions = {
   [localized('In 3 Hours')]: () => DateUtils.minutesFromNow(180),

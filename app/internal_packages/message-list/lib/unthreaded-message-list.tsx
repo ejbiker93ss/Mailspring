@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck -- Ported legacy plugin module; compiled by the first-party TypeScript pipeline.
-import { React, ReactDOM, Utils, Actions, MessageStore } from 'mailspring-exports';
+import { React, ReactDOM, Utils, Actions, MessageStore } from 'summermail-exports';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 

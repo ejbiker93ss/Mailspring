@@ -1,6 +1,6 @@
 import React from 'react';
-import { RetinaImg } from 'mailspring-component-kit';
-import { localizedReactFragment } from 'mailspring-exports';
+import { RetinaImg } from 'summermail-component-kit';
+import { localizedReactFragment } from 'summermail-exports';
 
 const ActivityListEmptyState = function ActivityListEmptyState() {
   return (

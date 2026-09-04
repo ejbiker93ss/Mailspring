@@ -1,7 +1,7 @@
 import fs from 'fs';
 import React from 'react';
 import { shell } from 'electron';
-import { ScrollRegion, ListensToFluxStore, RetinaImg } from 'mailspring-component-kit';
+import { ScrollRegion, ListensToFluxStore, RetinaImg } from 'summermail-component-kit';
 import {
   localized,
   localizedReactFragment,
@@ -10,7 +10,7 @@ import {
   DatabaseStore,
   FocusedPerspectiveStore,
   Actions,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import {
   MetricContainer,
@@ -329,7 +329,7 @@ class RootWithTimespan extends React.Component<
         AppEnv.showErrorDialog({
           title: localized('Export Failed'),
           message: localized(
-            `Mailspring was unable to write to the file location you specified (%@).` +
+            `SummerMail was unable to write to the file location you specified (%@).` +
               `Try choosing another location.\n\n%@`,
             filepath,
             err.toString()
@@ -377,7 +377,9 @@ class RootWithTimespan extends React.Component<
   };
 
   _onLearnMore = () => {
-    shell.openExternal('http://support.getmailspring.com/hc/en-us/articles/115002507891');
+    if (process.env.SUMMERMAIL_HELP_URL) {
+      shell.openExternal(process.env.SUMMERMAIL_HELP_URL);
+    }
   };
 
   render() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actions, Calendar, DatabaseStore, DateUtils, localized } from 'mailspring-exports';
+import { Actions, Calendar, DatabaseStore, DateUtils, localized } from 'summermail-exports';
 import { Moment } from 'moment';
 import {
   getEditableCalendars,
@@ -51,7 +51,7 @@ export class QuickEventPopover extends React.Component<
     end: Moment;
   }) => {
     const allCalendars = await DatabaseStore.findAll<Calendar>(Calendar);
-    const disabledCalendars: string[] = AppEnv.config.get('mailspring.disabledCalendars') || [];
+    const disabledCalendars: string[] = AppEnv.config.get('summermail.disabledCalendars') || [];
     const editableCals = getEditableCalendars(allCalendars, disabledCalendars);
     if (editableCals.length === 0) {
       showNoEditableCalendarsError();

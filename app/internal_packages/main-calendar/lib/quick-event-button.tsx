@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Actions, localized } from 'mailspring-exports';
-import { RetinaImg, BindGlobalCommands } from 'mailspring-component-kit';
+import { Actions, localized } from 'summermail-exports';
+import { RetinaImg, BindGlobalCommands } from 'summermail-component-kit';
 import { QuickEventPopover } from './quick-event-popover';
 
 export class QuickEventButton extends React.Component<Record<string, unknown>> {

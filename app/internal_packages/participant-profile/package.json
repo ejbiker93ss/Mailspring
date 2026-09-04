@@ -12,7 +12,7 @@
     "default": true
   },
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "license": "GPL-3.0"
 }

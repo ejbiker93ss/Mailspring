@@ -1,7 +1,7 @@
 import moment, { Moment } from 'moment';
 import React from 'react';
-import { Actions, localized, WorkspaceStore } from 'mailspring-exports';
-import { MiniMonthView } from 'mailspring-component-kit';
+import { Actions, localized, WorkspaceStore } from 'summermail-exports';
+import { MiniMonthView } from 'summermail-component-kit';
 import { CalendarDataSource, EventOccurrence } from './core/calendar-data-source';
 import { calcEventColors } from './core/calendar-helpers';
 
@@ -126,7 +126,7 @@ export class CompactCalendarSidebar extends React.Component<
         mode === 'agenda'
           ? date.clone().add(AGENDA_MONTHS_IN_VIEW, 'months').endOf('day').unix()
           : date.clone().endOf('day').unix();
-      const disabledCalendars = AppEnv.config.get('mailspring.disabledCalendars') || [];
+      const disabledCalendars = AppEnv.config.get('summermail.disabledCalendars') || [];
       this.dataSource.buildObservable({ startUnix, endUnix, disabledCalendars });
       this.eventSubscription = this.dataSource.subscribe(({ events }) => {
         this.setState({

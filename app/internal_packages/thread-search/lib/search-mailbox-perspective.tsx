@@ -9,7 +9,7 @@ import {
   CategoryStore,
   TaskFactory,
   MailboxPerspective,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import SearchQuerySubscription from './search-query-subscription';
 
 class SearchMailboxPerspective extends MailboxPerspective {

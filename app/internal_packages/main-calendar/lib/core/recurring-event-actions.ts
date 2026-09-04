@@ -5,7 +5,7 @@ import {
   ICSEventHelpers,
   CalendarUtils,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import { showRecurringEventDialog, RecurringEventOperation } from './recurring-event-dialog';
 
 /**

@@ -8,8 +8,8 @@ import {
   Contact,
   DraftEditingSession,
   Message,
-} from 'mailspring-exports';
-import { Menu, ButtonDropdown, InjectedComponentSet } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { Menu, ButtonDropdown, InjectedComponentSet } from 'summermail-component-kit';
 
 interface AccountContactFieldProps {
   accounts: Account[];

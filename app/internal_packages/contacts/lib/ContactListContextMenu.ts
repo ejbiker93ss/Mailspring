@@ -1,4 +1,4 @@
-import { localized, Contact } from 'mailspring-exports';
+import { localized, Contact } from 'summermail-exports';
 import { Store } from './Store';
 import { exportContactsToFile } from './VCFImportExport';
 import { showGPeopleReadonlyNotice } from './GoogleSupport';

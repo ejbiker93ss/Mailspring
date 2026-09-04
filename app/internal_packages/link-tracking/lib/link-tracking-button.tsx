@@ -2,11 +2,11 @@ import React from 'react';
 import {
   localized,
   APIError,
-  MailspringAPIRequest,
+  SummerMailAPIRequest,
   Message,
   DraftEditingSession,
-} from 'mailspring-exports';
-import { MetadataComposerToggleButton } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { MetadataComposerToggleButton } from 'summermail-component-kit';
 import { PLUGIN_ID, PLUGIN_NAME } from './link-tracking-constants';
 
 type Props = { draft: Message; session: DraftEditingSession };
@@ -14,7 +14,7 @@ type Props = { draft: Message; session: DraftEditingSession };
 function errorMessage(error: Error) {
   if (
     error instanceof APIError &&
-    MailspringAPIRequest.TimeoutErrorCodes.includes(error.statusCode)
+    SummerMailAPIRequest.TimeoutErrorCodes.includes(error.statusCode)
   ) {
     return localized(
       `Link tracking does not work offline. Please re-enable when you come back online.`

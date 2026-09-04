@@ -1,10 +1,10 @@
-import { localized, AccountStore, Account, IdentityStore } from 'mailspring-exports';
+import { localized, AccountStore, Account, IdentityStore } from 'summermail-exports';
 import { ipcRenderer } from 'electron';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 
 import * as OnboardingActions from './onboarding-actions';
 
-class OnboardingStore extends MailspringStore {
+class OnboardingStore extends SummerMailStore {
   _account: Account;
   _pageStack: string[];
 
@@ -50,7 +50,7 @@ class OnboardingStore extends MailspringStore {
       this._pageStack = ['account-choose'];
     } else if (identity || hasAccounts) {
       // Account setup is local in this distribution. Existing profiles and
-      // profiles upgraded without a legacy Mailspring ID go straight to the
+      // profiles upgraded without a legacy SummerMail ID go straight to the
       // provider picker instead of the hosted identity/subscription flow.
       this._pageStack = ['account-choose'];
     } else {
@@ -124,7 +124,7 @@ class OnboardingStore extends MailspringStore {
       AppEnv.showErrorDialog({
         title: localized('Unable to Add Account'),
         message: localized(
-          'Sorry, something went wrong when this account was added to Mailspring. If you do not see the account, try linking it again. %@',
+          'Sorry, something went wrong when this account was added to SummerMail. If you do not see the account, try linking it again. %@',
           e.toString()
         ),
       });

@@ -14,7 +14,7 @@ const DEFAULT_ICON = path.resolve(
   AppEnv.getLoadSettings().resourcePath,
   'static',
   'images',
-  'mailspring.png'
+  'summermail.png'
 );
 
 type INotificationCallback = (args: {
@@ -129,10 +129,10 @@ class NativeNotifications {
   }
 
   /**
-   * Get notification icon. Only works on linux, otherwise the Mailspring default icon wil be read
+   * Get notification icon. Only works on linux, otherwise the SummerMail default icon wil be read
    * from resources.
    *
-   * Reading the icon name from the desktop file of Mailspring. If the icon is a name, reads the
+   * Reading the icon name from the desktop file of SummerMail. If the icon is a name, reads the
    * icon theme directory for this icon. As the notification only works with PNG files, SVG files
    * must be converted to PNG
    *
@@ -242,7 +242,7 @@ class NativeNotifications {
     // Note: Windows supports up to 5 buttons total (including reply button)
     const actionsContent = (options.actions || [])
       .map((action, i) => {
-        const actionUrl = `mailspring://notification-action?${baseParams}&actionIndex=${i}`;
+        const actionUrl = `summermail://notification-action?${baseParams}&actionIndex=${i}`;
         return `    <action content="${this.escapeXml(action.text)}" arguments="${this.escapeXml(
           actionUrl
         )}" activationType="protocol"/>`;
@@ -255,7 +255,7 @@ class NativeNotifications {
     // - hint-maxLines="1" prevents sender name from wrapping
     // - group attribute enables notification stacking per thread
     // - activationType="protocol" allows handling when app is closed
-    const clickUrl = `mailspring://notification-click?${baseParams}`;
+    const clickUrl = `summermail://notification-click?${baseParams}`;
     return `<toast launch="${this.escapeXml(
       clickUrl
     )}" activationType="protocol" group="thread-${options.threadId || 'default'}">
@@ -292,7 +292,7 @@ ${actionsXml}
       messageId: '',
     }).toString();
 
-    const clickUrl = `mailspring://notification-click?${baseParams}`;
+    const clickUrl = `summermail://notification-click?${baseParams}`;
 
     return `<toast launch="${this.escapeXml(clickUrl)}" activationType="protocol">
   <visual>

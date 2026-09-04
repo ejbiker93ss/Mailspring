@@ -1,7 +1,7 @@
 import React from 'react';
 import { webUtils } from 'electron';
-import { localized, MailspringAPIRequest, IdentityStore } from 'mailspring-exports';
-import { RetinaImg, DropZone } from 'mailspring-component-kit';
+import { localized, SummerMailAPIRequest, IdentityStore } from 'summermail-exports';
+import { RetinaImg, DropZone } from 'summermail-component-kit';
 
 const MAX_IMAGE_RES = 250;
 
@@ -121,11 +121,11 @@ export default class SignaturePhotoPicker extends React.Component<
     let link = null;
 
     try {
-      link = await MailspringAPIRequest.postStaticAsset({ filename, blob });
+      link = await SummerMailAPIRequest.postStaticAsset({ filename, blob });
     } catch (err) {
       AppEnv.showErrorDialog(
         localized(
-          `Sorry, we couldn't save your signature image to Mailspring's servers. Please try again.\n\n(%@)`,
+          `Sorry, we couldn't save your signature image to SummerMail's servers. Please try again.\n\n(%@)`,
           err.toString()
         )
       );
@@ -150,7 +150,7 @@ export default class SignaturePhotoPicker extends React.Component<
 
     // we don't display the <input> for data URLs because they can be
     // long and the UI becomes slow.
-    const isMailspringURL = resolvedURL && resolvedURL.includes('getmailspring.com');
+    const isHostedImageURL = resolvedURL && resolvedURL.includes('getmailspring.com');
     const isUploadEnabled = IdentityStore.identity() !== null;
 
     const dropNote =
@@ -204,7 +204,7 @@ export default class SignaturePhotoPicker extends React.Component<
               <option value="custom">{localized('Custom Image…')}</option>
             </select>
             {source === 'custom' &&
-              (isMailspringURL ? (
+              (isHostedImageURL ? (
                 <a
                   className="btn"
                   onClick={() => this.props.onChange({ target: { value: '', id: 'photoURL' } })}

@@ -1,6 +1,6 @@
 import React from 'react';
-import { localized, MailspringAPIRequest } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { localized, SummerMailAPIRequest } from 'summermail-exports';
+import { RetinaImg } from 'summermail-component-kit';
 
 function buildShareHTML(htmlEl: HTMLElement, styleEl: HTMLStyleElement) {
   return `
@@ -9,8 +9,8 @@ function buildShareHTML(htmlEl: HTMLElement, styleEl: HTMLStyleElement) {
     <head>
     <meta charset="utf-8"> 
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="author" content="Mailspring">
-    <title>Mailspring Activity</title>
+    <meta name="author" content="SummerMail">
+    <title>SummerMail Activity</title>
     <style type="text/css">
     body {
       font-family: sans-serif;
@@ -67,7 +67,7 @@ export default class ShareButton extends React.Component<
       loading: true,
     });
 
-    const link = await MailspringAPIRequest.postStaticPage({
+    const link = await SummerMailAPIRequest.postStaticPage({
       key: `activity-${Date.now()}`,
       html: buildShareHTML(
         document.querySelector('style[source-path*="activity/styles/index.less"]'),

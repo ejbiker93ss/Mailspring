@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { RetinaImg } from 'mailspring-component-kit';
+import { RetinaImg } from 'summermail-component-kit';
 
 export default class LoadingCover extends React.Component<{ active: boolean }> {
   render() {

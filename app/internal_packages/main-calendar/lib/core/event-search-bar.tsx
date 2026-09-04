@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import moment from 'moment-timezone';
-import { Rx, Event, DatabaseStore, localized, Calendar, Actions } from 'mailspring-exports';
-import { RetinaImg, KeyCommandsRegion, BindGlobalCommands } from 'mailspring-component-kit';
+import { Rx, Event, DatabaseStore, localized, Calendar, Actions } from 'summermail-exports';
+import { RetinaImg, KeyCommandsRegion, BindGlobalCommands } from 'summermail-component-kit';
 import { EventOccurrence, occurrencesForEvents } from './calendar-data-source';
 import { Disposable } from 'rx-core';
 
-const DISABLED_CALENDARS = 'mailspring.disabledCalendars';
+const DISABLED_CALENDARS = 'summermail.disabledCalendars';
 
 interface EventSearchBarState {
   query: string;

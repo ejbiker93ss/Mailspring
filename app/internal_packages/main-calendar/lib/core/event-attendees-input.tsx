@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'underscore';
-import { Utils, Contact, ContactStore, RegExpUtils, localized } from 'mailspring-exports';
-import { TokenizingTextField, Menu, InjectedComponentSet } from 'mailspring-component-kit';
+import { Utils, Contact, ContactStore, RegExpUtils, localized } from 'summermail-exports';
+import { TokenizingTextField, Menu, InjectedComponentSet } from 'summermail-component-kit';
 import { EventAttendee } from './calendar-data-source';
 
 const TokenRenderer = (props: { token: EventAttendee }) => {

@@ -1,4 +1,4 @@
-import type { Thread, Message } from 'mailspring-exports';
+import type { Thread, Message } from 'summermail-exports';
 
 type AccessLevel = 'read-only' | 'read-write' | 'read-write-send';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Actions, WorkspaceStore } from 'mailspring-exports';
+import { localized, Actions, WorkspaceStore } from 'summermail-exports';
 import { Thread } from './flux/models/thread';
 import { SheetDeclaration } from './flux/stores/workspace-store';
 import { AppNavigationMenu } from '../internal_packages/account-sidebar/lib/components/app-navigation-menu';

@@ -7,7 +7,7 @@ import {
   Thread,
   DatabaseStore,
   SearchQueryParser,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 function emailFor(contact: Contact | undefined) {
   return (contact || { email: '' }).email;

@@ -2,7 +2,7 @@
 
 ## 1. ESLint Configuration Audit
 
-**File:** `/home/user/Mailspring/.eslintrc`
+**File:** `/home/user/SummerMail/.eslintrc`
 
 Two a11y rules explicitly disabled:
 ```json
@@ -415,7 +415,7 @@ Update call sites to pass `label` prop. Example in `all-day-toggle.tsx`:
 
 ### Phase 13: Re-enable ESLint Rule
 
-**File:** `/home/user/Mailspring/.eslintrc`
+**File:** `/home/user/SummerMail/.eslintrc`
 
 ```json
 // Remove:
@@ -476,4 +476,4 @@ localized('Search %@', account.label)  // interpolation
 - `app/internal_packages/preferences/lib/tabs/config-schema-item.tsx` — Core preferences renderer; adding `id` to `<select>` fixes all boolean toggles and enum dropdowns across all preference tabs
 - `app/internal_packages/composer/lib/composer-header.tsx` — Unlabeled Subject input; demonstrates the sr-only label pattern for all other form fields
 - `app/internal_packages/contacts/lib/ContactDetailEdit.tsx` — Largest volume of label association gaps; implicit wrap approach resolves all contact fields
-- `/home/user/Mailspring/.eslintrc` — Re-enable `jsx-a11y/label-has-associated-control` (replacing disabled `jsx-a11y/label-has-for`); becomes regression guard for future unlabeled inputs
+- `/home/user/SummerMail/.eslintrc` — Re-enable `jsx-a11y/label-has-associated-control` (replacing disabled `jsx-a11y/label-has-for`); becomes regression guard for future unlabeled inputs

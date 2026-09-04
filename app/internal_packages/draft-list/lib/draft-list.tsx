@@ -1,11 +1,11 @@
 import React from 'react';
-import { Actions, Message } from 'mailspring-exports';
+import { Actions, Message } from 'summermail-exports';
 import {
   FluxContainer,
   FocusContainer,
   EmptyListState,
   MultiselectList,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 import DraftListStore from './draft-list-store';
 import * as DraftListColumns from './draft-list-columns';
 

@@ -1,6 +1,6 @@
-# Community Themes for Mailspring
+# Community Themes for SummerMail
 
-This document lists known third-party themes for Mailspring found on GitHub.
+This document lists known third-party themes for SummerMail found on GitHub.
 
 ## Official Resources
 
@@ -84,12 +84,12 @@ To create your own theme:
 
 ### Theme Installation
 
-Install themes via **Edit > Install Theme...** (or **Mailspring > Install Theme...** on macOS) and select the theme folder.
+Install themes via **Edit > Install Theme...** (or **SummerMail > Install Theme...** on macOS) and select the theme folder.
 
 Alternatively, copy or symlink themes to:
-- **macOS**: `~/Library/Application Support/Mailspring/packages/`
-- **Linux**: `~/.config/Mailspring/packages/`
-- **Windows**: `%APPDATA%/Mailspring/packages/`
+- **macOS**: `~/Library/Application Support/SummerMail/packages/`
+- **Linux**: `~/.config/SummerMail/packages/`
+- **Windows**: `%APPDATA%/SummerMail/packages/`
 
 ### Theme Structure
 
@@ -112,7 +112,7 @@ The `package.json` should include:
   "theme": "ui",
   "version": "1.0.0",
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   }
 }
 ```

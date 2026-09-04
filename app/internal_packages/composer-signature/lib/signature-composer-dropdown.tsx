@@ -8,8 +8,8 @@ import {
   ISignature,
   ISignatureSet,
   MessageWithEditorState,
-} from 'mailspring-exports';
-import { Menu, RetinaImg, ButtonDropdown } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { Menu, RetinaImg, ButtonDropdown } from 'summermail-component-kit';
 
 import { applySignature, currentSignatureIdSlate, currentSignatureId } from './signature-utils';
 

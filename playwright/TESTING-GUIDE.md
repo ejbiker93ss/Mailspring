@@ -1,6 +1,6 @@
-# Mailspring Playwright E2E Testing Guide
+# SummerMail Playwright E2E Testing Guide
 
-This guide captures patterns, pitfalls, and debugging strategies for writing Playwright E2E tests against the Mailspring Electron app. It is intended for both human developers and AI agents.
+This guide captures patterns, pitfalls, and debugging strategies for writing Playwright E2E tests against the SummerMail Electron app. It is intended for both human developers and AI agents.
 
 ## Testing Philosophy
 
@@ -98,7 +98,7 @@ Key points:
 
 ### Pages and Windows
 
-Mailspring is a multi-window Electron app. The main window renders the thread list and message view. Popout windows are opened for new-message composition and thread popouts.
+SummerMail is a multi-window Electron app. The main window renders the thread list and message view. Popout windows are opened for new-message composition and thread popouts.
 
 ```typescript
 // mainWindow is the primary renderer — thread list, message view, sidebar
@@ -143,7 +143,7 @@ The capture system works by injecting a listener on `Actions.queueTask` in the r
 
 ### Executing JavaScript in the Renderer
 
-Mailspring restricts `window.eval()` for security. To run arbitrary JS in the renderer, use the `executeInRenderer` pattern (defined in helpers.ts):
+SummerMail restricts `window.eval()` for security. To run arbitrary JS in the renderer, use the `executeInRenderer` pattern (defined in helpers.ts):
 
 ```typescript
 await electronApp.evaluate(async ({ BrowserWindow }, js) => {
@@ -229,7 +229,7 @@ This matters because:
 
 ### 6. Native Dialogs and DevTools
 
-Mailspring may show native dialogs (keychain errors, sync errors) that block tests. The `launchApp()` helper mocks these:
+SummerMail may show native dialogs (keychain errors, sync errors) that block tests. The `launchApp()` helper mocks these:
 
 ```typescript
 await electronApp.evaluate(({ dialog }) => {
@@ -346,13 +346,13 @@ const itemCount = await mainWindow.evaluate(() => {
   return document.querySelectorAll('.list-item').length;
 });
 
-// Or inspect Mailspring stores via $m
+// Or inspect SummerMail stores via $m
 const threadId = await mainWindow.evaluate(() => {
   return window.$m.FocusedContentStore.focused('thread')?.id;
 });
 ```
 
-Note: Direct `evaluate` calls in the renderer may be blocked by Mailspring's eval restriction. Use the `executeInRenderer` pattern via `electronApp.evaluate` if needed.
+Note: Direct `evaluate` calls in the renderer may be blocked by SummerMail's eval restriction. Use the `executeInRenderer` pattern via `electronApp.evaluate` if needed.
 
 ## Patterns for Common Test Scenarios
 
@@ -519,7 +519,7 @@ Tests implemented:
 - `Cmd+I` toggles italic formatting (verified via `<em>` or `<i>` tag in contenteditable)
 
 Key findings:
-- Tab navigation uses `TabGroupRegion` from mailspring-component-kit. Testing it by typing after Tab and verifying text lands in the body is more reliable than checking `document.activeElement`.
+- Tab navigation uses `TabGroupRegion` from summermail-component-kit. Testing it by typing after Tab and verifying text lands in the body is more reliable than checking `document.activeElement`.
 - Contact token creation: type email then press `Comma` (not `Enter` — Enter may submit). The `.token` class element appears inside the `.composer-participant-field`.
 - The full send flow (`Cmd+Enter` → `SendDraftTask`) requires real database access that synthetic PLAYWRIGHT drafts can't provide. Testing send would require additional PLAYWRIGHT-mode shims in DraftStore._onSendDraft.
 
@@ -685,7 +685,7 @@ Tests implemented:
 
 Key findings:
 - The `draggable` attribute is on `.list-rows` (the parent container), not individual `.list-item` elements. `MultiselectList._onDragStart` uses `itemsForMouseEvent(event)` which calls `document.elementFromPoint()` to find the item under the cursor, then checks `[data-item-id]`.
-- The sidebar drop targets use `DropZone` components wrapped around `OutlineViewItem`. The `shouldAcceptDrop` handler validates that the dragged data contains `'mailspring-threads-data'` and account IDs match.
+- The sidebar drop targets use `DropZone` components wrapped around `OutlineViewItem`. The `shouldAcceptDrop` handler validates that the dragged data contains `'summermail-threads-data'` and account IDs match.
 - On drop, `SidebarItem.onDrop()` calls `perspective.receiveThreadIds()` which creates `ChangeFolderTask` via `TaskFactory.tasksForThreadsByAccountId()` with `source: 'Dragged into list'`.
 - Playwright's `dragTo` works correctly with Electron's HTML5 drag events — no special workarounds needed.
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import { Account } from 'mailspring-exports';
+import { Account } from 'summermail-exports';
 import OnboardingStore from './onboarding-store';
 import PageTopBar from './page-top-bar';
 

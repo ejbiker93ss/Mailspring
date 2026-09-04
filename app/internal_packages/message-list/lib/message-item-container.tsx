@@ -7,7 +7,7 @@ import {
   AccountStore,
   Thread,
   Message,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import MessageItem from './message-item';
 

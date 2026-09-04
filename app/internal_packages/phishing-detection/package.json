@@ -11,7 +11,7 @@
   "isOptional": true,
 
   "engines": {
-    "mailspring": "*"
+    "summermail": "*"
   },
   "windowTypes": {
     "default": true,

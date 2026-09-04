@@ -13,7 +13,7 @@ import {
   AccountStore,
   TaskQueue,
   EmlUtils,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import { AppContextMenuItem, showAppContextMenu } from '../../../src/components/app-context-menu';
 
 type TemplateItem = AppContextMenuItem;
@@ -181,7 +181,7 @@ export default class ThreadListContextMenu {
         const fs = require('fs');
         const tempDir = pathModule.join(
           require('@electron/remote').app.getPath('temp'),
-          `mailspring-fwd-${message.id}`
+          `summermail-fwd-${message.id}`
         );
         fs.mkdirSync(tempDir, { recursive: true });
         const tempPath = pathModule.join(tempDir, 'Forwarded Message.eml');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Editor } from 'slate';
-import { RetinaImg } from 'mailspring-component-kit';
-import { localized, SanitizeTransformer } from 'mailspring-exports';
+import { RetinaImg } from 'summermail-component-kit';
+import { localized, SanitizeTransformer } from 'summermail-exports';
 import { ComposerEditorPlugin } from './types';
 
 export const UNEDITABLE_TYPE = 'uneditable';

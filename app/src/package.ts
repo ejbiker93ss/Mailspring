@@ -101,7 +101,7 @@ export default class Package {
   }
 
   isEngineSet() {
-    return !!this.json.engines.mailspring;
+    return !!(this.json.engines.summermail || this.json.engines.mailspring);
   }
 
   isIdentityRequired() {

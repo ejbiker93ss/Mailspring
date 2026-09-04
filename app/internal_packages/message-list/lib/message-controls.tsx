@@ -9,8 +9,8 @@ import {
   EmlUtils,
   Thread,
   Message,
-} from 'mailspring-exports';
-import { RetinaImg, ButtonDropdown, Menu } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { RetinaImg, ButtonDropdown, Menu } from 'summermail-component-kit';
 
 interface MessageControlsProps {
   thread: Thread;

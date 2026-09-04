@@ -1,4 +1,4 @@
-import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { ComponentRegistry, WorkspaceStore } from 'summermail-exports';
 
 import MailAssistant from '../../message-list/lib/mail-assistant';
 import { CompactCalendarSidebar } from '../../main-calendar/lib/compact-calendar-sidebar';

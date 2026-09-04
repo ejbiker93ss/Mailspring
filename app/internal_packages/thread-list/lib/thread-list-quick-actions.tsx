@@ -5,7 +5,7 @@ import {
   Thread,
   TaskFactory,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 const sameThreadId = (prev: { thread: Thread }, next: { thread: Thread }) =>
   prev.thread.id === next.thread.id;

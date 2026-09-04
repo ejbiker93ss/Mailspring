@@ -5,7 +5,7 @@ import React from 'react';
 let stubIsRegistered = null;
 let stubRegister: (...args: any[]) => void = () => {};
 const patched = proxyquire('../lib/items/default-client-notif', {
-  'mailspring-exports': {
+  'summermail-exports': {
     DefaultClientHelper: class {
       constructor() {
         // The methods are assigned in the constructor (rather than declared as
@@ -27,7 +27,7 @@ const SETTINGS_KEY = 'mailto.prompted-about-default';
 describe('DefaultClientNotif', function DefaultClientNotifTests() {
   afterEach(cleanup);
 
-  describe("when Mailspring isn't the default mail client", () => {
+  describe("when SummerMail isn't the default mail client", () => {
     beforeEach(() => {
       stubIsRegistered = false;
     });
@@ -55,7 +55,7 @@ describe('DefaultClientNotif', function DefaultClientNotifTests() {
         expect(container.querySelector('.notification') !== null).toEqual(true);
       });
 
-      it('allows the user to set Mailspring as the default client', () => {
+      it('allows the user to set SummerMail as the default client', () => {
         let scheme = null;
         stubRegister = (urlScheme) => {
           scheme = urlScheme;
@@ -72,7 +72,7 @@ describe('DefaultClientNotif', function DefaultClientNotifTests() {
     });
   });
 
-  describe('when Mailspring is the default mail client', () => {
+  describe('when SummerMail is the default mail client', () => {
     let container;
     beforeEach(() => {
       stubIsRegistered = true;

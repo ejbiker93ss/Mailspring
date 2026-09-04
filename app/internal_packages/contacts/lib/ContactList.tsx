@@ -1,7 +1,7 @@
 import React, { CSSProperties, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { webUtils } from 'electron';
-import { Contact, localized, CanvasUtils, AccountStore } from 'mailspring-exports';
+import { Contact, localized, CanvasUtils, AccountStore } from 'summermail-exports';
 import {
   FocusContainer,
   MultiselectList,
@@ -9,7 +9,7 @@ import {
   RetinaImg,
   ListensToFluxStore,
   ListDataSource,
-} from 'mailspring-component-kit';
+} from 'summermail-component-kit';
 import { ContactsPerspective, Store } from './Store';
 import { writeContactsToTempVCF, importContactsFromPaths } from './VCFImportExport';
 import { ContactListContextMenu } from './ContactListContextMenu';
@@ -93,8 +93,8 @@ class ContactListWithData extends React.Component<ContactListProps, ContactListS
 
     const canvas = CanvasUtils.canvasForDragging('contacts', data.ids.length);
     event.dataTransfer.setDragImage(canvas, 10, 10);
-    event.dataTransfer.setData('mailspring-contacts-data', JSON.stringify(data));
-    event.dataTransfer.setData(`mailspring-accounts=${data.accountIds.join(',')}`, '1');
+    event.dataTransfer.setData('summermail-contacts-data', JSON.stringify(data));
+    event.dataTransfer.setData(`summermail-accounts=${data.accountIds.join(',')}`, '1');
 
     // Allow the contacts to be dragged to the desktop as a .vcf file.
     try {

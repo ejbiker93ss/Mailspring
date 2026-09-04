@@ -1,4 +1,4 @@
-import { localized, PreferencesUIStore } from 'mailspring-exports';
+import { localized, PreferencesUIStore } from 'summermail-exports';
 
 export function activate() {
   this.preferencesTab = new PreferencesUIStore.TabItem({

@@ -1,10 +1,10 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import { Contact } from '../models/contact';
 import RegExpUtils from '../../regexp-utils';
 import DatabaseStore from './database-store';
 import { AccountStore } from './account-store';
 import ComponentRegistry from '../../registries/component-registry';
-import { ContactGroup } from 'mailspring-exports';
+import { ContactGroup } from 'summermail-exports';
 import { Thread } from '../models/thread';
 import {
   SearchQueryToken,
@@ -51,7 +51,7 @@ with additional actions.
 
 Section: Stores
 */
-class ContactStore extends MailspringStore {
+class ContactStore extends SummerMailStore {
   async searchContactGroups(_search: string) {
     const search = _search.toLowerCase();
 

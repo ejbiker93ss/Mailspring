@@ -1,6 +1,6 @@
 import classnames from 'classnames';
 import React, { Component } from 'react';
-import { localized, DateUtils } from 'mailspring-exports';
+import { localized, DateUtils } from 'summermail-exports';
 
 type DateInputProps = {
   className?: string;

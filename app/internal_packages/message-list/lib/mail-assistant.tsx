@@ -17,7 +17,7 @@ import {
   TaskQueue,
   Thread,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 
 import { createCalendarEvent } from '../../main-calendar/lib/core/calendar-helpers';
 import { getMicrosoftTeamsHosts } from '../../main-calendar/lib/core/microsoft-teams-connection';
@@ -600,7 +600,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
         let teamsHostAccountId: string | undefined;
         if (action.arguments.meetingProvider === 'teams') {
           const microsoftHosts = getMicrosoftTeamsHosts(AccountStore.accounts());
-          const preferredHostId = AppEnv.config.get('mailspring.teamsHostAccountId');
+          const preferredHostId = AppEnv.config.get('summermail.teamsHostAccountId');
           const teamsHost =
             microsoftHosts.find((host) => host.id === preferredHostId) || microsoftHosts[0];
           if (!teamsHost) {
@@ -785,7 +785,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
                 {localized('Microsoft Teams meeting')} ·{' '}
                 {(
                   getMicrosoftTeamsHosts(AccountStore.accounts()).find(
-                    (host) => host.id === AppEnv.config.get('mailspring.teamsHostAccountId')
+                    (host) => host.id === AppEnv.config.get('summermail.teamsHostAccountId')
                   ) || getMicrosoftTeamsHosts(AccountStore.accounts())[0]
                 )?.emailAddress || localized('Microsoft connection required')}
               </p>
@@ -856,7 +856,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
           <span className="mail-assistant-header-icon">
             <SparklesIcon />
           </span>
-          <strong>{localized('Ask Mailspring')}</strong>
+          <strong>{localized('Ask SummerMail')}</strong>
           <span className="mail-assistant-private">{localized('Focused account')}</span>
           <button
             type="button"

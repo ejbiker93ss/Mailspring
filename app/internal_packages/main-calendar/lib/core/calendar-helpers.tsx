@@ -9,7 +9,7 @@ import {
   SyncbackEventTask,
   TaskQueue,
   localized,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import {
   createMicrosoftTeamsMeeting,
   deleteMicrosoftTeamsMeeting,

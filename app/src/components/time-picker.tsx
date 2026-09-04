@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import moment from 'moment';
 import classnames from 'classnames';
-import { TabGroupContext } from 'mailspring-component-kit';
+import { TabGroupContext } from 'summermail-component-kit';
 
 require('moment-round'); // overrides moment
 

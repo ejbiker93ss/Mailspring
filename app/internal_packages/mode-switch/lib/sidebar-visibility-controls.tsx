@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actions, localized, WorkspaceStore } from 'mailspring-exports';
+import { Actions, localized, WorkspaceStore } from 'summermail-exports';
 
 const CalendarIcon = () => (
   <span className="calendar-sidebar-toggle-icon" aria-hidden="true">

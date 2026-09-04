@@ -200,7 +200,7 @@ const DOMUtils = {
   },
 
   getWorkspaceCssNumberProperty(property: string, defaultValue: number) {
-    const workspaceElement = document.querySelector('mailspring-workspace');
+    const workspaceElement = document.querySelector('summermail-workspace');
     if (workspaceElement) {
       const value = getComputedStyle(workspaceElement).getPropertyValue(`--${property}`);
       if (value.length > 0) {

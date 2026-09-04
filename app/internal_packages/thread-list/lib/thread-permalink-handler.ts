@@ -1,28 +1,28 @@
 import url from 'url';
 import querystring from 'querystring';
 import { ipcRenderer } from 'electron';
-import { localized, DatabaseStore, Thread, Matcher, Actions } from 'mailspring-exports';
+import { localized, DatabaseStore, Thread, Matcher, Actions } from 'summermail-exports';
 
 const DATE_EPSILON = 60; // Seconds
 
-interface MailspringLinkParams {
+interface SummerMailLinkParams {
   subject: string;
   lastDate?: number;
   date?: number;
 }
 
-const _parseOpenThreadUrl = (mailspringUrlString: string) => {
-  const parsedUrl = url.parse(mailspringUrlString);
+const _parseOpenThreadUrl = (summermailUrlString: string) => {
+  const parsedUrl = url.parse(summermailUrlString);
   const params = querystring.parse(parsedUrl.query) as any;
   return {
     subject: params.subject,
     date: params.date ? parseInt(params.date, 10) : undefined,
     lastDate: params.lastDate ? parseInt(params.lastDate, 10) : undefined,
-  } as MailspringLinkParams;
+  } as SummerMailLinkParams;
 };
 
 const _findCorrespondingThread = (
-  { subject, lastDate, date }: MailspringLinkParams,
+  { subject, lastDate, date }: SummerMailLinkParams,
   dateEpsilon = DATE_EPSILON
 ) => {
   const dateClause = date
@@ -47,8 +47,8 @@ const _findCorrespondingThread = (
   ]);
 };
 
-const _onOpenThreadFromWeb = (event: Electron.IpcRendererEvent, mailspringUrl: string) => {
-  const params = _parseOpenThreadUrl(mailspringUrl);
+const _onOpenThreadFromWeb = (event: Electron.IpcRendererEvent, summermailUrl: string) => {
+  const params = _parseOpenThreadUrl(summermailUrl);
 
   _findCorrespondingThread(params)
     .then((thread) => {

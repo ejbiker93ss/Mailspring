@@ -1,7 +1,7 @@
 import classnames from 'classnames';
 import React from 'react';
-import { ComponentRegistry, Message, DraftEditingSession } from 'mailspring-exports';
-import { InjectedComponentSet } from 'mailspring-component-kit';
+import { ComponentRegistry, Message, DraftEditingSession } from 'summermail-exports';
+import { InjectedComponentSet } from 'summermail-component-kit';
 
 const ROLE = 'Composer:ActionButton';
 

@@ -3,7 +3,7 @@ export interface MailAssistantEmailReference {
   subject?: string;
 }
 
-const THREAD_LINK_PREFIX = '#mailspring-thread=';
+const THREAD_LINK_PREFIX = '#summermail-thread=';
 
 export function mailAssistantThreadHref(threadId: string) {
   return `${THREAD_LINK_PREFIX}${encodeURIComponent(threadId)}`;

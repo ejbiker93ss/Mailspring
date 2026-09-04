@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { Thread } from 'mailspring-exports';
-import { MultiselectToolbar } from 'mailspring-component-kit';
+import { Thread } from 'summermail-exports';
+import { MultiselectToolbar } from 'summermail-component-kit';
 import InjectsToolbarButtons, { ToolbarRole } from './injects-toolbar-buttons';
 
 interface ThreadListToolbarProps {

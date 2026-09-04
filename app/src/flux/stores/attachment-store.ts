@@ -2,7 +2,7 @@ import os from 'os';
 import _fs from 'fs';
 import path from 'path';
 import { shell } from 'electron';
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import DraftStore from './draft-store';
 import * as Actions from '../actions';
 import { File } from '../models/file';
@@ -33,7 +33,7 @@ const fileAccessibleAtPath = async (filePath) => {
 
 export type AttachmentDownloadData = null;
 
-class AttachmentStore extends MailspringStore {
+class AttachmentStore extends SummerMailStore {
   _filePreviewPaths = {};
   _filesDirectory: string = path.join(AppEnv.getConfigDirPath(), 'files');
   _lastDownloadDirectory: string;
@@ -356,12 +356,12 @@ class AttachmentStore extends MailspringStore {
     let message = null;
     if (['EPERM', 'EROFS', 'EPIPE', 'EBUSY', 'EMFILE', 'EACCES', 'UNKNOWN'].includes(error.code)) {
       message = localized(
-        'Mailspring could not save an attachment. Check that permissions are set correctly and try restarting Mailspring if the issue persists.'
+        'SummerMail could not save an attachment. Check that permissions are set correctly and try restarting SummerMail if the issue persists.'
       );
     }
     if (['ENOSPC'].includes(error.code)) {
       message = localized(
-        'Mailspring could not save an attachment because you have run out of disk space.'
+        'SummerMail could not save an attachment because you have run out of disk space.'
       );
     }
 

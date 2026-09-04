@@ -1,4 +1,4 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 import * as Actions from '../actions';
 import { Message } from '../models/message';
 import { Thread } from '../models/thread';
@@ -9,12 +9,12 @@ import FocusedContentStore from './focused-content-store';
 import WorkspaceStore from './workspace-store';
 import * as ExtensionRegistry from '../../registries/extension-registry';
 import electron from 'electron';
-import { MessageViewExtension } from 'mailspring-exports';
+import { MessageViewExtension } from 'summermail-exports';
 import { DatabaseChangeRecord } from './database-change-record';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
 
-class _MessageStore extends MailspringStore {
+class _MessageStore extends SummerMailStore {
   FolderNamesHiddenByDefault = FolderNamesHiddenByDefault;
 
   _showingHiddenItems = false;
@@ -202,7 +202,7 @@ class _MessageStore extends MailspringStore {
   }
 
   _setWindowTitle() {
-    const title = 'Mailspring' + (this._thread ? ' · ' + this._thread.subject : '');
+    const title = 'SummerMail' + (this._thread ? ' · ' + this._thread.subject : '');
     require('@electron/remote').getCurrentWindow().setTitle(title);
   }
 

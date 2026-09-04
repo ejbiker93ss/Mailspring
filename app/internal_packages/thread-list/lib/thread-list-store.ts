@@ -1,4 +1,4 @@
-import MailspringStore from 'mailspring-store';
+import SummerMailStore from 'summermail-store';
 
 import {
   Rx,
@@ -9,13 +9,13 @@ import {
   WorkspaceStore,
   FocusedContentStore,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
-import { ListTabular, ListDataSource } from 'mailspring-component-kit';
+} from 'summermail-exports';
+import { ListTabular, ListDataSource } from 'summermail-component-kit';
 import ThreadListDataSource from './thread-list-data-source';
 import { queryWithThreadListOptions } from './thread-list-query-options';
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 
-class ThreadListStore extends MailspringStore {
+class ThreadListStore extends SummerMailStore {
   _dataSource?: ListDataSource;
   _dataSourceUnlisten: () => void;
   _viewOptions: {

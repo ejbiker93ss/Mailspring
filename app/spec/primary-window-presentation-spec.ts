@@ -28,7 +28,7 @@ describe('Windows primary window presentation', () => {
 
     const ensureArgs = (application.windowManager.ensureWindow as jasmine.Spy).mostRecentCall.args;
     expect(ensureArgs[0]).toBe('onboarding');
-    expect(ensureArgs[1].title).toBe('Welcome to Mailspring');
+    expect(ensureArgs[1].title).toBe('Welcome to SummerMail');
     expect(application.windowManager.get).toHaveBeenCalledWith('onboarding');
     expect(primary.show).toHaveBeenCalled();
     expect(primary.focus).toHaveBeenCalled();

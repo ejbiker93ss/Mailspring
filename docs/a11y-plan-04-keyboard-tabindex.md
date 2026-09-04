@@ -23,7 +23,7 @@
 
 ## 2. ESLint Configuration Findings
 
-**File:** `/home/user/Mailspring/.eslintrc`
+**File:** `/home/user/SummerMail/.eslintrc`
 
 Disabled rules:
 ```json
@@ -293,7 +293,7 @@ Register `F6` / `Shift+F6` to cycle focus between main regions: sidebar → tool
 
 12. Create `app/src/components/roving-tab-index-toolbar.tsx`
 13. Write unit tests
-14. Apply to `CreateButtonGroup` in `mailspring-component-kit`
+14. Apply to `CreateButtonGroup` in `summermail-component-kit`
 15. Apply to `ContactDetailToolbar`
 16. Apply to `ToolbarWindowControls` and `ToolbarMenuControl`
 

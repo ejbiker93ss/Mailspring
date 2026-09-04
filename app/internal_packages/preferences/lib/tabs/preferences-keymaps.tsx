@@ -2,8 +2,8 @@ import React from 'react';
 import path from 'path';
 import fs from 'fs';
 
-import { Flexbox } from 'mailspring-component-kit';
-import { localized } from 'mailspring-exports';
+import { Flexbox } from 'summermail-component-kit';
+import { localized } from 'summermail-exports';
 
 import displayedKeybindings from './keymaps/displayed-keybindings';
 import CommandItem from './keymaps/command-item';

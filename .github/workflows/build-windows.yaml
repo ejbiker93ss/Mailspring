@@ -58,7 +58,7 @@ jobs:
           endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
           trusted-signing-account-name: ${{ vars.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
           certificate-profile-name: ${{ vars.AZURE_TRUSTED_SIGNING_CERT_PROFILE_NAME }}
-          files-folder: ${{ github.workspace }}\app\dist\mailspring-win32-x64
+          files-folder: ${{ github.workspace }}\app\dist\summermail-win32-x64
           files-folder-filter: exe,dll,node
           files-folder-recurse: true
           file-digest: SHA256
@@ -88,9 +88,9 @@ jobs:
         shell: pwsh
         run: |
           $commit = git rev-parse --short=8 HEAD
-          aws s3 sync app/dist/ "s3://mailspring-builds/client/$commit/win-x64" `
+          aws s3 sync app/dist/ "s3://summermail-builds/client/$commit/win-x64" `
             --acl public-read `
             --exclude "*" `
-            --include "MailspringSetup.exe" `
+            --include "SummerMailSetup.exe" `
             --include "*.nupkg" `
             --include "RELEASES"

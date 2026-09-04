@@ -1,4 +1,4 @@
-import { Thread, FocusedPerspectiveStore, DateUtils, localized } from 'mailspring-exports';
+import { Thread, FocusedPerspectiveStore, DateUtils, localized } from 'summermail-exports';
 
 export function threadAriaLabel(thread: Thread): string {
   const parts: string[] = [];

@@ -10,9 +10,9 @@ import {
   Utils,
   localized,
   IdentityStore,
-  MailspringAPIRequest,
+  SummerMailAPIRequest,
   SearchableComponentStore,
-} from 'mailspring-exports';
+} from 'summermail-exports';
 import IFrameSearcher from '../searchable-components/iframe-searcher';
 import url from 'url';
 import _ from 'underscore';
@@ -21,7 +21,7 @@ import fs from 'fs';
 import { buildSelectionQuoteHTML, buildSelectionQuotePlainText } from '../services/selection-quote';
 import { dismissAppContextMenu, showAppContextMenu } from './app-context-menu';
 
-const { rootURLForServer } = MailspringAPIRequest;
+const { rootURLForServer } = SummerMailAPIRequest;
 
 type EventedIFrameProps = {
   searchable?: boolean;

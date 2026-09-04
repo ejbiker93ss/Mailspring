@@ -10,14 +10,14 @@ import {
   CategoryStore,
   TaskFactory,
   localized,
-} from 'mailspring-exports';
-import { Spinner, ScrollRegion } from 'mailspring-component-kit';
-import MailspringStore from 'mailspring-store';
+} from 'summermail-exports';
+import { Spinner, ScrollRegion } from 'summermail-component-kit';
+import SummerMailStore from 'summermail-store';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 import { filterAndSortVisibleItems } from './unthreaded-list-ordering';
 
-const { Message } = require('mailspring-exports');
+const { Message } = require('summermail-exports');
 
 const RowActionIcon = ({ name }) => {
   const paths = {
@@ -32,7 +32,7 @@ const RowActionIcon = ({ name }) => {
   );
 };
 
-class VisibleMessagesStore extends MailspringStore {
+class VisibleMessagesStore extends SummerMailStore {
   constructor() {
     super();
     this._items = [];

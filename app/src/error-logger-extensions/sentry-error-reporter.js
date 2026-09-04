@@ -20,11 +20,11 @@ function makeEventId() {
 }
 
 // console.log can itself throw (eg. EPIPE writing to a closed stdout/stderr
-// pipe on Linux, when the terminal or launcher that started Mailspring has
+// pipe on Linux, when the terminal or launcher that started SummerMail has
 // exited). These calls run inside network callbacks rather than the
 // top-level uncaughtException handler, so a stray throw here escapes as an
 // unrelated "write EPIPE" crash reported from this file (Sentry:
-// MAILSPRING-CLIENT-2N) instead of whatever actually went wrong. main.js
+// SUMMERMAIL-CLIENT-2N) instead of whatever actually went wrong. main.js
 // already swallows EPIPE at the stream level, but never let a logging call
 // in here fail regardless.
 function safeLog(message) {
@@ -55,7 +55,7 @@ function isInApp(filename) {
 // Sentry expects frames oldest-first; V8 produces newest-first, so reverse.
 
 // In packaged builds, frames contain absolute paths like:
-//   /Applications/Mailspring.app/Contents/Resources/app.asar/src/foo.js
+//   /Applications/SummerMail.app/Contents/Resources/app.asar/src/foo.js
 // Normalize to app:///src/foo.js so Sentry matches uploaded source map artifacts.
 function normalizeFilename(filename) {
   const asarIdx = filename.indexOf('.asar/');
@@ -126,7 +126,7 @@ function sendEnvelope(event, release) {
     headers: {
       'Content-Type': 'application/x-sentry-envelope',
       'Content-Length': Buffer.byteLength(body),
-      'X-Sentry-Auth': `Sentry sentry_version=7, sentry_key=${publicKey}, sentry_client=mailspring/${release}`,
+      'X-Sentry-Auth': `Sentry sentry_version=7, sentry_key=${publicKey}, sentry_client=summermail/${release}`,
     },
   });
   req.on('error', e => {

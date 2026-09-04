@@ -66,11 +66,11 @@
   },
   "settings": {
     "import/core-modules": [
-      "mailspring-exports",
-      "mailspring-component-kit",
+      "summermail-exports",
+      "summermail-component-kit",
       "electron",
-      "mailspring-store",
-      "mailspring-observables"
+      "summermail-store",
+      "summermail-observables"
     ]
   }
 }

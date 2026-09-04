@@ -31,7 +31,7 @@ export default class ConfigPersistenceManager {
   initializeConfigDirectory() {
     if (!fs.existsSync(this.configDirPath)) {
       fs.mkdirSync(this.configDirPath, { recursive: true });
-      const templateConfigDirPath = path.join(this.resourcePath, 'dot-mailspring');
+      const templateConfigDirPath = path.join(this.resourcePath, 'dot-summermail');
       fs.cpSync(templateConfigDirPath, this.configDirPath, { recursive: true });
     }
 
@@ -51,7 +51,7 @@ export default class ConfigPersistenceManager {
   }
 
   writeTemplateConfigFile() {
-    const templateConfigPath = path.join(this.resourcePath, 'dot-mailspring', 'config.json');
+    const templateConfigPath = path.join(this.resourcePath, 'dot-summermail', 'config.json');
     const templateConfig = fs.readFileSync(templateConfigPath).toString();
     fs.writeFileSync(this.configFilePath, templateConfig);
   }
