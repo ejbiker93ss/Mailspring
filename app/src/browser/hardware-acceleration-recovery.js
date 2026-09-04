@@ -32,6 +32,12 @@ const preparePersistentSoftwareRendering = (
   // disableHardwareAcceleration() alone can still leave Chromium attempting
   // to initialize a GPU process that hangs without terminating the renderer.
   app.commandLine.appendSwitch('disable-gpu');
+  // Chromium may still initialize a DirectComposition surface while using
+  // the Windows software adapter. If that surface cannot retrieve the video
+  // device, the native caption remains visible while the entire renderer
+  // surface goes blank. Keep software-rendered windows on the normal HWND
+  // paint path instead.
+  app.commandLine.appendSwitch('disable-direct-composition');
 
   if (!fileSystem.existsSync(markerPath(configDirPath))) {
     return true;

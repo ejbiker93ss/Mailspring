@@ -80,6 +80,7 @@ describe('Windows hardware acceleration recovery', () => {
     expect(preparePersistentSoftwareRendering(app, 'C:\\profile', 'win32', fileSystem)).toBe(true);
     expect(app.disableHardwareAcceleration).toHaveBeenCalled();
     expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('disable-gpu');
+    expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('disable-direct-composition');
     expect(fileSystem.rmSync).not.toHaveBeenCalled();
     expect(fileSystem.writeFileSync).not.toHaveBeenCalled();
   });
@@ -114,6 +115,7 @@ describe('Windows hardware acceleration recovery', () => {
     expect(fileSystem.existsSync).toHaveBeenCalledWith(markerPath('C:\\profile'));
     expect(app.disableHardwareAcceleration).toHaveBeenCalled();
     expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('disable-gpu');
+    expect(app.commandLine.appendSwitch).toHaveBeenCalledWith('disable-direct-composition');
     expect(fileSystem.rmSync.callCount).toBe(3);
     expect(fileSystem.writeFileSync).toHaveBeenCalled();
   });

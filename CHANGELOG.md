@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.39 (9/4/2026)
+
+Bug Fixes:
+
+- Prevented intermittent blank Windows surfaces by bypassing DirectComposition when software rendering is active.
+
 ## 1.23.38 (9/4/2026)
 
 Bug Fixes:
