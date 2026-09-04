@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.38 (9/4/2026)
+
+Bug Fixes:
+
+- Fixed Enter, Escape, and arrow-key handling in mail search on current Chromium versions.
+
 ## 1.23.37 (9/4/2026)
 
 Changes:

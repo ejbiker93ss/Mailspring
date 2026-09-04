@@ -200,7 +200,12 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
 
   _onKeyDown = (e: React.KeyboardEvent) => {
     const { suggestions, selected, selectedIdx } = this.state;
-    const delta = { 40: 1, 38: -1 }[e.keyCode];
+    const key =
+      e.key ||
+      ({ 40: 'ArrowDown', 38: 'ArrowUp', 27: 'Escape', 13: 'Enter' } as Record<number, string>)[
+        e.keyCode
+      ];
+    const delta = ({ ArrowDown: 1, ArrowUp: -1 } as Record<string, number>)[key];
 
     if (delta) {
       e.preventDefault();
@@ -213,12 +218,12 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
       });
     }
 
-    if (e.keyCode === 27) {
+    if (key === 'Escape') {
       // escape
       e.preventDefault();
       this._onClearSearchQuery(e);
     }
-    if (e.keyCode === 13) {
+    if (key === 'Enter' || key === 'Return') {
       // return
       e.preventDefault();
       if (selected) {

@@ -33,10 +33,10 @@ describe('ThreadSearchBar', function () {
 
   it('submits the current editor value when Enter follows input before props update', function () {
     spyOn(Actions, 'searchQuerySubmitted');
-    const query = 'quarterly planning';
+    const query = 'from:aaron';
 
     ReactTestUtils.Simulate.input(this.input, { target: { innerText: query } as any });
-    ReactTestUtils.Simulate.keyDown(this.input, { keyCode: 13 });
+    ReactTestUtils.Simulate.keyDown(this.input, { key: 'Enter', keyCode: 0 });
 
     expect(Actions.searchQuerySubmitted).toHaveBeenCalledWith(query);
   });
