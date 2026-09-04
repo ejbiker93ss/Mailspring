@@ -8,6 +8,7 @@ const REQUIRED_PROFILE_FILES = ['config.json', 'edgehill.db'];
 const SQLITE_SIDECARS = ['edgehill.db-wal', 'edgehill.db-shm'];
 const DECLINED_MARKER = '.mailspring-profile-migration-declined';
 const COMPLETED_MARKER = '.mailspring-profile-migration-complete';
+const ATTACHMENTS_COMPLETED_MARKER = '.mailspring-attachment-migration-complete';
 
 const readConfig = (configPath: string) => {
   try {
@@ -65,6 +66,18 @@ const deserializeBuffer = (value: any) => {
   if (Buffer.isBuffer(value)) return value;
   if (value?.type === 'Buffer' && Array.isArray(value.data)) return Buffer.from(value.data);
   throw new Error('The Mailspring credential data is missing or invalid.');
+};
+
+const migrateAttachmentCache = (sourceProfile: string, destinationProfile: string) => {
+  const sourceFiles = path.join(sourceProfile, 'files');
+  if (fs.existsSync(sourceFiles)) {
+    fs.cpSync(sourceFiles, path.join(destinationProfile, 'files'), {
+      recursive: true,
+      force: false,
+      errorOnExist: false,
+    });
+  }
+  fs.writeFileSync(path.join(destinationProfile, ATTACHMENTS_COMPLETED_MARKER), 'completed\n');
 };
 
 const reencryptLegacyCredentials = (sourceProfile: string, destinationProfile: string) => {
@@ -172,6 +185,7 @@ export const migrateMailspringProfile = (
     if (migrateCredentials) {
       reencryptLegacyCredentials(sourceProfile, destinationProfile);
     }
+    migrateAttachmentCache(sourceProfile, destinationProfile);
     fs.writeFileSync(path.join(destinationProfile, COMPLETED_MARKER), 'completed\n');
   } catch (error) {
     for (const name of REQUIRED_PROFILE_FILES.concat(SQLITE_SIDECARS)) {
@@ -193,6 +207,22 @@ export const maybeMigrateMailspringProfile = (destinationProfile: string) => {
     return false;
   }
   const sourceProfile = path.join(path.dirname(destinationProfile), 'Mailspring');
+  if (
+    fs.existsSync(path.join(destinationProfile, COMPLETED_MARKER)) &&
+    !fs.existsSync(path.join(destinationProfile, ATTACHMENTS_COMPLETED_MARKER))
+  ) {
+    try {
+      migrateAttachmentCache(sourceProfile, destinationProfile);
+    } catch (error) {
+      dialog.showMessageBoxSync({
+        type: 'error',
+        title: 'Attachment migration was not completed',
+        message: 'SummerMail could not copy your cached Mailspring attachments.',
+        detail: `${error.message}\n\nClose Mailspring and restart SummerMail to try again.`,
+        buttons: ['OK'],
+      });
+    }
+  }
   if (!shouldOfferMailspringProfileMigration(sourceProfile, destinationProfile)) {
     return false;
   }

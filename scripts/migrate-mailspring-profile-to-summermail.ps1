@@ -70,6 +70,16 @@ try {
         Copy-Item -LiteralPath (Join-Path $source $name) -Destination (Join-Path $destination $name) -Force
     }
 
+    $sourceFiles = Join-Path $source 'files'
+    if (Test-Path -LiteralPath $sourceFiles -PathType Container) {
+        $destinationFiles = Join-Path $destination 'files'
+        New-Item -ItemType Directory -Path $destinationFiles -Force | Out-Null
+        & robocopy.exe $sourceFiles $destinationFiles /E /XC /XN /XO /R:1 /W:1 /NFL /NDL /NJH /NJS /NP
+        if ($LASTEXITCODE -ge 8) {
+            throw "Copying the cached Mailspring attachments failed with robocopy exit code $LASTEXITCODE."
+        }
+    }
+
     # Remove stale SQLite sidecars that did not exist in the source profile.
     foreach ($name in $optionalFiles) {
         if ($files -notcontains $name) {
@@ -95,6 +105,7 @@ try {
 }
 
 Write-Host "Migrated SummerMail account data successfully."
+Write-Host "Migrated missing cached attachments and inline images."
 Write-Host "Credentials stayed encrypted on disk throughout the migration."
 Write-Host "Backup: $backup"
 Write-Host "You can now start SummerMail."

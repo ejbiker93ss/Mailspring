@@ -56,6 +56,10 @@ describe('Mailspring profile migration', () => {
     fs.writeFileSync(path.join(destination, 'config.json'), JSON.stringify({ '*': {} }));
     fs.writeFileSync(path.join(destination, 'edgehill.db'), 'new-empty-database');
     fs.writeFileSync(path.join(source, 'edgehill.db-wal'), 'mailspring-wal');
+    fs.mkdirSync(path.join(source, 'files', 'aa', 'bb'), { recursive: true });
+    fs.writeFileSync(path.join(source, 'files', 'aa', 'bb', 'inline.png'), 'mailspring-image');
+    fs.mkdirSync(path.join(destination, 'files', 'aa', 'bb'), { recursive: true });
+    fs.writeFileSync(path.join(destination, 'files', 'aa', 'bb', 'keep.png'), 'summermail-image');
 
     const backup = migrateMailspringProfile(source, destination, { migrateCredentials: false });
 
@@ -67,6 +71,12 @@ describe('Mailspring profile migration', () => {
       'mailspring-wal'
     );
     expect(fs.readFileSync(path.join(backup, 'edgehill.db'), 'utf8')).toBe('new-empty-database');
+    expect(fs.readFileSync(path.join(destination, 'files', 'aa', 'bb', 'inline.png'), 'utf8')).toBe(
+      'mailspring-image'
+    );
+    expect(fs.readFileSync(path.join(destination, 'files', 'aa', 'bb', 'keep.png'), 'utf8')).toBe(
+      'summermail-image'
+    );
   });
 
   it('decrypts Chromium v10 credentials after the profile key is unlocked', () => {

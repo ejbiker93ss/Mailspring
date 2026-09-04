@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.36 (9/4/2026)
+
+Bug Fixes:
+
+- Migrated Mailspring's cached attachments so existing inline CID images continue to render in SummerMail.
+
 ## 1.23.35 (9/4/2026)
 
 Changes:
