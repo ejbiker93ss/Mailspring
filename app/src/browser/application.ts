@@ -31,6 +31,7 @@ import {
 import WindowsTaskbarManager from './windows-taskbar-manager';
 import { completeAccountSetup } from './complete-account-setup';
 import { resetThemeForRecovery } from './theme-recovery';
+import { maybeMigrateMailspringProfile } from './profile-migration';
 
 const openConfiguredWebsite = (environmentVariable: string, label: string) => {
   const target = process.env[environmentVariable];
@@ -77,6 +78,10 @@ export default class Application extends EventEmitter {
 
   async start(options) {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
+
+    if (!specMode && !devMode) {
+      maybeMigrateMailspringProfile(configDirPath);
+    }
 
     initializeLocalization({ configDirPath });
 

@@ -42,27 +42,15 @@ if (typeof process.setFdLimit === 'function') {
 
 const setupConfigDir = args => {
   let dirname = 'SummerMail';
-  let legacyDirname = 'Mailspring';
   if (args.devMode) {
     dirname = 'SummerMail-dev';
-    legacyDirname = 'Mailspring-dev';
   }
   if (args.specMode) {
     dirname = 'SummerMail-spec';
-    legacyDirname = 'Mailspring-spec';
   }
 
   // Check if a custom config dir was provided via --config-dir-path
   let configDirPath = args.configDirPath || path.join(app.getPath('appData'), dirname);
-
-  // One-time, non-destructive migration for installations created before the rename.
-  // Keep the old directory in place so rolling back remains possible.
-  if (!args.configDirPath && !(process.platform === 'linux' && process.env.SNAP)) {
-    const legacyConfigDirPath = path.join(app.getPath('appData'), legacyDirname);
-    if (!fs.existsSync(configDirPath) && fs.existsSync(legacyConfigDirPath)) {
-      fs.cpSync(legacyConfigDirPath, configDirPath, { recursive: true, errorOnExist: false });
-    }
-  }
 
   if (process.platform === 'linux' && process.env.SNAP) {
     // for linux snap, use the sandbox directory that is persisted between snap revisions

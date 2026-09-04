@@ -1,5 +1,15 @@
 # SummerMail Changelog
 
+## 1.23.35 (9/4/2026)
+
+Changes:
+
+- Added a first-launch prompt to migrate Mailspring accounts and securely re-encrypt their saved credentials for SummerMail.
+
+Bug Fixes:
+
+- Restored Gmail OAuth sign-in by preserving the cryptographic decoder input associated with the existing Google client credentials.
+
 ## 1.23.34 (9/4/2026)
 
 Bug Fixes:
