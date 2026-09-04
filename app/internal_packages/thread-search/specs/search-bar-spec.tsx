@@ -51,12 +51,18 @@ describe('ThreadSearchBar', function () {
       name: 'Inbox',
     } as any;
     const { container } = render(
-      <ThreadSearchBarComponent query={query} isSearching={false} perspective={perspective} />
+      <ThreadSearchBarComponent
+        query={query}
+        isSearching={false}
+        resultCount={27}
+        perspective={perspective}
+      />
     );
     const summary = container.querySelector<HTMLElement>('.thread-search-query-summary');
 
     expect(summary.textContent).toBe(query);
     expect(summary.title).toBe(query);
+    expect(container.querySelector('.thread-search-result-count').textContent).toBe('27 results');
   });
 
   it('restores the editable query when the compact summary is clicked', function () {
@@ -68,12 +74,18 @@ describe('ThreadSearchBar', function () {
       name: 'Inbox',
     } as any;
     const { container } = render(
-      <ThreadSearchBarComponent query={query} isSearching={false} perspective={perspective} />
+      <ThreadSearchBarComponent
+        query={query}
+        isSearching={false}
+        resultCount={1}
+        perspective={perspective}
+      />
     );
 
     fireEvent.mouseDown(container.querySelector('.thread-search-query-summary'));
 
     expect(container.querySelector('.thread-search-query-summary')).toBeNull();
     expect(document.activeElement).toBe(container.querySelector('[contenteditable]'));
+    expect(container.querySelector('.thread-search-result-count').textContent).toBe('1 result');
   });
 });

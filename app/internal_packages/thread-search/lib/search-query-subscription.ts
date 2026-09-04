@@ -7,6 +7,65 @@ import {
   ComponentRegistry,
   MutableQuerySubscription,
 } from 'summermail-exports';
+import { compileFTSMatchQuery } from '../../../src/services/search/search-query-backend-local';
+import {
+  FromQueryExpression,
+  QueryExpression,
+  ToQueryExpression,
+} from '../../../src/services/search/search-query-ast';
+
+type RankedSearchResult = {
+  ids: string[];
+  total: number;
+};
+
+type AddressOperator = {
+  field: 'from' | 'to';
+  value: string;
+};
+
+class RankedIdSortOrder {
+  attr = Thread.attributes.lastMessageReceivedTimestamp;
+  private _ids: string[];
+
+  constructor(ids: string[]) {
+    this._ids = ids;
+  }
+
+  orderBySQL(klass: typeof Thread) {
+    const cases = this._ids
+      .map((id, index) => `WHEN '${id.replace(/'/g, "''")}' THEN ${index}`)
+      .join(' ');
+    return `(CASE \`${klass.name}\`.\`id\` ${cases} ELSE ${this._ids.length}) ASC`;
+  }
+}
+
+function exactAddressOperator(ast: QueryExpression): AddressOperator | null {
+  if (!(ast instanceof FromQueryExpression) && !(ast instanceof ToQueryExpression)) {
+    return null;
+  }
+  const value = ast.text.token.s.trim().toLowerCase();
+  if (!value.includes('@')) {
+    return null;
+  }
+  return { field: ast instanceof FromQueryExpression ? 'from' : 'to', value };
+}
+
+function jsonAddressMatchSQL(messageAlias: string, operator: AddressOperator) {
+  const paths = operator.field === 'from' ? ['from'] : ['to', 'cc', 'bcc'];
+  return `(${paths
+    .map(
+      (path) =>
+        `EXISTS (SELECT 1 FROM json_each(${messageAlias}.data, '$.${path}') address WHERE lower(json_extract(address.value, '$.email')) = ?)`
+    )
+    .join(' OR ')})`;
+}
+
+function addressValues(operator: AddressOperator) {
+  return operator.field === 'from'
+    ? [operator.value]
+    : [operator.value, operator.value, operator.value];
+}
 
 class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searchQuery: string;
@@ -14,6 +73,7 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _connections = [];
   _extDisposables = [];
   _searching = false;
+  _resultCount: number | null = null;
 
   constructor(searchQuery: string, accountIds: string[]) {
     super(null, { emitResultSet: true });
@@ -33,18 +93,41 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     this.performExtensionSearch();
   }
 
-  performLocalSearch() {
+  async performLocalSearch() {
     let dbQuery = DatabaseStore.findAll<Thread>(Thread);
     if (this._accountIds.length === 1) {
       dbQuery = dbQuery.where({ accountId: this._accountIds[0] });
     }
 
+    let parsedQuery: QueryExpression | null = null;
     try {
-      const parsedQuery = SearchQueryParser.parse(this._searchQuery);
+      parsedQuery = SearchQueryParser.parse(this._searchQuery);
+    } catch (error) {
+      console.info('Failed to parse local search query, falling back to generic query', error);
+    }
+
+    if (parsedQuery) {
       dbQuery = dbQuery.structuredSearch(parsedQuery);
-    } catch (e) {
-      console.info('Failed to parse local search query, falling back to generic query', e);
+      try {
+        const ranked = await this._rankedSearchResults(parsedQuery);
+        if (ranked) {
+          this._resultCount = ranked.total;
+          dbQuery = dbQuery.where({
+            id: ranked.ids.length ? ranked.ids : ['__no_search_results__'],
+          });
+          if (ranked.ids.length) {
+            dbQuery = dbQuery.order(new RankedIdSortOrder(ranked.ids) as any);
+          }
+        } else {
+          this._resultCount = (await dbQuery.clone().count().background()) as unknown as number;
+        }
+      } catch (error) {
+        console.warn('Search relevance ranking failed; using chronological results', error);
+        this._resultCount = (await dbQuery.clone().count().background()) as unknown as number;
+      }
+    } else {
       dbQuery = dbQuery.search(this._searchQuery);
+      this._resultCount = (await dbQuery.clone().count().background()) as unknown as number;
     }
     dbQuery = dbQuery
       .background()
@@ -54,11 +137,61 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     this.replaceQuery(dbQuery);
   }
 
+  async _rankedSearchResults(parsedQuery: QueryExpression): Promise<RankedSearchResult | null> {
+    const ftsQuery = compileFTSMatchQuery(parsedQuery);
+    if (!ftsQuery) {
+      return null;
+    }
+
+    const operator = exactAddressOperator(parsedQuery);
+    const accountSQL = this._accountIds.length
+      ? `AND \`Thread\`.\`accountId\` IN (${this._accountIds.map(() => '?').join(', ')})`
+      : '';
+    const strictMessageSQL = operator
+      ? `AND EXISTS (SELECT 1 FROM \`Message\` strictMessage WHERE strictMessage.threadId = \`Thread\`.id AND ${jsonAddressMatchSQL(
+          'strictMessage',
+          operator
+        )})`
+      : '';
+    const matchCountSQL = operator
+      ? `(SELECT COUNT(*) FROM \`Message\` matchedMessage WHERE matchedMessage.threadId = \`Thread\`.id AND ${jsonAddressMatchSQL(
+          'matchedMessage',
+          operator
+        )})`
+      : '0';
+    const fromAndWhere = `FROM \`ThreadSearch\` JOIN \`Thread\` ON \`Thread\`.id = \`ThreadSearch\`.content_id WHERE \`ThreadSearch\` MATCH ? ${accountSQL} ${strictMessageSQL}`;
+
+    const rankValues = [
+      ...(operator ? addressValues(operator) : []),
+      ftsQuery,
+      ...this._accountIds,
+      ...(operator ? addressValues(operator) : []),
+    ];
+    const countValues = [
+      ftsQuery,
+      ...this._accountIds,
+      ...(operator ? addressValues(operator) : []),
+    ];
+    // ThreadSearch columns are subject, to, from, body, categories, and content_id.
+    // Favor intent-bearing metadata over incidental body text; content_id is unindexed.
+    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, bm25(\`ThreadSearch\`, 12, 6, 8, 1, 3, 0) AS relevance, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY exactMatches DESC, relevance ASC, \`Thread\`.lastMessageReceivedTimestamp DESC LIMIT 1000`;
+    const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
+
+    const [rows, countRows] = await Promise.all([
+      (DatabaseStore as any)._query(rankSQL, rankValues, true),
+      (DatabaseStore as any)._query(countSQL, countValues, true),
+    ]);
+    return {
+      ids: rows.map((row) => row.id),
+      total: Number(countRows[0]?.count || 0),
+    };
+  }
+
   _createResultAndTrigger() {
     super._createResultAndTrigger();
     if (this._searching) {
       this._searching = false;
-      Actions.searchCompleted();
+      Actions.searchCompleted(this._resultCount);
     }
   }
 

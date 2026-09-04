@@ -181,6 +181,11 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   }
 }
 
+export function compileFTSMatchQuery(ast: QueryExpression): string | null {
+  const intermediateAST = new MatchCompatibleQueryCondenser().visit(ast);
+  return intermediateAST instanceof MatchQueryExpression ? intermediateAST.rawQuery : null;
+}
+
 /*
  * Converts a search query into the appropriate where clause. It does this by
  * converting match-compatible subtrees into the appropriate subquery that

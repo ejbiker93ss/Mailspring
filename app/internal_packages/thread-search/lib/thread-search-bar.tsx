@@ -25,6 +25,7 @@ import {
 interface ThreadSearchBarProps {
   query: string;
   isSearching: boolean;
+  resultCount: number | null;
   perspective: MailboxPerspective;
 }
 
@@ -331,7 +332,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   };
 
   render() {
-    const { query, isSearching, perspective } = this.props;
+    const { query, isSearching, resultCount, perspective } = this.props;
     const { suggestions, selectedIdx } = this.state;
 
     const showPlaceholder = !this.state.focused && !query;
@@ -395,6 +396,11 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
             </div>
           ) : null}
         </div>
+        {query && !isSearching && resultCount !== null ? (
+          <span className="thread-search-result-count">
+            {resultCount.toLocaleString()} {localized(resultCount === 1 ? 'result' : 'results')}
+          </span>
+        ) : null}
         {showX && (
           <RetinaImg
             name="searchclear.png"
@@ -451,6 +457,7 @@ export default ListensToFluxStore(ThreadSearchBar, {
     return {
       query: SearchStore.query(),
       isSearching: SearchStore.isSearching(),
+      resultCount: SearchStore.resultCount(),
       perspective: FocusedPerspectiveStore.current(),
     };
   },

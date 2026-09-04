@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.41 (9/4/2026)
+
+Improvements:
+
+- Made full-address `from:` and `to:` searches validate the actual message sender and recipient fields.
+- Ranked results by the number of exact matching messages, weighted field relevance, and recency.
+- Added the total number of matching conversations to the search bar.
+
 ## 1.23.40 (9/4/2026)
 
 Bug Fixes:

@@ -11,6 +11,7 @@ import SearchMailboxPerspective from './search-mailbox-perspective';
 class SearchStore extends SummerMailStore {
   _searchQuery = (FocusedPerspectiveStore.current() as any).searchQuery || '';
   _isSearching = false;
+  _resultCount: number | null = null;
   _perspectiveBeforeSearch = null;
 
   constructor() {
@@ -34,13 +35,19 @@ class SearchStore extends SummerMailStore {
     return this._isSearching;
   }
 
-  _onSearchCompleted = () => {
+  resultCount() {
+    return this._resultCount;
+  }
+
+  _onSearchCompleted = (resultCount?: number) => {
     this._isSearching = false;
+    this._resultCount = typeof resultCount === 'number' ? resultCount : null;
     this.trigger();
   };
 
   _onPerspectiveChanged = () => {
     this._searchQuery = (FocusedPerspectiveStore.current() as any).searchQuery || '';
+    this._resultCount = null;
     this.trigger();
   };
 
@@ -51,6 +58,7 @@ class SearchStore extends SummerMailStore {
 
   _onQuerySubmitted = (query: string) => {
     this._searchQuery = query;
+    this._resultCount = null;
     this.trigger();
 
     const current = FocusedPerspectiveStore.current();
