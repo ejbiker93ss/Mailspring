@@ -17,6 +17,7 @@ import {
 type RankedSearchResult = {
   ids: string[];
   total: number;
+  matchingMessageIds: Map<string, string>;
 };
 
 type AddressOperator = {
@@ -67,13 +68,14 @@ function addressValues(operator: AddressOperator) {
     : [operator.value, operator.value, operator.value];
 }
 
-class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
+export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searchQuery: string;
   _accountIds: string[];
   _connections = [];
   _extDisposables = [];
   _searching = false;
   _resultCount: number | null = null;
+  _matchingMessageIds = new Map<string, string>();
 
   constructor(searchQuery: string, accountIds: string[]) {
     super(null, { emitResultSet: true });
@@ -112,6 +114,7 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
         const ranked = await this._rankedSearchResults(parsedQuery);
         if (ranked) {
           this._resultCount = ranked.total;
+          this._matchingMessageIds = ranked.matchingMessageIds;
           dbQuery = dbQuery.where({
             id: ranked.ids.length ? ranked.ids : ['__no_search_results__'],
           });
@@ -159,9 +162,16 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
           operator
         )})`
       : '0';
+    const matchingMessageIdSQL = operator
+      ? `(SELECT matchedMessage.id FROM \`Message\` matchedMessage WHERE matchedMessage.threadId = \`Thread\`.id AND ${jsonAddressMatchSQL(
+          'matchedMessage',
+          operator
+        )} ORDER BY matchedMessage.date DESC LIMIT 1)`
+      : 'NULL';
     const fromAndWhere = `FROM \`ThreadSearch\` JOIN \`Thread\` ON \`Thread\`.id = \`ThreadSearch\`.content_id WHERE \`ThreadSearch\` MATCH ? ${accountSQL} ${strictMessageSQL}`;
 
     const rankValues = [
+      ...(operator ? addressValues(operator) : []),
       ...(operator ? addressValues(operator) : []),
       ftsQuery,
       ...this._accountIds,
@@ -174,7 +184,7 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     ];
     // ThreadSearch columns are subject, to, from, body, categories, and content_id.
     // Favor intent-bearing metadata over incidental body text; content_id is unindexed.
-    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, bm25(\`ThreadSearch\`, 12, 6, 8, 1, 3, 0) AS relevance, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY exactMatches DESC, relevance ASC, \`Thread\`.lastMessageReceivedTimestamp DESC LIMIT 1000`;
+    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, bm25(\`ThreadSearch\`, 12, 6, 8, 1, 3, 0) AS relevance, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY exactMatches DESC, relevance ASC, \`Thread\`.lastMessageReceivedTimestamp DESC LIMIT 1000`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
 
     const [rows, countRows] = await Promise.all([
@@ -184,7 +194,14 @@ class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     return {
       ids: rows.map((row) => row.id),
       total: Number(countRows[0]?.count || 0),
+      matchingMessageIds: new Map(
+        rows.filter((row) => row.matchingMessageId).map((row) => [row.id, row.matchingMessageId])
+      ),
     };
+  }
+
+  matchingMessageIdForThread(threadId: string) {
+    return this._matchingMessageIds.get(threadId) || null;
   }
 
   _createResultAndTrigger() {

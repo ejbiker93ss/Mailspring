@@ -24,6 +24,8 @@ class _MessageStore extends SummerMailStore {
   _itemsLoading: boolean;
   _lastMarkedAsReadThreadId?: string;
   _onFocusChangedTimer?: NodeJS.Timeout;
+  _searchFocus?: { threadId: string; messageId: string; requestId: number };
+  _searchFocusRequestId = 0;
 
   constructor() {
     super();
@@ -97,6 +99,7 @@ class _MessageStore extends SummerMailStore {
     this._itemsLoading = false;
     this._showingHiddenItems = false;
     this._thread = null;
+    this._searchFocus = undefined;
   }
 
   _registerListeners() {
@@ -105,6 +108,7 @@ class _MessageStore extends SummerMailStore {
     this.listenTo(FocusedContentStore, this._onFocusChanged);
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     this.listenTo(Actions.toggleMessageIdExpanded, this._onToggleMessageIdExpanded);
+    this.listenTo(Actions.focusMessageInThread, this._onFocusMessageInThread);
     this.listenTo(Actions.toggleAllMessagesExpanded, this._onToggleAllMessagesExpanded);
     this.listenTo(Actions.showAllMessagesExpanded, this._onShowAllMessagesExpanded);
     this.listenTo(Actions.toggleHiddenMessages, this._onToggleHiddenMessages);
@@ -113,6 +117,7 @@ class _MessageStore extends SummerMailStore {
   }
 
   _onPerspectiveChanged() {
+    this._searchFocus = undefined;
     return this.trigger();
   }
 
@@ -184,6 +189,21 @@ class _MessageStore extends SummerMailStore {
     const focused = FocusedContentStore.focused('thread') as Thread;
     if (focused === null) {
       this._lastMarkedAsReadThreadId = null;
+    }
+
+    const focusedSearchMessageId = focused && (focused as any).__searchMatchMessageId;
+    if (
+      focusedSearchMessageId &&
+      (this._searchFocus?.threadId !== focused.id ||
+        this._searchFocus?.messageId !== focusedSearchMessageId)
+    ) {
+      this._searchFocus = {
+        threadId: focused.id,
+        messageId: focusedSearchMessageId,
+        requestId: ++this._searchFocusRequestId,
+      };
+    } else if (this._searchFocus?.threadId !== focused?.id) {
+      this._searchFocus = undefined;
     }
 
     // if we already match the desired state, no need to trigger
@@ -271,6 +291,39 @@ class _MessageStore extends SummerMailStore {
     this.trigger();
   }
 
+  _onFocusMessageInThread({ threadId, messageId }: { threadId: string; messageId: string }) {
+    this._searchFocus = { threadId, messageId, requestId: ++this._searchFocusRequestId };
+    if (threadId !== this.threadId()) return;
+
+    if (this._revealFocusedMessage()) {
+      this.trigger();
+    }
+  }
+
+  focusedMessageId() {
+    return this._searchFocus && this._searchFocus.threadId === this.threadId()
+      ? this._searchFocus.messageId
+      : undefined;
+  }
+
+  focusedMessageRequestId() {
+    return this._searchFocus && this._searchFocus.threadId === this.threadId()
+      ? this._searchFocus.requestId
+      : undefined;
+  }
+
+  _revealFocusedMessage() {
+    const messageId = this.focusedMessageId();
+    const item = this._items.find((candidate) => candidate.id === messageId);
+    if (!item) return false;
+
+    if (!this.items().some((visibleItem) => visibleItem.id === messageId)) {
+      this._showingHiddenItems = true;
+    }
+    this._expandItem(item);
+    return true;
+  }
+
   _expandItem(item: Message) {
     this._itemsExpanded[item.id] = 'explicit';
     this._fetchExpandedAttachments([item]);
@@ -299,6 +352,8 @@ class _MessageStore extends SummerMailStore {
       this._items = this._sortItemsForDisplay(this._items);
 
       this._expandItemsToDefault();
+
+      this._revealFocusedMessage();
 
       if (this._itemsLoading) {
         this._fetchMissingBodies(this._items);

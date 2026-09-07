@@ -293,6 +293,9 @@ export const ensureCategoryIsFocused = create('ensureCategoryIsFocused', ActionS
   */
 export const toggleMessageIdExpanded = create('toggleMessageIdExpanded', ActionScopeWindow);
 
+// Used by search results to reveal the message that made a conversation match.
+export const focusMessageInThread = create('focusMessageInThread', ActionScopeWindow);
+
 /*
   Public: Toggle whether messages from trash and spam are shown in the current
   message view.

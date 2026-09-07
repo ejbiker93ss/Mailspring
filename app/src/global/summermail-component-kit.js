@@ -122,6 +122,7 @@ lazyLoad('ComposerEditorPlaintext', 'composer-editor/composer-editor-plaintext')
 lazyLoad('ComposerSupport', 'composer-editor/composer-support');
 
 lazyLoad('ScrollRegion', 'scroll-region');
+lazyLoadFrom('ScrollPosition', 'scroll-region');
 lazyLoad('ResizableRegion', 'resizable-region');
 
 lazyLoad('AccountColorBar', 'account-color-bar');

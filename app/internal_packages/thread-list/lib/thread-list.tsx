@@ -129,6 +129,7 @@ class ThreadList extends React.Component<
               'thread-list:select-unstarred': this._onSelectUnstarred,
               'thread-list:mark-all-as-read': this._onMarkAllAsRead,
             }}
+            onClick={this._onClickThread}
             onDoubleClick={(thread) => Actions.popoutThread(thread)}
             onDragItems={this._onDragItems}
             onDragEnd={this._onDragEnd}
@@ -214,6 +215,13 @@ class ThreadList extends React.Component<
 
     return props;
   }
+
+  _onClickThread = (thread: Thread) => {
+    const messageId = (thread as any).__searchMatchMessageId;
+    if (messageId) {
+      Actions.focusMessageInThread({ threadId: thread.id, messageId });
+    }
+  };
 
   _onSyncStatusChanged = () => {
     const syncing = FocusedPerspectiveStore.current().hasSyncingCategories();

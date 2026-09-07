@@ -19,7 +19,7 @@ const _observableForThreadMessages = (id: string, initialModels: Message[]) => {
   return Rx.Observable.fromNamedQuerySubscription(`message-${id}`, subscription);
 };
 
-const _flatMapJoiningMessages = ($threadsResultSet) => {
+const _flatMapJoiningMessages = ($threadsResultSet, subscription) => {
   // DatabaseView leverages `QuerySubscription` for threads /and/ for the
   // messages on each thread, which are passed to out as `thread.__messages`.
   let $messagesResultSets = {};
@@ -79,6 +79,9 @@ const _flatMapJoiningMessages = ($threadsResultSet) => {
           const clone = new Thread(thread) as any;
           clone.__messages = messagesResultSets[idx] ? messagesResultSets[idx].models() : [];
           clone.__messages = clone.__messages.filter((m) => !m.isHidden());
+          if (typeof subscription.matchingMessageIdForThread === 'function') {
+            clone.__searchMatchMessageId = subscription.matchingMessageIdForThread(clone.id);
+          }
           threadsWithMessages[clone.id] = clone;
         });
 
@@ -95,7 +98,7 @@ class ThreadListDataSource extends ObservableListDataSource {
       'thread-list',
       subscription
     );
-    $resultSetObservable = _flatMapJoiningMessages($resultSetObservable);
+    $resultSetObservable = _flatMapJoiningMessages($resultSetObservable, subscription);
     super($resultSetObservable, subscription.replaceRange.bind(subscription));
   }
 }

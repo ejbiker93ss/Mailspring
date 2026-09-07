@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.42 (9/7/2026)
+
+Improvements:
+
+- Opening a full-address search result now expands and scrolls to the exact matching message in the conversation.
+- Repeated result clicks re-center the match, and matching messages hidden by the current folder view are revealed.
+
 ## 1.23.41 (9/4/2026)
 
 Improvements:

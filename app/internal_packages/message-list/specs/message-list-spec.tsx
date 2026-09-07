@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
+import { ScrollPosition } from 'summermail-component-kit';
 
 import {
   Thread,
@@ -63,6 +64,7 @@ const m1 = new Message({
 });
 const m2 = new Message({
   id: '222',
+  headerMessageId: 'message-222@example.com',
   from: [user_2],
   to: [user_1],
   cc: [user_3, user_4],
@@ -227,6 +229,21 @@ describe('MessageList', function () {
         MessageItemContainer
       );
       expect(items.length).toBe(6);
+    });
+
+    it('scrolls the matching search message into view', function () {
+      spyOn(this.messageList, '_scrollTo');
+      spyOn(window, 'requestAnimationFrame').andCallFake((callback) => {
+        callback(0);
+        return 1;
+      });
+
+      this.messageList.setState({ focusedMessageId: m2.id, focusedMessageRequestId: 1 });
+
+      expect(this.messageList._scrollTo).toHaveBeenCalledWith({
+        headerMessageId: m2.headerMessageId,
+        position: ScrollPosition.CenterIfInvisible,
+      });
     });
   });
 

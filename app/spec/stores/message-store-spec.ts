@@ -33,6 +33,63 @@ const testMessage3 = new Message({
 });
 
 describe('MessageStore', function () {
+  describe('when a search result identifies a matching message', function () {
+    beforeEach(function () {
+      MessageStore._thread = testThread;
+      MessageStore._items = [testMessage1, testMessage2, testMessage3];
+      MessageStore._itemsExpanded = { c: 'default' };
+      MessageStore._searchFocus = undefined;
+      spyOn(MessageStore, '_fetchExpandedAttachments');
+    });
+
+    afterEach(function () {
+      MessageStore._searchFocus = undefined;
+      MessageStore._thread = null;
+      MessageStore._items = [];
+      MessageStore._itemsExpanded = {};
+      MessageStore._showingHiddenItems = false;
+    });
+
+    it('expands and exposes the matching message', function () {
+      MessageStore._onFocusMessageInThread({ threadId: testThread.id, messageId: 'a' });
+
+      expect(MessageStore.itemsExpandedState().a).toBe('explicit');
+      expect(MessageStore.focusedMessageId()).toBe('a');
+    });
+
+    it('keeps a target pending until its thread is loaded', function () {
+      MessageStore._onFocusMessageInThread({ threadId: 'later', messageId: 'message-later' });
+
+      expect(MessageStore.focusedMessageId()).toBeUndefined();
+      expect(MessageStore.itemsExpandedState().a).toBeUndefined();
+      expect(MessageStore._searchFocus.threadId).toBe('later');
+      expect(MessageStore._searchFocus.messageId).toBe('message-later');
+      expect(typeof MessageStore._searchFocus.requestId).toBe('number');
+    });
+
+    it('reveals a matching message that the current folder would normally hide', function () {
+      const hiddenMessage = new Message({
+        id: 'hidden',
+        folder: new Folder({ role: 'trash' }),
+        files: [],
+        accountId: TEST_ACCOUNT_ID,
+      } as any);
+      MessageStore._items = [...MessageStore._items, hiddenMessage];
+      MessageStore._showingHiddenItems = false;
+      spyOn(FocusedPerspectiveStore, 'current').andReturn({
+        categoriesSharedRole: () => 'inbox',
+      });
+
+      MessageStore._onFocusMessageInThread({
+        threadId: testThread.id,
+        messageId: hiddenMessage.id,
+      });
+
+      expect(MessageStore._showingHiddenItems).toBe(true);
+      expect(MessageStore.itemsExpandedState().hidden).toBe('explicit');
+    });
+  });
+
   describe('when the receiving focus changes from the FocusedContentStore', function () {
     beforeEach(function () {
       if (MessageStore._onFocusChangedTimer) {

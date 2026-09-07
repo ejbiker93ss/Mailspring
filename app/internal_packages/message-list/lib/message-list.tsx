@@ -55,6 +55,8 @@ interface MessageListState {
   loading: boolean;
   minified: boolean;
   focusedMessageIndex: number;
+  focusedMessageId?: string;
+  focusedMessageRequestId?: number;
 }
 
 const { Menu, MenuItem } = require('@electron/remote');
@@ -75,6 +77,7 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
   MINIFY_THRESHOLD = 3;
 
   _messageListEl: HTMLElement;
+  _lastRevealedSearchRequestId?: number;
 
   constructor(props) {
     super(props);
@@ -94,7 +97,26 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
   }
 
   componentDidUpdate() {
-    // cannot remove
+    const messageId = this.state.focusedMessageId;
+    const requestId = this.state.focusedMessageRequestId;
+    if (!messageId || requestId === undefined || requestId === this._lastRevealedSearchRequestId) {
+      return;
+    }
+
+    const message = this.state.messages.find((candidate) => candidate.id === messageId);
+    if (!message || !message.headerMessageId) return;
+
+    window.requestAnimationFrame(() => {
+      if (requestId === this._lastRevealedSearchRequestId) return;
+      const container = this._getMessageContainer(message.headerMessageId);
+      if (!container) return;
+
+      this._lastRevealedSearchRequestId = requestId;
+      this._scrollTo({
+        headerMessageId: message.headerMessageId,
+        position: ScrollPosition.CenterIfInvisible,
+      });
+    });
   }
 
   componentWillUnmount() {
@@ -504,6 +526,7 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
     if (threadId !== nextThreadId) {
       newState.minified = WorkspaceStore.rootSheet() !== WorkspaceStore.Sheet.Conversation;
       newState.focusedMessageIndex = 0;
+      this._lastRevealedSearchRequestId = undefined;
     }
     this.setState(newState);
   };
@@ -516,6 +539,8 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
       hasCollapsedItems: MessageStore.hasCollapsedItems(),
       currentThread: MessageStore.thread(),
       loading: MessageStore.itemsLoading(),
+      focusedMessageId: MessageStore.focusedMessageId(),
+      focusedMessageRequestId: MessageStore.focusedMessageRequestId(),
     };
   }
 
