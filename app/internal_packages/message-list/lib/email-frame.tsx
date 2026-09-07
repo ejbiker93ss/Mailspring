@@ -1,6 +1,7 @@
 import { EventedIFrame } from 'summermail-component-kit';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { fileURLToPath } from 'url';
 import {
   Utils,
   localized,
@@ -19,6 +20,19 @@ interface EmailFrameProps {
   message: Message;
 }
 
+export function localPathForInlineImageSource(source: string) {
+  if (!source || !/^file:/i.test(source)) return null;
+
+  try {
+    return fileURLToPath(source);
+  } catch (_error) {
+    // Older message bodies used file:// followed by a Windows path instead of
+    // a standards-compliant file URL. Chromium still displays these, so retain
+    // a narrow compatibility fallback for the same source format.
+    return decodeURIComponent(source.replace(/^file:\/+/i, ''));
+  }
+}
+
 export default class EmailFrame extends React.Component<EmailFrameProps> {
   static displayName = 'EmailFrame';
 
@@ -27,6 +41,7 @@ export default class EmailFrame extends React.Component<EmailFrameProps> {
   _iframeComponent: EventedIFrame;
   _iframeWrapperEl: HTMLDivElement;
   _iframeDocObserver: ResizeObserver;
+  _previewDocument: Document;
   _lastFitSize = '';
 
   componentDidMount() {
@@ -62,12 +77,14 @@ export default class EmailFrame extends React.Component<EmailFrameProps> {
 
   componentWillUnmount() {
     this._mounted = false;
+    this._detachInlineImagePreviews();
     if (this._iframeDocObserver) this._iframeDocObserver.disconnect();
     if (this._unlisten) this._unlisten();
   }
 
   _writeContent = () => {
     if (this._iframeDocObserver) this._iframeDocObserver.disconnect();
+    this._detachInlineImagePreviews();
 
     const iframeEl = ReactDOM.findDOMNode(this._iframeComponent) as HTMLIFrameElement;
     const doc = iframeEl.contentDocument;
@@ -142,6 +159,7 @@ export default class EmailFrame extends React.Component<EmailFrameProps> {
         telAggressiveMatch: false,
       });
       adjustImages(doc);
+      this._attachInlineImagePreviews(doc);
 
       for (const extension of MessageStore.extensions()) {
         if (!extension.renderedMessageBodyIntoDocument) {
@@ -159,6 +177,50 @@ export default class EmailFrame extends React.Component<EmailFrameProps> {
         }
       }
     });
+  };
+
+  _attachInlineImagePreviews = (doc: Document) => {
+    this._previewDocument = doc;
+    doc.addEventListener('dblclick', this._onInlineImageDoubleClick, true);
+
+    doc.querySelectorAll('img').forEach((image) => {
+      const makePreviewable = () => {
+        const source = image.currentSrc || image.src || image.getAttribute('src');
+        if (
+          !localPathForInlineImageSource(source) ||
+          (image.naturalWidth <= 2 && image.naturalHeight <= 2)
+        ) {
+          return;
+        }
+
+        image.dataset.summermailInlineImagePreview = 'true';
+        image.style.cursor = 'zoom-in';
+        if (!image.title) image.title = localized('Double-click to preview');
+      };
+
+      if (image.complete) makePreviewable();
+      else image.addEventListener('load', makePreviewable, { once: true });
+    });
+  };
+
+  _detachInlineImagePreviews = () => {
+    this._previewDocument?.removeEventListener('dblclick', this._onInlineImageDoubleClick, true);
+    this._previewDocument = null;
+  };
+
+  _onInlineImageDoubleClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const image = target?.closest?.('img') as HTMLImageElement;
+    if (!image || image.dataset.summermailInlineImagePreview !== 'true') return;
+
+    const filePath = localPathForInlineImageSource(
+      image.currentSrc || image.src || image.getAttribute('src')
+    );
+    if (!filePath) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    Actions.quickPreviewFile(filePath);
   };
 
   _onReevaluateContentSize = (entry: ResizeObserverEntry) => {
