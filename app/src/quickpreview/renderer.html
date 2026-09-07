@@ -297,7 +297,7 @@
       overflow: hidden;
       background: #191b22 !important;
       color: #f1f3f8;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .media-viewer {
       position: fixed;
@@ -350,7 +350,11 @@
       border-radius: 7px;
       color: #e8ebf4;
       background: transparent;
-      font: 600 14px/30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font:
+        600 14px/30px -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
       text-align: center;
     }
     .media-toolbar button {
@@ -563,11 +567,14 @@
       const viewer = createMediaViewer(filePath.split(/[\\/]/).pop());
       viewer.stage.classList.add('is-pdf');
       let renderGeneration = 0;
+      let lastRenderedWidth = 0;
+      let resizeTimer = null;
 
       const renderPages = async ({ rotation, zoom }) => {
         const generation = ++renderGeneration;
         viewer.stage.innerHTML = '';
         const availableWidth = Math.max(320, viewer.viewport.clientWidth - 64);
+        lastRenderedWidth = availableWidth;
 
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
           const page = await pdf.getPage(pageNumber);
@@ -603,6 +610,23 @@
           canvas.style.height = `${Number(canvas.dataset.baseHeight) * state.zoom}px`;
         });
       });
+
+      const resizePdf = () => {
+        const availableWidth = Math.max(320, viewer.viewport.clientWidth - 64);
+        if (availableWidth === lastRenderedWidth) return;
+
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => renderPages(viewer.getState()), 120);
+      };
+      window.addEventListener('resize', resizePdf);
+      window.addEventListener(
+        'unload',
+        () => {
+          clearTimeout(resizeTimer);
+          window.removeEventListener('resize', resizePdf);
+        },
+        { once: true }
+      );
       await renderPages(viewer.getState());
     }
 

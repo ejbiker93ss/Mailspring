@@ -100,10 +100,15 @@ interface PdfCanvasPreviewProps {
 class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
   _container: HTMLDivElement;
   _generation = 0;
+  _lastRenderedWidth = 0;
   _loadingTask: any;
   _renderTasks: any[] = [];
+  _resizeObserver: ResizeObserver;
+  _resizeTimer: ReturnType<typeof setTimeout>;
 
   componentDidMount() {
+    this._resizeObserver = new ResizeObserver(this._scheduleResizeRender);
+    this._resizeObserver.observe(this._container);
     this._renderPdf();
   }
 
@@ -115,12 +120,23 @@ class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
 
   componentWillUnmount() {
     this._generation += 1;
+    this._resizeObserver?.disconnect();
+    clearTimeout(this._resizeTimer);
     this._renderTasks.forEach((task) => task.cancel());
     if (this._loadingTask) this._loadingTask.destroy();
   }
 
+  _scheduleResizeRender = () => {
+    const width = Math.round(this._container?.clientWidth || 0);
+    if (!width || width === this._lastRenderedWidth) return;
+
+    clearTimeout(this._resizeTimer);
+    this._resizeTimer = setTimeout(() => this._renderPdf(), 120);
+  };
+
   async _renderPdf() {
     const generation = ++this._generation;
+    this._lastRenderedWidth = Math.round(this._container?.clientWidth || 0);
     this._renderTasks.forEach((task) => task.cancel());
     this._renderTasks = [];
     if (this._loadingTask) await this._loadingTask.destroy();
