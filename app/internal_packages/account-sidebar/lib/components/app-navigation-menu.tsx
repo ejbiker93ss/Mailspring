@@ -201,7 +201,13 @@ export default class AppNavigationButton extends React.Component {
         aria-haspopup="menu"
         onClick={this._onShowMenu}
       >
-        <Icon name="mail" />
+        <img
+          className="app-navigation-brand-icon"
+          src="summermail://account-sidebar/assets/summermail-app-icon@2x.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
         <span className="app-navigation-button-divider" />
         <svg
           className="app-navigation-chevron"
