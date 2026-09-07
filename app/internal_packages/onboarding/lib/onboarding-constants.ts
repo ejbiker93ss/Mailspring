@@ -2,8 +2,13 @@ import crypto from 'crypto';
 
 export const LOCAL_SERVER_PORT = 12141;
 
-export const GMAIL_CLIENT_ID =
-  process.env.MS_GMAIL_CLIENT_ID ||
+export const SUMMERMAIL_GMAIL_CLIENT_ID =
+  '801963813541-pq2fivhovp4j5efg3hknfcfjnsq6sldd.apps.googleusercontent.com';
+export const GMAIL_CLIENT_ID = process.env.MS_GMAIL_CLIENT_ID || SUMMERMAIL_GMAIL_CLIENT_ID;
+
+// Accounts keep the OAuth client ID that issued their refresh token. Retain the
+// previous client only for refreshing existing accounts after an upgrade.
+export const LEGACY_GMAIL_CLIENT_ID =
   '662287800555-pdiq3r3puob8a44locitndbocua7c30f.apps.googleusercontent.com';
 
 // per https://stackoverflow.com/questions/59416326/safely-distribute-oauth-2-0-client-secret-in-desktop-applications-in-python,
@@ -22,12 +27,21 @@ export const GMAIL_CLIENT_SECRET =
     .createDecipheriv(
       'aes-256-ctr',
       // This value is cryptographic input for the existing Google OAuth secret.
-      // It must remain unchanged even though the application is now SummerMail.
+      // It must remain unchanged unless the encrypted fallback below is regenerated.
       "don't-be-ev1l-thanks--mailspring",
-      Buffer.from('wgvAx+N05nHqhFxJ9I07jw==', 'base64')
+      Buffer.from('xl6ilhOxxG3rWz3vB2+RGw==', 'base64')
     )
-    .update(Buffer.from('1EyEGYVh3NBNIbYEdpdMvOzCH7+vrSciGeYZ1F+W6W+yShk=', 'base64'))
+    .update(Buffer.from('f9mf3u4WYoge6fqYUjLD0jgTtawVSpgE6ywple7cMpLqIcc=', 'base64'))
     .toString('utf8');
+
+export const LEGACY_GMAIL_CLIENT_SECRET = crypto
+  .createDecipheriv(
+    'aes-256-ctr',
+    "don't-be-ev1l-thanks--mailspring",
+    Buffer.from('wgvAx+N05nHqhFxJ9I07jw==', 'base64')
+  )
+  .update(Buffer.from('1EyEGYVh3NBNIbYEdpdMvOzCH7+vrSciGeYZ1F+W6W+yShk=', 'base64'))
+  .toString('utf8');
 
 export const GMAIL_SCOPES = [
   'https://mail.google.com/', // email

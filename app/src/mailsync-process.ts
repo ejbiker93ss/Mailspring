@@ -15,6 +15,8 @@ import { IIdentity, Account } from 'summermail-exports';
 import {
   GMAIL_CLIENT_ID,
   GMAIL_CLIENT_SECRET,
+  LEGACY_GMAIL_CLIENT_ID,
+  LEGACY_GMAIL_CLIENT_SECRET,
 } from '../internal_packages/onboarding/lib/onboarding-constants';
 
 let Utils = null;
@@ -161,6 +163,8 @@ export class MailsyncProcess extends EventEmitter {
       CONFIG_DIR_PATH: this.configDirPath,
       GMAIL_CLIENT_ID: GMAIL_CLIENT_ID,
       GMAIL_CLIENT_SECRET: GMAIL_CLIENT_SECRET,
+      LEGACY_GMAIL_CLIENT_ID: LEGACY_GMAIL_CLIENT_ID,
+      LEGACY_GMAIL_CLIENT_SECRET: LEGACY_GMAIL_CLIENT_SECRET,
       IDENTITY_SERVER: 'unknown',
     };
     if (process.type === 'renderer') {
