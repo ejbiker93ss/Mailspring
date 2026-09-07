@@ -1,13 +1,16 @@
 import SwipeContainer from './swipe-container';
 import React from 'react';
 import { Utils } from 'summermail-exports';
-import { ListTabularColumn } from './list-tabular';
+import { ListTabularColumn, ListTabularSection } from './list-tabular';
 
 type ListTabularItemProps = {
   metrics?: {
     top: number;
     height: number;
+    itemHeight: number;
+    sectionHeaderHeight: number;
   };
+  section?: ListTabularSection;
   columns: ListTabularColumn[];
   item: any; // template type soon?
   itemProps?: {
@@ -65,29 +68,50 @@ export class ListTabularItem extends React.Component<ListTabularItemProps> {
       this._columnCache = this._columns();
     }
 
+    const { metrics, section } = this.props;
     return (
-      <SwipeContainer
-        {...props}
-        role="presentation"
-        onClick={this._onClick}
+      <div
+        className="list-tabular-row-slot"
         style={{
           position: 'absolute',
-          top: this.props.metrics.top,
+          top: metrics.top,
           width: '100%',
-          height: this.props.metrics.height,
+          height: metrics.height,
         }}
       >
-        <div
-          className={className}
-          style={{ height: this.props.metrics.height }}
-          role={role}
-          id={id}
-          aria-selected={ariaSelected}
-          aria-label={ariaLabel}
+        {section ? (
+          <div
+            className="list-tabular-section-header"
+            style={{ height: metrics.sectionHeaderHeight }}
+            role="heading"
+            aria-level={2}
+          >
+            <span>{section.label}</span>
+          </div>
+        ) : null}
+        <SwipeContainer
+          {...props}
+          role="presentation"
+          onClick={this._onClick}
+          style={{
+            position: 'absolute',
+            top: metrics.sectionHeaderHeight,
+            width: '100%',
+            height: metrics.itemHeight,
+          }}
         >
-          {this._columnCache}
-        </div>
-      </SwipeContainer>
+          <div
+            className={className}
+            style={{ height: metrics.itemHeight }}
+            role={role}
+            id={id}
+            aria-selected={ariaSelected}
+            aria-label={ariaLabel}
+          >
+            {this._columnCache}
+          </div>
+        </SwipeContainer>
+      </div>
     );
   }
 

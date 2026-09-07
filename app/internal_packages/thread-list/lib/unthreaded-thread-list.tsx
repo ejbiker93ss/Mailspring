@@ -16,6 +16,7 @@ import SummerMailStore from 'summermail-store';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 import { filterAndSortVisibleItems } from './unthreaded-list-ordering';
+import { DATE_SECTION_ORDER, dateSectionFor, dateSectionLabel } from './date-sections';
 
 const { Message } = require('summermail-exports');
 
@@ -354,42 +355,18 @@ export default class UnthreadedThreadList extends React.Component {
     );
   }
 
-  _sectionForDate(value) {
-    const date = new Date(value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const lastWeek = new Date(today);
-    lastWeek.setDate(today.getDate() - 7);
-    const lastMonth = new Date(today);
-    lastMonth.setDate(today.getDate() - 30);
-
-    if (date >= today) return 'today';
-    if (date >= yesterday) return 'yesterday';
-    if (date >= lastWeek) return 'last-week';
-    if (date >= lastMonth) return 'last-month';
-    return 'older';
-  }
-
   _dateSections(entries, dateForEntry) {
-    const labels = {
-      today: localized('Today'),
-      yesterday: localized('Yesterday'),
-      'last-week': localized('Last Week'),
-      'last-month': localized('Last Month'),
-      older: localized('Older'),
-    };
-    const order = ['today', 'yesterday', 'last-week', 'last-month', 'older'];
     const buckets = {};
     entries.forEach((entry) => {
-      const key = this._sectionForDate(dateForEntry(entry));
+      const key = dateSectionFor(dateForEntry(entry));
       (buckets[key] || (buckets[key] = [])).push(entry);
     });
-    const keys = this.state.sortAscending ? order.slice().reverse() : order;
+    const keys = this.state.sortAscending
+      ? DATE_SECTION_ORDER.slice().reverse()
+      : DATE_SECTION_ORDER;
     return keys
       .filter((key) => buckets[key] && buckets[key].length)
-      .map((key) => ({ key, label: labels[key], entries: buckets[key] }));
+      .map((key) => ({ key, label: dateSectionLabel(key), entries: buckets[key] }));
   }
 
   _toggleSection = (key) => {

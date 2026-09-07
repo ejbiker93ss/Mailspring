@@ -32,6 +32,7 @@ import ThreadListScrollTooltip from './thread-list-scroll-tooltip';
 import ThreadListStore from './thread-list-store';
 import ThreadListContextMenu from './thread-list-context-menu';
 import { threadAriaLabel } from './thread-list-aria-utils';
+import { dateSectionFor, dateSectionLabel } from './date-sections';
 
 class ThreadList extends React.Component<
   Record<string, unknown>,
@@ -117,6 +118,8 @@ class ThreadList extends React.Component<
             columns={columns}
             itemPropsProvider={this._threadPropsProvider}
             itemHeight={itemHeight}
+            sectionForItem={this._dateSectionForThread}
+            sectionHeaderHeight={41}
             className={`thread-list thread-list-${this.state.style}`}
             scrollTooltipComponent={ThreadListScrollTooltip}
             EmptyComponent={EmptyListState}
@@ -215,6 +218,14 @@ class ThreadList extends React.Component<
 
     return props;
   }
+
+  _dateSectionForThread = (thread: Thread) => {
+    const timestamp = FocusedPerspectiveStore.current().isSent()
+      ? thread.lastMessageSentTimestamp
+      : thread.lastMessageReceivedTimestamp;
+    const key = dateSectionFor(timestamp);
+    return { key, label: dateSectionLabel(key) };
+  };
 
   _onClickThread = (thread: Thread) => {
     const messageId = (thread as any).__searchMatchMessageId;

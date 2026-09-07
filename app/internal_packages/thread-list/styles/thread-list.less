@@ -556,7 +556,31 @@ body.is-blurred {
   height: 100%;
   width: 100%;
   border-top: 1px solid @border-color-divider;
-  .sheet-toolbar { 
+  .sheet-toolbar {
     -webkit-app-region: none;
+  }
+}
+
+.thread-list .list-tabular-section-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px 4px;
+  pointer-events: none;
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 29px;
+    padding: 0 10px;
+    border: 1px solid fade(@text-color, 10%);
+    border-radius: 8px;
+    background: mix(@background-secondary, @background-primary, 70%);
+    color: fade(@text-color, 72%);
+    box-shadow: 0 1px 2px fade(#000, 7%);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    line-height: 1;
+    text-transform: uppercase;
   }
 }

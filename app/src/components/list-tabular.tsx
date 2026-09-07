@@ -36,11 +36,62 @@ export class ListTabularColumn {
   }
 }
 
+export type ListTabularSection = {
+  key: string;
+  label: React.ReactNode;
+};
+
+export function listOffsetForIndex(
+  index: number,
+  itemHeight: number,
+  sectionHeaderHeight: number,
+  sectionBoundaryIndexes: number[]
+) {
+  const sectionsBefore = sectionBoundaryIndexes.filter(
+    (boundaryIndex) => boundaryIndex < index
+  ).length;
+  return index * itemHeight + sectionsBefore * sectionHeaderHeight;
+}
+
+export function listIndexForOffset(
+  offset: number,
+  count: number,
+  itemHeight: number,
+  sectionHeaderHeight: number,
+  sectionBoundaryIndexes: number[]
+) {
+  let low = 0;
+  let high = Math.max(0, count);
+  while (low < high) {
+    const middle = Math.floor((low + high + 1) / 2);
+    if (
+      listOffsetForIndex(middle, itemHeight, sectionHeaderHeight, sectionBoundaryIndexes) <= offset
+    ) {
+      low = middle;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return low;
+}
+
+type ListTabularRow = {
+  item: any;
+  idx: number;
+  itemProps?: any;
+  metrics: {
+    top: number;
+    height: number;
+    itemHeight: number;
+    sectionHeaderHeight: number;
+  };
+  section?: ListTabularSection;
+};
+
 type ListTabularRowsProps = {
-  rows?: any[];
+  rows?: ListTabularRow[];
   columns: any[];
   draggable?: boolean;
-  itemHeight?: number;
   innerStyles?: CSSProperties;
   role?: string;
   ariaLabel?: string;
@@ -59,7 +110,6 @@ export const ListTabularRows: React.FC<ListTabularRowsProps> = React.memo(
   ({
     rows,
     columns,
-    itemHeight,
     innerStyles,
     draggable,
     role,
@@ -87,14 +137,15 @@ export const ListTabularRows: React.FC<ListTabularRowsProps> = React.memo(
       tabIndex={tabIndex}
       aria-activedescendant={ariaActiveDescendant}
     >
-      {rows.map(({ item, idx, itemProps = {} }) => {
+      {rows.map(({ item, idx, itemProps = {}, metrics, section }) => {
         if (!item) return null;
         return (
           <ListTabularItem
             key={item.id || idx}
             item={item}
             itemProps={itemProps}
-            metrics={{ top: idx * itemHeight, height: itemHeight }}
+            metrics={metrics}
+            section={section}
             columns={columns}
             onSelect={onSelect}
             onClick={onClick}
@@ -116,6 +167,8 @@ export interface ListTabularProps extends ScrollRegionProps {
   dataSource?: ListDataSource;
   itemPropsProvider?: (...args: any[]) => any;
   itemHeight?: number;
+  sectionForItem?: (item: any) => ListTabularSection | null;
+  sectionHeaderHeight?: number;
   EmptyComponent?: React.ComponentType<{ visible: boolean }>;
   role?: string;
   ariaLabel?: string;
@@ -165,6 +218,7 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
   _onWindowResize?: any;
   _scrollRegion: ScrollRegion;
   _listRowsEl: HTMLElement | null = null;
+  _sectionBoundaries: { [index: number]: ListTabularSection } = {};
 
   _setListRowsEl = (el: HTMLElement | null) => {
     this._listRowsEl = el;
@@ -193,8 +247,16 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
     // If our view has been swapped out for an entirely different one,
     // reset our scroll position to the top.
     if (prevProps.dataSource !== this.props.dataSource) {
+      this._sectionBoundaries = {};
       this._scrollRegion.scrollTop = 0;
       this.setupDataSource(this.props.dataSource);
+    }
+
+    if (
+      prevProps.sectionForItem !== this.props.sectionForItem ||
+      prevProps.sectionHeaderHeight !== this.props.sectionHeaderHeight
+    ) {
+      this._sectionBoundaries = {};
     }
 
     if (this.updateRangeStateFiring) {
@@ -265,23 +327,103 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
   getRowsToRender() {
     const { itemPropsProvider } = this.props;
     const { items, animatingOut, renderedRangeStart, renderedRangeEnd } = this.state;
+    this._updateSectionBoundaries();
     // The ordering of the rows array is important. We want current rows to
     // slide over rows which are animating out, so we need to render them last.
     const rows = [];
     Object.entries(animatingOut).forEach(([idx, record]) => {
       const itemProps = itemPropsProvider(record.item, Number(idx));
-      rows.push({ item: record.item, idx: Number(idx) / 1, itemProps });
+      const numericIdx = Number(idx) / 1;
+      rows.push({
+        item: record.item,
+        idx: numericIdx,
+        itemProps,
+        metrics: this._metricsForIndex(numericIdx, false, true),
+      });
     });
 
     Utils.range(renderedRangeStart, renderedRangeEnd).forEach((idx) => {
       const item = items[idx];
       if (item) {
         const itemProps = itemPropsProvider(item, idx);
-        rows.push({ item, idx, itemProps });
+        const section = this._sectionBoundaries[idx];
+        rows.push({
+          item,
+          idx,
+          itemProps,
+          section,
+          metrics: this._metricsForIndex(idx, !!section),
+        });
       }
     });
 
     return rows;
+  }
+
+  _updateSectionBoundaries() {
+    const { sectionForItem } = this.props;
+    if (!sectionForItem) {
+      this._sectionBoundaries = {};
+      return;
+    }
+
+    const { items, renderedRangeStart, renderedRangeEnd, count } = this.state;
+    Object.keys(this._sectionBoundaries).forEach((rawIndex) => {
+      if (Number(rawIndex) >= count) {
+        delete this._sectionBoundaries[rawIndex];
+      }
+    });
+
+    Utils.range(renderedRangeStart, renderedRangeEnd).forEach((idx) => {
+      const item = items[idx];
+      if (!item) return;
+
+      const section = sectionForItem(item);
+      const previousItem = idx > renderedRangeStart ? items[idx - 1] : null;
+      const previousSection = previousItem ? sectionForItem(previousItem) : null;
+
+      if (idx === 0 || previousItem) {
+        delete this._sectionBoundaries[idx];
+        if (section && (idx === 0 || section.key !== previousSection?.key)) {
+          this._sectionBoundaries[idx] = section;
+        }
+      }
+    });
+  }
+
+  _offsetForIndex(index: number) {
+    const { itemHeight, sectionHeaderHeight = 0 } = this.props;
+    return listOffsetForIndex(
+      index,
+      itemHeight,
+      sectionHeaderHeight,
+      Object.keys(this._sectionBoundaries).map(Number)
+    );
+  }
+
+  _metricsForIndex(index: number, hasSection: boolean, itemOnly = false) {
+    const { itemHeight, sectionHeaderHeight = 0 } = this.props;
+    const headerHeight = hasSection ? sectionHeaderHeight : 0;
+    const top =
+      this._offsetForIndex(index) +
+      (itemOnly && this._sectionBoundaries[index] ? sectionHeaderHeight : 0);
+    return {
+      top,
+      height: itemHeight + headerHeight,
+      itemHeight,
+      sectionHeaderHeight: headerHeight,
+    };
+  }
+
+  _indexForOffset(offset: number) {
+    const { itemHeight, sectionHeaderHeight = 0 } = this.props;
+    return listIndexForOffset(
+      offset,
+      this.state.count,
+      itemHeight,
+      sectionHeaderHeight,
+      Object.keys(this._sectionBoundaries).map(Number)
+    );
   }
 
   scrollTo(node: HTMLElement) {
@@ -312,7 +454,7 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
 
     // Determine the exact range of rows we want onscreen
     const rangeSize = Math.ceil(window.innerHeight / itemHeight);
-    let rangeStart = Math.floor(scrollTop / itemHeight);
+    let rangeStart = this._indexForOffset(scrollTop);
     let rangeEnd = rangeStart + rangeSize;
 
     // Expand the start/end so that you can advance the keyboard cursor fast and
@@ -419,6 +561,7 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       onDragEnd,
       onDragStart,
       onDoubleClick,
+      sectionForItem,
     } = this.props;
     const { count, loaded, empty } = this.state;
     const rows = this.getRowsToRender();
@@ -437,7 +580,6 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
             rows={rows}
             columns={columns}
             draggable={draggable}
-            itemHeight={itemHeight}
             role={role}
             ariaLabel={ariaLabel}
             ariaMultiselectable={ariaMultiselectable}
@@ -445,8 +587,8 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
             ariaActiveDescendant={ariaActiveDescendant}
             domRef={this._setListRowsEl}
             innerStyles={{
-              height: count * itemHeight,
-              backgroundSize: `100% ${this.props.itemHeight}px`,
+              height: this._offsetForIndex(count),
+              backgroundSize: sectionForItem ? undefined : `100% ${this.props.itemHeight}px`,
             }}
             onClick={onClick}
             onSelect={onSelect}
