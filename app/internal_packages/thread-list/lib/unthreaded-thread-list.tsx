@@ -20,6 +20,17 @@ import { DATE_SECTION_ORDER, dateSectionFor, dateSectionLabel } from './date-sec
 
 const { Message } = require('summermail-exports');
 
+const DisclosureChevron = ({ expanded, className = '' }) => (
+  <span
+    className={`unthreaded-disclosure-chevron ${expanded ? 'expanded' : 'collapsed'} ${className}`}
+    aria-hidden="true"
+  >
+    <svg viewBox="0 0 12 12">
+      <path d="m3.5 4.5 2.5 3 2.5-3" />
+    </svg>
+  </span>
+);
+
 const RowActionIcon = ({ name }) => {
   const paths = {
     reply: <path d="M9 7 4 12l5 5v-3c5 0 8 1 11 4-1-6-4-9-11-9V7Z" />,
@@ -384,11 +395,17 @@ export default class UnthreadedThreadList extends React.Component {
       return (
         <section className="unthreaded-date-section" key={section.key}>
           <button
+            type="button"
             className="unthreaded-date-section-header"
             onClick={() => this._toggleSection(section.key)}
             aria-expanded={!collapsed}
+            aria-label={
+              collapsed
+                ? localized('Expand %@', section.label)
+                : localized('Collapse %@', section.label)
+            }
           >
-            <span className={`unthreaded-date-section-caret ${collapsed ? '' : 'expanded'}`} />
+            <DisclosureChevron expanded={!collapsed} className="unthreaded-date-section-caret" />
             <span className="unthreaded-date-section-label">{section.label}</span>
             <span className="unthreaded-date-section-count">{section.entries.length}</span>
           </button>
@@ -527,7 +544,21 @@ export default class UnthreadedThreadList extends React.Component {
           onClick={() => this._onGroupHeaderClick(group)}
         >
           {expandable ? (
-            <div className={`unthreaded-group-caret ${expanded ? 'expanded' : 'collapsed'}`} />
+            <button
+              type="button"
+              className="unthreaded-group-caret"
+              aria-expanded={expanded}
+              aria-label={
+                expanded ? localized('Collapse conversation') : localized('Expand conversation')
+              }
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this._onGroupHeaderClick(group);
+              }}
+            >
+              <DisclosureChevron expanded={expanded} />
+            </button>
           ) : null}
           <div className="unthreaded-group-body">
             {this._renderItem(group.items[0], {
