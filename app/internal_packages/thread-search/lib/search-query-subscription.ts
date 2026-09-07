@@ -126,7 +126,8 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
         }
       } catch (error) {
         console.warn('Search relevance ranking failed; using chronological results', error);
-        this._resultCount = (await dbQuery.clone().count().background()) as unknown as number;
+        this._resultCount = null;
+        this._matchingMessageIds.clear();
       }
     } else {
       dbQuery = dbQuery.search(this._searchQuery);
@@ -209,6 +210,14 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     if (this._searching) {
       this._searching = false;
       Actions.searchCompleted(this._resultCount);
+    }
+  }
+
+  _handleQueryError(error: Error) {
+    console.error('Search query failed', error);
+    if (this._searching) {
+      this._searching = false;
+      Actions.searchCompleted(null);
     }
   }
 

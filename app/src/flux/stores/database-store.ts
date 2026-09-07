@@ -21,6 +21,10 @@ const BASE_RETRY_LOCK_DELAY = 50;
 const MAX_RETRY_LOCK_DELAY = 500;
 
 type AgentResponse = { results: any[]; agentTime: number };
+type AgentOpenQuery = {
+  resolve: (args: AgentResponse) => void;
+  reject: (error: Error) => void;
+};
 type SQLString = string;
 type SQLValue = boolean | string | number;
 
@@ -213,28 +217,28 @@ class DatabaseStore extends SummerMailStore {
   //
   // If a query is made before the database has been opened, the query will be
   // held in a queue and run / resolved when the database is ready.
-  _query(query: SQLString, values: SQLValue[] = [], background = false) {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<{ [key: string]: any }[]>(async (resolve, reject) => {
-      if (!this._open) {
-        this._waiting.push(() => this._query(query, values).then(resolve, reject));
-        return;
-      }
-
-      // Undefined, True, and False are not valid SQLite datatypes:
-      // https://www.sqlite.org/datatype3.html
-      values.forEach((val, idx) => {
-        if (val === false) {
-          values[idx] = 0;
-        } else if (val === true) {
-          values[idx] = 1;
-        } else if (val === undefined) {
-          values[idx] = null;
-        }
+  async _query(query: SQLString, values: SQLValue[] = [], background = false) {
+    if (!this._open) {
+      return new Promise<{ [key: string]: any }[]>((resolve, reject) => {
+        this._waiting.push(() => this._query(query, values, background).then(resolve, reject));
       });
+    }
 
-      const start = Date.now();
+    // Undefined, True, and False are not valid SQLite datatypes:
+    // https://www.sqlite.org/datatype3.html
+    values.forEach((val, idx) => {
+      if (val === false) {
+        values[idx] = 0;
+      } else if (val === true) {
+        values[idx] = 1;
+      } else if (val === undefined) {
+        values[idx] = null;
+      }
+    });
 
+    const start = Date.now();
+
+    try {
       if (!background) {
         const results = await this._executeLocally(query, values);
         const msec = Date.now() - start;
@@ -243,7 +247,7 @@ class DatabaseStore extends SummerMailStore {
             `DatabaseStore._executeLocally took more than 100ms - ${msec}msec: ${query}`
           );
         }
-        resolve(results);
+        return results;
       } else {
         const { results, agentTime } = await this._executeInBackground(query, values);
         const msec = Date.now() - start;
@@ -258,9 +262,14 @@ class DatabaseStore extends SummerMailStore {
             `${msgPrefix}${msec}msec (${agentTime}msec in background): ${query}`
           );
         }
-        resolve(results);
+        return results;
       }
-    });
+    } catch (err) {
+      if (/database disk image is malformed/gi.test(String(err))) {
+        handleUnrecoverableDatabaseError(err);
+      }
+      throw err;
+    }
   }
 
   async _executeLocally(query: SQLString, values: SQLValue[]) {
@@ -322,11 +331,6 @@ class DatabaseStore extends SummerMailStore {
         }
       } catch (err) {
         const errString = err.toString();
-        if (/database disk image is malformed/gi.test(errString)) {
-          handleUnrecoverableDatabaseError(err);
-          return results;
-        }
-
         if (scheduler.numTries() > 5 || !retryableRegexp.test(errString)) {
           throw new Error(
             `DatabaseStore: Query ${query}, ${JSON.stringify(values)} failed ${err.toString()}`
@@ -345,7 +349,7 @@ class DatabaseStore extends SummerMailStore {
 
   _agent?: ChildProcess;
   _agentSpawnFailed = false;
-  _agentOpenQueries: { [id: string]: (args: AgentResponse) => void };
+  _agentOpenQueries: { [id: string]: AgentOpenQuery };
 
   _executeInBackground(query: SQLString, values: SQLValue[]) {
     if (!this._agent && !this._agentSpawnFailed) {
@@ -358,6 +362,11 @@ class DatabaseStore extends SummerMailStore {
           this._agent.stderr.on('data', (data) => console.error(data.toString()));
         this._agent.on('close', (code) => {
           debug(`Query Agent: exited with code ${code}`);
+          const pending = this._agentOpenQueries;
+          this._agentOpenQueries = {};
+          Object.values(pending).forEach(({ reject }) =>
+            reject(new Error(`Background database query worker exited with code ${code}`))
+          );
           this._agent = null;
         });
         this._agent.on('error', (err) => {
@@ -366,10 +375,15 @@ class DatabaseStore extends SummerMailStore {
           this._agent = null;
         });
         this._agent.on('message', (message: Record<string, any>) => {
-          const { type, id, results, agentTime } = message;
-          if (type === 'results' && this._agentOpenQueries[id]) {
-            this._agentOpenQueries[id]({ results, agentTime });
-            delete this._agentOpenQueries[id];
+          const { type, id, results, agentTime, error } = message;
+          const pending = this._agentOpenQueries[id];
+          if (!pending) return;
+
+          delete this._agentOpenQueries[id];
+          if (type === 'results') {
+            pending.resolve({ results, agentTime });
+          } else if (type === 'error') {
+            pending.reject(new Error(error || 'Background database query failed'));
           }
         });
       } catch (err) {
@@ -386,18 +400,23 @@ class DatabaseStore extends SummerMailStore {
       }
     }
 
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<AgentResponse>(async (resolve) => {
+    return new Promise<AgentResponse>((resolve, reject) => {
       if (!this._agent) {
         // Something bad has happened and we were immediately unable to spawn the query helper.
         // Fall back to running the query in-process.
-        const results = await this._executeLocally(query, values);
-        resolve({ results, agentTime: -1 });
+        this._executeLocally(query, values).then(
+          (results) => resolve({ results, agentTime: -1 }),
+          reject
+        );
         return;
       }
       const id = Utils.generateTempId();
-      this._agentOpenQueries[id] = resolve;
-      this._agent.send({ query, values, id, dbpath: this._databasePath });
+      this._agentOpenQueries[id] = { resolve, reject };
+      this._agent.send({ query, values, id, dbpath: this._databasePath }, (error) => {
+        if (!error || !this._agentOpenQueries[id]) return;
+        delete this._agentOpenQueries[id];
+        reject(error);
+      });
     });
   }
 

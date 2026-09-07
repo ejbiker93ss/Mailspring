@@ -22,6 +22,19 @@ describe('DatabaseStore', function DatabaseStoreSpecs() {
     });
   });
 
+  describe('background query errors', () => {
+    it('rejects instead of leaving the query pending forever', async () => {
+      let rejected = false;
+      try {
+        await DatabaseStore._executeInBackground('SELECT * FROM `TableThatDoesNotExist`', []);
+      } catch (error) {
+        rejected = true;
+        expect(error).toBeDefined();
+      }
+      expect(rejected).toBe(true);
+    });
+  });
+
   describe('find', () =>
     it('should return a ModelQuery for retrieving a single item by Id', () => {
       const q = DatabaseStore.find(TestModel, '4');

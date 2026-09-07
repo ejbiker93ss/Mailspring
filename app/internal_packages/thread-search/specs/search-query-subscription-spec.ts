@@ -30,4 +30,25 @@ describe('SearchQuerySubscription matching messages', () => {
     expect(result.matchingMessageIds.get('thread-1')).toBe('message-2');
     expect(querySpy.calls[0].args[0]).toContain('AS matchingMessageId');
   });
+
+  it('falls back to chronological results when relevance ranking fails', async () => {
+    const subscription = Object.create(SearchQuerySubscription.prototype);
+    subscription._accountIds = ['account-1'];
+    subscription._searchQuery = 'jerian';
+    subscription._resultCount = null;
+    subscription._matchingMessageIds = new Map([['old-thread', 'old-message']]);
+    spyOn(subscription, '_rankedSearchResults').andReturn(
+      Promise.reject(new Error('database disk image is malformed'))
+    );
+    spyOn(subscription, 'replaceQuery');
+
+    await subscription.performLocalSearch();
+
+    expect(subscription.replaceQuery).toHaveBeenCalled();
+    expect(subscription._resultCount).toBe(null);
+    expect(subscription._matchingMessageIds.size).toBe(0);
+    expect(subscription.replaceQuery.calls[0].args[0].sql()).toContain(
+      'ORDER BY `Thread`.`lastMessageReceivedTimestamp` DESC'
+    );
+  });
 });

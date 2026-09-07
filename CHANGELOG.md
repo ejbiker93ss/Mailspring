@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.43 (9/7/2026)
+
+Bug Fixes:
+
+- Fixed searches that could spin forever when a background database query failed.
+- Detects a corrupt local mail index during background search and starts the existing safe cache rebuild flow.
+- Falls back to chronological search results when relevance ranking is unavailable.
+
 ## 1.23.42 (9/7/2026)
 
 Improvements:
