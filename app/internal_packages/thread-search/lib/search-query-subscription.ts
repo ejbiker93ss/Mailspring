@@ -37,7 +37,7 @@ class RankedIdSortOrder {
     const cases = this._ids
       .map((id, index) => `WHEN '${id.replace(/'/g, "''")}' THEN ${index}`)
       .join(' ');
-    return `(CASE \`${klass.name}\`.\`id\` ${cases} ELSE ${this._ids.length}) ASC`;
+    return `(CASE \`${klass.name}\`.\`id\` ${cases} ELSE ${this._ids.length} END) ASC`;
   }
 }
 

@@ -51,4 +51,25 @@ describe('SearchQuerySubscription matching messages', () => {
       'ORDER BY `Thread`.`lastMessageReceivedTimestamp` DESC'
     );
   });
+
+  it('generates a complete CASE expression for ranked result ordering', async () => {
+    const subscription = Object.create(SearchQuerySubscription.prototype);
+    subscription._accountIds = ['account-1'];
+    subscription._searchQuery = 'jerian';
+    subscription._resultCount = null;
+    subscription._matchingMessageIds = new Map();
+    spyOn(subscription, '_rankedSearchResults').andReturn(
+      Promise.resolve({
+        ids: ['thread-1', 'thread-2'],
+        total: 2,
+        matchingMessageIds: new Map(),
+      })
+    );
+    spyOn(subscription, 'replaceQuery');
+
+    await subscription.performLocalSearch();
+
+    const sql = subscription.replaceQuery.calls[0].args[0].sql();
+    expect(sql).toContain('ELSE 2 END) ASC');
+  });
 });

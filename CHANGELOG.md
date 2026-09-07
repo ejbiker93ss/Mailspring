@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.44 (9/7/2026)
+
+Bug Fixes:
+
+- Fixed ranked search result queries failing because their SQLite `CASE` sort expression was incomplete.
+- Ranked results now load into the thread list instead of leaving it blank.
+
 ## 1.23.43 (9/7/2026)
 
 Bug Fixes:
