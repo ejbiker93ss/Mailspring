@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.49 (9/8/2026)
+
+Bug Fixes:
+
+- Make Today, Yesterday, and other date headers real buttons that collapse and expand message groups with mouse or keyboard.
+- Keep following groups visible when collapsing large groups in the virtualized message list.
+
 ## 1.23.48 (9/8/2026)
 
 Improvements:

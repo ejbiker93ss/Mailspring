@@ -1,6 +1,7 @@
 import { localized } from 'summermail-exports';
 
 export type DateSectionKey = 'today' | 'yesterday' | 'last-week' | 'last-month' | 'older';
+export type CollapsedDateSections = Partial<Record<DateSectionKey, boolean>>;
 
 export const DATE_SECTION_ORDER: DateSectionKey[] = [
   'today',
@@ -40,4 +41,11 @@ export function dateSectionLabel(key: DateSectionKey): string {
     older: localized('Older'),
   };
   return labels[key];
+}
+
+export function toggleDateSection(
+  collapsedSections: CollapsedDateSections,
+  key: DateSectionKey
+): CollapsedDateSections {
+  return { ...collapsedSections, [key]: !collapsedSections[key] };
 }

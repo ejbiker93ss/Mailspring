@@ -1,19 +1,16 @@
-import { dateSectionFor } from '../lib/date-sections';
+import { toggleDateSection } from '../lib/date-sections';
 
-describe('thread list date sections', () => {
-  const now = new Date(2026, 8, 7, 15, 30);
+describe('date section controls', () => {
+  it('uses the same immutable toggle behavior in every conversation view', () => {
+    const initial = { today: true };
+    const expanded = toggleDateSection(initial, 'today');
 
-  it('groups messages into the expected calendar buckets', () => {
-    expect(dateSectionFor(new Date(2026, 8, 7, 0, 1), now)).toBe('today');
-    expect(dateSectionFor(new Date(2026, 8, 6, 23, 59), now)).toBe('yesterday');
-    expect(dateSectionFor(new Date(2026, 8, 2, 12, 0), now)).toBe('last-week');
-    expect(dateSectionFor(new Date(2026, 7, 20, 12, 0), now)).toBe('last-month');
-    expect(dateSectionFor(new Date(2026, 6, 1, 12, 0), now)).toBe('older');
-  });
-
-  it('uses local midnight rather than a rolling 24-hour window', () => {
-    expect(dateSectionFor(new Date(2026, 8, 6, 23, 59), new Date(2026, 8, 7, 0, 1))).toBe(
-      'yesterday'
-    );
+    expect(initial.today).toBe(true);
+    expect(expanded.today).toBe(false);
+    expect(toggleDateSection(expanded, 'today').today).toBe(true);
+    expect(toggleDateSection(expanded, 'yesterday')).toEqual({
+      today: false,
+      yesterday: true,
+    });
   });
 });

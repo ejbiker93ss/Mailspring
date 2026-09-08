@@ -1,6 +1,6 @@
 import SwipeContainer from './swipe-container';
 import React from 'react';
-import { Utils } from 'summermail-exports';
+import { Utils, localized } from 'summermail-exports';
 import { ListTabularColumn, ListTabularSection } from './list-tabular';
 
 type ListTabularItemProps = {
@@ -11,6 +11,7 @@ type ListTabularItemProps = {
     sectionHeaderHeight: number;
   };
   section?: ListTabularSection;
+  sectionCollapsed?: boolean;
   columns: ListTabularColumn[];
   item: any; // template type soon?
   itemProps?: {
@@ -23,6 +24,7 @@ type ListTabularItemProps = {
   onSelect?: (...args: any[]) => any;
   onClick?: (...args: any[]) => any;
   onDoubleClick?: (...args: any[]) => any;
+  onToggleSection?: (key: string) => void;
 };
 
 export class ListTabularItem extends React.Component<ListTabularItemProps> {
@@ -68,7 +70,7 @@ export class ListTabularItem extends React.Component<ListTabularItemProps> {
       this._columnCache = this._columns();
     }
 
-    const { metrics, section } = this.props;
+    const { metrics, section, sectionCollapsed } = this.props;
     return (
       <div
         className="list-tabular-row-slot"
@@ -86,31 +88,66 @@ export class ListTabularItem extends React.Component<ListTabularItemProps> {
             role="heading"
             aria-level={2}
           >
-            <span>{section.label}</span>
+            <button
+              type="button"
+              className="list-tabular-section-toggle"
+              aria-expanded={!sectionCollapsed}
+              aria-label={
+                sectionCollapsed
+                  ? localized('Expand %@', section.label)
+                  : localized('Collapse %@', section.label)
+              }
+              onClick={this._onToggleSection}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+              }}
+            >
+              <svg
+                className="list-tabular-disclosure-chevron"
+                viewBox="0 0 12 12"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3 4.25 6 7.25 9 4.25"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <span className="list-tabular-section-label">{section.label}</span>
+              <span
+                className="list-tabular-section-count"
+                aria-label={`${section.count || 0} messages`}
+              >
+                {section.count}
+              </span>
+            </button>
           </div>
         ) : null}
-        <SwipeContainer
-          {...props}
-          role="presentation"
-          onClick={this._onClick}
-          style={{
-            position: 'absolute',
-            top: metrics.sectionHeaderHeight,
-            width: '100%',
-            height: metrics.itemHeight,
-          }}
-        >
-          <div
-            className={className}
-            style={{ height: metrics.itemHeight }}
-            role={role}
-            id={id}
-            aria-selected={ariaSelected}
-            aria-label={ariaLabel}
+        {metrics.itemHeight > 0 ? (
+          <SwipeContainer
+            {...props}
+            role="presentation"
+            onClick={this._onClick}
+            style={{
+              position: 'absolute',
+              top: metrics.sectionHeaderHeight,
+              width: '100%',
+              height: metrics.itemHeight,
+            }}
           >
-            {this._columnCache}
-          </div>
-        </SwipeContainer>
+            <div
+              className={className}
+              style={{ height: metrics.itemHeight }}
+              role={role}
+              id={id}
+              aria-selected={ariaSelected}
+              aria-label={ariaLabel}
+            >
+              {this._columnCache}
+            </div>
+          </SwipeContainer>
+        ) : null}
       </div>
     );
   }
@@ -152,5 +189,13 @@ export class ListTabularItem extends React.Component<ListTabularItemProps> {
     }
 
     this._lastClickTime = Date.now();
+  };
+
+  _onToggleSection = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.props.section && this.props.onToggleSection) {
+      this.props.onToggleSection(this.props.section.key);
+    }
   };
 }

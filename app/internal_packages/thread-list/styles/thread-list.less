@@ -75,7 +75,9 @@
       transition: background-color linear 150ms;
       background-color: mix(#ed304b, @background-primary, 75%);
       &::after {
-        transition: left linear 150ms, transform linear 150ms;
+        transition:
+          left linear 150ms,
+          transform linear 150ms;
         content: 'Trash';
         left: 0;
         background-image: url(../static/images/swipe/icon-swipe-trash@2x.png);
@@ -94,7 +96,9 @@
       transition: background-color linear 150ms;
       background-color: mix(#6cd420, @background-primary, 75%);
       &::after {
-        transition: left linear 150ms, transform linear 150ms;
+        transition:
+          left linear 150ms,
+          transform linear 150ms;
         content: 'Archive';
         left: 0;
         background-image: url(../static/images/swipe/icon-swipe-archive@2x.png);
@@ -112,7 +116,9 @@
       transition: background-color linear 150ms;
       background-color: mix(#8d6be3, @background-primary, 75%);
       &::after {
-        transition: right linear 150ms, transform linear 150ms;
+        transition:
+          right linear 150ms,
+          transform linear 150ms;
         content: 'Snooze';
         right: 0;
         background-image: url(../static/images/swipe/icon-swipe-snooze@2x.png);
@@ -336,13 +342,19 @@
     margin: 9px 16px 0 16px;
   }
   .action.action-archive {
-    background: url(@archive-img) center no-repeat, @background-gradient;
+    background:
+      url(@archive-img) center no-repeat,
+      @background-gradient;
   }
   .action.action-trash {
-    background: url(@trash-img) center no-repeat, @background-gradient;
+    background:
+      url(@trash-img) center no-repeat,
+      @background-gradient;
   }
   .action.action-snooze {
-    background: url(@snooze-img) center no-repeat, @background-gradient;
+    background:
+      url(@snooze-img) center no-repeat,
+      @background-gradient;
   }
 }
 body.platform-win32 {
@@ -565,11 +577,12 @@ body.is-blurred {
   display: flex;
   align-items: center;
   padding: 8px 10px 4px;
-  pointer-events: none;
 
-  > span {
+  .list-tabular-section-toggle {
     display: inline-flex;
     align-items: center;
+    width: 100%;
+    gap: 7px;
     min-height: 29px;
     padding: 0 10px;
     border: 1px solid fade(@text-color, 10%);
@@ -577,10 +590,38 @@ body.is-blurred {
     background: mix(@background-secondary, @background-primary, 70%);
     color: fade(@text-color, 72%);
     box-shadow: 0 1px 2px fade(#000, 7%);
+    cursor: pointer;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.045em;
     line-height: 1;
     text-transform: uppercase;
+
+    &:hover {
+      background: mix(@background-secondary, @background-primary, 82%);
+      color: fade(@text-color, 90%);
+    }
+
+    &:focus-visible {
+      outline: 2px solid @accent-primary;
+      outline-offset: 1px;
+    }
+
+    .list-tabular-disclosure-chevron {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 auto;
+      transition: transform 140ms ease-out;
+    }
+
+    &[aria-expanded='false'] .list-tabular-disclosure-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .list-tabular-section-count {
+      margin-left: auto;
+      color: fade(@text-color, 72%);
+      font-variant-numeric: tabular-nums;
+    }
   }
 }

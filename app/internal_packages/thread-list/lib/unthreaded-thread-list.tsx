@@ -16,7 +16,12 @@ import SummerMailStore from 'summermail-store';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 import { filterAndSortVisibleItems } from './unthreaded-list-ordering';
-import { DATE_SECTION_ORDER, dateSectionFor, dateSectionLabel } from './date-sections';
+import {
+  DATE_SECTION_ORDER,
+  dateSectionFor,
+  dateSectionLabel,
+  toggleDateSection,
+} from './date-sections';
 
 const { Message } = require('summermail-exports');
 
@@ -382,10 +387,7 @@ export default class UnthreadedThreadList extends React.Component {
 
   _toggleSection = (key) => {
     this.setState((prevState) => ({
-      collapsedSections: {
-        ...prevState.collapsedSections,
-        [key]: !prevState.collapsedSections[key],
-      },
+      collapsedSections: toggleDateSection(prevState.collapsedSections, key),
     }));
   };
 

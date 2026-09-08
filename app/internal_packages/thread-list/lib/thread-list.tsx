@@ -32,11 +32,17 @@ import ThreadListScrollTooltip from './thread-list-scroll-tooltip';
 import ThreadListStore from './thread-list-store';
 import ThreadListContextMenu from './thread-list-context-menu';
 import { threadAriaLabel } from './thread-list-aria-utils';
-import { dateSectionFor, dateSectionLabel } from './date-sections';
+import {
+  CollapsedDateSections,
+  DateSectionKey,
+  dateSectionFor,
+  dateSectionLabel,
+  toggleDateSection,
+} from './date-sections';
 
 class ThreadList extends React.Component<
   Record<string, unknown>,
-  { style: string; syncing: boolean }
+  { style: string; syncing: boolean; collapsedSections: CollapsedDateSections }
 > {
   static displayName = 'ThreadList';
 
@@ -56,6 +62,7 @@ class ThreadList extends React.Component<
     this.state = {
       style: 'unknown',
       syncing: false,
+      collapsedSections: {},
     };
   }
 
@@ -72,7 +79,7 @@ class ThreadList extends React.Component<
 
   shouldComponentUpdate(
     nextProps: Record<string, unknown>,
-    nextState: { style: string; syncing: boolean }
+    nextState: { style: string; syncing: boolean; collapsedSections: CollapsedDateSections }
   ) {
     return !Utils.isEqualReact(this.props, nextProps) || !Utils.isEqualReact(this.state, nextState);
   }
@@ -120,6 +127,8 @@ class ThreadList extends React.Component<
             itemHeight={itemHeight}
             sectionForItem={this._dateSectionForThread}
             sectionHeaderHeight={41}
+            collapsedSections={this.state.collapsedSections}
+            onToggleSection={this._onToggleSection}
             className={`thread-list thread-list-${this.state.style}`}
             scrollTooltipComponent={ThreadListScrollTooltip}
             EmptyComponent={EmptyListState}
@@ -232,6 +241,12 @@ class ThreadList extends React.Component<
     if (messageId) {
       Actions.focusMessageInThread({ threadId: thread.id, messageId });
     }
+  };
+
+  _onToggleSection = (key: DateSectionKey) => {
+    this.setState((state) => ({
+      collapsedSections: toggleDateSection(state.collapsedSections, key),
+    }));
   };
 
   _onSyncStatusChanged = () => {

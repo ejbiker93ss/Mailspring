@@ -39,18 +39,34 @@ export class ListTabularColumn {
 export type ListTabularSection = {
   key: string;
   label: React.ReactNode;
+  count?: number;
 };
 
 export function listOffsetForIndex(
   index: number,
   itemHeight: number,
   sectionHeaderHeight: number,
-  sectionBoundaryIndexes: number[]
+  sectionBoundaryIndexes: number[],
+  collapsedSections: { [key: string]: boolean } = {},
+  sectionKeys: { [boundaryIndex: number]: string } = {}
 ) {
-  const sectionsBefore = sectionBoundaryIndexes.filter(
-    (boundaryIndex) => boundaryIndex < index
-  ).length;
-  return index * itemHeight + sectionsBefore * sectionHeaderHeight;
+  const boundaries = sectionBoundaryIndexes.slice().sort((a, b) => a - b);
+  let offset = index * itemHeight;
+
+  boundaries.forEach((boundaryIndex, boundaryPosition) => {
+    if (boundaryIndex >= index) {
+      return;
+    }
+
+    offset += sectionHeaderHeight;
+    const nextBoundary = boundaries[boundaryPosition + 1] ?? index;
+    const sectionKey = sectionKeys[boundaryIndex];
+    if (sectionKey && collapsedSections[sectionKey]) {
+      offset -= Math.max(0, Math.min(index, nextBoundary) - boundaryIndex) * itemHeight;
+    }
+  });
+
+  return offset;
 }
 
 export function listIndexForOffset(
@@ -58,14 +74,23 @@ export function listIndexForOffset(
   count: number,
   itemHeight: number,
   sectionHeaderHeight: number,
-  sectionBoundaryIndexes: number[]
+  sectionBoundaryIndexes: number[],
+  collapsedSections: { [key: string]: boolean } = {},
+  sectionKeys: { [boundaryIndex: number]: string } = {}
 ) {
   let low = 0;
   let high = Math.max(0, count);
   while (low < high) {
     const middle = Math.floor((low + high + 1) / 2);
     if (
-      listOffsetForIndex(middle, itemHeight, sectionHeaderHeight, sectionBoundaryIndexes) <= offset
+      listOffsetForIndex(
+        middle,
+        itemHeight,
+        sectionHeaderHeight,
+        sectionBoundaryIndexes,
+        collapsedSections,
+        sectionKeys
+      ) <= offset
     ) {
       low = middle;
     } else {
@@ -86,6 +111,7 @@ type ListTabularRow = {
     sectionHeaderHeight: number;
   };
   section?: ListTabularSection;
+  sectionCollapsed?: boolean;
 };
 
 type ListTabularRowsProps = {
@@ -104,6 +130,7 @@ type ListTabularRowsProps = {
   onDoubleClick?: (...args: any[]) => any;
   onDragStart?: (...args: any[]) => any;
   onDragEnd?: (...args: any[]) => any;
+  onToggleSection?: (key: string) => void;
 };
 
 export const ListTabularRows: React.FC<ListTabularRowsProps> = React.memo(
@@ -123,6 +150,7 @@ export const ListTabularRows: React.FC<ListTabularRowsProps> = React.memo(
     onDoubleClick,
     onDragStart,
     onDragEnd,
+    onToggleSection,
   }) => (
     <div
       ref={domRef}
@@ -137,7 +165,7 @@ export const ListTabularRows: React.FC<ListTabularRowsProps> = React.memo(
       tabIndex={tabIndex}
       aria-activedescendant={ariaActiveDescendant}
     >
-      {rows.map(({ item, idx, itemProps = {}, metrics, section }) => {
+      {rows.map(({ item, idx, itemProps = {}, metrics, section, sectionCollapsed }) => {
         if (!item) return null;
         return (
           <ListTabularItem
@@ -146,10 +174,12 @@ export const ListTabularRows: React.FC<ListTabularRowsProps> = React.memo(
             itemProps={itemProps}
             metrics={metrics}
             section={section}
+            sectionCollapsed={sectionCollapsed}
             columns={columns}
             onSelect={onSelect}
             onClick={onClick}
             onDoubleClick={onDoubleClick}
+            onToggleSection={onToggleSection}
           />
         );
       })}
@@ -169,6 +199,8 @@ export interface ListTabularProps extends ScrollRegionProps {
   itemHeight?: number;
   sectionForItem?: (item: any) => ListTabularSection | null;
   sectionHeaderHeight?: number;
+  collapsedSections?: { [key: string]: boolean };
+  onToggleSection?: (key: string) => void;
   EmptyComponent?: React.ComponentType<{ visible: boolean }>;
   role?: string;
   ariaLabel?: string;
@@ -259,6 +291,10 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       this._sectionBoundaries = {};
     }
 
+    if (prevProps.collapsedSections !== this.props.collapsedSections) {
+      this.updateRangeStateIfViewportChanged();
+    }
+
     if (this.updateRangeStateFiring) {
       this.updateRangeStateFiring = false;
     } else if (
@@ -346,13 +382,19 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       const item = items[idx];
       if (item) {
         const itemProps = itemPropsProvider(item, idx);
-        const section = this._sectionBoundaries[idx];
+        const section = this._sectionForIndex(idx);
+        const isSectionBoundary = !!this._sectionBoundaries[idx];
+        const sectionCollapsed = !!(section && this.props.collapsedSections?.[section.key]);
+        if (sectionCollapsed && !isSectionBoundary) {
+          return;
+        }
         rows.push({
           item,
           idx,
           itemProps,
-          section,
-          metrics: this._metricsForIndex(idx, !!section),
+          section: isSectionBoundary ? this._sectionWithCount(idx) : undefined,
+          sectionCollapsed,
+          metrics: this._metricsForIndex(idx, isSectionBoundary),
         });
       }
     });
@@ -367,28 +409,54 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       return;
     }
 
-    const { items, renderedRangeStart, renderedRangeEnd, count } = this.state;
-    Object.keys(this._sectionBoundaries).forEach((rawIndex) => {
-      if (Number(rawIndex) >= count) {
-        delete this._sectionBoundaries[rawIndex];
-      }
+    const boundaries = { ...this._sectionBoundaries };
+    Object.keys(boundaries).forEach((index) => {
+      if (Number(index) >= this.state.count) delete boundaries[index];
     });
-
-    Utils.range(renderedRangeStart, renderedRangeEnd).forEach((idx) => {
-      const item = items[idx];
-      if (!item) return;
-
+    for (let idx = 0; idx < this.state.count; idx += 1) {
+      const item = this.props.dataSource.get(idx);
+      const previousItem = idx > 0 ? this.props.dataSource.get(idx - 1) : null;
+      // Retained query ranges may not include earlier rows. Keep their known
+      // boundaries instead of treating a gap in loaded data as a new section.
+      if (!item || (idx > 0 && !previousItem)) continue;
       const section = sectionForItem(item);
-      const previousItem = idx > renderedRangeStart ? items[idx - 1] : null;
       const previousSection = previousItem ? sectionForItem(previousItem) : null;
-
-      if (idx === 0 || previousItem) {
-        delete this._sectionBoundaries[idx];
-        if (section && (idx === 0 || section.key !== previousSection?.key)) {
-          this._sectionBoundaries[idx] = section;
-        }
+      delete boundaries[idx];
+      if (section && section.key !== previousSection?.key) {
+        boundaries[idx] = section;
       }
-    });
+    }
+    this._sectionBoundaries = boundaries;
+  }
+
+  _sectionBoundaryIndexes() {
+    return Object.keys(this._sectionBoundaries)
+      .map(Number)
+      .sort((a, b) => a - b);
+  }
+
+  _sectionKeys() {
+    return Object.keys(this._sectionBoundaries).reduce(
+      (keys, rawIndex) => {
+        keys[Number(rawIndex)] = this._sectionBoundaries[Number(rawIndex)].key;
+        return keys;
+      },
+      {} as { [boundaryIndex: number]: string }
+    );
+  }
+
+  _sectionForIndex(index: number) {
+    const boundaryIndex = this._sectionBoundaryIndexes()
+      .filter((boundary) => boundary <= index)
+      .pop();
+    return boundaryIndex == null ? null : this._sectionBoundaries[boundaryIndex];
+  }
+
+  _sectionWithCount(index: number) {
+    const boundaries = this._sectionBoundaryIndexes();
+    const boundaryPosition = boundaries.indexOf(index);
+    const nextBoundary = boundaries[boundaryPosition + 1] ?? this.state.count;
+    return { ...this._sectionBoundaries[index], count: nextBoundary - index };
   }
 
   _offsetForIndex(index: number) {
@@ -397,20 +465,24 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       index,
       itemHeight,
       sectionHeaderHeight,
-      Object.keys(this._sectionBoundaries).map(Number)
+      this._sectionBoundaryIndexes(),
+      this.props.collapsedSections,
+      this._sectionKeys()
     );
   }
 
   _metricsForIndex(index: number, hasSection: boolean, itemOnly = false) {
     const { itemHeight, sectionHeaderHeight = 0 } = this.props;
+    const section = hasSection ? this._sectionBoundaries[index] : null;
+    const isCollapsed = !!(section && this.props.collapsedSections?.[section.key]);
     const headerHeight = hasSection ? sectionHeaderHeight : 0;
     const top =
       this._offsetForIndex(index) +
       (itemOnly && this._sectionBoundaries[index] ? sectionHeaderHeight : 0);
     return {
       top,
-      height: itemHeight + headerHeight,
-      itemHeight,
+      height: (isCollapsed ? 0 : itemHeight) + headerHeight,
+      itemHeight: isCollapsed ? 0 : itemHeight,
       sectionHeaderHeight: headerHeight,
     };
   }
@@ -422,7 +494,9 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       this.state.count,
       itemHeight,
       sectionHeaderHeight,
-      Object.keys(this._sectionBoundaries).map(Number)
+      this._sectionBoundaryIndexes(),
+      this.props.collapsedSections,
+      this._sectionKeys()
     );
   }
 
@@ -450,12 +524,12 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       return;
     }
     const { scrollTop } = this._scrollRegion;
-    const { itemHeight } = this.props;
-
     // Determine the exact range of rows we want onscreen
-    const rangeSize = Math.ceil(window.innerHeight / itemHeight);
     let rangeStart = this._indexForOffset(scrollTop);
-    let rangeEnd = rangeStart + rangeSize;
+    // Collapsed groups can span many source rows but occupy only one header.
+    // Resolve both viewport edges through the section layout so the following
+    // groups are still loaded and rendered after collapsing a large group.
+    let rangeEnd = this._indexForOffset(scrollTop + window.innerHeight) + 1;
 
     // Expand the start/end so that you can advance the keyboard cursor fast and
     // we have items to move to and then scroll to.
@@ -562,6 +636,7 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
       onDragStart,
       onDoubleClick,
       sectionForItem,
+      onToggleSection,
     } = this.props;
     const { count, loaded, empty } = this.state;
     const rows = this.getRowsToRender();
@@ -595,6 +670,7 @@ export class ListTabular extends Component<ListTabularProps, ListTabularState> {
             onDragEnd={onDragEnd}
             onDragStart={onDragStart}
             onDoubleClick={onDoubleClick}
+            onToggleSection={onToggleSection}
           />
           <div className="footer">{footer}</div>
         </ScrollRegion>
