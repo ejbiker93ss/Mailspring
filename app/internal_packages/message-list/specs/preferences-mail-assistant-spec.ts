@@ -4,16 +4,26 @@ import {
   getMailAssistantAPIKey,
   getManagedMailAssistantAPIKey,
 } from '../lib/preferences-mail-assistant';
+import {
+  getManagedMailAssistantAPIKey as getManagedProviderAPIKey,
+  providerLabel,
+} from '../lib/ai-provider-settings';
 
 describe('Mail assistant credentials', () => {
   let originalCompanyKey: string | undefined;
   let originalStandardKey: string | undefined;
+  let originalAnthropicKey: string | undefined;
+  let originalGeminiKey: string | undefined;
 
   beforeEach(() => {
     originalCompanyKey = process.env.MSSE_OPENAI_API_KEY;
     originalStandardKey = process.env.OPENAI_API_KEY;
+    originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    originalGeminiKey = process.env.GEMINI_API_KEY;
     delete process.env.MSSE_OPENAI_API_KEY;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.GEMINI_API_KEY;
   });
 
   afterEach(() => {
@@ -21,6 +31,10 @@ describe('Mail assistant credentials', () => {
     else process.env.MSSE_OPENAI_API_KEY = originalCompanyKey;
     if (originalStandardKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = originalStandardKey;
+    if (originalAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
+    if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalGeminiKey;
   });
 
   it('prefers a company-managed environment credential without reading saved app data', async () => {
@@ -44,5 +58,23 @@ describe('Mail assistant credentials', () => {
     spyOn(KeyManager, 'getPassword').andReturn(Promise.resolve('saved-key'));
 
     expect(await getMailAssistantAPIKey()).toBe('saved-key');
+  });
+
+  it('keeps managed credentials isolated by provider', () => {
+    process.env.OPENAI_API_KEY = 'openai-key';
+    process.env.ANTHROPIC_API_KEY = 'anthropic-key';
+    process.env.GEMINI_API_KEY = 'gemini-key';
+
+    expect(getManagedProviderAPIKey('anthropic')).toBe('anthropic-key');
+    expect(getManagedProviderAPIKey('google')).toBe('gemini-key');
+    expect(getManagedProviderAPIKey('deepseek')).toBe('');
+  });
+
+  it('uses clear labels for every supported provider', () => {
+    expect(providerLabel('openai')).toBe('OpenAI');
+    expect(providerLabel('anthropic')).toBe('Anthropic');
+    expect(providerLabel('google')).toBe('Google Gemini');
+    expect(providerLabel('deepseek')).toBe('DeepSeek');
+    expect(providerLabel('custom')).toBe('Custom compatible API');
   });
 });

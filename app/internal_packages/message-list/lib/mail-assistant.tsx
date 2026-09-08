@@ -29,11 +29,13 @@ import {
 } from './openai-mail-assistant-client';
 import {
   INCLUDE_TEXT_CONFIG_KEY,
-  MODEL_CONFIG_KEY,
   REDACT_PERSONAL_INFO_CONFIG_KEY,
   USE_THREAD_CONFIG_KEY,
-  getMailAssistantAPIKey,
 } from './preferences-mail-assistant';
+import {
+  providerConfigurationIsReady,
+  resolveMailAssistantProviderConfig,
+} from './ai-provider-settings';
 import {
   MailAssistantAliasMap,
   addAliasesFromSerializedMail,
@@ -170,7 +172,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
       ),
     ];
     this.setState({
-      hasAPIKey: !!(await getMailAssistantAPIKey()),
+      hasAPIKey: providerConfigurationIsReady(await resolveMailAssistantProviderConfig()),
       conversations: loadMailAssistantConversations(),
       prompt: loadMailAssistantDraft(),
     });
@@ -401,8 +403,8 @@ export default class MailAssistant extends React.Component<Record<string, never>
     const prompt = (requestedPrompt || this.state.prompt).trim();
     if (!prompt || this.state.loading) return;
 
-    const apiKey = await getMailAssistantAPIKey();
-    if (!apiKey) {
+    const config = await resolveMailAssistantProviderConfig();
+    if (!providerConfigurationIsReady(config)) {
       this.setState({ hasAPIKey: false });
       return;
     }
@@ -459,8 +461,12 @@ export default class MailAssistant extends React.Component<Record<string, never>
         );
 
       const response = await askMailAssistant({
-        apiKey,
-        model: AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra',
+        apiKey: config.apiKey,
+        model: config.model,
+        provider: config.provider,
+        endpoint: config.endpoint,
+        supportsImages: config.supportsImages,
+        supportsTools: config.supportsTools,
         messages: displayMessages
           .filter((message) => !message.error)
           .map(({ role, content }) => ({
@@ -884,7 +890,9 @@ export default class MailAssistant extends React.Component<Record<string, never>
               <SparklesIcon />
             </span>
             <h2>{localized('Bring AI to your inbox')}</h2>
-            <p>{localized('Add your OpenAI API key in Settings to summarize and draft safely.')}</p>
+            <p>
+              {localized('Add an AI provider API key in Settings to summarize and draft safely.')}
+            </p>
             <button className="btn btn-emphasis" onClick={this._openSettings}>
               {localized('Open Settings')}
             </button>

@@ -7,6 +7,7 @@ import {
 } from './mail-assistant-privacy';
 import { buildMailAssistantInstructions } from './mail-assistant-system-prompt';
 import { linkMailAssistantEmailReferences } from './mail-assistant-email-links';
+import { MailAssistantProvider } from './ai-provider-settings';
 
 export interface AssistantChatMessage {
   role: 'user' | 'assistant';
@@ -274,24 +275,233 @@ const TOOLS = [
   },
 ];
 
+function configuredUrl(provider: MailAssistantProvider, endpoint?: string) {
+  if (provider === 'openai') return new URL('https://api.openai.com/v1/responses');
+  if (provider === 'anthropic') return new URL('https://api.anthropic.com/v1/messages');
+  if (provider === 'google') return new URL('https://generativelanguage.googleapis.com');
+  if (provider === 'deepseek') return new URL('https://api.deepseek.com/chat/completions');
+  if (!endpoint) throw new Error('Add a compatible API base URL in AI Assistant settings.');
+  const url = new URL(endpoint);
+  if (url.protocol !== 'https:' && !['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {
+    throw new Error('Compatible AI endpoints must use HTTPS unless they are local.');
+  }
+  if (url.username || url.password || url.search || url.hash)
+    throw new Error('Use a clean compatible API base URL.');
+  const basePath = url.pathname.replace(/\/$/, '');
+  url.pathname = basePath.endsWith('/chat/completions') ? basePath : `${basePath}/chat/completions`;
+  return url;
+}
+
+function inputText(content: any) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content))
+    return content
+      .filter((part) => part.type === 'input_text')
+      .map((part) => part.text)
+      .join('\n');
+  return '';
+}
+
+function openAICompatiblePayload(payload: Record<string, any>) {
+  const messages: any[] = [];
+  if (payload.instructions) messages.push({ role: 'system', content: payload.instructions });
+  for (const item of payload.input || []) {
+    if (item.type === 'function_call_output') {
+      messages.push({ role: 'tool', tool_call_id: item.call_id, content: item.output });
+    } else if (item.type === 'function_call') {
+      messages.push({
+        role: 'assistant',
+        content: null,
+        ...(item.reasoning_content ? { reasoning_content: item.reasoning_content } : {}),
+        tool_calls: [
+          {
+            id: item.call_id,
+            type: 'function',
+            function: { name: item.name, arguments: item.arguments },
+          },
+        ],
+      });
+    } else if (item.role) {
+      messages.push({ role: item.role, content: inputText(item.content) });
+    }
+  }
+  return {
+    model: payload.model,
+    messages,
+    tools: payload.tools && payload.tools.map(({ strict, ...tool }) => tool),
+    max_tokens: payload.max_output_tokens || 800,
+  };
+}
+
+function googlePayload(payload: Record<string, any>) {
+  const contents: any[] = [];
+  for (const item of payload.input || []) {
+    if (item.type === 'function_call_output')
+      contents.push({
+        role: 'user',
+        parts: [
+          { functionResponse: { name: item.name || 'tool', response: { result: item.output } } },
+        ],
+      });
+    else if (item.type === 'function_call')
+      contents.push({
+        role: 'model',
+        parts: [{ functionCall: { name: item.name, args: JSON.parse(item.arguments || '{}') } }],
+      });
+    else if (item.role)
+      contents.push({
+        role: item.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: inputText(item.content) }],
+      });
+  }
+  return {
+    systemInstruction: { parts: [{ text: payload.instructions || '' }] },
+    contents,
+    tools: payload.tools
+      ? [
+          {
+            functionDeclarations: payload.tools.map(({ type, strict, parameters, ...tool }) => ({
+              ...tool,
+              parameters,
+            })),
+          },
+        ]
+      : undefined,
+    generationConfig: { maxOutputTokens: payload.max_output_tokens || 800 },
+  };
+}
+
+function anthropicPayload(payload: Record<string, any>) {
+  const messages: any[] = [];
+  for (const item of payload.input || []) {
+    if (item.type === 'function_call_output')
+      messages.push({
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: item.call_id, content: item.output }],
+      });
+    else if (item.type === 'function_call')
+      messages.push({
+        role: 'assistant',
+        content: [
+          {
+            type: 'tool_use',
+            id: item.call_id,
+            name: item.name,
+            input: JSON.parse(item.arguments || '{}'),
+          },
+        ],
+      });
+    else if (item.role) messages.push({ role: item.role, content: inputText(item.content) });
+  }
+  return {
+    model: payload.model,
+    system: payload.instructions,
+    messages,
+    tools:
+      payload.tools &&
+      payload.tools.map(({ type, strict, parameters, ...tool }) => ({
+        ...tool,
+        input_schema: parameters,
+      })),
+    max_tokens: payload.max_output_tokens || 800,
+  };
+}
+
+function normalizedResponse(provider: MailAssistantProvider, response: any) {
+  if (provider === 'openai') return response;
+  if (provider === 'google') {
+    const parts = response.candidates?.[0]?.content?.parts || [];
+    return {
+      output: [
+        ...parts
+          .filter((part) => part.text)
+          .map((part) => ({
+            type: 'message',
+            content: [{ type: 'output_text', text: part.text }],
+          })),
+        ...parts
+          .filter((part) => part.functionCall)
+          .map((part, index) => ({
+            type: 'function_call',
+            call_id: part.functionCall.id || `google-${index}`,
+            name: part.functionCall.name,
+            arguments: JSON.stringify(part.functionCall.args || {}),
+          })),
+      ],
+    };
+  }
+  if (provider === 'anthropic')
+    return {
+      output: (response.content || []).map((part) =>
+        part.type === 'text'
+          ? { type: 'message', content: [{ type: 'output_text', text: part.text }] }
+          : {
+              type: 'function_call',
+              call_id: part.id,
+              name: part.name,
+              arguments: JSON.stringify(part.input || {}),
+            }
+      ),
+    };
+  const message = response.choices?.[0]?.message || {};
+  return {
+    output: [
+      ...(message.content
+        ? [{ type: 'message', content: [{ type: 'output_text', text: message.content }] }]
+        : []),
+      ...(message.tool_calls || []).map((call) => ({
+        type: 'function_call',
+        call_id: call.id,
+        name: call.function?.name,
+        arguments: call.function?.arguments || '{}',
+        reasoning_content: message.reasoning_content,
+      })),
+    ],
+  };
+}
+
 function requestJSON(
   apiKey: string,
   payload: Record<string, any>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  provider: MailAssistantProvider = 'openai',
+  endpoint?: string
 ): Promise<any> {
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify(payload);
+    let url: URL;
+    try {
+      url = configuredUrl(provider, endpoint);
+    } catch (error) {
+      reject(error);
+      return;
+    }
+    if (provider === 'google')
+      url.pathname = `/v1beta/models/${encodeURIComponent(payload.model)}:generateContent`;
+    const providerPayload =
+      provider === 'openai'
+        ? payload
+        : provider === 'google'
+          ? googlePayload(payload)
+          : provider === 'anthropic'
+            ? anthropicPayload(payload)
+            : openAICompatiblePayload(payload);
+    const body = JSON.stringify(providerPayload);
+    const headers: Record<string, string | number> = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+    };
+    if (provider === 'anthropic') {
+      headers['x-api-key'] = apiKey;
+      headers['anthropic-version'] = '2023-06-01';
+    } else if (provider === 'google') headers['x-goog-api-key'] = apiKey;
+    else if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
     const request = https.request(
       {
-        hostname: 'api.openai.com',
-        port: 443,
-        path: '/v1/responses',
+        hostname: url.hostname,
+        port: url.port ? Number(url.port) : 443,
+        path: `${url.pathname}${url.search}`,
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(body),
-        },
+        headers,
       },
       (response) => {
         let raw = '';
@@ -302,7 +512,9 @@ function requestJSON(
           try {
             parsed = JSON.parse(raw);
           } catch (error) {
-            reject(new Error(`OpenAI returned an unreadable response (${response.statusCode}).`));
+            reject(
+              new Error(`${provider} returned an unreadable response (${response.statusCode}).`)
+            );
             return;
           }
           if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -310,12 +522,12 @@ function requestJSON(
               new Error(
                 parsed.error && parsed.error.message
                   ? parsed.error.message
-                  : 'OpenAI request failed.'
+                  : `${provider} request failed.`
               )
             );
             return;
           }
-          resolve(parsed);
+          resolve(normalizedResponse(provider, parsed));
         });
       }
     );
@@ -336,6 +548,8 @@ function requestJSON(
 export async function summarizeMailText(options: {
   apiKey: string;
   model: string;
+  provider?: MailAssistantProvider;
+  endpoint?: string;
   systemPrompt: string;
   userMessage: string;
   signal?: AbortSignal;
@@ -349,7 +563,9 @@ export async function summarizeMailText(options: {
       input: [{ role: 'user', content: options.userMessage }],
       max_output_tokens: 800,
     },
-    options.signal
+    options.signal,
+    options.provider,
+    options.endpoint
   );
   const text = (response.output || [])
     .filter((item) => item.type === 'message')
@@ -358,13 +574,17 @@ export async function summarizeMailText(options: {
     .map((item) => item.text)
     .join('\n')
     .trim();
-  if (!text) throw new Error('OpenAI returned an empty summary.');
+  if (!text) throw new Error(`${options.provider || 'OpenAI'} returned an empty summary.`);
   return text;
 }
 
 export async function askMailAssistant(options: {
   apiKey: string;
   model: string;
+  provider?: MailAssistantProvider;
+  endpoint?: string;
+  supportsImages?: boolean;
+  supportsTools?: boolean;
   messages: AssistantChatMessage[];
   threadContext?: string;
   redactPersonalInfo: boolean;
@@ -389,6 +609,12 @@ export async function askMailAssistant(options: {
   const boundedMessages = buildAssistantRequestMessages(options.messages);
   let input: any[] = [...boundedMessages];
   const attachments = options.attachments || [];
+  if (
+    attachments.some((attachment) => attachment.kind === 'image') &&
+    options.supportsImages === false
+  ) {
+    throw new Error('The selected AI provider or model does not support image attachments.');
+  }
   if (attachments.length && input.length) {
     const last = input[input.length - 1];
     const textFiles = attachments.filter((attachment) => attachment.kind === 'text');
@@ -421,9 +647,11 @@ export async function askMailAssistant(options: {
         store: false,
         instructions: scopedInstructions,
         input,
-        tools: TOOLS,
+        tools: options.supportsTools === false ? undefined : TOOLS,
       },
-      options.signal
+      options.signal,
+      options.provider,
+      options.endpoint
     );
 
     const readCalls = (response.output || []).filter(
@@ -472,6 +700,7 @@ export async function askMailAssistant(options: {
         return {
           type: 'function_call_output',
           call_id: item.call_id,
+          name: item.name,
           output: output.slice(0, 60000),
         };
       })

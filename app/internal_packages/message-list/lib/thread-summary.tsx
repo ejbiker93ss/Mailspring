@@ -5,11 +5,13 @@ import { AiSummaryMarkdown } from './ai-summary-markdown';
 import { generateThreadSummary } from './ai-summary-client';
 import { getAiSummaryStore, AiSummaryScope, StoredThreadSummary } from './ai-summary-store';
 import {
-  MODEL_CONFIG_KEY,
   REDACT_PERSONAL_INFO_CONFIG_KEY,
   SUMMARY_INPUT_CAP_CONFIG_KEY,
-  getMailAssistantAPIKey,
 } from './preferences-mail-assistant';
+import {
+  providerConfigurationIsReady,
+  resolveMailAssistantProviderConfig,
+} from './ai-provider-settings';
 
 interface Props {
   thread: Thread;
@@ -80,7 +82,7 @@ export default class ThreadSummary extends React.Component<Props, State> {
       }
     }
     const savedOpen = localStorage.getItem(this._storageKey());
-    const hasAPIKey = !!(await getMailAssistantAPIKey());
+    const hasAPIKey = providerConfigurationIsReady(await resolveMailAssistantProviderConfig());
     if (!this._mounted || threadId !== this.props.thread.id) return;
     this.setState({
       error: '',
@@ -99,15 +101,17 @@ export default class ThreadSummary extends React.Component<Props, State> {
 
   _generate = async () => {
     const scope = scopeFor(this.props.messages);
-    const apiKey = await getMailAssistantAPIKey();
-    if (!scope || !apiKey) return;
+    const config = await resolveMailAssistantProviderConfig();
+    if (!scope || !providerConfigurationIsReady(config)) return;
     const messages = this.props.messages.filter((message) => !message.draft).slice(-60);
     this._abort = new AbortController();
     this.setState({ error: '', loading: true, open: true });
     try {
       const summary = await generateThreadSummary({
-        apiKey,
-        model: AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra',
+        apiKey: config.apiKey,
+        model: config.model,
+        provider: config.provider,
+        endpoint: config.endpoint,
         messages,
         redactPersonalInfo: AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false,
         inputCap: AppEnv.config.get(SUMMARY_INPUT_CAP_CONFIG_KEY) || 120000,
@@ -157,7 +161,7 @@ export default class ThreadSummary extends React.Component<Props, State> {
         title={
           this.state.hasAPIKey
             ? actionLabel
-            : localized('Add your OpenAI API key in AI Assistant settings to summarize mail.')
+            : localized('Add an AI provider API key in AI Assistant settings to summarize mail.')
         }
         aria-label={actionLabel}
         onClick={this._generate}

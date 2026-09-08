@@ -131,12 +131,20 @@ export default class SummerMailWindow extends EventEmitter {
       autoHideMenuBar,
     };
 
-    if (this.neverClose || this.isSpec) {
+    if (
+      this.neverClose ||
+      this.isSpec ||
+      settings.windowType === 'emptyWindow' ||
+      settings.windowType === 'composer'
+    ) {
       // Prevents DOM timers from being suspended when the main window is hidden.
       // Means there's not an awkward catch-up when you re-show the main window.
       // For spec windows, this is critical: the hidden spec window would otherwise
       // throttle setTimeout calls to ~1Hz, making each test take ~1s and causing
       // the full test suite to exceed CI time limits.
+      // Hot/composer windows also finish startup while hidden. Their readiness
+      // and focus use animation frames, so throttling delays New Message or
+      // leaves the hot window unready and forces a cold renderer startup.
       browserWindowOptions.webPreferences.backgroundThrottling = false;
     }
 

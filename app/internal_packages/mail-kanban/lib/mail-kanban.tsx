@@ -180,11 +180,10 @@ export default class MailKanban extends React.Component<Record<string, never>, S
 
   _moveThread = (threadId: string, sourceFolder: Folder | undefined, folder: Folder) => {
     const thread = this.state.threads.find((candidate) => candidate.id === threadId);
-    if (
-      !thread ||
-      sourceFolder?.id === folder.id ||
-      (thread.folders || []).some((current) => current.id === folder.id)
-    ) {
+    // A conversation can span both lanes (for example, an older completed
+    // message and a new Inbox reply). Destination membership must not prevent
+    // moving the remaining messages out of the source lane.
+    if (!thread || sourceFolder?.id === folder.id) {
       return;
     }
     Actions.queueTask(

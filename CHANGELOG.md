@@ -1,5 +1,16 @@
 # SummerMail Changelog
 
+## 1.23.47 (9/8/2026)
+
+Improvements:
+
+- Added AI provider selection for Google, Anthropic, DeepSeek, and custom compatible endpoints alongside OpenAI.
+
+Bug Fixes:
+
+- Reduced new composer startup delays by keeping preloaded windows responsive and waiting for the editor to mount before focusing it.
+- Fixed Kanban drops being ignored when a conversation already had an older message in the destination folder.
+
 ## 1.23.46 (9/8/2026)
 
 Bug Fixes:

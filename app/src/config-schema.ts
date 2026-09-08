@@ -148,6 +148,14 @@ export default {
       mailAssistant: {
         type: 'object',
         properties: {
+          provider: {
+            type: 'string',
+            default: 'openai',
+          },
+          providers: {
+            type: 'object',
+            default: {},
+          },
           model: {
             type: 'string',
             default: 'gpt-5.6-terra',

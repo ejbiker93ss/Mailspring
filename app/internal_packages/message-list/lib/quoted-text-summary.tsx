@@ -4,11 +4,13 @@ import { AiSummaryMarkdown } from './ai-summary-markdown';
 import { generateQuotedSummary } from './ai-summary-client';
 import { getAiSummaryStore, AiSummaryScope } from './ai-summary-store';
 import {
-  MODEL_CONFIG_KEY,
   REDACT_PERSONAL_INFO_CONFIG_KEY,
   SUMMARY_INPUT_CAP_CONFIG_KEY,
-  getMailAssistantAPIKey,
 } from './preferences-mail-assistant';
+import {
+  providerConfigurationIsReady,
+  resolveMailAssistantProviderConfig,
+} from './ai-provider-settings';
 
 interface Props {
   message: Message;
@@ -64,9 +66,9 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
   _peek = async () => {
     const quoteText = this.props.quoteText;
     const scope = scopeFor(this.props.message);
-    const apiKey = await getMailAssistantAPIKey();
+    const config = await resolveMailAssistantProviderConfig();
     if (!this._mounted || quoteText !== this.props.quoteText) return;
-    if (!scope || !apiKey) {
+    if (!scope || !providerConfigurationIsReady(config)) {
       this.setState({ available: false, summary: null, open: false });
       return;
     }
@@ -94,8 +96,8 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
 
   _generate = async (force = false) => {
     const scope = scopeFor(this.props.message);
-    const apiKey = await getMailAssistantAPIKey();
-    if (!scope || !apiKey) return;
+    const config = await resolveMailAssistantProviderConfig();
+    if (!scope || !providerConfigurationIsReady(config)) return;
     if (!force) {
       let cached = null;
       try {
@@ -117,8 +119,10 @@ export default class QuotedTextSummary extends React.Component<Props, State> {
     this.setState({ error: '', loading: true, open: true });
     try {
       const summary = await generateQuotedSummary({
-        apiKey,
-        model: AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra',
+        apiKey: config.apiKey,
+        model: config.model,
+        provider: config.provider,
+        endpoint: config.endpoint,
         quoteText: this.props.quoteText,
         subject: this.props.message.subject,
         contextMessages: [this.props.message],

@@ -1,14 +1,25 @@
 import React from 'react';
 import { KeyManager, localized } from 'summermail-exports';
 import {
+  activeProvider,
+  getManagedMailAssistantAPIKey as getManagedProviderAPIKey,
+  getMailAssistantAPIKey as getProviderAPIKey,
+  isMailAssistantProvider,
+  MailAssistantProvider,
+  providerEndpoint,
+  providerKeyName,
+  providerLabel,
+  providerModel,
+  saveMailAssistantProviderKey,
+  saveMailAssistantProviderSettings,
+} from './ai-provider-settings';
+import {
   connectMicrosoftTeams,
   disconnectMicrosoftTeams,
   getMicrosoftTeamsConnection,
   MicrosoftTeamsConnection,
 } from '../../main-calendar/lib/core/microsoft-teams-connection';
 
-const API_KEY_NAME = 'openai-mail-assistant-api-key';
-const MANAGED_API_KEY_ENV_NAMES = ['MSSE_OPENAI_API_KEY', 'OPENAI_API_KEY'];
 export const MODEL_CONFIG_KEY = 'core.mailAssistant.model';
 export const INCLUDE_TEXT_CONFIG_KEY = 'core.mailAssistant.includeRedactedText';
 export const REDACT_PERSONAL_INFO_CONFIG_KEY = 'core.mailAssistant.redactPersonalInfo';
@@ -19,10 +30,14 @@ export const SUMMARY_INPUT_CAP_CONFIG_KEY = 'core.mailAssistant.summaryInputCap'
 
 interface State {
   apiKey: string;
+  endpoint: string;
   hasManagedKey: boolean;
   hasSavedKey: boolean;
   includeRedactedText: boolean;
   model: string;
+  provider: MailAssistantProvider;
+  supportsImages: boolean;
+  supportsTools: boolean;
   redactPersonalInfo: boolean;
   saving: boolean;
   status: string;
@@ -35,15 +50,11 @@ interface State {
 }
 
 export function getManagedMailAssistantAPIKey() {
-  for (const name of MANAGED_API_KEY_ENV_NAMES) {
-    const value = (process.env[name] || '').trim();
-    if (value) return value;
-  }
-  return '';
+  return getManagedProviderAPIKey('openai');
 }
 
 export async function getMailAssistantAPIKey() {
-  return getManagedMailAssistantAPIKey() || KeyManager.getPassword(API_KEY_NAME);
+  return getProviderAPIKey();
 }
 
 export default class PreferencesMailAssistant extends React.Component<
@@ -54,10 +65,14 @@ export default class PreferencesMailAssistant extends React.Component<
 
   state: State = {
     apiKey: '',
+    endpoint: providerEndpoint(),
     hasManagedKey: false,
     hasSavedKey: false,
     includeRedactedText: AppEnv.config.get(INCLUDE_TEXT_CONFIG_KEY) !== false,
-    model: AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra',
+    model: providerModel(),
+    provider: activeProvider(),
+    supportsImages: false,
+    supportsTools: false,
     redactPersonalInfo: AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false,
     saving: false,
     status: '',
@@ -70,20 +85,42 @@ export default class PreferencesMailAssistant extends React.Component<
   };
 
   async componentDidMount() {
-    const hasManagedKey = !!getManagedMailAssistantAPIKey();
+    const provider = this.state.provider;
+    const hasManagedKey = !!getManagedProviderAPIKey(provider);
     this.setState({
       hasManagedKey,
-      hasSavedKey: hasManagedKey ? false : !!(await KeyManager.getPassword(API_KEY_NAME)),
+      hasSavedKey: hasManagedKey
+        ? false
+        : !!(await KeyManager.getPassword(providerKeyName(provider))),
     });
   }
+
+  _selectProvider = async (provider: MailAssistantProvider) => {
+    const hasManagedKey = !!getManagedProviderAPIKey(provider);
+    this.setState({
+      apiKey: '',
+      endpoint: providerEndpoint(provider),
+      hasManagedKey,
+      hasSavedKey: hasManagedKey
+        ? false
+        : !!(await KeyManager.getPassword(providerKeyName(provider))),
+      model: providerModel(provider),
+      provider,
+      status: '',
+    });
+  };
 
   _save = async () => {
     this.setState({ saving: true, status: '' });
     try {
-      if (!this.state.hasManagedKey && this.state.apiKey.trim()) {
-        await KeyManager.replacePassword(API_KEY_NAME, this.state.apiKey.trim());
-      }
-      AppEnv.config.set(MODEL_CONFIG_KEY, this.state.model.trim() || 'gpt-5.6-terra');
+      if (!this.state.hasManagedKey)
+        await saveMailAssistantProviderKey(this.state.provider, this.state.apiKey);
+      saveMailAssistantProviderSettings(this.state.provider, {
+        model: this.state.model.trim() || providerModel(this.state.provider),
+        endpoint: this.state.endpoint.trim(),
+        supportsTools: this.state.supportsTools,
+        supportsImages: this.state.supportsImages,
+      });
       AppEnv.config.set(INCLUDE_TEXT_CONFIG_KEY, this.state.includeRedactedText);
       AppEnv.config.set(REDACT_PERSONAL_INFO_CONFIG_KEY, this.state.redactPersonalInfo);
       AppEnv.config.set(USE_THREAD_CONFIG_KEY, this.state.useCurrentThread);
@@ -102,7 +139,7 @@ export default class PreferencesMailAssistant extends React.Component<
   };
 
   _clearKey = async () => {
-    await KeyManager.deletePassword(API_KEY_NAME);
+    await KeyManager.deletePassword(providerKeyName(this.state.provider));
     this.setState({ apiKey: '', hasSavedKey: false, status: localized('API key removed.') });
   };
 
@@ -139,7 +176,7 @@ export default class PreferencesMailAssistant extends React.Component<
           <p>
             {this.state.hasManagedKey
               ? localized(
-                  'Your organization provides the OpenAI API credential through the Windows environment. SummerMail does not save it.'
+                  'Your organization provides this AI provider credential through the Windows environment. SummerMail does not save it.'
                 )
               : localized(
                   'Your API key is encrypted using the same operating-system credential storage as your mail passwords.'
@@ -151,7 +188,24 @@ export default class PreferencesMailAssistant extends React.Component<
             </p>
           ) : (
             <>
-              <label htmlFor="mail-assistant-api-key">{localized('OpenAI API key')}</label>
+              <label htmlFor="mail-assistant-provider">{localized('Provider')}</label>
+              <select
+                id="mail-assistant-provider"
+                value={this.state.provider}
+                onChange={(event) => {
+                  const provider = event.target.value;
+                  if (isMailAssistantProvider(provider)) this._selectProvider(provider);
+                }}
+              >
+                {(
+                  ['openai', 'anthropic', 'google', 'deepseek', 'custom'] as MailAssistantProvider[]
+                ).map((provider) => (
+                  <option key={provider} value={provider}>
+                    {providerLabel(provider)}
+                  </option>
+                ))}
+              </select>
+              <label htmlFor="mail-assistant-api-key">{localized('API key')}</label>
               <input
                 id="mail-assistant-api-key"
                 type="password"
@@ -162,6 +216,27 @@ export default class PreferencesMailAssistant extends React.Component<
               />
             </>
           )}
+          {this.state.hasManagedKey && (
+            <label htmlFor="mail-assistant-provider">{localized('Provider')}</label>
+          )}
+          {this.state.hasManagedKey && (
+            <select
+              id="mail-assistant-provider"
+              value={this.state.provider}
+              onChange={(event) => {
+                const provider = event.target.value;
+                if (isMailAssistantProvider(provider)) this._selectProvider(provider);
+              }}
+            >
+              {(
+                ['openai', 'anthropic', 'google', 'deepseek', 'custom'] as MailAssistantProvider[]
+              ).map((provider) => (
+                <option key={provider} value={provider}>
+                  {providerLabel(provider)}
+                </option>
+              ))}
+            </select>
+          )}
         </section>
         <section>
           <label htmlFor="mail-assistant-model">{localized('Model')}</label>
@@ -171,6 +246,36 @@ export default class PreferencesMailAssistant extends React.Component<
             value={this.state.model}
             onChange={(event) => this.setState({ model: event.target.value, status: '' })}
           />
+          {this.state.provider === 'custom' && (
+            <>
+              <label htmlFor="mail-assistant-endpoint">
+                {localized('Compatible API base URL')}
+              </label>
+              <input
+                id="mail-assistant-endpoint"
+                type="url"
+                value={this.state.endpoint}
+                placeholder="https://example.com/v1"
+                onChange={(event) => this.setState({ endpoint: event.target.value, status: '' })}
+              />
+              <label className="mail-assistant-checkbox">
+                <input
+                  type="checkbox"
+                  checked={this.state.supportsTools}
+                  onChange={(event) => this.setState({ supportsTools: event.target.checked })}
+                />
+                {localized('This endpoint supports function calling')}
+              </label>
+              <label className="mail-assistant-checkbox">
+                <input
+                  type="checkbox"
+                  checked={this.state.supportsImages}
+                  onChange={(event) => this.setState({ supportsImages: event.target.checked })}
+                />
+                {localized('This endpoint supports image input')}
+              </label>
+            </>
+          )}
           <label className="mail-assistant-checkbox">
             <input
               type="checkbox"
@@ -232,7 +337,7 @@ export default class PreferencesMailAssistant extends React.Component<
           {!this.state.redactPersonalInfo && (
             <p className="mail-assistant-privacy-warning">
               {localized(
-                'Privacy filtering is off. Original names, addresses, phone numbers, URLs, and matching message content may be sent to OpenAI. This can improve recipient-aware answers and actions.'
+                'Privacy filtering is off. Original names, addresses, phone numbers, URLs, and matching message content may be sent to the selected AI provider. This can improve recipient-aware answers and actions.'
               )}
             </p>
           )}
@@ -243,7 +348,7 @@ export default class PreferencesMailAssistant extends React.Component<
           </p>
           <p className="mail-assistant-privacy-note">
             {localized(
-              'Mailbox-wide questions use the read-only tools and account/folder permissions configured under MCP Server. Matching mail content is sent to OpenAI to answer your question.'
+              'Mailbox-wide questions use the read-only tools and account/folder permissions configured under MCP Server. Matching mail content is sent to the selected AI provider to answer your question.'
             )}
           </p>
         </section>

@@ -1,6 +1,7 @@
 import { Message } from 'summermail-exports';
 import { buildAliasMap, redactText } from './mail-assistant-privacy';
 import { summarizeMailText } from './openai-mail-assistant-client';
+import { MailAssistantProvider } from './ai-provider-settings';
 
 export const THREAD_SUMMARY_PROMPT =
   'You are a helpful assistant that summarizes email threads. Write a 1-2 sentence overview followed by 3-6 bullet points highlighting key facts, decisions, and action items. Do not invent information that is not in the messages.';
@@ -48,6 +49,8 @@ export function buildThreadSummaryTranscript(messages: Message[], redactPersonal
 export async function generateThreadSummary(options: {
   apiKey: string;
   model: string;
+  provider?: MailAssistantProvider;
+  endpoint?: string;
   messages: Message[];
   redactPersonalInfo: boolean;
   inputCap: number;
@@ -60,6 +63,8 @@ export async function generateThreadSummary(options: {
   return summarizeMailText({
     apiKey: options.apiKey,
     model: options.model,
+    provider: options.provider,
+    endpoint: options.endpoint,
     systemPrompt: THREAD_SUMMARY_PROMPT,
     userMessage: transcript,
     signal: options.signal,
@@ -69,6 +74,8 @@ export async function generateThreadSummary(options: {
 export async function generateQuotedSummary(options: {
   apiKey: string;
   model: string;
+  provider?: MailAssistantProvider;
+  endpoint?: string;
   quoteText: string;
   subject?: string;
   contextMessages?: Message[];
@@ -85,6 +92,8 @@ export async function generateQuotedSummary(options: {
   return summarizeMailText({
     apiKey: options.apiKey,
     model: options.model,
+    provider: options.provider,
+    endpoint: options.endpoint,
     systemPrompt: QUOTED_SUMMARY_PROMPT,
     userMessage: userMessage.slice(0, options.inputCap),
     signal: options.signal,

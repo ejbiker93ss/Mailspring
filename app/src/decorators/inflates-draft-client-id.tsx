@@ -87,11 +87,18 @@ function InflatesDraftClientId(
         this.setState({ draft: session.draft() });
       });
 
-      this.setState({
-        session: session,
-        draft: session.draft(),
-      });
-      this.props.onDraftReady();
+      this.setState(
+        {
+          session: session,
+          draft: session.draft(),
+        },
+        () => {
+          // Popout windows stay hidden until onDraftReady focuses the composer.
+          // Notify after React commits the child ref: notifying before the commit
+          // makes focus poll requestAnimationFrame in a hidden, throttled window.
+          if (shouldSetState()) this.props.onDraftReady();
+        }
+      );
     }
 
     _teardownForDraft() {

@@ -11,10 +11,10 @@ import { ComposerEditor } from 'summermail-component-kit';
 import { buildThreadSummaryTranscript } from '../../message-list/lib/ai-summary-client';
 import { summarizeMailText } from '../../message-list/lib/openai-mail-assistant-client';
 import {
-  MODEL_CONFIG_KEY,
-  REDACT_PERSONAL_INFO_CONFIG_KEY,
-  getMailAssistantAPIKey,
-} from '../../message-list/lib/preferences-mail-assistant';
+  providerConfigurationIsReady,
+  resolveMailAssistantProviderConfig,
+} from '../../message-list/lib/ai-provider-settings';
+import { REDACT_PERSONAL_INFO_CONFIG_KEY } from '../../message-list/lib/preferences-mail-assistant';
 
 export interface ComposerToneResult {
   level: 'good' | 'caution' | 'harsh';
@@ -293,19 +293,22 @@ export default class ComposerAIActions extends React.Component<
     if (!anchor || !editor || !text) return;
     this.setState({ running: kind });
     try {
-      const apiKey = await getMailAssistantAPIKey();
-      if (!apiKey) throw new Error(localized('Add your OpenAI API key to use writing checks.'));
+      const config = await resolveMailAssistantProviderConfig();
+      if (!providerConfigurationIsReady(config))
+        throw new Error(localized('Add an AI provider API key and model to use writing checks.'));
       const messages = await messagesForDraft(this.props.draft);
       const context = await requestContext(this.props.draft, messages);
-      const model = AppEnv.config.get(MODEL_CONFIG_KEY) || 'gpt-5.6-terra';
+      const model = config.model;
       if (kind === 'grammar') {
         const redact = AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false;
         const masked = redact
           ? maskComposerPrivateText(text, [...messages, this.props.draft as Message])
           : { text, restore: (value: string) => value };
         const result = await summarizeMailText({
-          apiKey,
+          apiKey: config.apiKey,
           model,
+          provider: config.provider,
+          endpoint: config.endpoint,
           systemPrompt: GRAMMAR_PROMPT,
           userMessage: `${context ? `Conversation context:\n${context}\n\n` : ''}Draft:\n${masked.text}`,
         });
@@ -328,8 +331,10 @@ export default class ComposerAIActions extends React.Component<
           ? maskComposerPrivateText(text, [...messages, this.props.draft as Message]).text
           : text;
         const result = await summarizeMailText({
-          apiKey,
+          apiKey: config.apiKey,
           model,
+          provider: config.provider,
+          endpoint: config.endpoint,
           systemPrompt: TONE_PROMPT,
           userMessage: `${context ? `Conversation context:\n${context}\n\n` : ''}Draft to evaluate:\n${masked}`,
         });
