@@ -3,6 +3,7 @@ import React from 'react';
 import { localized, Account } from 'summermail-exports';
 import CreatePageForForm from './decorators/create-page-for-form';
 import FormField from './form-field';
+import { emailDomain, imapCalendarDefaults } from './imap-setup-defaults';
 
 const StandardIMAPPorts = [143, 993];
 const StandardSMTPPorts = [25, 465, 587];
@@ -60,6 +61,65 @@ class AccountIMAPSettingsForm extends React.Component<AccountIMAPSettingsFormPro
 
   componentDidMount() {
     ipcRenderer.send('resize-window', { width: 1180, height: 660 });
+    this.updateSettings(Object.entries(imapCalendarDefaults(this.props.account)));
+  }
+
+  updateSettings = (entries: [string, any][]) => {
+    const [entry, ...remaining] = entries;
+    if (!entry) return;
+    this.props.onFieldChange(
+      { target: { id: `settings.${entry[0]}`, value: entry[1] } },
+      { afterSetState: () => this.updateSettings(remaining) }
+    );
+  };
+
+  onMailFieldChange: AccountIMAPSettingsFormProps['onFieldChange'] = (event) => {
+    const key = event.target.id.replace('settings.', '');
+    const calendarKey = key.replace('imap_', 'caldav_');
+    const { settings } = this.props.account;
+    const copyToCalendar =
+      ['imap_username', 'imap_password'].includes(key) &&
+      (!settings[calendarKey] || settings[calendarKey] === settings[key]);
+    this.props.onFieldChange(event, {
+      afterSetState: () => {
+        if (copyToCalendar) this.updateSettings([[calendarKey, event.target.value]]);
+      },
+    });
+  };
+
+  renderServerDropdown() {
+    const { account, submitting } = this.props;
+    const domain = emailDomain(account.emailAddress);
+    if (!domain) return null;
+    const { imap_host, smtp_host } = account.settings;
+    const value =
+      imap_host === `mail.${domain}` && smtp_host === `mail.${domain}`
+        ? 'mail'
+        : imap_host === `imap.${domain}` && smtp_host === `smtp.${domain}`
+          ? 'separate'
+          : 'custom';
+    return (
+      <span>
+        <label htmlFor="server-preset">{localized('Server names')}:</label>
+        <select
+          id="server-preset"
+          value={value}
+          disabled={submitting}
+          onChange={(event) => {
+            if (event.target.value === 'custom') return;
+            const shared = event.target.value === 'mail';
+            this.updateSettings([
+              ['imap_host', `${shared ? 'mail' : 'imap'}.${domain}`],
+              ['smtp_host', `${shared ? 'mail' : 'smtp'}.${domain}`],
+            ]);
+          }}
+        >
+          <option value="separate">{`imap.${domain} / smtp.${domain}`}</option>
+          <option value="mail">{`mail.${domain}`}</option>
+          <option value="custom">{localized('Custom')}</option>
+        </select>
+      </span>
+    );
   }
 
   renderPortDropdown(protocol) {
@@ -215,12 +275,14 @@ class AccountIMAPSettingsForm extends React.Component<AccountIMAPSettingsFormPro
           field={`settings.${type}_username`}
           title={localized('Username')}
           {...this.props}
+          onFieldChange={this.onMailFieldChange}
         />
         <FormField
           field={`settings.${type}_password`}
           title={localized('Password')}
           type="password"
           {...this.props}
+          onFieldChange={this.onMailFieldChange}
         />
         {type === 'imap' && (
           <FormField
@@ -235,34 +297,41 @@ class AccountIMAPSettingsForm extends React.Component<AccountIMAPSettingsFormPro
 
   render() {
     return (
-      <div className="twocol threecol">
-        <div className="col">
-          <div className="col-heading">{localized('Incoming Mail')} (IMAP):</div>
-          {this.renderFieldsForType('imap')}
-        </div>
-        <div className="col">
-          <div className="col-heading">{localized('Outgoing Mail')} (SMTP):</div>
-          {this.renderFieldsForType('smtp')}
-        </div>
-        <div className="col">
-          <div className="col-heading">{localized('Calendar')} (CalDAV):</div>
-          <p>
-            {localized(
-              'Optional. Leave blank to discover calendar settings automatically. These credentials default to your IMAP username and password.'
-            )}
-          </p>
-          <FormField field="settings.caldav_host" title={localized('Server URL')} {...this.props} />
-          <FormField
-            field="settings.caldav_username"
-            title={localized('Username')}
-            {...this.props}
-          />
-          <FormField
-            field="settings.caldav_password"
-            title={localized('Password')}
-            type="password"
-            {...this.props}
-          />
+      <div>
+        {this.renderServerDropdown()}
+        <div className="twocol threecol">
+          <div className="col">
+            <div className="col-heading">{localized('Incoming Mail')} (IMAP):</div>
+            {this.renderFieldsForType('imap')}
+          </div>
+          <div className="col">
+            <div className="col-heading">{localized('Outgoing Mail')} (SMTP):</div>
+            {this.renderFieldsForType('smtp')}
+          </div>
+          <div className="col">
+            <div className="col-heading">{localized('Calendar')} (CalDAV):</div>
+            <p>
+              {localized(
+                'Calendar settings are filled from your email domain and IMAP credentials. You can edit them or clear the server URL to discover settings automatically.'
+              )}
+            </p>
+            <FormField
+              field="settings.caldav_host"
+              title={localized('Server URL')}
+              {...this.props}
+            />
+            <FormField
+              field="settings.caldav_username"
+              title={localized('Username')}
+              {...this.props}
+            />
+            <FormField
+              field="settings.caldav_password"
+              title={localized('Password')}
+              type="password"
+              {...this.props}
+            />
+          </div>
         </div>
       </div>
     );

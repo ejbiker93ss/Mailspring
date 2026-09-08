@@ -9,6 +9,7 @@ const FormField = (props: {
   submitting?: boolean;
   onFieldKeyPress?: (e: React.KeyboardEvent) => void;
   onFieldChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   errorFieldNames?: string[];
   account: Record<string, any>;
 }) => {
@@ -32,6 +33,7 @@ const FormField = (props: {
         value={val || ''}
         onKeyPress={props.onFieldKeyPress}
         onChange={props.onFieldChange}
+        onBlur={props.onBlur}
       />
     </span>
   );

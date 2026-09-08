@@ -10,7 +10,7 @@ interface AccountSmarterMailSettingsFormProps {
   errorFieldNames: string[];
   submitting: boolean;
   onConnect: (account: Account) => void;
-  onFieldChange: () => void;
+  onFieldChange: (event: { target: { id: string; value: string } }) => void;
   onFieldKeyPress: () => void;
 }
 
@@ -50,11 +50,32 @@ class AccountSmarterMailSettingsForm extends React.Component<AccountSmarterMailS
     this.props.onConnect(buildSmarterMailAccount(this.props.account));
   }
 
+  _suggestedServer = '';
+
+  onEmailBlur = () => {
+    const { account, onFieldChange } = this.props;
+    const email = account.emailAddress.trim();
+    if (!RegExpUtils.emailRegex().test(email)) return;
+
+    const server = account.settings.smartermail_server;
+    if (server && server !== this._suggestedServer) return;
+
+    this._suggestedServer = `https://mail.${email.split('@')[1].toLowerCase()}`;
+    onFieldChange({
+      target: { id: 'settings.smartermail_server', value: this._suggestedServer },
+    });
+  };
+
   render() {
     return (
       <form className="settings">
         <FormField field="name" title={localized('Name')} {...this.props} />
-        <FormField field="emailAddress" title={localized('Email')} {...this.props} />
+        <FormField
+          field="emailAddress"
+          title={localized('Email')}
+          {...this.props}
+          onBlur={this.onEmailBlur}
+        />
         <FormField
           field="settings.smartermail_server"
           title={localized('SmarterMail Server')}

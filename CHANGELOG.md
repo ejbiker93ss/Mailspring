@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.48 (9/8/2026)
+
+Improvements:
+
+- Fill the SmarterMail server from the email domain when leaving the email field.
+- Switch IMAP and SMTP server names together using a domain-based preset dropdown.
+- Prefill the CalDAV WebDAV URL and credentials during IMAP setup while preserving custom settings.
+
 ## 1.23.47 (9/8/2026)
 
 Improvements:
