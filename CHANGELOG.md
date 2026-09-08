@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.51 (9/8/2026)
+
+Bug Fixes:
+
+- Reduce date group button height while retaining compact collapse controls.
+
 ## 1.23.50 (9/8/2026)
 
 Bug Fixes:

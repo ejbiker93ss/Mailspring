@@ -41,6 +41,7 @@ describe('ListTabular date section button', () => {
 
     const styles = window.getComputedStyle(button);
     expect(styles.width).not.toBe('100%');
+    expect(Number.parseFloat(styles.minHeight)).toBe(26);
 
     ReactTestUtils.Simulate.click(button);
     expect(onToggleSection).toHaveBeenCalledWith('today');
