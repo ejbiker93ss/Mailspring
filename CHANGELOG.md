@@ -1,5 +1,18 @@
 # SummerMail Changelog
 
+## 1.23.45 (9/7/2026)
+
+Improvements:
+
+- Made PDF previews resize with their windows and added double-click image previews with zoom controls for embedded message images.
+- Added day and week grouping to threaded mail views and polished conversation expand/collapse controls.
+- Replaced the application, taskbar, installer, and navigation icon with the new SummerMail artwork.
+- Switched new Gmail sign-ins to SummerMail's Google OAuth application while preserving refresh compatibility for migrated accounts.
+
+Privacy:
+
+- Removed the inherited Mailspring Sentry endpoint and disabled telemetry unless a SummerMail-owned Sentry project is explicitly configured at build time.
+
 ## 1.23.44 (9/7/2026)
 
 Bug Fixes:
