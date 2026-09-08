@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.50 (9/8/2026)
+
+Bug Fixes:
+
+- Keep date group buttons compact and sized to their label and count while preserving a comfortable click target.
+
 ## 1.23.49 (9/8/2026)
 
 Bug Fixes:
@@ -664,7 +670,6 @@ Bug Fixes:
 
 - Added error handling for `shell.openExternal` calls to prevent crashes on unsupported URLs. (#2679)
 
-
 Developer:
 
 - Fixed ability to declare platform-specific options via config-schema. (#2681)
@@ -784,7 +789,6 @@ Developer:
 Features:
 
 - Grammar check is now available in the composer! (#2612)
-
   - This feature relies on a deployment of LanguageTool at id.getmailspring.com - when you use Grammar Check, small snippets of your draft are sent to this server, but the requests are not logged and no message data is stored.
   - This feature is disabled by default. To turn it on, click the new icon in the composer toolbar.
 
@@ -1941,7 +1945,6 @@ Fixes:
 Features:
 
 - Mailspring now supports localization! The app detects your system locale and all text, menus, buttons, etc. in the app appear in your language. Mailspring's core strings has been manually localized in 38 languages and the rest (mostly error messages and text describing features) have been automatically translated.
-
   - We'd love your help improving these localizations! A new "Developer > Toggle Localizer Tools" menu option in Mailspring allows you to submit better translations right within the app. You can also edit the translation files directly and submit a pull request. See the new [localizer guide here](https://github.com/Foundry376/Mailspring/blob/master/LOCALIZATION.md).
 
   - If you use a RTL language, Mailspring's entire UI now appears right-justified, including the sidebar, preference panels, scrollbars, and more. If you use Mailspring in Arabic or Hebrew and notice issues in the right-to-left presentation, please file issues or submit pull requests.
@@ -2026,7 +2029,6 @@ Fixes:
 ### 1.3.0 (7/14/2018)
 
 - Mailspring 1.3 brings an overhauled search bar with powerful autocomplete that makes it easier to create advanced search queries.
-
   - In addition to searching for freeform text and using the Gmail query language (`subject:`, `in:`, `is:`, `from:`, `to:`), Mailspring now allows you to search by date using natural language terms like `since: "last week"` and `before: "february 5th"`. Try combining them with other terms to search a specific time window!
 
   - You can now right-click a thread to search for other threads from that sender or with that subject.
@@ -2034,7 +2036,6 @@ Fixes:
   - You can now focus the search bar and conduct searches entirely with keyboard shortcuts (use Escape to exit the search bar!) #960
 
 - Mailspring now uses Electron 2.0.2, which delivers some [great bug fixes and new features](https://github.com/electron/electron/releases/tag/v2.0.0):
-
   - Chrome 61, Node 8.9.3, V8 6.1.534.41 with improved performance and lower memory footprints
   - Better GTK+ theme support, including support for menu styling
   - Better support for Linux desktop notifications
@@ -2354,7 +2355,6 @@ Fixes:
 - The `View` links in the contact sidebar now open the browser correctly.
 
 - Electron has been bumped to 1.7.10, which fixes:
-
   - Subpixel font rendering with freetype on Linux.
 
   - Rendering issues with Nvidia GPU on High Sierra

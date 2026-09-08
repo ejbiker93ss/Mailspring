@@ -581,10 +581,11 @@ body.is-blurred {
   .list-tabular-section-toggle {
     display: inline-flex;
     align-items: center;
-    width: 100%;
-    gap: 7px;
-    min-height: 29px;
-    padding: 0 10px;
+    width: auto;
+    max-width: 100%;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 11px;
     border: 1px solid fade(@text-color, 10%);
     border-radius: 8px;
     background: mix(@background-secondary, @background-primary, 70%);
@@ -619,7 +620,6 @@ body.is-blurred {
     }
 
     .list-tabular-section-count {
-      margin-left: auto;
       color: fade(@text-color, 72%);
       font-variant-numeric: tabular-nums;
     }
