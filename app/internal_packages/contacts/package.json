@@ -12,6 +12,7 @@
     "summermail": "*"
   },
   "windowTypes": {
+    "default": true,
     "contacts": true
   }
 }

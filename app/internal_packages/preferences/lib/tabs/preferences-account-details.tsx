@@ -196,11 +196,22 @@ class PreferencesAccountDetails extends Component<
   };
 
   _onCalendarSettingChanged = (key: 'caldav_host' | 'caldav_username', value: string) => {
+    const settings = {
+      ...this.state.account.settings,
+      [key]: value,
+    };
+    if (key === 'caldav_host' && this.state.account.provider === 'smartermail') {
+      const normalized = value.trim().replace(/\/+$/, '');
+      settings.carddav_host = !normalized
+        ? ''
+        : /\/cal$/i.test(normalized)
+          ? normalized.replace(/\/cal$/i, '/ab/')
+          : /\/webdav$/i.test(normalized)
+            ? `${normalized}/ab/`
+            : `${normalized}/WebDAV/ab/`;
+    }
     this._setState({
-      settings: {
-        ...this.state.account.settings,
-        [key]: value,
-      },
+      settings,
     });
   };
 

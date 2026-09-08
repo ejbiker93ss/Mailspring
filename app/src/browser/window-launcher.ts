@@ -28,6 +28,8 @@ export default class WindowLauncher {
   private _defaultWindowOpts: SummerMailWindowSettings;
   private config: import('../config').default;
   private onCreatedHotWindow: (win: SummerMailWindow) => void;
+  private hotWindowRefillTimer?: ReturnType<typeof setTimeout>;
+  private quitting = false;
 
   constructor({
     devMode,
@@ -144,11 +146,23 @@ export default class WindowLauncher {
 
       win.setLoadSettings(newLoadSettings);
 
-      setTimeout(() => {
-        // We need to regen a hot window, but do it in the next event
-        // loop to not hang the opening of the current window.
-        this.createHotWindow();
-      }, 0);
+      // Starting another renderer immediately competes with this window's
+      // activation and first paint. Refill only after it has become visible.
+      this.hotWindow = undefined;
+      let refillScheduled = false;
+      const refill = () => {
+        if (refillScheduled || this.quitting) return;
+        refillScheduled = true;
+        win.browserWindow.removeListener('show', refill);
+        win.browserWindow.removeListener('closed', refill);
+        this.hotWindowRefillTimer = setTimeout(() => {
+          this.hotWindowRefillTimer = undefined;
+          if (!this.quitting) this.createHotWindow();
+        }, 250);
+      };
+      win.browserWindow.once('show', refill);
+      win.browserWindow.once('closed', refill);
+      if (win.browserWindow.isVisible()) refill();
     }
 
     if (!isWaylandSession() && !opts.initializeInBackground && !opts.hidden) {
@@ -192,6 +206,8 @@ export default class WindowLauncher {
   // events.  This is necessary for the app to quit promptly on Linux.
   // Keep window launch ordering stable for existing startup flows.
   cleanupBeforeAppQuit() {
+    this.quitting = true;
+    if (this.hotWindowRefillTimer) clearTimeout(this.hotWindowRefillTimer);
     if (this.hotWindow != null) {
       this.hotWindow.browserWindow.destroy();
     }

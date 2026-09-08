@@ -1,5 +1,5 @@
 import React from 'react';
-import { ipcRenderer, shell } from 'electron';
+import { shell } from 'electron';
 import { AccountStore, Actions, localized, WorkspaceStore } from 'summermail-exports';
 
 type IconName =
@@ -100,7 +100,11 @@ export const AppNavigationMenu = () => {
   const openMail = () => run(() => Actions.selectRootSheet(WorkspaceStore.Sheet.Threads));
   const openKanban = () => run(() => Actions.selectRootSheet(WorkspaceStore.Sheet.Kanban));
   const openCalendar = () => run(() => Actions.selectRootSheet(WorkspaceStore.Sheet.Calendar));
-  const openContacts = () => run(() => ipcRenderer.send('command', 'application:show-contacts'));
+  const openContacts = () =>
+    run(() => {
+      Actions.selectRootSheet(WorkspaceStore.Sheet.Contacts);
+      AppEnv.mailsyncBridge.sendSyncContactsNow();
+    });
   const openTasks = () =>
     run(() => {
       if (WorkspaceStore.Sheet.Activity) {
@@ -150,7 +154,12 @@ export const AppNavigationMenu = () => {
       action: openCalendar,
       active: rootSheet === WorkspaceStore.Sheet.Calendar,
     },
-    { name: 'contacts', label: localized('Contacts'), action: openContacts },
+    {
+      name: 'contacts',
+      label: localized('Contacts'),
+      action: openContacts,
+      active: rootSheet === WorkspaceStore.Sheet.Contacts,
+    },
     {
       name: 'tasks',
       label: localized('Tasks'),

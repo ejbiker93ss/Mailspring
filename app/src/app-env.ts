@@ -718,6 +718,13 @@ export default class AppEnvConstructor {
     this.initializeReactRoot();
     this.packages.activatePackages(windowType);
 
+    if (windowType === 'emptyWindow') {
+      // Load the built-in editor's dependency tree while the spare window is
+      // hidden, rather than parsing Slate and the composer on the user's click.
+      // Do not activate the package or create a draft until window props arrive.
+      require('../internal_packages/composer/lib/composer-view');
+    }
+
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {

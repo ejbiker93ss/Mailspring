@@ -62,12 +62,14 @@ class TaskQueue extends SummerMailStore {
 
   constructor() {
     super();
-    Rx.Observable.fromQuery(DatabaseStore.findAll<Task>(Task)).subscribe(
-      this._onQueueChangedDebounced
-    );
+    Rx.Observable.fromQuery(DatabaseStore.findAll<Task>(Task)).subscribe(this._onQueueChanged);
   }
 
-  _onQueueChangedDebounced = _.throttle((tasks: Task[]) => {
+  // Keep progress UI updates bounded, but never delay persistence acknowledgments.
+  // Opening a new composer waits for its draft's local save to complete.
+  _triggerQueueChanged = _.throttle(() => this.trigger(), 150);
+
+  _onQueueChanged = (tasks: Task[]) => {
     const finished = [Task.Status.Complete, Task.Status.Cancelled];
     this._queue = tasks.filter((t) => !finished.includes(t.status));
     this._completed = tasks.filter((t) => finished.includes(t.status));
@@ -91,8 +93,8 @@ class TaskQueue extends SummerMailStore {
       return true;
     });
 
-    this.trigger();
-  }, 150);
+    this._triggerQueueChanged();
+  };
 
   queue() {
     return this._queue;

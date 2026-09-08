@@ -25,7 +25,7 @@ class ContactsWindowStore extends SummerMailStore {
     super();
 
     window.requestAnimationFrame(() => {
-      AppEnv.displayWindow();
+      if (!AppEnv.isMainWindow()) AppEnv.displayWindow();
 
       const contacts = DatabaseStore.findAll<Contact>(Contact)
         .where(Contact.attributes.refs.greaterThan(0))
@@ -132,12 +132,16 @@ class ContactsWindowStore extends SummerMailStore {
     if (this._search) {
       const isearch = this._search.toLowerCase();
       filtered = filtered.filter(
-        (c) => c.name.toLowerCase().includes(isearch) || c.email.toLowerCase().includes(isearch)
+        (c) =>
+          (c.name || '').toLowerCase().includes(isearch) ||
+          (c.email || '').toLowerCase().includes(isearch)
       );
     }
 
     // note we do this in JS because in SQLite the order is not locale aware.
-    this._filtered = filtered.sort((a, b) => a.name.localeCompare(b.name));
+    this._filtered = filtered.sort((a, b) =>
+      (a.name || a.email || '').localeCompare(b.name || b.email || '')
+    );
     this._listSource.setItems(this._filtered);
     this.trigger();
   }

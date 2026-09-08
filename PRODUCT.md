@@ -27,19 +27,19 @@ The product is used as a daily desktop workspace across Windows, macOS, and Linu
 - Preserve existing product behavior, platform support, accessibility work, user profiles, and protocol integrations while moving the complete product identity to SummerMail.
 - Product-owned package names, module imports, CSS hooks, profile directories, protocol schemes, bundle IDs, executables, installers, and build artifacts use `summermail` or `SummerMail`.
 - Existing profiles and third-party plugins receive narrow compatibility bridges during migration.
-- A new application icon is explicitly deferred to a later pass; existing image content may remain temporarily under SummerMail filenames.
+- Use the approved multicolor ribbon-and-envelope SummerMail mark for application, installer, taskbar, navigation, and platform icon assets.
 
 ## Brand Commitments
 
 - Product name: SummerMail.
 - This rebrand preserves the current visual design while replacing both visible and technical product naming.
-- Existing iconography remains in place temporarily until a focused icon design pass.
+- The approved SummerMail mark is the product icon across application and platform surfaces.
 
 ## Evidence on Hand
 
 - Existing production interface, packaging resources, localization strings, and application assets in this repository.
 - Existing screenshots and visual regression snapshots document the current interface.
-- No new icon or broader visual identity has been approved yet.
+- The approved source artwork is maintained at `app/build/resources/summermail-icon-source.png` and generates the platform and in-app icon variants.
 
 ## Product Principles
 

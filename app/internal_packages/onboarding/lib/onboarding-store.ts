@@ -3,6 +3,7 @@ import { ipcRenderer } from 'electron';
 import SummerMailStore from 'summermail-store';
 
 import * as OnboardingActions from './onboarding-actions';
+import { pendingOutlookAccounts, removePendingOutlookAccount } from './pending-outlook-accounts';
 
 class OnboardingStore extends SummerMailStore {
   _account: Account;
@@ -48,7 +49,7 @@ class OnboardingStore extends SummerMailStore {
     } else if (addingAccount) {
       // Adding a new, unknown account
       this._pageStack = ['account-choose'];
-    } else if (identity || hasAccounts) {
+    } else if (identity || hasAccounts || pendingOutlookAccounts().length > 0) {
       // Account setup is local in this distribution. Existing profiles and
       // profiles upgraded without a legacy SummerMail ID go straight to the
       // provider picker instead of the hosted identity/subscription flow.
@@ -119,6 +120,7 @@ class OnboardingStore extends SummerMailStore {
 
     try {
       await AccountStore.addAccount(account);
+      removePendingOutlookAccount(account.emailAddress);
     } catch (e) {
       AppEnv.reportError(e);
       AppEnv.showErrorDialog({

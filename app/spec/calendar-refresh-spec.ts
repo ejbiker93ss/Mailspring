@@ -4,6 +4,21 @@ import {
   SummerMailCalendar,
 } from '../internal_packages/main-calendar/lib/core/summermail-calendar';
 import { EventRSVPTask } from '../src/flux/tasks/event-rsvp-task';
+import { Actions, Calendar, DatabaseStore, Event, SyncbackEventTask } from 'summermail-exports';
+
+const ACCEPTED_INVITE_ICS = `BEGIN:VCALENDAR
+VERSION:2.0
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:accepted-invite@test
+DTSTAMP:20260904T180000Z
+DTSTART:20260907T190000Z
+DTEND:20260907T203000Z
+ORGANIZER:mailto:organizer@example.com
+ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:user@example.com
+SUMMARY:Accepted meeting
+END:VEVENT
+END:VCALENDAR`;
 
 describe('Calendar refresh behavior', () => {
   it('periodically refreshes day and agenda views only', () => {
@@ -55,5 +70,31 @@ describe('Calendar refresh behavior', () => {
     await task.onSuccess();
 
     expect(AppEnv.mailsyncBridge.sendSyncCalendarNow).toHaveBeenCalledWith('account-1');
+  });
+
+  it('imports an accepted invite into a writable calendar when it is not already synced', async () => {
+    const task = new EventRSVPTask({
+      accountId: 'account-1',
+      icsOriginalData: ACCEPTED_INVITE_ICS,
+      icsRSVPStatus: 'ACCEPTED',
+    } as any);
+    const calendar = new Calendar({
+      id: 'calendar-1',
+      accountId: 'account-1',
+      name: 'Calendar',
+      readOnly: false,
+    } as any);
+    spyOn(DatabaseStore, 'findBy').andReturn(Promise.resolve(null) as any);
+    spyOn(DatabaseStore, 'findAll').andReturn(Promise.resolve([calendar]) as any);
+    const queueTask = spyOn(Actions, 'queueTask');
+
+    await task.saveAcceptedEventToCalendar();
+
+    const syncback = queueTask.calls[queueTask.calls.length - 1].args[0] as SyncbackEventTask;
+    expect(syncback instanceof SyncbackEventTask).toBe(true);
+    expect(syncback.event instanceof Event).toBe(true);
+    expect(syncback.event.calendarId).toBe('calendar-1');
+    expect(syncback.event.icsuid).toBe('accepted-invite@test');
+    expect(syncback.event.ics).not.toContain('METHOD:REQUEST');
   });
 });

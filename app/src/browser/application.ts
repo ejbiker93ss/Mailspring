@@ -32,6 +32,7 @@ import WindowsTaskbarManager from './windows-taskbar-manager';
 import { completeAccountSetup } from './complete-account-setup';
 import { resetThemeForRecovery } from './theme-recovery';
 import { maybeMigrateMailspringProfile } from './profile-migration';
+import { discoverOutlookAccounts } from './outlook-account-discovery';
 
 const openConfiguredWebsite = (environmentVariable: string, label: string) => {
   const target = process.env[environmentVariable];
@@ -80,7 +81,7 @@ export default class Application extends EventEmitter {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
 
     if (!specMode && !devMode) {
-      maybeMigrateMailspringProfile(configDirPath);
+      await maybeMigrateMailspringProfile(configDirPath);
     }
 
     initializeLocalization({ configDirPath });
@@ -483,9 +484,10 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:show-contacts', () => {
-      this.windowManager.ensureWindow(WindowManager.CONTACTS_WINDOW, {});
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        main.focus();
+        main.sendMessage('command', 'contacts:show');
         main.sendMessage('run-contact-sync');
       }
     });
@@ -665,6 +667,8 @@ export default class Application extends EventEmitter {
     ipcMain.handle('get-system-accent-color', () => {
       return this.systemAccentWatcher ? this.systemAccentWatcher.getCurrent() : null;
     });
+
+    ipcMain.handle('discover-outlook-accounts', () => discoverOutlookAccounts());
 
     // Synchronous because ThemeManager needs the value during its constructor to
     // pick the initial ui-light / ui-dark variant without a flash.

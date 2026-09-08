@@ -100,6 +100,9 @@ export default class MailsyncBridge {
     ipcRenderer.on('run-calendar-sync', (_event, accountId?: string) =>
       this.sendSyncCalendarNow(accountId)
     );
+    ipcRenderer.on('run-contact-sync', (_event, accountId?: string) =>
+      this.sendSyncContactsNow(accountId)
+    );
 
     Actions.queueTask.listen(this._onQueueTask, this);
     Actions.queueTasks.listen(this._onQueueTasks, this);
@@ -222,6 +225,12 @@ export default class MailsyncBridge {
     for (const client of clients) {
       client.sendMessage({ type: 'sync-calendar' });
     }
+  }
+
+  // Contacts and calendars share the DAV worker. Keep a contacts-specific API
+  // so callers describe user intent while preserving one deduplicated sync path.
+  sendSyncContactsNow(accountId?: string) {
+    this.sendSyncCalendarNow(accountId);
   }
 
   sendMessageToAccount(accountId: string, json: Record<string, unknown>) {

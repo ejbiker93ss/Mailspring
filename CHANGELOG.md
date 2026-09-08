@@ -1,5 +1,19 @@
 # SummerMail Changelog
 
+## 1.23.52 (9/8/2026)
+
+Improvements:
+
+- Add the modern Contacts tab after Calendar with SmarterMail/CardDAV account support.
+- Include the latest SummerMail icon in application and installer assets.
+- Show account migration progress and copy large profile files asynchronously.
+- Add Outlook account discovery and import during setup and in account preferences.
+
+Bug Fixes:
+
+- Reconcile CalDAV event inventories periodically without downloading unchanged events, and preserve encoded WebDAV resource paths.
+- Refresh calendar events after RSVP completion and improve composer window readiness.
+
 ## 1.23.51 (9/8/2026)
 
 Bug Fixes:

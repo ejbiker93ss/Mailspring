@@ -1,4 +1,4 @@
-import React, { CSSProperties, useRef } from 'react';
+import React, { useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { webUtils } from 'electron';
 import { Contact, localized, CanvasUtils, AccountStore } from 'summermail-exports';
@@ -9,6 +9,7 @@ import {
   RetinaImg,
   ListensToFluxStore,
   ListDataSource,
+  ContactProfilePhoto,
 } from 'summermail-component-kit';
 import { ContactsPerspective, Store } from './Store';
 import { writeContactsToTempVCF, importContactsFromPaths } from './VCFImportExport';
@@ -18,23 +19,23 @@ const ContactColumn = new ListTabular.Column({
   name: 'Item',
   flex: 1,
   resolver: (contact: Contact) => {
-    // until we revisit the UI to accommodate more icons
     const account = AccountStore.accountForId(contact.accountId);
-    let style: CSSProperties = {};
-    if (account && account.color) {
-      style = {
-        height: '50%',
-        paddingLeft: '4px',
-        borderLeftWidth: '4px',
-        borderLeftColor: account.color,
-        borderLeftStyle: 'solid',
-      };
-    }
+    const displayName = contact.name || contact.email || localized('Unnamed contact');
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-        <div style={style} className="subject" dir="auto">
-          {contact.name}
+      <div className="contact-list-row">
+        <ContactProfilePhoto contact={contact} loading={false} avatar="" />
+        <div className="contact-list-copy" dir="auto">
+          <div className="contact-list-name">{displayName}</div>
+          {contact.email && contact.email !== displayName ? (
+            <div className="contact-list-email">{contact.email}</div>
+          ) : null}
         </div>
+        <span
+          className="contact-list-account-dot"
+          style={{ backgroundColor: account?.color || undefined }}
+          title={account?.label || localized('Unknown account')}
+          aria-label={account?.label || localized('Unknown account')}
+        />
       </div>
     );
   },
@@ -42,7 +43,14 @@ const ContactColumn = new ListTabular.Column({
 
 class ContactsListEmpty extends React.Component<{ visible: boolean }> {
   render() {
-    return this.props.visible ? <div>No contacts to display</div> : <span />;
+    return this.props.visible ? (
+      <div className="contacts-list-empty">
+        <h3>{localized('No contacts to display')}</h3>
+        <p>{localized('Choose another source, or add a contact to this account.')}</p>
+      </div>
+    ) : (
+      <span />
+    );
   }
 }
 
@@ -187,7 +195,7 @@ class ContactListWithData extends React.Component<ContactListProps, ContactListS
             columns={[ContactColumn]}
             dataSource={this.props.listSource}
             itemPropsProvider={() => ({})}
-            itemHeight={32}
+            itemHeight={58}
             EmptyComponent={ContactsListEmpty}
             onDragItems={this._onDragItems}
             onDragEnd={() => null}
@@ -208,8 +216,8 @@ export const ContactList = ListensToFluxStore(ContactListWithData, {
 
 ContactList.displayName = 'ContactList';
 ContactList.containerStyles = {
-  minWidth: 140,
-  maxWidth: 450,
+  minWidth: 260,
+  maxWidth: 420,
 };
 
 interface ContactListSearchWithDataProps {

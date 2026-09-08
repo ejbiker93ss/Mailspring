@@ -147,6 +147,8 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     if (id === 'Threads') {
       Actions.setFocus({ collection: 'thread', item: null });
       Actions.setCursorPosition({ collection: 'thread', item: null });
+    } else if (id === 'Contacts') {
+      AppEnv.mailsyncBridge.sendSyncContactsNow();
     }
     this.setState({ activeId: id });
   };

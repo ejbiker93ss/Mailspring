@@ -1,4 +1,12 @@
 @import 'onboarding-reset';
+@import 'outlook-import';
+
+.page-frame .page.account-choose:has(.outlook-import-panel) {
+  overflow-y: auto;
+  h2 {
+    margin-top: 28px;
+  }
+}
 
 @keyframes fadein {
   from {

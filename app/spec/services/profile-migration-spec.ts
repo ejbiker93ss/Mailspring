@@ -52,7 +52,7 @@ describe('Mailspring profile migration', () => {
     expect(shouldOfferMailspringProfileMigration(source, destination)).toBe(true);
   });
 
-  it('copies credentials and the SQLite database while preserving a backup', () => {
+  it('copies credentials and the SQLite database while preserving a backup', async () => {
     fs.writeFileSync(path.join(destination, 'config.json'), JSON.stringify({ '*': {} }));
     fs.writeFileSync(path.join(destination, 'edgehill.db'), 'new-empty-database');
     fs.writeFileSync(path.join(source, 'edgehill.db-wal'), 'mailspring-wal');
@@ -61,7 +61,9 @@ describe('Mailspring profile migration', () => {
     fs.mkdirSync(path.join(destination, 'files', 'aa', 'bb'), { recursive: true });
     fs.writeFileSync(path.join(destination, 'files', 'aa', 'bb', 'keep.png'), 'summermail-image');
 
-    const backup = migrateMailspringProfile(source, destination, { migrateCredentials: false });
+    const backup = await migrateMailspringProfile(source, destination, {
+      migrateCredentials: false,
+    });
 
     expect(fs.readFileSync(path.join(destination, 'config.json'), 'utf8')).toContain('account-1');
     expect(fs.readFileSync(path.join(destination, 'edgehill.db'), 'utf8')).toBe(
@@ -79,6 +81,23 @@ describe('Mailspring profile migration', () => {
     );
   });
 
+  it('reports meaningful progress while the profile is migrated', async () => {
+    fs.writeFileSync(path.join(destination, 'config.json'), JSON.stringify({ '*': {} }));
+    fs.writeFileSync(path.join(destination, 'edgehill.db'), 'new-empty-database');
+    const updates: Array<{ percent: number; status: string }> = [];
+
+    await migrateMailspringProfile(source, destination, {
+      migrateCredentials: false,
+      onProgress: (percent, status) => updates.push({ percent, status }),
+    });
+
+    expect(updates.map(({ percent }) => percent)).toEqual([10, 24, 42, 76, 96]);
+    expect(updates.every(({ status }) => status.length > 0)).toBe(true);
+    expect(fs.existsSync(path.join(destination, '.mailspring-profile-migration-complete'))).toBe(
+      true
+    );
+  });
+
   it('decrypts Chromium v10 credentials after the profile key is unlocked', () => {
     const key = crypto.randomBytes(32);
     const nonce = crypto.randomBytes(12);
@@ -88,5 +107,30 @@ describe('Mailspring profile migration', () => {
     const encrypted = Buffer.concat([Buffer.from('v10'), nonce, ciphertext, cipher.getAuthTag()]);
 
     expect(decryptChromiumV10CredentialBlob(encrypted, key)).toBe(plaintext);
+  });
+
+  it('yields during copying and restores the backup after a copy failure', async () => {
+    fs.writeFileSync(path.join(destination, 'config.json'), JSON.stringify({ '*': {} }));
+    fs.writeFileSync(path.join(destination, 'edgehill.db'), 'original-database');
+    fs.rmSync(path.join(source, 'edgehill.db'));
+    let yielded = false;
+    let failed = false;
+    const migration = migrateMailspringProfile(source, destination, { migrateCredentials: false });
+    await Promise.resolve().then(() => {
+      yielded = true;
+    });
+    try {
+      await migration;
+    } catch (error) {
+      failed = true;
+    }
+    expect(yielded).toBe(true);
+    expect(failed).toBe(true);
+    expect(fs.readFileSync(path.join(destination, 'edgehill.db'), 'utf8')).toBe(
+      'original-database'
+    );
+    expect(fs.existsSync(path.join(destination, '.mailspring-profile-migration-complete'))).toBe(
+      false
+    );
   });
 });

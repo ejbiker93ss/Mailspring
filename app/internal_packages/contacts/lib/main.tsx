@@ -82,10 +82,19 @@ export function activate() {
     { split: ['ContactsSidebar', 'ContactsList', 'ContactsDetail'] }
   );
 
-  adjustMenus();
-  Actions.selectRootSheet(WorkspaceStore.Sheet.Contacts);
+  if (AppEnv.isMainWindow()) {
+    _commandDisposable = AppEnv.commands.add(document.body, {
+      'contacts:show': () => {
+        Actions.selectRootSheet(WorkspaceStore.Sheet.Contacts);
+        AppEnv.mailsyncBridge.sendSyncContactsNow();
+      },
+    });
+  } else {
+    adjustMenus();
+    Actions.selectRootSheet(WorkspaceStore.Sheet.Contacts);
+  }
 
-  _commandDisposable = AppEnv.commands.add(document.body, {
+  const contactCommands = AppEnv.commands.add(document.body, {
     'contacts:import-vcf': () => {
       const accountId = resolveImportAccountId();
       if (accountId) {
@@ -106,6 +115,14 @@ export function activate() {
       exportContactsToFile(contacts);
     },
   });
+
+  const previousDisposable = _commandDisposable;
+  _commandDisposable = {
+    dispose: () => {
+      previousDisposable?.dispose();
+      contactCommands.dispose();
+    },
+  };
 
   ComponentRegistry.register(ContactPerspectivesList, {
     location: WorkspaceStore.Location.ContactsSidebar,

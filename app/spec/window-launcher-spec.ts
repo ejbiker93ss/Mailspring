@@ -1,4 +1,5 @@
 import WindowLauncher, { isHotWindowReady } from '../src/browser/window-launcher';
+import { EventEmitter } from 'events';
 
 describe('WindowLauncher hot window readiness', () => {
   it('does not reuse a preloaded window before its renderer is ready', () => {
@@ -64,5 +65,64 @@ describe('WindowLauncher hot window readiness', () => {
     });
 
     expect(launcher._mustUseColdWindow(options)).toBeFalsy();
+  });
+});
+
+describe('WindowLauncher spare renderer scheduling', () => {
+  let launcher: WindowLauncher;
+  let browserWindow: EventEmitter;
+  let createHotWindow: jasmine.Spy;
+
+  beforeEach(() => {
+    launcher = new WindowLauncher({
+      devMode: false,
+      safeMode: false,
+      specMode: true,
+      resourcePath: '',
+      configDirPath: '',
+      onCreatedHotWindow: () => {},
+      config: { get: () => undefined } as any,
+    });
+    browserWindow = Object.assign(new EventEmitter(), { isVisible: () => false });
+    launcher.hotWindow = {
+      isLoaded: () => true,
+      loadSettings: () => ({}),
+      setLoadSettings: () => {},
+      browserWindow,
+    } as any;
+    createHotWindow = spyOn(launcher, 'createHotWindow');
+  });
+
+  afterEach(() => launcher.cleanupBeforeAppQuit());
+
+  it('waits for the composer to appear before starting its replacement renderer', () => {
+    launcher.newWindow({ windowType: 'composer', hidden: true });
+    expect(launcher.hotWindow).toBe(undefined);
+    advanceClock(1000);
+    expect(createHotWindow).not.toHaveBeenCalled();
+
+    browserWindow.emit('show');
+    advanceClock(249);
+    expect(createHotWindow).not.toHaveBeenCalled();
+    advanceClock(1);
+    expect(createHotWindow.callCount).toBe(1);
+    browserWindow.emit('closed');
+    advanceClock(250);
+    expect(createHotWindow.callCount).toBe(1);
+  });
+
+  it('replaces a consumed window that closes before it can be shown', () => {
+    launcher.newWindow({ windowType: 'composer', hidden: true });
+    browserWindow.emit('closed');
+    advanceClock(250);
+    expect(createHotWindow.callCount).toBe(1);
+  });
+
+  it('does not start another renderer after shutdown', () => {
+    launcher.newWindow({ windowType: 'composer', hidden: true });
+    browserWindow.emit('show');
+    launcher.cleanupBeforeAppQuit();
+    advanceClock(1000);
+    expect(createHotWindow).not.toHaveBeenCalled();
   });
 });
