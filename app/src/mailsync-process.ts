@@ -334,6 +334,18 @@ export class MailsyncProcess extends EventEmitter {
     signal: NodeJS.Signals | null,
     rawLog: string
   ) {
+    // Windows loader failures happen before mailsync can access the database.
+    const loaderFailure =
+      code !== null && [0xc0000135, 0xc000007b, 0xc0000139].includes(code >>> 0);
+    if (loaderFailure) {
+      const error = new Error(
+        localized(
+          'SummerMail could not start its mail engine because a required program file is missing or incompatible. Please reinstall the latest version of SummerMail. Rebuilding the email cache will not repair this problem.'
+        )
+      );
+      (error as any).isInstallationError = true;
+      return error;
+    }
     const isNetworkFailure = mode === 'test' && /"offline"\s*:\s*true/.test(rawLog);
     const exitDescription = signal ? `signal ${signal}` : `${code}`;
     const error = isNetworkFailure

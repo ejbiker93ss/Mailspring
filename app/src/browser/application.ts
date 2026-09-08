@@ -108,7 +108,9 @@ export default class Application extends EventEmitter {
     } catch (err) {
       let message = null;
       let buttons = [localized('Quit')];
-      if (err.toString().includes('ENOENT')) {
+      if (err.isInstallationError) {
+        message = err.message;
+      } else if (err.toString().includes('ENOENT')) {
         message = localized(
           `SummerMail could not find the mailsync process. If you're building SummerMail from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`
         );

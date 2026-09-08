@@ -161,6 +161,9 @@ function runVerifyUnpackedRuntimeAssets({ buildPath }) {
     );
   }
   console.log('---> Verified unpacked quick preview and language-extension assets');
+  if (platform === 'win32') {
+    require('./verify-windows-mailsync')(unpackedPath);
+  }
 }
 
 async function runUploadSourceMapsToSentry({ buildPath }) {
@@ -484,6 +487,9 @@ async function createRpmInstaller() {
 }
 
 async function main() {
+  if (platform === 'win32') {
+    require('./verify-windows-mailsync')(appDir);
+  }
   await runPackager();
 
   if (process.argv.includes('--skip-installers')) {

@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.46 (9/8/2026)
+
+Bug Fixes:
+
+- Restored the native mail engine DLLs missing from the Windows installer.
+- Verify the mail engine starts before and after packaging, preventing incomplete runtime bundles from being released.
+- Report missing or incompatible program files as an installation problem without offering a destructive database rebuild.
+
 ## 1.23.45 (9/7/2026)
 
 Improvements:
