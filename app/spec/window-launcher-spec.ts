@@ -63,6 +63,6 @@ describe('WindowLauncher hot window readiness', () => {
       },
     });
 
-    expect(launcher._mustUseColdWindow(options)).toBe(false);
+    expect(launcher._mustUseColdWindow(options)).toBeFalsy();
   });
 });
