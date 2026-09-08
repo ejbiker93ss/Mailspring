@@ -4,6 +4,7 @@
   "desktopName": "SummerMail.desktop",
   "version": "1.23.44",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
+  "sentryDsn": "",
   "description": "The best email app for people and teams at work",
   "license": "GPL-3.0",
   "main": "./src/browser/main.js",

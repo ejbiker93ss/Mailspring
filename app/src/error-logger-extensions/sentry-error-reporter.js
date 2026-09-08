@@ -4,14 +4,21 @@ const crypto = require('crypto');
 const https = require('https');
 const { URL } = require('url');
 
-const DSN = 'https://b4e04d8ca1e8f1206aa79db0dee2da16@o70907.ingest.us.sentry.io/4511340571000832';
+function configuredDSN() {
+  const pkg = require('../../package.json');
+  return process.env.SUMMERMAIL_SENTRY_DSN || pkg.sentryDsn || '';
+}
 
 function parseDSN(dsn) {
   const u = new URL(dsn);
+  const projectId = u.pathname.replace(/^\//, '');
+  if (u.protocol !== 'https:' || !u.username || !u.host || !projectId) {
+    throw new Error('Invalid SummerMail Sentry DSN');
+  }
   return {
     publicKey: u.username,
     host: u.host,
-    projectId: u.pathname.replace(/^\//, ''),
+    projectId,
   };
 }
 
@@ -109,12 +116,12 @@ function buildEvent({ err, extra, deviceHash, release, tags }) {
   };
 }
 
-function sendEnvelope(event, release) {
-  const { publicKey, host, projectId } = parseDSN(DSN);
+function sendEnvelope(event, release, dsn) {
+  const { publicKey, host, projectId } = parseDSN(dsn);
   const envelopeHeader = JSON.stringify({
     event_id: event.event_id,
     sent_at: new Date().toISOString(),
-    dsn: DSN,
+    dsn,
   });
   const itemHeader = JSON.stringify({ type: 'event' });
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify(event)}`;
@@ -185,6 +192,14 @@ module.exports = class SentryErrorReporter {
       return;
     }
 
+    // SummerMail ships with telemetry disabled. A release only reports errors
+    // when its build explicitly embeds a SummerMail-owned DSN (or the process
+    // is launched with an explicit runtime override).
+    const dsn = configuredDSN();
+    if (!dsn) {
+      return;
+    }
+
     // Coerce non-Error inputs into a real Error so V8 captures a stack.
     // Otherwise our stack-frames array would be empty and Sentry's Relay
     // rejects the event. Matches raven 2.1.2's captureException behavior.
@@ -207,7 +222,7 @@ module.exports = class SentryErrorReporter {
     });
 
     try {
-      sendEnvelope(event, release);
+      sendEnvelope(event, release, dsn);
     } catch (e) {
       safeLog(`Sentry: ${e.message}`);
     }

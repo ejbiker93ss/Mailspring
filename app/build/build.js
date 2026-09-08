@@ -76,9 +76,10 @@ function runCopyPlatformSpecificResources({ buildPath, platform }) {
 function runWriteCommitHashIntoPackage({ buildPath }) {
   const commit = execSync('git rev-parse HEAD').toString();
   const jsonPath = path.resolve(buildPath, 'package.json');
-  let jsonString = fs.readFileSync(jsonPath).toString();
-  jsonString = jsonString.replace('COMMIT_INSERTED_DURING_PACKAGING', commit.substr(0, 8));
-  fs.writeFileSync(jsonPath, jsonString);
+  const json = JSON.parse(fs.readFileSync(jsonPath).toString());
+  json.commitHash = commit.substr(0, 8);
+  json.sentryDsn = process.env.SUMMERMAIL_SENTRY_DSN || '';
+  fs.writeFileSync(jsonPath, `${JSON.stringify(json, null, 2)}\n`);
 }
 
 // For Electron versions that support the setuid sandbox on Linux, the
@@ -163,7 +164,11 @@ function runVerifyUnpackedRuntimeAssets({ buildPath }) {
 }
 
 async function runUploadSourceMapsToSentry({ buildPath }) {
-  const { SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT } = process.env;
+  const {
+    SUMMERMAIL_SENTRY_AUTH_TOKEN: authToken,
+    SUMMERMAIL_SENTRY_ORG: org,
+    SUMMERMAIL_SENTRY_PROJECT: project,
+  } = process.env;
   const mapFiles = glob.sync('**/*.js.map', { cwd: buildPath });
 
   const cleanup = () => {
@@ -171,9 +176,9 @@ async function runUploadSourceMapsToSentry({ buildPath }) {
     console.log(`---> Cleaned up ${mapFiles.length} source map files`);
   };
 
-  if (!SENTRY_AUTH_TOKEN || !SENTRY_ORG || !SENTRY_PROJECT) {
+  if (!authToken || !org || !project) {
     console.log(
-      '---> Skipping Sentry source map upload (set SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT to enable)'
+      '---> Skipping Sentry source map upload (set SUMMERMAIL_SENTRY_AUTH_TOKEN, SUMMERMAIL_SENTRY_ORG, and SUMMERMAIL_SENTRY_PROJECT to enable)'
     );
     cleanup();
     return;
@@ -194,9 +199,9 @@ async function runUploadSourceMapsToSentry({ buildPath }) {
     const commitHash = execSync('git rev-parse HEAD').toString().trim().substr(0, 8);
     const version = `${packageJSON.version}-${commitHash}`;
     const cli = new SentryCli(null, {
-      authToken: SENTRY_AUTH_TOKEN,
-      org: SENTRY_ORG,
-      project: SENTRY_PROJECT,
+      authToken,
+      org,
+      project,
     });
     await cli.releases.new(version);
     await cli.releases.uploadSourceMaps(version, {

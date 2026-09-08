@@ -67,9 +67,10 @@ jobs:
           APPLE_PROVISIONING_PROFILE_PATH: ${{ env.APPLE_PROVISIONING_PROFILE_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SUMMERMAIL_SENTRY_DSN: ${{ secrets.SUMMERMAIL_SENTRY_DSN }}
+          SUMMERMAIL_SENTRY_AUTH_TOKEN: ${{ secrets.SUMMERMAIL_SENTRY_AUTH_TOKEN }}
+          SUMMERMAIL_SENTRY_ORG: ${{ secrets.SUMMERMAIL_SENTRY_ORG }}
+          SUMMERMAIL_SENTRY_PROJECT: ${{ secrets.SUMMERMAIL_SENTRY_PROJECT }}
 
       - name: Rename artifacts
         if: matrix.arch == 'arm64'
