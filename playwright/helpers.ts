@@ -137,7 +137,7 @@ export async function waitForMainWindow(
     for (const page of electronApp.windows()) {
       if (isMainWindow(page)) {
         try {
-          await page.locator('.item-compose').waitFor({ timeout: 2_000 });
+          await page.getByRole('tab', { name: /^Mail\b/ }).waitFor({ timeout: 2_000 });
           return page;
         } catch {
           // Still loading

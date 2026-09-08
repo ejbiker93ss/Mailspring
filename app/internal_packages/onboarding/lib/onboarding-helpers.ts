@@ -453,8 +453,10 @@ export function buildSmarterMailAccount(account: Account) {
   const serverOrigin = normalizeSmarterMailServerURL(account.settings.smartermail_server);
   const server = new URL(serverOrigin);
   const password = account.settings.imap_password;
-  const caldavURL = `${serverOrigin}/WebDAV/cal/`;
-  const carddavURL = `${serverOrigin}/WebDAV/ab/`;
+  // SmarterMail exposes DAV discovery from one account-level WebDAV root.
+  // Individual calendar and address-book paths vary by server version and
+  // must come from the authenticated DAV discovery response.
+  const webdavURL = `${serverOrigin}/WebDAV/`;
   const populated = account.clone();
 
   populated.provider = 'smartermail';
@@ -473,8 +475,8 @@ export function buildSmarterMailAccount(account: Account) {
     smtp_password: password,
     smtp_security: 'SSL / TLS',
     smtp_allow_insecure_ssl: false,
-    caldav_host: caldavURL,
-    carddav_host: carddavURL,
+    caldav_host: webdavURL,
+    carddav_host: webdavURL,
     caldav_username: populated.emailAddress,
     caldav_password: password,
     container_folder: '',

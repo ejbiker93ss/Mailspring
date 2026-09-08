@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.53 (9/8/2026)
+
+Bug Fixes:
+
+- Preserve the configured SmarterMail WebDAV root and discover server-provided calendar and address-book collections from it.
+- Follow a bounded number of HTTPS-only DAV redirects without forwarding credentials to a different host.
+
 ## 1.23.52 (9/8/2026)
 
 Improvements:
