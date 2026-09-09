@@ -413,6 +413,7 @@ function normalizedResponse(provider: MailAssistantProvider, response: any) {
   if (provider === 'google') {
     const parts = response.candidates?.[0]?.content?.parts || [];
     return {
+      status: response.candidates?.[0]?.finishReason === 'MAX_TOKENS' ? 'incomplete' : 'completed',
       output: [
         ...parts
           .filter((part) => part.text)
@@ -433,6 +434,7 @@ function normalizedResponse(provider: MailAssistantProvider, response: any) {
   }
   if (provider === 'anthropic')
     return {
+      status: response.stop_reason === 'max_tokens' ? 'incomplete' : 'completed',
       output: (response.content || []).map((part) =>
         part.type === 'text'
           ? { type: 'message', content: [{ type: 'output_text', text: part.text }] }
@@ -446,6 +448,7 @@ function normalizedResponse(provider: MailAssistantProvider, response: any) {
     };
   const message = response.choices?.[0]?.message || {};
   return {
+    status: response.choices?.[0]?.finish_reason === 'length' ? 'incomplete' : 'completed',
     output: [
       ...(message.content
         ? [{ type: 'message', content: [{ type: 'output_text', text: message.content }] }]
@@ -554,6 +557,8 @@ export async function summarizeMailText(options: {
   systemPrompt: string;
   userMessage: string;
   signal?: AbortSignal;
+  maxOutputTokens?: number;
+  requireComplete?: boolean;
 }) {
   const response = await requestJSON(
     options.apiKey,
@@ -562,12 +567,20 @@ export async function summarizeMailText(options: {
       store: false,
       instructions: options.systemPrompt,
       input: [{ role: 'user', content: options.userMessage }],
-      max_output_tokens: 800,
+      max_output_tokens: options.maxOutputTokens || 800,
     },
     options.signal,
     options.provider,
     options.endpoint
   );
+  if (
+    options.requireComplete &&
+    (response.status === 'incomplete' || response.status === 'failed')
+  ) {
+    throw new Error(
+      'The writing check did not return a complete draft. No corrections were applied.'
+    );
+  }
   const text = (response.output || [])
     .filter((item) => item.type === 'message')
     .flatMap((item) => item.content || [])

@@ -71,7 +71,18 @@ class PreferencesAccountDetails extends Component<
     onAccountUpdated: (account: Account, newAccount: Account) => void;
   }) {
     if (prevProps.account !== this.props.account) {
-      this.setState({ account: this.props.account.clone() });
+      this.setState((state) => {
+        const account = this.props.account.clone();
+        // Sync refreshes must not overwrite text that has not been saved on blur.
+        if (prevProps.account.id === account.id) {
+          for (const field of ['label', 'name'] as const) {
+            if (state.account[field] !== prevProps.account[field]) {
+              account[field] = state.account[field];
+            }
+          }
+        }
+        return { account };
+      });
     }
   }
 
@@ -111,8 +122,10 @@ class PreferencesAccountDetails extends Component<
   };
 
   _setState = (updates, callback = () => {}) => {
-    const account = Object.assign(this.state.account.clone(), updates);
-    this.setState({ account }, callback);
+    this.setState(
+      (state) => ({ account: Object.assign(state.account.clone(), updates) }),
+      callback
+    );
   };
 
   _setStateAndSave = (updates: Partial<Account>) => {
@@ -448,10 +461,10 @@ class PreferencesAccountDetails extends Component<
         </div>
         {(account.provider === 'imap' || account.provider === 'smartermail') && (
           <div className="account-calendar-settings">
-            <h6>{localized('Calendar')} (CalDAV)</h6>
+            <h6>{localized('Calendar and Contacts')} (CalDAV / CardDAV)</h6>
             <p className="account-calendar-help">
               {localized(
-                'A calendar-capable account is detected when CalDAV discovery returns at least one calendar. Enter the CalDAV service URL below; the username and password default to this account’s IMAP credentials.'
+                'These DAV credentials are shared by calendar and contact sync. Enter the CalDAV service URL below. If no separate DAV login has been saved, the username and password default to this account’s IMAP credentials.'
               )}
             </p>
             <label htmlFor="account-caldav-host">{localized('Server URL')}</label>
@@ -476,20 +489,24 @@ class PreferencesAccountDetails extends Component<
                 this._onCalendarSettingChanged('caldav_username', event.target.value)
               }
             />
-            <label htmlFor="account-caldav-password">{localized('Password or app password')}</label>
+            <label htmlFor="account-caldav-password">
+              {localized('DAV password or WebDAV app password')}
+            </label>
             <input
               id="account-caldav-password"
               type="password"
               value={this.state.calendarPassword}
-              placeholder={localized('Leave blank to use the IMAP password')}
+              placeholder={localized('Leave blank to keep the saved password')}
               autoComplete="new-password"
               onChange={(event) => this.setState({ calendarPassword: event.target.value })}
             />
             <p className="account-calendar-help">
-              {localized('SmarterMail must also have WebDAV service access enabled for this user.')}
+              {localized(
+                'For SmarterMail with two-factor authentication, use the WebDAV application password from webmail Settings → Account → Two-Factor Authentication. It is separate from the IMAP/SMTP app password. Do not enter a one-time verification code. WebDAV access must also be enabled for this user.'
+              )}
             </p>
             <div className="btn btn-emphasis" onClick={this._onSyncCalendar}>
-              {localized('Save and Sync Calendar')}
+              {localized('Save and Sync Calendar and Contacts')}
             </div>
           </div>
         )}

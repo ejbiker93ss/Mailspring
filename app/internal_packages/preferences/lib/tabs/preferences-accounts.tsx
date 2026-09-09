@@ -97,6 +97,7 @@ class PreferencesAccounts extends React.Component<
           />
           {this.state.selected && (
             <PreferencesAccountDetails
+              key={this.state.selected.id}
               account={this.state.selected}
               onAccountUpdated={this._onAccountUpdated}
             />

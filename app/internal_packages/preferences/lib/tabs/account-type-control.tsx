@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Account, AccountStore, localized } from 'summermail-exports';
+import { Account, AccountStore, KeyManager, localized } from 'summermail-exports';
 import { ConvertibleAccountType, verifyAccountTypeChange } from '../account-type-change';
 
 export default function AccountTypeControl({
@@ -17,6 +17,7 @@ export default function AccountTypeControl({
     account.settings.smartermail_server || `https://${account.settings.imap_host || ''}`
   );
   const [busy, setBusy] = useState(false);
+  const [webdavPassword, setWebdavPassword] = useState('');
   const [error, setError] = useState('');
   const active = useRef(true);
   const inFlight = useRef(false);
@@ -37,7 +38,7 @@ export default function AccountTypeControl({
     const originalSettings = JSON.stringify(account.settings);
     const originalProvider = account.provider;
     try {
-      const candidate = await verifyAccountTypeChange(account, provider, server);
+      const candidate = await verifyAccountTypeChange(account, provider, server, webdavPassword);
       if (!active.current) return;
       const current = AccountStore.accountForId(account.id);
       if (
@@ -51,6 +52,11 @@ export default function AccountTypeControl({
           )
         );
       }
+      if (provider === 'smartermail' && webdavPassword) {
+        await KeyManager.replacePassword(`${account.emailAddress}-caldav`, webdavPassword);
+      }
+      if (!active.current) return;
+      setWebdavPassword('');
       onVerified(candidate);
       setEditing(false);
     } catch (e) {
@@ -74,6 +80,7 @@ export default function AccountTypeControl({
             onClick={() => {
               setProvider(account.provider === 'imap' ? 'smartermail' : 'imap');
               setError('');
+              setWebdavPassword('');
               setEditing(true);
             }}
           >
@@ -105,12 +112,24 @@ export default function AccountTypeControl({
                 placeholder="https://mail.example.com"
                 onChange={(e) => setServer(e.target.value)}
               />
+              <label htmlFor="account-type-webdav-password">
+                {localized('WebDAV app password (Calendar / Contacts)')}
+              </label>
+              <input
+                id="account-type-webdav-password"
+                type="password"
+                autoComplete="new-password"
+                value={webdavPassword}
+                disabled={busy}
+                placeholder={localized('Leave blank to use saved DAV credentials')}
+                onChange={(e) => setWebdavPassword(e.target.value)}
+              />
             </>
           )}
           <p className="account-calendar-help">
             {provider === 'smartermail'
               ? localized(
-                  'Verify your saved login, then use this server for calendars and contacts. Existing mail, folders and account preferences are kept.'
+                  'Your existing mail password is kept. With two-factor authentication, enter the separate WebDAV app password, not the IMAP/SMTP app password or a one-time code. If blank, use the saved DAV password, or the mail password if none is saved. Credentials are verified before changing the account type.'
                 )
               : localized(
                   'Keep your existing mail connection, calendars, contacts and account preferences. The SmarterMail webmail shortcut will be removed.'
@@ -121,7 +140,15 @@ export default function AccountTypeControl({
             <button type="submit" className="btn btn-emphasis" disabled={busy}>
               {busy ? localized('Verifying…') : localized('Verify and Change Type')}
             </button>
-            <button type="button" className="btn" disabled={busy} onClick={() => setEditing(false)}>
+            <button
+              type="button"
+              className="btn"
+              disabled={busy}
+              onClick={() => {
+                setWebdavPassword('');
+                setEditing(false);
+              }}
+            >
               {localized('Cancel')}
             </button>
           </div>

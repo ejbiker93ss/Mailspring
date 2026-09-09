@@ -478,7 +478,7 @@ export function buildSmarterMailAccount(account: Account) {
     caldav_host: webdavURL,
     carddav_host: webdavURL,
     caldav_username: populated.emailAddress,
-    caldav_password: password,
+    caldav_password: account.settings.caldav_password || password,
     container_folder: '',
   };
   return populated;

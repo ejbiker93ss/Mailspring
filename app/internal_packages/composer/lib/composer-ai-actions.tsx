@@ -1,4 +1,5 @@
 import React from 'react';
+import { correctionParts, applySelectedCorrections } from './composer-corrections';
 import {
   Actions,
   DatabaseStore,
@@ -28,7 +29,7 @@ export interface ComposerDiffSegment {
   text: string;
 }
 
-const GRAMMAR_PROMPT = `You edit email drafts. Correct spelling, grammar, punctuation, capitalization, and obvious typos while preserving the author's meaning, tone, paragraph breaks, and level of formality. Do not add facts, greetings, sign-offs, commentary, or markdown. Preserve every token shaped like [[PRIVATE_1]] exactly. Return only the corrected draft text.`;
+const GRAMMAR_PROMPT = `You edit email drafts. Review the ENTIRE draft and correct ALL spelling, grammar, punctuation, capitalization, and obvious typo issues in one comprehensive pass. Do not stop after the first few corrections or limit the number of issues. Check the complete corrected draft for remaining errors before returning it. Preserve the author's meaning, tone, paragraph breaks, and level of formality. Do not add facts, greetings, sign-offs, commentary, or markdown. Preserve every token shaped like [[PRIVATE_1]] exactly. Return the entire corrected draft text, not an excerpt.`;
 
 export const ALWAYS_CHECK_GRAMMAR_CONFIG_KEY = 'core.sending.alwaysCheckSpellingAndGrammar';
 
@@ -172,6 +173,8 @@ export async function correctComposerGrammar(draft: MessageWithEditorState, text
     provider: config.provider,
     endpoint: config.endpoint,
     systemPrompt: GRAMMAR_PROMPT,
+    maxOutputTokens: Math.min(32000, Math.max(4096, masked.text.length * 2 + 1024)),
+    requireComplete: true,
     userMessage: `${context ? `Conversation context:\n${context}\n\n` : ''}Draft:\n${masked.text}`,
   });
   return masked.restore(stripCodeFence(result));
@@ -183,18 +186,27 @@ interface ReviewCardProps {
   originalText?: string;
   tone?: ComposerToneResult;
   error?: string;
-  onApply?: () => void;
+  onApply?: (text: string) => void;
+  onSendAnyway?: () => void;
+  onDismiss?: () => void;
 }
 
 export function ComposerAIReviewCard(props: ReviewCardProps) {
+  const [excluded, setExcluded] = React.useState(new Set<number>());
+  const dismiss = React.useRef(props.onDismiss);
+  React.useEffect(() => () => dismiss.current?.(), []);
   const tone = props.tone;
   const grammarIsClean =
     props.kind === 'grammar' &&
     composerTextsMatch(props.originalText || '', props.correctedText || '');
-  const grammarDiff =
-    props.kind === 'grammar' && !grammarIsClean
-      ? buildComposerWordDiff(props.originalText || '', props.correctedText || '')
-      : [];
+  const grammarDiff = React.useMemo(
+    () =>
+      props.kind === 'grammar' && !grammarIsClean
+        ? buildComposerWordDiff(props.originalText || '', props.correctedText || '')
+        : [],
+    [props.kind, props.originalText, props.correctedText, grammarIsClean]
+  );
+  const parts = React.useMemo(() => correctionParts(grammarDiff), [grammarDiff]);
   return (
     <div className={`composer-ai-review-card ${tone ? `tone-${tone.level}` : ''}`}>
       <button
@@ -218,24 +230,58 @@ export function ComposerAIReviewCard(props: ReviewCardProps) {
             </div>
           ) : (
             <>
-              <p>{localized('Here is exactly what the AI would change.')}</p>
+              <p>
+                {localized(
+                  'Review all suggested corrections below. Uncheck any change you want to keep as written.'
+                )}
+              </p>
               <div className="composer-ai-diff-legend">
                 <span className="removed">{localized('Removed')}</span>
                 <span className="added">{localized('Added')}</span>
               </div>
               <div className="composer-ai-corrected-preview composer-ai-change-diff">
-                {grammarDiff.map((segment, index) => (
-                  <span className={`diff-${segment.type}`} key={`${index}-${segment.type}`}>
-                    {segment.text}
-                  </span>
-                ))}
+                {parts.map((part, index) =>
+                  part.changed ? (
+                    <label className="composer-ai-correction" key={index}>
+                      <input
+                        type="checkbox"
+                        checked={!excluded.has(index)}
+                        aria-label={
+                          localized('Apply correction') + `: ${part.before} → ${part.after}`
+                        }
+                        onChange={() =>
+                          setExcluded((previous) => {
+                            const next = new Set(previous);
+                            if (next.has(index)) next.delete(index);
+                            else next.add(index);
+                            return next;
+                          })
+                        }
+                      />
+                      <del className="diff-removed">{part.before}</del>
+                      <ins className="diff-added">{part.after}</ins>
+                    </label>
+                  ) : (
+                    <span key={index}>{part.before}</span>
+                  )
+                )}
               </div>
               <div className="composer-ai-review-actions">
                 <button className="btn" onClick={() => Actions.closePopover()}>
                   {localized('Cancel')}
                 </button>
-                <button className="btn btn-emphasis" onClick={props.onApply}>
-                  {localized('Apply corrections')}
+                {props.onSendAnyway && (
+                  <button className="btn" onClick={props.onSendAnyway}>
+                    {localized('Send Anyway')}
+                  </button>
+                )}
+                <button
+                  className="btn btn-emphasis"
+                  onClick={() => props.onApply?.(applySelectedCorrections(parts, excluded))}
+                >
+                  {props.onSendAnyway
+                    ? localized('Apply and Send')
+                    : localized('Apply corrections')}
                 </button>
               </div>
             </>
@@ -271,6 +317,11 @@ export function ComposerAIReviewCard(props: ReviewCardProps) {
           <div className="composer-ai-review-kicker">{localized('AI writing tools')}</div>
           <h2>{localized('Could not complete the check')}</h2>
           <p>{props.error}</p>
+          {props.onSendAnyway && (
+            <button className="btn" onClick={props.onSendAnyway}>
+              {localized('Send Anyway')}
+            </button>
+          )}
           <button
             className="btn btn-emphasis"
             onClick={() => {
@@ -323,8 +374,15 @@ export default class ComposerAIActions extends React.Component<
             kind="grammar"
             originalText={text}
             correctedText={correctedText}
-            onApply={() => {
-              editor.replaceEditableText(correctedText);
+            onApply={(selectedText) => {
+              if (!composerTextsMatch(text, editor.getEditableText())) {
+                require('@electron/remote').dialog.showErrorBox(
+                  localized('Draft changed'),
+                  localized('Run the writing check again before applying corrections.')
+                );
+                return;
+              }
+              editor.replaceEditableText(selectedText);
               Actions.closePopover();
             }}
           />,

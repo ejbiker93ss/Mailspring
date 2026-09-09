@@ -12,11 +12,14 @@ test('account type changes verify first and retain mail identity and settings', 
       KeyManager.insertAccountSecrets = async a => {
         const c=a.clone();c.settings.imap_password='test-secret';c.settings.smtp_password='test-secret';return c;
       };
+      window.typeTest.savedKeys = [];
+      KeyManager.replacePassword = async (key,value) => { window.typeTest.savedKeys.push({key,value}); };
       MailsyncProcess.prototype.test = async function() { window.typeTest.mailChecks++; };
       MailsyncProcess.prototype.kill = () => {};
       AppEnv.mailsyncBridge.forceRelaunchClient = async () => { window.typeTest.relaunches++; };
       const {EventEmitter}=require('events');
       require('https').request = (_url,_options,callback) => {
+        window.typeTest.davUsedSeparatePassword = Buffer.from(_options.headers.Authorization.slice(6),'base64').toString().endsWith(':dav-test-secret');
         const req=new EventEmitter();req.destroy=()=>req.emit('close');
         req.end=()=>setTimeout(()=>{
           const res=new EventEmitter();res.statusCode=window.typeTest.status;callback(res);
@@ -32,8 +35,11 @@ test('account type changes verify first and retain mail identity and settings', 
     const control = mainWindow.locator('.account-type-settings');
     await control.getByRole('button', {name:'Change account type…'}).click();
     await control.getByLabel('SmarterMail server').fill('https://mail.example.com');
+    await control.getByLabel('WebDAV app password (Calendar / Contacts)').fill('dav-test-secret');
     await control.getByRole('button', {name:'Verify and Change Type'}).click();
     await expect(control.getByRole('alert')).toContainText('rejected');
+    expect(await executeInRenderer(electronApp, 'window.typeTest.savedKeys.length')).toBe(0);
+    expect(await executeInRenderer(electronApp, 'window.typeTest.davUsedSeparatePassword')).toBe(true);
     await control.screenshot({path:'playwright/account-type-change.png'});
     expect(await executeInRenderer(electronApp, `require('summermail-exports').AccountStore.accountForId(window.typeTest.id).provider`)).toBe('imap');
     await executeInRenderer(electronApp, 'window.typeTest.status=207');
@@ -48,6 +54,11 @@ test('account type changes verify first and retain mail identity and settings', 
       expect(state.settings[key]).toEqual(state.before[key]);
     }
     expect(state.settings.imap_password).toBeUndefined();
+    expect(state.settings.caldav_password).toBeUndefined();
+    const savedKeys = await executeInRenderer(electronApp, 'window.typeTest.savedKeys');
+    expect(savedKeys).toHaveLength(1);
+    expect(savedKeys[0].key).toMatch(/-caldav$/);
+    expect(savedKeys[0].value).toBe('dav-test-secret');
     expect(state.settings.carddav_host).toBe('https://mail.example.com/WebDAV/');
     expect(state.relaunches).toBe(1);
     await control.getByRole('button', {name:'Change account type…'}).click();

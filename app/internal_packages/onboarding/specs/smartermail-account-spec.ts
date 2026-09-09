@@ -18,6 +18,7 @@ describe('SmarterMail account setup', () => {
       settings: {
         smartermail_server: 'https://mail.example.com',
         imap_password: 'secret',
+        caldav_password: 'separate-webdav-secret',
       },
     });
 
@@ -30,5 +31,8 @@ describe('SmarterMail account setup', () => {
     expect(result.settings.caldav_host).toBe('https://mail.example.com/WebDAV/');
     expect(result.settings.carddav_host).toBe('https://mail.example.com/WebDAV/');
     expect(result.settings.caldav_username).toBe('alice@example.com');
+    expect(result.settings.caldav_password).toBe('separate-webdav-secret');
+    expect(result.settings.imap_password).toBe('secret');
+    expect(result.settings.smtp_password).toBe('secret');
   });
 });

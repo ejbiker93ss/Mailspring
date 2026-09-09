@@ -97,7 +97,7 @@ export class SendActionButton extends React.Component<
       } finally {
         this.setState({ isPreparingSend: false });
       }
-      if (!readyToSend) return;
+      if (!readyToSend || !this.props.isValidDraft()) return;
     }
 
     if (AppEnv.config.get('core.sending.sounds')) {

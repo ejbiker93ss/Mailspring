@@ -64,7 +64,7 @@ async function verifyDAV(account: Account) {
             reject(
               new Error(
                 localized(
-                  'The server rejected the saved DAV login. Check the calendar credentials and WebDAV access for this account.'
+                  'The server rejected the saved DAV login. If SmarterMail uses two-factor authentication, save its WebDAV app password under Calendar and Contacts, then try again. The IMAP/SMTP app password and one-time verification code are not DAV passwords. Also check that WebDAV access is enabled.'
                 )
               )
             );
@@ -115,10 +115,14 @@ async function verifyDAV(account: Account) {
 export async function verifyAccountTypeChange(
   account: Account,
   provider: ConvertibleAccountType,
-  serverURL: string
+  serverURL: string,
+  webdavPassword = ''
 ) {
   const candidate = buildAccountTypeChange(account, provider, serverURL);
   const withSecrets = await KeyManager.insertAccountSecrets(candidate);
+  if (provider === 'smartermail' && webdavPassword) {
+    withSecrets.settings.caldav_password = webdavPassword;
+  }
   if (!withSecrets.settings.imap_password || !withSecrets.settings.smtp_password) {
     throw new Error(
       localized('Update the account connection settings to save a mail password first.')

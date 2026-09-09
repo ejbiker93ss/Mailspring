@@ -1,5 +1,18 @@
 # SummerMail Changelog
 
+## 1.23.58 (9/9/2026)
+
+Improvements:
+
+- Configure separate SmarterMail mail and WebDAV app passwords without replacing working mail credentials.
+- Review all returned writing corrections, choose which to apply, and use Send Anyway or Apply and Send.
+- Increase the full-draft writing-check output allowance and reject truncated responses.
+
+Bug Fixes:
+
+- Preserve account-label edits during background account refreshes.
+- Fix standalone Outlook import stylesheet compilation.
+
 ## 1.23.57 (9/9/2026)
 
 Improvements:

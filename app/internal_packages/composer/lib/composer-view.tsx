@@ -464,7 +464,19 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     return true;
   };
 
+  _writingCheckInFlight = false;
+
   _checkGrammarBeforeSending = async (anchor?: HTMLElement) => {
+    if (this._writingCheckInFlight) return false;
+    this._writingCheckInFlight = true;
+    try {
+      return await this._runGrammarBeforeSending(anchor);
+    } finally {
+      this._writingCheckInFlight = false;
+    }
+  };
+
+  _runGrammarBeforeSending = async (anchor?: HTMLElement) => {
     if (AppEnv.config.get(ALWAYS_CHECK_GRAMMAR_CONFIG_KEY) !== true) return true;
 
     const editor = this.editor.current;
@@ -497,24 +509,81 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
       }
       if (composerTextsMatch(originalText, correctedText)) return true;
 
-      openCard(
-        <ComposerAIReviewCard
-          kind="grammar"
-          originalText={originalText}
-          correctedText={correctedText}
-          onApply={() => {
-            editor.replaceEditableText(correctedText);
-            Actions.closePopover();
-          }}
-        />
-      );
-      return false;
+      return this._reviewBeforeSending(openCard, originalText, correctedText);
     } catch (error) {
-      if (this._mounted)
-        openCard(<ComposerAIReviewCard kind="error" error={error.message || String(error)} />);
+      if (this._mounted) {
+        return this._reviewBeforeSending(
+          openCard,
+          originalText,
+          undefined,
+          error.message || String(error)
+        );
+      }
       return false;
     }
   };
+
+  _reviewBeforeSending = (
+    openCard: (card: React.ReactNode) => void,
+    originalText: string,
+    correctedText?: string,
+    error?: string
+  ): Promise<boolean> =>
+    new Promise((resolve) => {
+      let settled = false;
+      const finish = async (send: boolean, selectedText?: string) => {
+        if (settled) return;
+        settled = true;
+        const editor = this.editor.current;
+        const unchanged =
+          this._mounted && editor && composerTextsMatch(originalText, editor.getEditableText());
+        if (send && !unchanged && this._mounted) {
+          require('@electron/remote').dialog.showErrorBox(
+            localized('Draft changed'),
+            localized('Review your latest edits and send again. No message was sent.')
+          );
+        }
+        try {
+          if (send && unchanged && selectedText !== undefined) {
+            editor.replaceEditableText(selectedText);
+            // Slate may publish its change on the next turn. Never send the old draft.
+            for (let attempt = 0; attempt < 50; attempt++) {
+              await new Promise((done) => setTimeout(done, 20));
+              if (!this._mounted || composerTextsMatch(selectedText, editor.getEditableText()))
+                break;
+            }
+            if (!this._mounted || !composerTextsMatch(selectedText, editor.getEditableText())) {
+              throw new Error('Editor did not accept corrections');
+            }
+          }
+          resolve(Boolean(send && unchanged && this._mounted));
+        } catch {
+          if (this._mounted)
+            require('@electron/remote').dialog.showErrorBox(
+              localized('Corrections were not applied'),
+              localized('Review the draft and try again. No message was sent.')
+            );
+          resolve(false);
+        }
+        Actions.closePopover();
+      };
+      openCard(
+        <ComposerAIReviewCard
+          kind={error ? 'error' : 'grammar'}
+          error={error}
+          originalText={originalText}
+          correctedText={correctedText}
+          onApply={(text) => finish(true, text)}
+          onSendAnyway={() => finish(true)}
+          onDismiss={() => {
+            if (!settled) {
+              settled = true;
+              resolve(false);
+            }
+          }}
+        />
+      );
+    });
 
   _onDestroyDraft = () => {
     Actions.destroyDraft(this.props.draft);
