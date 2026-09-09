@@ -3,6 +3,7 @@ import fs from 'fs';
 import React, { Component } from 'react';
 import { ipcRenderer } from 'electron';
 import { EditableList } from 'summermail-component-kit';
+import AccountTypeControl from './account-type-control';
 import {
   localized,
   RegExpUtils,
@@ -165,6 +166,26 @@ class PreferencesAccountDetails extends Component<
 
   _onResetCache = () => {
     AppEnv.mailsyncBridge.resetCacheForAccount(this.state.account);
+  };
+
+  _onAccountTypeVerified = (candidate: Account) => {
+    this._setState(
+      {
+        provider: candidate.provider,
+        settings: candidate.settings,
+        authedAt: candidate.authedAt,
+      },
+      async () => {
+        this._saveChanges();
+        try {
+          await AppEnv.mailsyncBridge.forceRelaunchClient(this.state.account);
+        } catch {
+          AppEnv.showErrorDialog(
+            localized('Account type saved. Restart SummerMail to resume synchronization.')
+          );
+        }
+      }
+    );
   };
 
   _onAddSharedMailbox = () => {
@@ -405,6 +426,11 @@ class PreferencesAccountDetails extends Component<
           </div>
         </div>
         <h6>{localized('Account Settings')}</h6>
+        <AccountTypeControl
+          key={account.id}
+          account={account}
+          onVerified={this._onAccountTypeVerified}
+        />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           <div className="btn" onClick={this._onManageContacts}>
             {localized('Manage Contacts')}

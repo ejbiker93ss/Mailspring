@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.57 (9/9/2026)
+
+Improvements:
+
+- Change existing IMAP accounts to SmarterMail, or back to IMAP, from account settings without recreating the account.
+- Verify saved mail and DAV credentials before applying the change, preserve mail settings and account identity, and restart synchronization afterward.
+
 ## 1.23.56 (9/9/2026)
 
 Bug Fixes:

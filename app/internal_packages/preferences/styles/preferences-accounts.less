@@ -1,4 +1,12 @@
 @import 'ui-variables';
+
+.account-type-settings {
+  margin-bottom: 16px;
+  label { display: block; margin-top: 10px; }
+  input, select { width: 100%; }
+  .account-type-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  [role='alert'] { color: @color-error; }
+}
 @import '../../onboarding/styles/outlook-import';
 
 // Preferences Specific
