@@ -7,6 +7,7 @@ Add-Type -AssemblyName System.Drawing
 
 $resourceRoot = Join-Path $PSScriptRoot 'resources'
 $canonicalSource = Join-Path $resourceRoot 'summermail-icon-source.png'
+$windowsIcoSource = Join-Path $resourceRoot 'summermail-taskbar-source.ico'
 $staticIcon = Join-Path $PSScriptRoot '..\static\images\summermail.png'
 $navigationIcon = Join-Path $PSScriptRoot '..\internal_packages\account-sidebar\assets\summermail-app-icon@2x.png'
 $windows75Icon = Join-Path $resourceRoot 'win\summermail-75px.png'
@@ -177,6 +178,9 @@ try {
   $icoSizes = @(16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
   $primaryIco = Join-Path $resourceRoot 'win\summermail.ico'
   Save-Ico $cleaned $icoSizes $primaryIco
+  if (Test-Path -LiteralPath $windowsIcoSource) {
+    [System.IO.File]::Copy($windowsIcoSource, $primaryIco, $true)
+  }
   [System.IO.File]::Copy(
     $primaryIco,
     (Join-Path $resourceRoot 'win\summermail-square.ico'),

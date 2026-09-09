@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.54 (9/8/2026)
+
+Improvements:
+
+- Update the Windows application, taskbar, shortcut, notification, and installer icon to the new SummerMail artwork.
+- Keep the supplied multi-resolution Windows ICO as the canonical source for future icon regeneration.
+
 ## 1.23.53 (9/8/2026)
 
 Bug Fixes:
