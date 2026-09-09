@@ -30,6 +30,8 @@ export interface ComposerDiffSegment {
 
 const GRAMMAR_PROMPT = `You edit email drafts. Correct spelling, grammar, punctuation, capitalization, and obvious typos while preserving the author's meaning, tone, paragraph breaks, and level of formality. Do not add facts, greetings, sign-offs, commentary, or markdown. Preserve every token shaped like [[PRIVATE_1]] exactly. Return only the corrected draft text.`;
 
+export const ALWAYS_CHECK_GRAMMAR_CONFIG_KEY = 'core.sending.alwaysCheckSpellingAndGrammar';
+
 const TONE_PROMPT = `You are a pragmatic workplace communication coach. Evaluate the draft using the supplied conversation context when present. Direct disagreement is not automatically rude. Warn when wording is needlessly harsh, accusatory, dismissive, threatening, sarcastic, unprofessional, or likely to inflame the exchange. Return only JSON with this exact shape: {"level":"good|caution|harsh","headline":"short verdict","explanation":"1-3 useful sentences","suggestions":["up to 3 specific improvements"]}. Do not rewrite the email and do not use markdown.`;
 
 function stripCodeFence(value: string) {
@@ -152,6 +154,27 @@ async function requestContext(draft: MessageWithEditorState, messages: Message[]
   if (!draft.threadId || !messages.length) return '';
   const redact = AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false;
   return buildThreadSummaryTranscript(messages, redact).slice(0, 30000);
+}
+
+export async function correctComposerGrammar(draft: MessageWithEditorState, text: string) {
+  const config = await resolveMailAssistantProviderConfig();
+  if (!providerConfigurationIsReady(config))
+    throw new Error(localized('Add an AI provider API key and model to use writing checks.'));
+  const messages = await messagesForDraft(draft);
+  const context = await requestContext(draft, messages);
+  const redact = AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false;
+  const masked = redact
+    ? maskComposerPrivateText(text, [...messages, draft as Message])
+    : { text, restore: (value: string) => value };
+  const result = await summarizeMailText({
+    apiKey: config.apiKey,
+    model: config.model,
+    provider: config.provider,
+    endpoint: config.endpoint,
+    systemPrompt: GRAMMAR_PROMPT,
+    userMessage: `${context ? `Conversation context:\n${context}\n\n` : ''}Draft:\n${masked.text}`,
+  });
+  return masked.restore(stripCodeFence(result));
 }
 
 interface ReviewCardProps {
@@ -293,26 +316,8 @@ export default class ComposerAIActions extends React.Component<
     if (!anchor || !editor || !text) return;
     this.setState({ running: kind });
     try {
-      const config = await resolveMailAssistantProviderConfig();
-      if (!providerConfigurationIsReady(config))
-        throw new Error(localized('Add an AI provider API key and model to use writing checks.'));
-      const messages = await messagesForDraft(this.props.draft);
-      const context = await requestContext(this.props.draft, messages);
-      const model = config.model;
       if (kind === 'grammar') {
-        const redact = AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false;
-        const masked = redact
-          ? maskComposerPrivateText(text, [...messages, this.props.draft as Message])
-          : { text, restore: (value: string) => value };
-        const result = await summarizeMailText({
-          apiKey: config.apiKey,
-          model,
-          provider: config.provider,
-          endpoint: config.endpoint,
-          systemPrompt: GRAMMAR_PROMPT,
-          userMessage: `${context ? `Conversation context:\n${context}\n\n` : ''}Draft:\n${masked.text}`,
-        });
-        const correctedText = masked.restore(stripCodeFence(result));
+        const correctedText = await correctComposerGrammar(this.props.draft, text);
         this._openCard(
           <ComposerAIReviewCard
             kind="grammar"
@@ -326,13 +331,18 @@ export default class ComposerAIActions extends React.Component<
           anchor
         );
       } else {
+        const config = await resolveMailAssistantProviderConfig();
+        if (!providerConfigurationIsReady(config))
+          throw new Error(localized('Add an AI provider API key and model to use writing checks.'));
+        const messages = await messagesForDraft(this.props.draft);
+        const context = await requestContext(this.props.draft, messages);
         const redact = AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false;
         const masked = redact
           ? maskComposerPrivateText(text, [...messages, this.props.draft as Message]).text
           : text;
         const result = await summarizeMailText({
           apiKey: config.apiKey,
-          model,
+          model: config.model,
           provider: config.provider,
           endpoint: config.endpoint,
           systemPrompt: TONE_PROMPT,

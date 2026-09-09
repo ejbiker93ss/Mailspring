@@ -18,6 +18,7 @@ type ButtonDropdownProps = {
   closeOnMenuClick?: boolean;
   attachment?: string;
   className?: string;
+  disabled?: boolean;
 };
 
 export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonDropdownState> {
@@ -39,6 +40,7 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
       'open open-up': this.state.open === 'up',
       'open open-down': this.state.open === 'down',
       bordered: this.props.bordered !== false,
+      disabled: this.props.disabled,
     });
 
     const menu = this.state.open ? this.props.menu : false;
@@ -54,12 +56,14 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
         >
           <div
             role="button"
-            tabIndex={0}
+            tabIndex={this.props.disabled ? -1 : 0}
             className="primary-item"
             title={this.props.primaryTitle || ''}
             aria-label={this.props.primaryTitle}
-            onClick={this.props.primaryClick}
+            aria-disabled={this.props.disabled}
+            onClick={this.props.disabled ? undefined : this.props.primaryClick}
             onKeyDown={(e) => {
+              if (this.props.disabled) return;
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 this.props.primaryClick();
@@ -70,13 +74,15 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
           </div>
           <div
             role="button"
-            tabIndex={0}
+            tabIndex={this.props.disabled ? -1 : 0}
             aria-label={localized('More options')}
+            aria-disabled={this.props.disabled}
             aria-haspopup="menu"
             aria-expanded={this.state.open !== false}
             className="secondary-picker"
-            onClick={this.toggleDropdown}
+            onClick={this.props.disabled ? undefined : this.toggleDropdown}
             onKeyDown={(e) => {
+              if (this.props.disabled) return;
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 this.toggleDropdown();
@@ -102,7 +108,8 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
           <div
             className="only-item"
             title={this.props.primaryTitle || ''}
-            onClick={this.toggleDropdown}
+            aria-disabled={this.props.disabled}
+            onClick={this.props.disabled ? undefined : this.toggleDropdown}
           >
             {this.props.primaryItem}
             <RetinaImg
@@ -123,6 +130,7 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
   }
 
   toggleDropdown = () => {
+    if (this.props.disabled) return;
     if (this.state.open !== false) {
       this.setState({ open: false });
     } else {

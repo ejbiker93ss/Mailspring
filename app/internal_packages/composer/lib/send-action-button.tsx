@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {
   localized,
   ISendAction,
@@ -14,10 +15,12 @@ interface SendActionButtonProps {
   style: any;
   draft: Message;
   isValidDraft: () => boolean;
+  beforeSend?: (anchor?: HTMLElement) => Promise<boolean>;
 }
 
 interface SendActionButtonState {
   sendActions: ISendAction[];
+  isPreparingSend: boolean;
 }
 
 export class SendActionButton extends React.Component<
@@ -35,6 +38,7 @@ export class SendActionButton extends React.Component<
     super(props);
     this.state = {
       sendActions: SendActionsStore.orderedSendActionsForDraft(props.draft),
+      isPreparingSend: false,
     };
   }
 
@@ -67,8 +71,9 @@ export class SendActionButton extends React.Component<
   We only use the draft prop when you click send, so update with more discretion. */
   shouldComponentUpdate(nextProps: SendActionButtonProps, nextState: SendActionButtonState) {
     return (
+      nextState.isPreparingSend !== this.state.isPreparingSend ||
       nextState.sendActions.map((a) => a.configKey).join(',') !==
-      this.state.sendActions.map((a) => a.configKey).join(',')
+        this.state.sendActions.map((a) => a.configKey).join(',')
     );
   }
 
@@ -80,16 +85,28 @@ export class SendActionButton extends React.Component<
     this._onSendWithAction(this.state.sendActions[0]);
   };
 
-  _onSendWithAction = (sendAction: ISendAction) => {
-    if (this.props.isValidDraft()) {
-      if (AppEnv.config.get('core.sending.sounds')) {
-        SoundRegistry.playSound('hit-send');
+  _onSendWithAction = async (sendAction: ISendAction) => {
+    if (this.state.isPreparingSend || !this.props.isValidDraft()) return;
+
+    if (this.props.beforeSend) {
+      this.setState({ isPreparingSend: true });
+      let readyToSend = false;
+      try {
+        const anchor = ReactDOM.findDOMNode(this) as HTMLElement;
+        readyToSend = await this.props.beforeSend(anchor);
+      } finally {
+        this.setState({ isPreparingSend: false });
       }
-      Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey });
+      if (!readyToSend) return;
     }
+
+    if (AppEnv.config.get('core.sending.sounds')) {
+      SoundRegistry.playSound('hit-send');
+    }
+    Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey });
   };
 
-  _renderSendActionItem = ({ iconUrl }) => {
+  _renderSendActionItem = ({ iconUrl }, checking = false) => {
     let plusHTML: React.ReactChild = '';
     let additionalImg: React.ReactChild = null;
 
@@ -106,7 +123,7 @@ export class SendActionButton extends React.Component<
           aria-hidden="true"
         />
         <span className="text">
-          {localized(`Send`)}
+          {checking ? localized('Checking…') : localized(`Send`)}
           {plusHTML}
         </span>
         {additionalImg}
@@ -117,17 +134,27 @@ export class SendActionButton extends React.Component<
   render() {
     return (
       <ButtonDropdown
-        className={'btn-send btn-emphasis btn-text'}
+        className={`btn-send btn-emphasis btn-text ${
+          this.state.isPreparingSend ? 'is-preparing-send' : ''
+        }`}
         style={{ order: -100 }}
-        primaryItem={this._renderSendActionItem(this.state.sendActions[0])}
-        primaryTitle={this.state.sendActions[0].title}
+        disabled={this.state.isPreparingSend}
+        primaryItem={this._renderSendActionItem(
+          this.state.sendActions[0],
+          this.state.isPreparingSend
+        )}
+        primaryTitle={
+          this.state.isPreparingSend
+            ? localized('Checking spelling and grammar…')
+            : this.state.sendActions[0].title
+        }
         primaryClick={this._onPrimaryClick}
         closeOnMenuClick
         menu={
           <Menu
             items={this.state.sendActions.slice(1)}
             itemKey={(actionConfig) => actionConfig.configKey}
-            itemContent={this._renderSendActionItem}
+            itemContent={(actionConfig) => this._renderSendActionItem(actionConfig)}
             onSelect={this._onSendWithAction}
           />
         }

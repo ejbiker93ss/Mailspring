@@ -32,7 +32,12 @@ import Fields from './fields';
 import RecentFilesPopover from './recent-files-popover';
 import QuotedTextSummary from '../../message-list/lib/quoted-text-summary';
 import { QUOTED_SUMMARIES_CONFIG_KEY } from '../../message-list/lib/preferences-mail-assistant';
-import ComposerAIActions from './composer-ai-actions';
+import ComposerAIActions, {
+  ALWAYS_CHECK_GRAMMAR_CONFIG_KEY,
+  ComposerAIReviewCard,
+  composerTextsMatch,
+  correctComposerGrammar,
+} from './composer-ai-actions';
 
 const { hasBlockquote, hasNonTrailingBlockquote, hideQuotedTextByDefault, quotedTextFromValue } =
   ComposerSupport.BaseBlockPlugins;
@@ -459,6 +464,58 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     return true;
   };
 
+  _checkGrammarBeforeSending = async (anchor?: HTMLElement) => {
+    if (AppEnv.config.get(ALWAYS_CHECK_GRAMMAR_CONFIG_KEY) !== true) return true;
+
+    const editor = this.editor.current;
+    const originalText = editor?.getEditableText();
+    if (!editor || !originalText) return true;
+
+    const anchorNode =
+      anchor || (ReactDOM.findDOMNode(this.sendButton.current) as HTMLElement | null);
+    if (!anchorNode) return false;
+
+    const openCard = (card: React.ReactNode) =>
+      Actions.openPopover(card, {
+        originRect: anchorNode.getBoundingClientRect(),
+        direction: 'up',
+        fallbackDirection: 'down',
+        closeOnAppBlur: false,
+      });
+
+    try {
+      const correctedText = await correctComposerGrammar(this.props.draft, originalText);
+      if (!this._mounted) return false;
+      if (!composerTextsMatch(originalText, editor.getEditableText())) {
+        require('@electron/remote').dialog.showMessageBox({
+          type: 'info',
+          buttons: [localized('OK')],
+          message: localized('Message changed during the writing check'),
+          detail: localized('Review your latest edits, then send again to run a fresh check.'),
+        });
+        return false;
+      }
+      if (composerTextsMatch(originalText, correctedText)) return true;
+
+      openCard(
+        <ComposerAIReviewCard
+          kind="grammar"
+          originalText={originalText}
+          correctedText={correctedText}
+          onApply={() => {
+            editor.replaceEditableText(correctedText);
+            Actions.closePopover();
+          }}
+        />
+      );
+      return false;
+    } catch (error) {
+      if (this._mounted)
+        openCard(<ComposerAIReviewCard kind="error" error={error.message || String(error)} />);
+      return false;
+    }
+  };
+
   _onDestroyDraft = () => {
     Actions.destroyDraft(this.props.draft);
   };
@@ -529,6 +586,7 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                     draft={this.props.draft}
                     session={this.props.session}
                     isValidDraft={this._isValidDraft}
+                    beforeSend={this._checkGrammarBeforeSending}
                   />
                   <DeleteButton onClick={this._onDestroyDraft} />
                   <AttachFileButton
@@ -544,6 +602,7 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
                     style={{ order: -100 }}
                     draft={this.props.draft}
                     isValidDraft={this._isValidDraft}
+                    beforeSend={this._checkGrammarBeforeSending}
                   />
                 </RovingTabIndexToolbar>
               </footer>

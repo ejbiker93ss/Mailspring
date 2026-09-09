@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, cleanup } from '@testing-library/react';
+import { render, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { Actions, Message, SendActionsStore } from 'summermail-exports';
 import { SendActionButton } from '../lib/send-action-button';
 
@@ -35,10 +35,16 @@ describe('SendActionButton', function describeBlock() {
     this.draft = new Message({ id: this.id, draft: true, headerMessageId: 'bla' });
   });
 
-  const renderButton = (draft, { isValid = true } = {}) => {
+  const renderButton = (
+    draft,
+    {
+      isValid = true,
+      beforeSend,
+    }: { isValid?: boolean; beforeSend?: (anchor?: HTMLElement) => Promise<boolean> } = {}
+  ) => {
     this.isValidDraft.andReturn(isValid);
     const { container } = render(
-      <SendActionButton {...({ draft, isValidDraft: this.isValidDraft } as any)} />
+      <SendActionButton {...({ draft, isValidDraft: this.isValidDraft, beforeSend } as any)} />
     );
     return container;
   };
@@ -117,5 +123,32 @@ describe('SendActionButton', function describeBlock() {
     expect(Actions.sendDraft).toHaveBeenCalledWith(this.draft.headerMessageId, {
       actionKey: 'good-send-action',
     });
+  });
+
+  it('sends after an enabled pre-send check finds no issues', async () => {
+    spyOn(SendActionsStore, 'orderedSendActionsForDraft').andReturn([
+      SendActionsStore.DefaultSendAction,
+    ]);
+    const beforeSend = jasmine.createSpy('beforeSend').andReturn(Promise.resolve(true));
+    const container = renderButton(this.draft, { beforeSend });
+
+    fireEvent.click(container.querySelector('.primary-item'));
+
+    expect(beforeSend).toHaveBeenCalled();
+    await waitFor(() => expect(Actions.sendDraft).toHaveBeenCalled());
+  });
+
+  it('stops sending when the pre-send check finds corrections', async () => {
+    spyOn(SendActionsStore, 'orderedSendActionsForDraft').andReturn([
+      SendActionsStore.DefaultSendAction,
+    ]);
+    const beforeSend = jasmine.createSpy('beforeSend').andReturn(Promise.resolve(false));
+    const container = renderButton(this.draft, { beforeSend });
+
+    fireEvent.click(container.querySelector('.primary-item'));
+
+    expect(beforeSend).toHaveBeenCalled();
+    await waitFor(() => expect(container.querySelector('.is-preparing-send')).toBeNull());
+    expect(Actions.sendDraft).not.toHaveBeenCalled();
   });
 });

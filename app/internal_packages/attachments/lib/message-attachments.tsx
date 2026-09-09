@@ -104,11 +104,13 @@ class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
   _loadingTask: any;
   _renderTasks: any[] = [];
   _resizeObserver: ResizeObserver;
+  _resizeTarget: HTMLElement;
   _resizeTimer: ReturnType<typeof setTimeout>;
 
   componentDidMount() {
     this._resizeObserver = new ResizeObserver(this._scheduleResizeRender);
-    this._resizeObserver.observe(this._container);
+    this._resizeTarget = this._container.closest('.inline-attachment-preview') as HTMLElement;
+    this._resizeObserver.observe(this._resizeTarget || this._container);
     this._renderPdf();
   }
 
@@ -127,7 +129,7 @@ class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
   }
 
   _scheduleResizeRender = () => {
-    const width = Math.round(this._container?.clientWidth || 0);
+    const width = Math.round(this._resizeTarget?.clientWidth || this._container?.clientWidth || 0);
     if (!width || width === this._lastRenderedWidth) return;
 
     clearTimeout(this._resizeTimer);
@@ -136,7 +138,9 @@ class PdfCanvasPreview extends Component<PdfCanvasPreviewProps> {
 
   async _renderPdf() {
     const generation = ++this._generation;
-    this._lastRenderedWidth = Math.round(this._container?.clientWidth || 0);
+    this._lastRenderedWidth = Math.round(
+      this._resizeTarget?.clientWidth || this._container?.clientWidth || 0
+    );
     this._renderTasks.forEach((task) => task.cancel());
     this._renderTasks = [];
     if (this._loadingTask) await this._loadingTask.destroy();

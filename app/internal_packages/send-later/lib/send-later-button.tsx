@@ -21,6 +21,7 @@ interface SendLaterButtonProps {
   draft: Message;
   session: DraftEditingSession;
   isValidDraft: () => boolean;
+  beforeSend?: (anchor?: HTMLElement) => Promise<boolean>;
 }
 
 interface SendLaterButtonState {
@@ -67,6 +68,12 @@ class SendLaterButton extends Component<SendLaterButtonProps, SendLaterButtonSta
 
   onAssignSendLaterDate = async (sendLaterDate: Date, dateLabel?: string) => {
     if (!this.props.isValidDraft()) {
+      return;
+    }
+    if (
+      this.props.beforeSend &&
+      !(await this.props.beforeSend(ReactDOM.findDOMNode(this) as HTMLElement))
+    ) {
       return;
     }
     Actions.closePopover();

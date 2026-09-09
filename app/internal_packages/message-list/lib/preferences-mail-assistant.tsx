@@ -198,7 +198,14 @@ export default class PreferencesMailAssistant extends React.Component<
                 }}
               >
                 {(
-                  ['openai', 'anthropic', 'google', 'deepseek', 'custom'] as MailAssistantProvider[]
+                  [
+                    'openai',
+                    'anthropic',
+                    'google',
+                    'deepseek',
+                    'grok',
+                    'custom',
+                  ] as MailAssistantProvider[]
                 ).map((provider) => (
                   <option key={provider} value={provider}>
                     {providerLabel(provider)}
@@ -229,7 +236,14 @@ export default class PreferencesMailAssistant extends React.Component<
               }}
             >
               {(
-                ['openai', 'anthropic', 'google', 'deepseek', 'custom'] as MailAssistantProvider[]
+                [
+                  'openai',
+                  'anthropic',
+                  'google',
+                  'deepseek',
+                  'grok',
+                  'custom',
+                ] as MailAssistantProvider[]
               ).map((provider) => (
                 <option key={provider} value={provider}>
                   {providerLabel(provider)}

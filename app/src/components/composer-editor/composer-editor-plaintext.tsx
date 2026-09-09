@@ -36,6 +36,26 @@ export class ComposerEditorPlaintext extends React.Component<ComposerEditorPlain
 
   // Public methods required for compatibility with the rich text ComposerEditor.
 
+  _editableTextEnd = () => {
+    const value = this.props.value || '';
+    const quoteStart = /(On [A-Za-z0-9]+|\n> |-------)/g.exec(value);
+    let end = quoteStart ? quoteStart.index : value.length;
+    while (end > 0 && value[end - 1] === '\n') end -= 1;
+    return end;
+  };
+
+  getEditableText = () => {
+    return (this.props.value || '').slice(0, this._editableTextEnd()).trim();
+  };
+
+  replaceEditableText = (text: string) => {
+    if (!text.trim()) return;
+    const value = this.props.value || '';
+    const end = this._editableTextEnd();
+    this.props.onChange(`${text.trim()}${value.slice(end)}`);
+    window.requestAnimationFrame(this.updateHeight);
+  };
+
   focus = () => {
     this.focusEndReplyText();
   };

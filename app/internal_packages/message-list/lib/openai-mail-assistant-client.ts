@@ -280,6 +280,7 @@ function configuredUrl(provider: MailAssistantProvider, endpoint?: string) {
   if (provider === 'anthropic') return new URL('https://api.anthropic.com/v1/messages');
   if (provider === 'google') return new URL('https://generativelanguage.googleapis.com');
   if (provider === 'deepseek') return new URL('https://api.deepseek.com/chat/completions');
+  if (provider === 'grok') return new URL('https://api.x.ai/v1/chat/completions');
   if (!endpoint) throw new Error('Add a compatible API base URL in AI Assistant settings.');
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' && !['localhost', '127.0.0.1', '::1'].includes(url.hostname)) {

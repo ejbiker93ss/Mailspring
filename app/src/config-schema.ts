@@ -381,6 +381,14 @@ export default {
             default: true,
             title: localized('Message Sent Sound'),
           },
+          alwaysCheckSpellingAndGrammar: {
+            type: 'boolean',
+            default: false,
+            title: localized('Always check spelling and grammar before sending'),
+            note: localized(
+              'Clean messages send automatically. If the AI finds changes, sending stops so you can review them.'
+            ),
+          },
           defaultSendType: {
             type: 'string',
             default: 'send',

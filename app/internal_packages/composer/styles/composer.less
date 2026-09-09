@@ -659,6 +659,14 @@ body.platform-win32 {
         }
       }
 
+      &.is-preparing-send {
+        .primary-item,
+        .secondary-picker {
+          cursor: progress;
+          opacity: 0.78;
+        }
+      }
+
       .primary-item {
         border-radius: var(--fm-radius-sm) 0 0 var(--fm-radius-sm);
       }

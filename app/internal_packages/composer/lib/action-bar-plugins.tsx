@@ -10,6 +10,7 @@ export class ActionBarPlugins extends React.Component<
     draft: Message;
     session: DraftEditingSession;
     isValidDraft: () => boolean;
+    beforeSend?: (anchor?: HTMLElement) => Promise<boolean>;
   },
   { pluginsLoaded: boolean }
 > {
@@ -75,6 +76,7 @@ export class ActionBarPlugins extends React.Component<
             headerMessageId: this.props.draft.headerMessageId,
             session: this.props.session,
             isValidDraft: this.props.isValidDraft,
+            beforeSend: this.props.beforeSend,
           }}
         />
       </span>

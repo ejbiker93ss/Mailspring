@@ -1,6 +1,12 @@
 import { KeyManager } from 'summermail-exports';
 
-export type MailAssistantProvider = 'openai' | 'anthropic' | 'google' | 'deepseek' | 'custom';
+export type MailAssistantProvider =
+  | 'openai'
+  | 'anthropic'
+  | 'google'
+  | 'deepseek'
+  | 'grok'
+  | 'custom';
 
 export const PROVIDER_CONFIG_KEY = 'core.mailAssistant.provider';
 export const PROVIDERS_CONFIG_KEY = 'core.mailAssistant.providers';
@@ -65,6 +71,13 @@ const providerDetails: Record<
     supportsTools: true,
     supportsImages: false,
   },
+  grok: {
+    keyName: 'grok-mail-assistant-api-key',
+    env: ['MSSE_XAI_API_KEY', 'XAI_API_KEY', 'GROK_API_KEY'],
+    defaultModel: 'grok-4.6',
+    supportsTools: true,
+    supportsImages: true,
+  },
   custom: {
     keyName: 'custom-mail-assistant-api-key',
     env: ['MSSE_CUSTOM_AI_API_KEY'],
@@ -84,6 +97,7 @@ export function providerLabel(provider: MailAssistantProvider) {
     anthropic: 'Anthropic',
     google: 'Google Gemini',
     deepseek: 'DeepSeek',
+    grok: 'Grok (xAI)',
     custom: 'Custom compatible API',
   }[provider];
 }

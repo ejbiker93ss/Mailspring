@@ -14,16 +14,19 @@ describe('Mail assistant credentials', () => {
   let originalStandardKey: string | undefined;
   let originalAnthropicKey: string | undefined;
   let originalGeminiKey: string | undefined;
+  let originalXAIKey: string | undefined;
 
   beforeEach(() => {
     originalCompanyKey = process.env.MSSE_OPENAI_API_KEY;
     originalStandardKey = process.env.OPENAI_API_KEY;
     originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
     originalGeminiKey = process.env.GEMINI_API_KEY;
+    originalXAIKey = process.env.XAI_API_KEY;
     delete process.env.MSSE_OPENAI_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
     delete process.env.GEMINI_API_KEY;
+    delete process.env.XAI_API_KEY;
   });
 
   afterEach(() => {
@@ -35,6 +38,8 @@ describe('Mail assistant credentials', () => {
     else process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
     if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
     else process.env.GEMINI_API_KEY = originalGeminiKey;
+    if (originalXAIKey === undefined) delete process.env.XAI_API_KEY;
+    else process.env.XAI_API_KEY = originalXAIKey;
   });
 
   it('prefers a company-managed environment credential without reading saved app data', async () => {
@@ -64,10 +69,12 @@ describe('Mail assistant credentials', () => {
     process.env.OPENAI_API_KEY = 'openai-key';
     process.env.ANTHROPIC_API_KEY = 'anthropic-key';
     process.env.GEMINI_API_KEY = 'gemini-key';
+    process.env.XAI_API_KEY = 'xai-key';
 
     expect(getManagedProviderAPIKey('anthropic')).toBe('anthropic-key');
     expect(getManagedProviderAPIKey('google')).toBe('gemini-key');
     expect(getManagedProviderAPIKey('deepseek')).toBe('');
+    expect(getManagedProviderAPIKey('grok')).toBe('xai-key');
   });
 
   it('uses clear labels for every supported provider', () => {
@@ -75,6 +82,7 @@ describe('Mail assistant credentials', () => {
     expect(providerLabel('anthropic')).toBe('Anthropic');
     expect(providerLabel('google')).toBe('Google Gemini');
     expect(providerLabel('deepseek')).toBe('DeepSeek');
+    expect(providerLabel('grok')).toBe('Grok (xAI)');
     expect(providerLabel('custom')).toBe('Custom compatible API');
   });
 });
