@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { webUtils } from 'electron';
-import { Contact, localized, CanvasUtils, AccountStore } from 'summermail-exports';
+import { Contact, localized, CanvasUtils } from 'summermail-exports';
 import {
   FocusContainer,
   MultiselectList,
@@ -19,8 +19,10 @@ const ContactColumn = new ListTabular.Column({
   name: 'Item',
   flex: 1,
   resolver: (contact: Contact) => {
-    const account = AccountStore.accountForId(contact.accountId);
-    const displayName = contact.name || contact.email || localized('Unnamed contact');
+    const displayName =
+      contact.displayName({ includeAccountLabel: false }) ||
+      contact.email ||
+      localized('Unnamed contact');
     return (
       <div className="contact-list-row">
         <ContactProfilePhoto contact={contact} loading={false} avatar="" />
@@ -30,12 +32,6 @@ const ContactColumn = new ListTabular.Column({
             <div className="contact-list-email">{contact.email}</div>
           ) : null}
         </div>
-        <span
-          className="contact-list-account-dot"
-          style={{ backgroundColor: account?.color || undefined }}
-          title={account?.label || localized('Unknown account')}
-          aria-label={account?.label || localized('Unknown account')}
-        />
       </div>
     );
   },

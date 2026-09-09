@@ -23,6 +23,7 @@ import { Model } from 'summermail-exports';
 const MAX_CRASH_HISTORY = 10;
 
 const VERBOSE_UNTIL_KEY = 'core.sync.verboseUntil';
+const CONTACT_SYNC_MIN_INTERVAL_MS = 30 * 1000;
 
 /*
 This class keeps track of how often Mailsync workers crash. If a mailsync
@@ -89,6 +90,7 @@ export default class MailsyncBridge {
   _incomingMessageQueue: string[] = [];
   _incomingMessageQueueOffset = 0;
   _incomingMessageDrainScheduled = false;
+  _lastContactSyncAt: { [accountId: string]: number } = {};
 
   constructor() {
     if (!AppEnv.isMainWindow() || AppEnv.inSpecMode()) {
@@ -227,10 +229,27 @@ export default class MailsyncBridge {
     }
   }
 
-  // Contacts and calendars share the DAV worker. Keep a contacts-specific API
-  // so callers describe user intent while preserving one deduplicated sync path.
+  // A tab focus only needs contacts. Keep this separate from calendar refreshes
+  // and coalesce repeated clicks so DAV servers are not needlessly hammered.
   sendSyncContactsNow(accountId?: string) {
-    this.sendSyncCalendarNow(accountId);
+    if (!AppEnv.isMainWindow()) {
+      ipcRenderer.send('request-contact-sync', accountId);
+      return;
+    }
+
+    const clients = accountId
+      ? [[accountId, this._clients[accountId]] as const]
+      : Object.entries(this._clients);
+    const now = Date.now();
+
+    for (const [clientAccountId, client] of clients) {
+      if (!client) continue;
+      if (now - (this._lastContactSyncAt[clientAccountId] || 0) < CONTACT_SYNC_MIN_INTERVAL_MS) {
+        continue;
+      }
+      this._lastContactSyncAt[clientAccountId] = now;
+      client.sendMessage({ type: 'sync-contacts' });
+    }
   }
 
   sendMessageToAccount(accountId: string, json: Record<string, unknown>) {

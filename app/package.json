@@ -2,7 +2,7 @@
   "name": "summermail",
   "productName": "SummerMail",
   "desktopName": "SummerMail.desktop",
-  "version": "1.23.54",
+  "version": "1.23.55",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
   "sentryDsn": "",
   "description": "The best email app for people and teams at work",

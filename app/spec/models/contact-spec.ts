@@ -110,6 +110,17 @@ describe('Contact', function () {
     expect(c3.displayName({ compact: true })).toBe('');
   });
 
+  it('cleans quoted and escaped mailbox phrases for display', function () {
+    const quoted = new Contact({ name: "'Aaron Yoder'", email: 'aaron@example.com' });
+    const escaped = new Contact({
+      name: '\\"Aishwarya Gupta\\" <aishwarya.gupta@example.com>',
+      email: 'aishwarya.gupta@example.com',
+    });
+
+    expect(quoted.displayName()).toBe('Aaron Yoder');
+    expect(escaped.displayName()).toBe('Aishwarya Gupta');
+  });
+
   it('properly parses names with @', function () {
     let c1 = new Contact({ name: 'nyl@s' });
     expect(c1.firstName()).toBe('nyl@s');

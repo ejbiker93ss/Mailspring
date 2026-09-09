@@ -1,5 +1,18 @@
 # SummerMail Changelog
 
+## 1.23.55 (9/9/2026)
+
+Improvements:
+
+- Refresh server contacts when the Contacts tab becomes active without also refreshing calendars.
+- Coalesce repeated contact refresh requests to protect client CPU and DAV servers.
+
+Bug Fixes:
+
+- Prefer personal CardDAV address books over global directories during SmarterMail discovery.
+- Fall back to the configured IMAP server for CardDAV discovery when the identity lookup is unavailable.
+- Keep the Contacts search toolbar and Found in Mail notice aligned, and clean malformed learned-contact display names.
+
 ## 1.23.54 (9/8/2026)
 
 Improvements:

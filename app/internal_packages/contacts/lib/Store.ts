@@ -133,14 +133,16 @@ class ContactsWindowStore extends SummerMailStore {
       const isearch = this._search.toLowerCase();
       filtered = filtered.filter(
         (c) =>
-          (c.name || '').toLowerCase().includes(isearch) ||
+          c.displayName({ includeAccountLabel: false }).toLowerCase().includes(isearch) ||
           (c.email || '').toLowerCase().includes(isearch)
       );
     }
 
     // note we do this in JS because in SQLite the order is not locale aware.
     this._filtered = filtered.sort((a, b) =>
-      (a.name || a.email || '').localeCompare(b.name || b.email || '')
+      (a.displayName({ includeAccountLabel: false }) || a.email || '').localeCompare(
+        b.displayName({ includeAccountLabel: false }) || b.email || ''
+      )
     );
     this._listSource.setItems(this._filtered);
     this.trigger();

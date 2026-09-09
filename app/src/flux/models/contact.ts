@@ -602,7 +602,15 @@ export class Contact extends Model {
       }
     }
 
-    // If the name is in single or double quotes, strip the quotes off
+    // Learned contacts can retain an RFC mailbox phrase (and, from some
+    // message sources, escaped quote characters). Keep only the human name.
+    name = name.trim().replace(/\\+(?=["'])/g, '');
+    const mailboxPhrase = name.match(/^(.*?)\s*<[^<>]+>\s*$/);
+    if (mailboxPhrase) {
+      name = mailboxPhrase[1].trim();
+    }
+
+    // If the name is in single or double quotes, strip the quotes off.
     if (
       (name.startsWith("'") && name.endsWith("'")) ||
       (name.startsWith('"') && name.endsWith('"'))

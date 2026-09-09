@@ -821,6 +821,11 @@ export default class Application extends EventEmitter {
       main?.sendMessage('run-calendar-sync', accountId);
     });
 
+    ipcMain.on('request-contact-sync', (_event, accountId?: string) => {
+      const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      main?.sendMessage('run-contact-sync', accountId);
+    });
+
     ipcMain.on('action-bridge-rebroadcast-to-all', (event, ...args) => {
       const win = BrowserWindow.fromWebContents(event.sender);
       this.windowManager.sendToAllWindows('action-bridge-message', { except: win }, ...args);
