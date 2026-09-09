@@ -590,19 +590,19 @@
     }
 
     &.accepted .attendee-status {
-      background-color: #34c759;
-      color: white;
+      background-color: fade(@color-success, 18%);
+      color: @text-color;
     }
 
     &.declined .attendee-status {
-      background-color: #ff3b30;
-      color: white;
+      background-color: fade(@color-error, 18%);
+      color: @text-color;
     }
 
     &.tentative .attendee-status,
     &.needs-action .attendee-status {
-      background-color: #8e8e93;
-      color: white;
+      background-color: @background-secondary;
+      color: @text-color;
     }
   }
   .description {

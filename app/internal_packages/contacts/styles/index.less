@@ -12,6 +12,8 @@
 }
 
 .contact-detail-column {
+  background: @background-primary;
+  color: @text-color;
   height: 100%;
   flex: 1;
 
@@ -91,7 +93,7 @@
         width: calc(100% - 58px);
       }
       a {
-        color: black;
+        color: @text-color-link;
         text-decoration: none;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -177,6 +179,8 @@
     }
   }
   .contact-notes-textarea {
+    background: @input-bg;
+    color: @text-color;
     width: 100%;
     resize: vertical;
     min-height: 80px;
@@ -330,6 +334,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// Let existing theme list-selection rules control the complete selected row.
+.contact-list .list-item.selected {
+  .contact-list-name, .contact-list-email { color: inherit; }
 }
 
 .contact-list-name {

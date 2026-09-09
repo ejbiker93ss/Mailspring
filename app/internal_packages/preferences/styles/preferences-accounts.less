@@ -2,10 +2,18 @@
 
 .account-type-settings {
   margin-bottom: 16px;
-  label { display: block; margin-top: 10px; }
-  input, select { width: 100%; }
   .account-type-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   [role='alert'] { color: @color-error; }
+}
+
+// Nested settings use the same controls and spacing as the original account form.
+.account-type-settings,
+.account-calendar-settings {
+  color: inherit;
+  label { display: block; margin-top: @spacing-half; }
+  input, select { width: 100%; min-width: 0; font-size: 0.9em; }
+  select { color: @text-color; background: @input-bg; border: 1px solid @input-border-color; }
+  .account-calendar-help { color: @text-color-subtle; line-height: @line-height-base; overflow-wrap: anywhere; }
 }
 @import '../../onboarding/styles/outlook-import';
 
@@ -63,7 +71,8 @@
         padding: 20px;
         padding-left: @spacing-standard * 2.25;
         padding-right: @spacing-standard * 2.25;
-        background-color: @gray-lighter;
+        background-color: @background-secondary;
+        color: @text-color;
         border-top: 1px solid @border-color-divider;
         border-right: 1px solid @border-color-divider;
         border-bottom: 1px solid @border-color-divider;

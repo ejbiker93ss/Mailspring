@@ -282,11 +282,12 @@
   box-sizing: border-box;
   padding: 20px;
   border: 1px solid @border-color-divider;
-  border-top: 3px solid @accent-primary;
-  border-radius: 8px;
+  border-radius: @border-radius-base;
   background: @background-primary;
   color: @text-color;
-  box-shadow: 0 10px 32px fade(#000, 24%);
+  box-shadow: @standard-shadow;
+  max-height: calc(~'100vh - 32px');
+  overflow: auto;
 
   h2 {
     margin: 3px 28px 7px 0;
@@ -344,11 +345,9 @@
 }
 
 .composer-ai-review-kicker {
-  color: @accent-primary;
+  color: @text-color-subtle;
   font-size: @font-size-smaller;
   font-weight: @font-weight-semi-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .composer-ai-corrected-preview {
@@ -370,14 +369,14 @@
   .diff-added {
     border-radius: 2px;
     background: fade(@color-success, 18%);
-    color: mix(@color-success, @text-color, 48%);
+    color: @text-color;
     text-decoration: none;
   }
 
   .diff-removed {
     border-radius: 2px;
     background: fade(@color-error, 14%);
-    color: mix(@color-error, @text-color, 48%);
+    color: @text-color;
     text-decoration: line-through;
     text-decoration-thickness: 1px;
   }
@@ -436,8 +435,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: @color-success;
-  color: white;
+  background: fade(@color-success, 18%);
+  color: @text-color;
   font-size: 18px;
   font-weight: @font-weight-semi-bold;
 }
@@ -455,8 +454,9 @@
   cursor: pointer;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  input { margin: 0 4px; vertical-align: middle; }
+  input { margin: 0 4px; vertical-align: middle; accent-color: @accent-primary; }
   ins { text-decoration: none; }
+  del:not(:empty) + ins:not(:empty)::before { content: ' → '; color: @text-color-subtle; }
   &:has(input:not(:checked)) ins { opacity: 0.45; text-decoration: line-through; }
   &:has(input:focus-visible) { outline: 2px solid @accent-primary; }
 }
