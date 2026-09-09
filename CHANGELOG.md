@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.56 (9/9/2026)
+
+Bug Fixes:
+
+- Enumerate CardDAV contacts using a standard DAV listing; SmarterMail can return an empty successful response to an unfiltered contact query.
+- Repair previously empty contact caches once, then retain lightweight unchanged-address-book checks.
+- Preserve sync checkpoints and cached contacts when a DAV listing or contact download is incomplete.
+
 ## 1.23.55 (9/9/2026)
 
 Improvements:
