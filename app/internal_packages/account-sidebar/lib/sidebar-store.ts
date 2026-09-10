@@ -18,6 +18,7 @@ import * as AccountCommands from './account-commands';
 import { Disposable } from 'event-kit';
 import { ISidebarSection } from './types';
 import { FAVORITE_FOLDERS_CONFIG_KEY } from './sidebar-item';
+import { SMART_FOLDERS_CONFIG_KEY } from './smart-folders';
 import {
   SIDEBAR_ACCOUNT_ORDER_CONFIG_KEY,
   SIDEBAR_COLLAPSED_ACCOUNTS_CONFIG_KEY,
@@ -88,6 +89,7 @@ class SidebarStore extends SummerMailStore {
     );
     AppEnv.config.onDidChange('core.workspace.sidebarOrganization', this._updateSections);
     AppEnv.config.onDidChange(FAVORITE_FOLDERS_CONFIG_KEY, this._updateSections);
+    AppEnv.config.onDidChange(SMART_FOLDERS_CONFIG_KEY, this._updateSections);
     AppEnv.config.onDidChange(SIDEBAR_ACCOUNT_ORDER_CONFIG_KEY, this._updateSections);
     AppEnv.config.onDidChange(SIDEBAR_FOLDER_ORDER_CONFIG_KEY, this._updateSections);
     AppEnv.config.onDidChange(SIDEBAR_COLLAPSED_ACCOUNTS_CONFIG_KEY, this._updateSections);
@@ -175,6 +177,7 @@ class SidebarStore extends SummerMailStore {
     }
     const multiAccount = accounts.length > 1;
     const organization = AppEnv.config.get('core.workspace.sidebarOrganization') || 'folders';
+    const smartFolders = SidebarSection.smartFoldersSectionForAccounts(accounts);
 
     this._sections[Sections.Standard] = SidebarSection.favoritesSectionForAccounts(
       accounts,
@@ -182,10 +185,13 @@ class SidebarStore extends SummerMailStore {
     );
 
     if (organization === 'accounts') {
-      this._sections[Sections.User] = accounts.map((account) => {
-        const section = SidebarSection.completeSectionForAccount(account, this._reordering);
-        return this._makeAccountSectionReorderable(section, account, accounts);
-      });
+      this._sections[Sections.User] = [
+        smartFolders,
+        ...accounts.map((account) => {
+          const section = SidebarSection.completeSectionForAccount(account, this._reordering);
+          return this._makeAccountSectionReorderable(section, account, accounts);
+        }),
+      ];
     } else {
       const groupedFolders = SidebarSection.standardSectionForAccounts(accounts, this._reordering);
       groupedFolders.title = localized('Mailboxes');
@@ -206,7 +212,7 @@ class SidebarStore extends SummerMailStore {
         const section = SidebarSection.forUserCategories(acc, opts);
         return multiAccount ? this._makeAccountSectionReorderable(section, acc, accounts) : section;
       });
-      this._sections[Sections.User] = [groupedFolders, ...customFolders];
+      this._sections[Sections.User] = [smartFolders, groupedFolders, ...customFolders];
     }
     this.trigger();
   };

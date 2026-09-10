@@ -37,6 +37,7 @@ import {
   DateSectionKey,
   dateSectionFor,
   dateSectionLabel,
+  shouldShowDateSections,
   toggleDateSection,
 } from './date-sections';
 
@@ -229,7 +230,9 @@ class ThreadList extends React.Component<
   }
 
   _dateSectionForThread = (thread: Thread) => {
-    const timestamp = FocusedPerspectiveStore.current().isSent()
+    const perspective = FocusedPerspectiveStore.current();
+    if (!shouldShowDateSections(perspective as any)) return null;
+    const timestamp = perspective.isSent()
       ? thread.lastMessageSentTimestamp
       : thread.lastMessageReceivedTimestamp;
     const key = dateSectionFor(timestamp);

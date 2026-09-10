@@ -70,7 +70,15 @@ export class MailboxPerspective {
     return this.forStandardCategories(accountsOrIds, 'inbox');
   }
 
-  static fromJSON(json: { type: string; serializedCategories?: string; accountIds: string[] }) {
+  static fromJSON(json: {
+    type: string;
+    serializedCategories?: string;
+    accountIds: string[];
+    searchQuery?: string;
+    name?: string;
+    iconName?: string;
+    smartFolderId?: string;
+  }) {
     try {
       if (json.type === CategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -85,6 +93,19 @@ export class MailboxPerspective {
       }
       if (json.type === DraftsMailboxPerspective.name) {
         return this.forDrafts(json.accountIds);
+      }
+      if (json.type === 'SearchMailboxPerspective' && json.searchQuery) {
+        const SearchMailboxPerspective =
+          require('../internal_packages/thread-search/lib/search-mailbox-perspective').default;
+        return new SearchMailboxPerspective(
+          new MailboxPerspective(json.accountIds),
+          json.searchQuery,
+          {
+            name: json.name,
+            iconName: json.iconName,
+            smartFolderId: json.smartFolderId,
+          }
+        );
       }
       return this.forInbox(json.accountIds);
     } catch (error) {

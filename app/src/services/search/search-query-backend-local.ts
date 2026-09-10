@@ -65,6 +65,11 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
     this._result = `(subject : "${text}"*)`;
   }
 
+  visitBody(node) {
+    const text = this.visitAndGetResult(node.text);
+    this._result = `(body : "${text}"*)`;
+  }
+
   visitGeneric(node) {
     const text = this.visitAndGetResult(node.text);
     this._result = `("${text}"*)`;
@@ -152,6 +157,10 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
     this._result = this._matchVisitor.visit(node);
   }
 
+  visitBody(node) {
+    this._result = this._matchVisitor.visit(node);
+  }
+
   visitGeneric(node) {
     this._result = this._matchVisitor.visit(node);
   }
@@ -230,6 +239,10 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitSubject(node) {
+    throw new Error(`Unreachable: ${node}`);
+  }
+
+  visitBody(node) {
     throw new Error(`Unreachable: ${node}`);
   }
 

@@ -29,6 +29,9 @@ export class SearchQueryExpressionVisitor {
   visitSubject(node: QueryExpression) {
     throw new Error(`Abstract function not implemented!: ${node}`);
   }
+  visitBody(node: QueryExpression) {
+    throw new Error(`Abstract function not implemented!: ${node}`);
+  }
   visitGeneric(node: QueryExpression) {
     throw new Error(`Abstract function not implemented!: ${node}`);
   }
@@ -254,6 +257,30 @@ export class SubjectQueryExpression extends QueryExpression {
 
   equals(other: QueryExpression) {
     if (!(other instanceof SubjectQueryExpression)) {
+      return false;
+    }
+    return this.text.equals(other.text);
+  }
+}
+
+export class BodyQueryExpression extends QueryExpression {
+  text: TextQueryExpression;
+
+  constructor(text: TextQueryExpression) {
+    super();
+    this.text = text;
+  }
+
+  accept(visitor: SearchQueryExpressionVisitor) {
+    visitor.visitBody(this);
+  }
+
+  _computeIsMatchCompatible() {
+    return true;
+  }
+
+  equals(other: QueryExpression) {
+    if (!(other instanceof BodyQueryExpression)) {
       return false;
     }
     return this.text.equals(other.text);

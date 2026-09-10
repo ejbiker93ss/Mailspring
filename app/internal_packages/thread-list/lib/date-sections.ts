@@ -3,6 +3,10 @@ import { localized } from 'summermail-exports';
 export type DateSectionKey = 'today' | 'yesterday' | 'last-week' | 'last-month' | 'older';
 export type CollapsedDateSections = Partial<Record<DateSectionKey, boolean>>;
 
+export function shouldShowDateSections(perspective?: { searchQuery?: string } | null): boolean {
+  return !perspective?.searchQuery;
+}
+
 export const DATE_SECTION_ORDER: DateSectionKey[] = [
   'today',
   'yesterday',

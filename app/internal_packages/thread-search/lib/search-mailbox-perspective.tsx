@@ -16,8 +16,14 @@ class SearchMailboxPerspective extends MailboxPerspective {
   searchQuery: string;
   sourcePerspective: MailboxPerspective;
   name: string;
+  iconName: string;
+  smartFolderId?: string;
 
-  constructor(sourcePerspective, searchQuery: string) {
+  constructor(
+    sourcePerspective,
+    searchQuery: string,
+    options: { name?: string; iconName?: string; smartFolderId?: string } = {}
+  ) {
     super(sourcePerspective.accountIds);
     if (typeof searchQuery !== 'string') {
       throw new Error('SearchMailboxPerspective: Expected a `string` search query');
@@ -31,7 +37,19 @@ class SearchMailboxPerspective extends MailboxPerspective {
       this.sourcePerspective = sourcePerspective;
     }
 
-    this.name = `Searching ${this.sourcePerspective.name}`;
+    this.name = options.name || `Searching ${this.sourcePerspective.name}`;
+    this.iconName = options.iconName || 'searchloupe.png';
+    this.smartFolderId = options.smartFolderId;
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      searchQuery: this.searchQuery,
+      name: this.name,
+      iconName: this.iconName,
+      smartFolderId: this.smartFolderId,
+    };
   }
 
   emptyMessage() {
@@ -39,6 +57,10 @@ class SearchMailboxPerspective extends MailboxPerspective {
   }
 
   isEqual(other) {
+    if (!other) return false;
+    if (this.smartFolderId || other.smartFolderId) {
+      return this.smartFolderId === other.smartFolderId;
+    }
     return super.isEqual(other) && other.searchQuery === this.searchQuery;
   }
 

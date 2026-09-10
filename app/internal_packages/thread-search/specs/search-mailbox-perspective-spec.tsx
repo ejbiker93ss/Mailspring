@@ -18,4 +18,19 @@ describe('SearchMailboxPerspective', function () {
 
     expect(subscription._searchQuery).toBe('chino in:trash');
   });
+
+  it('serializes named smart-folder searches for session restoration', function () {
+    const source = new MailboxPerspective(['account-1', 'account-2']);
+    const perspective = new SearchMailboxPerspective(source, 'body:"amount due"', {
+      name: 'Invoices',
+      smartFolderId: 'smart-folder-1',
+    });
+
+    const restored = MailboxPerspective.fromJSON(perspective.toJSON()) as any;
+
+    expect(restored.name).toBe('Invoices');
+    expect(restored.smartFolderId).toBe('smart-folder-1');
+    expect(restored.accountIds).toEqual(['account-1', 'account-2']);
+    expect(restored.searchQuery).toBe('body:"amount due"');
+  });
 });

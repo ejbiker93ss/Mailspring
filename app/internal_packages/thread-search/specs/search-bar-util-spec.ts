@@ -122,6 +122,11 @@ describe('search-bar-util', function () {
       expect(matches).not.toBeNull();
     });
 
+    it('matches "body" with a term', function () {
+      const matches = 'body:"amount due"'.match(TokenAndTermRegexp());
+      expect(matches).not.toBeNull();
+    });
+
     it('matches "in" with a term', function () {
       const matches = 'in:inbox'.match(TokenAndTermRegexp());
       expect(matches).not.toBeNull();

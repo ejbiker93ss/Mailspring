@@ -1,5 +1,18 @@
 # SummerMail Changelog
 
+## 1.23.59 (9/9/2026)
+
+Improvements:
+
+- Add saved Smart Folders with reusable subject, sender, recipient, body, folder, date, state, and attachment criteria.
+- Search Smart Folders across every account or a selected account set, and pin any saved view to Favorites.
+- Prioritize recent search results when relevance is comparable while retaining clearly stronger matches.
+
+Bug Fixes:
+
+- Keep search results in a clean ranked list instead of repeating chronological group headers.
+- Align message hover actions with the card edge and round the exposed corners.
+
 ## 1.23.58 (9/9/2026)
 
 Improvements:

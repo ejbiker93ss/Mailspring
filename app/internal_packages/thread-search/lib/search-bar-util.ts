@@ -14,7 +14,7 @@ import {
 // - end of string
 // - a colon, optional space, and optional word
 export const TokenAndTermRegexp = () =>
-  /(^|\s)(i[ns]?|s[iu]?[nb]?[cj]?e?c?t?|fr?o?m?|to?|ha?s?|be?f?o?r?e?|af?t?e?r?)(?::? ?$|: ?("[^"]*"?|[^\s]+))/gi;
+  /(^|\s)(i[ns]?|s[iu]?[nb]?[cj]?e?c?t?|bo?d?y?|fr?o?m?|to?|ha?s?|be?f?o?r?e?|af?t?e?r?)(?::? ?$|: ?("[^"]*"?|[^\s]+))/gi;
 
 export const LearnMoreURL = process.env.SUMMERMAIL_HELP_URL || '';
 
@@ -115,6 +115,12 @@ export const TokenSuggestions = [
     token: 'subject',
     term: '',
     description: localized('an email subject'),
+    termSuggestions: [],
+  },
+  {
+    token: 'body',
+    term: '',
+    description: localized('text in the message body'),
     termSuggestions: [],
   },
   // {

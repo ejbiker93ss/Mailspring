@@ -25,6 +25,11 @@ type AddressOperator = {
   value: string;
 };
 
+// FTS5's BM25 scores are negative (more negative is a stronger match). Group
+// nearby scores so small ranking differences do not bury recent messages, while
+// still allowing a materially stronger match to outrank a newer weak match.
+const RELEVANCE_BAND_WIDTH = 1.5;
+
 class RankedIdSortOrder {
   attr = Thread.attributes.lastMessageReceivedTimestamp;
   private _ids: string[];
@@ -99,6 +104,8 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     let dbQuery = DatabaseStore.findAll<Thread>(Thread);
     if (this._accountIds.length === 1) {
       dbQuery = dbQuery.where({ accountId: this._accountIds[0] });
+    } else if (this._accountIds.length > 1) {
+      dbQuery = dbQuery.where(Thread.attributes.accountId.in(this._accountIds));
     }
 
     let parsedQuery: QueryExpression | null = null;
@@ -185,7 +192,9 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     ];
     // ThreadSearch columns are subject, to, from, body, categories, and content_id.
     // Favor intent-bearing metadata over incidental body text; content_id is unindexed.
-    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, bm25(\`ThreadSearch\`, 12, 6, 8, 1, 3, 0) AS relevance, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY exactMatches DESC, relevance ASC, \`Thread\`.lastMessageReceivedTimestamp DESC LIMIT 1000`;
+    const bm25SQL = 'bm25(`ThreadSearch`, 12, 6, 8, 1, 3, 0)';
+    const relevanceBandSQL = `CAST(${bm25SQL} / ${RELEVANCE_BAND_WIDTH} AS INTEGER)`;
+    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, ${bm25SQL} AS relevance, ${relevanceBandSQL} AS relevanceBand, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY exactMatches DESC, relevanceBand ASC, \`Thread\`.lastMessageReceivedTimestamp DESC, relevance ASC LIMIT 1000`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
 
     const [rows, countRows] = await Promise.all([

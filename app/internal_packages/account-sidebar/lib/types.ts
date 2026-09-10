@@ -14,6 +14,7 @@ export interface ISidebarItem {
   counterStyle: string;
   onDelete?: () => void;
   onEdited?: (item, name: string) => void;
+  onEdit?: (item) => void;
   onExport?: () => void;
   onExportMbox?: () => void;
   onCreateChild?: (item, childName: string) => void;
@@ -41,8 +42,9 @@ export interface ISidebarSection {
   iconName?: string;
   collapsed?: boolean;
   titleColor?: string;
-  onCollapseToggled?: () => void;
+  onCollapseToggled?: (section: ISidebarSection) => void;
   onItemCreated?: (displayName) => void;
+  onCreateTriggered?: () => void;
   accountId?: string;
   reorderable?: boolean;
   onSectionDragStart?: (event) => void;

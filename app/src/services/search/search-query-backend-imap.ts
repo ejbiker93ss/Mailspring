@@ -6,6 +6,7 @@ import {
   FromQueryExpression,
   ToQueryExpression,
   SubjectQueryExpression,
+  BodyQueryExpression,
   GenericQueryExpression,
   TextQueryExpression,
   UnreadStatusQueryExpression,
@@ -64,6 +65,10 @@ class IMAPSearchQueryFolderFinderVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitSubject(/* node */) {
+    this._result = TOP;
+  }
+
+  visitBody(/* node */) {
     this._result = TOP;
   }
 
@@ -144,6 +149,11 @@ class IMAPSearchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
   visitSubject(node: SubjectQueryExpression) {
     const text = this.visitAndGetResult(node.text);
     this._result = ['SUBJECT', text];
+  }
+
+  visitBody(node: BodyQueryExpression) {
+    const text = this.visitAndGetResult(node.text);
+    this._result = ['BODY', text];
   }
 
   visitGeneric(node: GenericQueryExpression) {

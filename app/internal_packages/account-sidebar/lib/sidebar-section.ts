@@ -8,10 +8,13 @@ import _ from 'underscore';
 import {
   Account,
   CategoryStore,
+  FocusedPerspectiveStore,
   Label,
   ExtensionRegistry,
   RegExpUtils,
   localized,
+  Actions,
+  MailboxPerspective,
 } from 'summermail-exports';
 
 import SidebarItem, {
@@ -22,6 +25,16 @@ import SidebarItem, {
 } from './sidebar-item';
 import * as SidebarActions from './sidebar-actions';
 import { ISidebarSection, ISidebarItem } from './types';
+import SearchMailboxPerspective from '../../thread-search/lib/search-mailbox-perspective';
+import {
+  SmartFolderDefinition,
+  configuredSmartFolders,
+  deleteSmartFolder,
+  smartFolderDescription,
+  smartFolderQuery,
+  toggleSmartFolderFavorite,
+} from './smart-folders';
+import { openSmartFolderEditor } from './components/smart-folder-editor';
 import {
   SIDEBAR_REORDER_DRAG_TYPE,
   isAccountCollapsed,
@@ -288,10 +301,83 @@ class SidebarSection {
       });
     });
 
+    configuredSmartFolders()
+      .filter((folder) => folder.favorite)
+      .forEach((folder) => {
+        const item = this.smartFolderItem(folder, accounts, { favoriteCopy: true });
+        if (item) items.push(item);
+      });
+
     return {
       title: localized('Favorites'),
       iconName: 'starred.png',
       items,
+    };
+  }
+
+  static smartFolderItem(
+    definition: SmartFolderDefinition,
+    accounts: Account[],
+    { favoriteCopy = false }: { favoriteCopy?: boolean } = {}
+  ): ISidebarItem | null {
+    const availableIds = new Set(accounts.map((account) => account.id));
+    const accountIds =
+      definition.scope === 'all'
+        ? accounts.map((account) => account.id)
+        : definition.accountIds.filter((accountId) => availableIds.has(accountId));
+    const query = smartFolderQuery(definition);
+    if (!query || accountIds.length === 0) return null;
+
+    const perspective = new SearchMailboxPerspective(new MailboxPerspective(accountIds), query, {
+      name: definition.name,
+      iconName: 'searchloupe.png',
+      smartFolderId: definition.id,
+    });
+    const deleteFolder = () => {
+      const response = require('@electron/remote').dialog.showMessageBoxSync({
+        type: 'question',
+        message: localized('Delete Smart Folder?'),
+        detail: localized(
+          'This removes the saved view only. No messages or mail folders will be deleted.'
+        ),
+        buttons: [localized('Delete'), localized('Cancel')],
+        defaultId: 1,
+        cancelId: 1,
+      });
+      if (response !== 0) return;
+      deleteSmartFolder(definition.id);
+      if ((FocusedPerspectiveStore.current() as any).smartFolderId === definition.id) {
+        Actions.focusDefaultMailboxPerspectiveForAccounts(accounts);
+      }
+    };
+
+    return SidebarItem.forPerspective(
+      `${favoriteCopy ? 'favorite-' : ''}smart-folder-${definition.id}`,
+      perspective,
+      {
+        name: definition.name,
+        title: `${definition.name} — ${smartFolderDescription(definition)}`,
+        contextMenuLabel: localized('Smart Folder'),
+        iconName: 'searchloupe.png',
+        favorite: definition.favorite,
+        onEdit: () => openSmartFolderEditor(definition),
+        onDelete: deleteFolder,
+        onToggleFavorite: () => toggleSmartFolderFavorite(definition.id),
+      }
+    );
+  }
+
+  static smartFoldersSectionForAccounts(accounts: Account[]): ISidebarSection {
+    const title = localized('Smart Folders');
+    return {
+      title,
+      iconName: 'searchloupe.png',
+      items: configuredSmartFolders()
+        .map((folder) => this.smartFolderItem(folder, accounts))
+        .filter(Boolean),
+      collapsed: isSectionCollapsed(title),
+      onCollapseToggled: (section) => toggleSectionCollapsed(section),
+      onCreateTriggered: () => openSmartFolderEditor(),
     };
   }
 

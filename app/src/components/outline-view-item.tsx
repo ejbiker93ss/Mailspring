@@ -173,6 +173,7 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
   _shouldShowContextMenu = () => {
     return (
       this.props.item.onDelete != null ||
+      this.props.item.onEdit != null ||
       this.props.item.onEdited != null ||
       this.props.item.onExport != null ||
       this.props.item.onExportMbox != null ||
@@ -237,7 +238,9 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
   };
 
   _onEdit = () => {
-    if (this.props.item.onEdited) {
+    if (this.props.item.onEdit) {
+      this._runCallback('onEdit');
+    } else if (this.props.item.onEdited) {
       this.setState({ editing: true });
     }
   };
@@ -285,10 +288,12 @@ class OutlineViewItem extends Component<OutlineViewItemProps, OutlineViewItemSta
     const { Menu, MenuItem } = require('@electron/remote');
     const menu = new Menu();
 
-    if (this.props.item.onEdited) {
+    if (this.props.item.onEdit || this.props.item.onEdited) {
       menu.append(
         new MenuItem({
-          label: `${localized(`Rename`)} ${contextMenuLabel}`,
+          label: this.props.item.onEdit
+            ? `${localized(`Edit`)} ${contextMenuLabel}`
+            : `${localized(`Rename`)} ${contextMenuLabel}`,
           click: this._onEdit,
         })
       );

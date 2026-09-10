@@ -1,7 +1,14 @@
 import { DatabaseStore, SearchQueryParser } from 'summermail-exports';
 import { SearchQuerySubscription } from '../lib/search-query-subscription';
+import { compileFTSMatchQuery } from '../../../src/services/search/search-query-backend-local';
 
 describe('SearchQuerySubscription matching messages', () => {
+  it('compiles body-only queries against the indexed body field', () => {
+    const match = compileFTSMatchQuery(SearchQueryParser.parse('body:"amount due"'));
+
+    expect(match).toBe('(body : "amount due"*)');
+  });
+
   it('retains the message that satisfied an exact sender search', async () => {
     const subscription = Object.create(SearchQuerySubscription.prototype);
     subscription._accountIds = ['account-1'];
@@ -29,6 +36,30 @@ describe('SearchQuerySubscription matching messages', () => {
     expect(result.total).toBe(1);
     expect(result.matchingMessageIds.get('thread-1')).toBe('message-2');
     expect(querySpy.calls[0].args[0]).toContain('AS matchingMessageId');
+  });
+
+  it('sorts comparable matches newest-first while preserving stronger relevance bands', async () => {
+    const subscription = Object.create(SearchQuerySubscription.prototype);
+    subscription._accountIds = ['account-1'];
+
+    const querySpy = (DatabaseStore as any)._query as jasmine.Spy;
+    querySpy.andCallFake((sql: string) => {
+      if (sql.startsWith('SELECT COUNT(*)')) {
+        return Promise.resolve([{ count: 0 }]);
+      }
+      return Promise.resolve([]);
+    });
+
+    await subscription._rankedSearchResults(SearchQueryParser.parse('quarterly report'));
+
+    const rankSQL = querySpy.calls[0].args[0];
+    const bandOrder = rankSQL.indexOf('relevanceBand ASC');
+    const dateOrder = rankSQL.indexOf('`Thread`.lastMessageReceivedTimestamp DESC');
+    const rawRelevanceOrder = rankSQL.lastIndexOf('relevance ASC');
+    expect(rankSQL).toContain('AS relevanceBand');
+    expect(bandOrder).toBeGreaterThan(-1);
+    expect(dateOrder).toBeGreaterThan(bandOrder);
+    expect(rawRelevanceOrder).toBeGreaterThan(dateOrder);
   });
 
   it('falls back to chronological results when relevance ranking fails', async () => {

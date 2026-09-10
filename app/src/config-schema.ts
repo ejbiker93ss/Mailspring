@@ -94,6 +94,10 @@ export default {
             default: [],
             items: { type: 'string' },
           },
+          smartFolders: {
+            type: 'array',
+            default: [],
+          },
           use24HourClock: {
             type: 'boolean',
             default: false,

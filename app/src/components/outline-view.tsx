@@ -19,6 +19,7 @@ export interface IOutlineViewItem {
   editing?: boolean;
   selected?: boolean;
   onItemCreated?: (...args: any[]) => any;
+  onCreateTriggered?: (...args: any[]) => any;
   onCollapseToggled?: (...args: any[]) => any;
   shouldAcceptDrop?: (...args: any[]) => any;
   onInputCleared?: (...args: any[]) => any;
@@ -26,6 +27,7 @@ export interface IOutlineViewItem {
   onSelect?: (...args: any[]) => any;
   onDelete?: (...args: any[]) => any;
   onEdited?: (...args: any[]) => any;
+  onEdit?: (...args: any[]) => any;
   onExport?: (...args: any[]) => any;
   onExportMbox?: (...args: any[]) => any;
   onCreateChild?: (...args: any[]) => any;
@@ -46,6 +48,7 @@ export interface OutlineViewProps {
   titleColor?: string;
   onCollapseToggled?: (props: OutlineViewProps) => void;
   onItemCreated?: (displayName) => void;
+  onCreateTriggered?: () => void;
   reorderable?: boolean;
   onSectionDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   onSectionDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -125,6 +128,10 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
 
   _onCreateButtonClicked = () => {
     this._clickingCreateButton = false;
+    if (this.props.onCreateTriggered) {
+      this.props.onCreateTriggered();
+      return;
+    }
     this.setState({ showCreateInput: !this.state.showCreateInput });
   };
 
@@ -366,7 +373,7 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
       return <span />;
     }
 
-    const showInput = allowCreate && this.state.showCreateInput;
+    const showInput = !!this.props.onItemCreated && allowCreate && this.state.showCreateInput;
     return (
       <div role="tree" aria-label={this.props.title} onKeyDown={this._onTreeKeyDown}>
         {showInput ? this._renderCreateInput() : null}
@@ -378,7 +385,8 @@ export class OutlineView extends Component<OutlineViewProps, OutlineViewState> {
   render() {
     const collapsible = this.props.onCollapseToggled;
     const collapsed = this.props.collapsed;
-    const allowCreate = this.props.onItemCreated != null && !collapsed;
+    const allowCreate =
+      (this.props.onItemCreated != null || this.props.onCreateTriggered != null) && !collapsed;
 
     return (
       <div className="outline-view nylas-outline-view">

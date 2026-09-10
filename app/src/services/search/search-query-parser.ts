@@ -6,6 +6,7 @@ import {
   FromQueryExpression,
   ToQueryExpression,
   SubjectQueryExpression,
+  BodyQueryExpression,
   GenericQueryExpression,
   TextQueryExpression,
   UnreadStatusQueryExpression,
@@ -66,6 +67,7 @@ const reserved = [
   'from',
   'to',
   'subject',
+  'body',
   'in',
   'has',
   'attachment',
@@ -160,6 +162,7 @@ const nextToken = (text: string): [SearchQueryToken, string] => {
  *             | from_query
  *             | to_query
  *             | subject_query
+ *             | body_query
  *             | paren_query
  *             | is_query
  *             | has_query
@@ -167,6 +170,7 @@ const nextToken = (text: string): [SearchQueryToken, string] => {
  * from_query: FROM COLON TEXT
  * to_query: TO COLON TEXT
  * subject_query: SUBJECT COLON TEXT
+ * body_query: BODY COLON TEXT
  * paren_query: LPAREN query RPAREN
  * is_query: IS COLON is_query_rest
  * is_query_rest: read_cond
@@ -257,6 +261,12 @@ const parseSimpleQuery = (text: string): [QueryExpression, string] => {
     const afterColon = consumeExpectedToken(afterTok, ':');
     const [txt, afterTxt] = parseText(afterColon);
     return [new FromQueryExpression(txt), afterTxt];
+  }
+
+  if (tok.s.toUpperCase() === 'BODY') {
+    const afterColon = consumeExpectedToken(afterTok, ':');
+    const [txt, afterTxt] = parseText(afterColon);
+    return [new BodyQueryExpression(txt), afterTxt];
   }
 
   if (tok.s.toUpperCase() === 'SUBJECT') {
