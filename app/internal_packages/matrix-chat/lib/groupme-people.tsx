@@ -73,12 +73,24 @@ export default class GroupMePeople extends React.Component<
           <ul>
             {members.map((member) => (
               <li key={member.id}>
-                <span className="matrix-room-avatar" aria-hidden="true">
-                  {initials(member.name)}
-                </span>
-                <span className="matrix-people-copy">
-                  <strong>{member.name}</strong>
-                </span>
+                <button
+                  type="button"
+                  className="matrix-person-button"
+                  disabled={member.id === GroupMeChatStore.userId()}
+                  title={
+                    member.id === GroupMeChatStore.userId()
+                      ? member.name
+                      : localized('Message %@', member.name)
+                  }
+                  onClick={() => GroupMeChatStore.startDirectMessage(member)}
+                >
+                  <span className="matrix-room-avatar" aria-hidden="true">
+                    {initials(member.name)}
+                  </span>
+                  <span className="matrix-people-copy">
+                    <strong>{member.name}</strong>
+                  </span>
+                </button>
               </li>
             ))}
           </ul>

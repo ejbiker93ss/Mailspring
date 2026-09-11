@@ -772,6 +772,31 @@
   }
 }
 
+.matrix-person-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  text-align: left;
+  width: 100%;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: color-mix(in srgb, @text-color 10%, transparent);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
 .matrix-people-copy {
   display: flex;
   flex-direction: column;

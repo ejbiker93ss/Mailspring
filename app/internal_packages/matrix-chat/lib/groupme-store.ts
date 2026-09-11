@@ -432,6 +432,31 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     void this._loadSelected(true);
   }
 
+  startDirectMessage(member: GroupMeMember) {
+    if (!member.id || member.id === this._user?.id) return;
+    const id = `direct:${member.id}`;
+    const existing = this._chats.find((chat) => chatKey(chat) === id);
+    if (!existing) {
+      const conversationId = [this._user?.id || '', member.id].filter(Boolean).sort().join('+');
+      this._chats = [
+        {
+          conversationId,
+          id: member.id,
+          kind: 'direct',
+          lastMessage: '',
+          lastMessageAt: Date.now(),
+          lastMessageId: null,
+          lastMessageSenderId: null,
+          members: [member],
+          name: member.name,
+          unreadCount: 0,
+        },
+        ...this._chats,
+      ];
+    }
+    this.selectChat(id);
+  }
+
   async sendMessage() {
     const chat = this.selectedChat();
     const body = this._composerDraft.trim();
@@ -496,7 +521,16 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     const token = this._token;
     if (!token) return;
     const previous = new Map(this._chats.map((chat) => [chatKey(chat), chat]));
-    this._chats = await groupmeChats(token, this._user?.id);
+    const refreshed = await groupmeChats(token, this._user?.id);
+    const pendingDirects = this._chats.filter(
+      (chat) =>
+        chat.kind === 'direct' &&
+        !chat.lastMessageId &&
+        !refreshed.some((candidate) => chatKey(candidate) === chatKey(chat))
+    );
+    this._chats = [...refreshed, ...pendingDirects].sort(
+      (a, b) => b.lastMessageAt - a.lastMessageAt
+    );
     const receiptChecks = this._chats.filter((chat) => {
       if (chat.kind !== 'direct') return false;
       const key = chatKey(chat);
