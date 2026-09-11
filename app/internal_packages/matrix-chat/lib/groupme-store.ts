@@ -34,6 +34,7 @@ const DEVICE_KEY = 'groupme-chat.device-id';
 const HIDDEN_CHATS_KEY = 'groupme-chat.hidden-chats';
 const ROOMS_COLLAPSED_KEY = 'groupme-chat.rooms-collapsed';
 const PEOPLE_COLLAPSED_KEY = 'groupme-chat.people-collapsed';
+const UNREAD_STATE_KEY = 'groupme-chat.unread-state';
 const LEGACY_STATE_KEY = 'matrix-chat.groupme';
 const LIST_POLL_MS = 8000;
 const MESSAGE_POLL_MS = 3000;
@@ -58,6 +59,32 @@ function hiddenChatIds(): string[] {
 
 function chatKey(chat: GroupMeChat) {
   return `${chat.kind}:${chat.id}`;
+}
+
+type SavedUnreadState = {
+  lastMessageId: string | null;
+  unreadCount: number;
+};
+
+function savedUnreadStates(): Map<string, SavedUnreadState> {
+  const stored = AppEnv.config.get(UNREAD_STATE_KEY);
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return new Map();
+  return new Map(
+    Object.entries(stored as Record<string, unknown>).flatMap(([key, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+      const entry = value as Record<string, unknown>;
+      const unreadCount = Number(entry.unreadCount);
+      return [
+        [
+          key,
+          {
+            lastMessageId: typeof entry.lastMessageId === 'string' ? entry.lastMessageId : null,
+            unreadCount: Number.isFinite(unreadCount) ? Math.max(0, unreadCount) : 0,
+          },
+        ] as [string, SavedUnreadState],
+      ];
+    })
+  );
 }
 
 function initials(name: string) {
@@ -97,6 +124,7 @@ export class GroupMeChatStoreClass extends SummerMailStore {
   private _sending = false;
   private _timeline: GroupMeMessage[] = [];
   private _token: string | null = null;
+  private _unreadStates = savedUnreadStates();
   private _user: GroupMeUser | null = null;
 
   constructor() {
@@ -398,9 +426,6 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     this._composerDraft = '';
     this._replyingTo = null;
     this._timeline = [];
-    this._chats = this._chats.map((chat) =>
-      chatKey(chat) === chatId ? { ...chat, unreadCount: 0 } : chat
-    );
     const chat = this.selectedChat();
     this._members = chat?.members || [];
     this.trigger(this);
@@ -501,25 +526,31 @@ export class GroupMeChatStoreClass extends SummerMailStore {
         AppEnv.getCurrentWindow().isFocused()
       )
         return { ...chat, unreadCount: 0 };
-      if (chat.kind !== 'direct') return chat;
       const before = previous.get(key);
+      const saved = this._unreadStates.get(key);
       const incoming =
-        !!before &&
+        !!(before || saved) &&
         !!chat.lastMessageId &&
-        chat.lastMessageId !== before.lastMessageId &&
+        chat.lastMessageId !== (before?.lastMessageId || saved?.lastMessageId) &&
         !!chat.lastMessageSenderId &&
         chat.lastMessageSenderId !== this._user?.id;
-      const observedUnread = incoming ? Math.max(1, before.unreadCount) : before?.unreadCount || 0;
-      return {
-        ...chat,
-        unreadCount: groupmeUnreadAfterReceipt(
-          chat,
+      let unreadCount = Math.max(
+        chat.unreadCount,
+        before?.unreadCount || 0,
+        saved?.unreadCount || 0
+      );
+      if (incoming) unreadCount = Math.max(1, unreadCount);
+      if (chat.kind === 'direct') {
+        unreadCount = groupmeUnreadAfterReceipt(
+          { ...chat, unreadCount, unreadStateKnown: false },
           this._readReceipts.get(key),
           this._user?.id,
-          observedUnread
-        ),
-      };
+          unreadCount
+        );
+      }
+      return { ...chat, unreadCount };
     });
+    this._saveUnreadStates();
     for (const chat of this._chats) {
       const before = previous.get(chatKey(chat));
       if (
@@ -541,7 +572,13 @@ export class GroupMeChatStoreClass extends SummerMailStore {
       if (detailed) {
         this._members = detailed.members;
         this._chats = this._chats.map((chat) =>
-          chatKey(chat) === chatKey(detailed) ? { ...detailed, unreadCount: 0 } : chat
+          chatKey(chat) === chatKey(detailed)
+            ? {
+                ...detailed,
+                unreadCount:
+                  this._chats.find((item) => chatKey(item) === chatKey(detailed))?.unreadCount || 0,
+              }
+            : chat
         );
       }
     } else {
@@ -594,12 +631,27 @@ export class GroupMeChatStoreClass extends SummerMailStore {
       this._chats = this._chats.map((item) =>
         visible && chatKey(item) === chatKey(chat) ? { ...item, unreadCount: 0 } : item
       );
+      this._saveUnreadStates();
       this._error = null;
       this.trigger(this);
     } catch (error) {
       this._error = error instanceof Error ? error.message : String(error);
       this.trigger(this);
     }
+  }
+
+  private _saveUnreadStates() {
+    const states: Record<string, SavedUnreadState> = {};
+    for (const chat of this._chats) {
+      const key = chatKey(chat);
+      const state = {
+        lastMessageId: chat.lastMessageId,
+        unreadCount: Math.max(0, chat.unreadCount),
+      };
+      this._unreadStates.set(key, state);
+      states[key] = state;
+    }
+    AppEnv.config.set(UNREAD_STATE_KEY, states);
   }
 
   private _startPolling() {

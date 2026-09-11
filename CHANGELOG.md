@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.63 (9/11/2026)
+
+Bug Fixes:
+
+- Restore GroupMe unread badges in the chat list and top tab for both groups and direct messages, retain them across restarts, and clear them only after the chat is visibly read.
+
 ## 1.23.62 (9/11/2026)
 
 Improvements:
