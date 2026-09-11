@@ -112,7 +112,7 @@ export class Account extends ModelWithMetadata {
     smtp_allow_insecure_ssl: boolean;
     smtp_security: 'SSL / TLS' | 'STARTTLS' | 'none';
     refresh_token: string;
-    sync_engine?: 'microsoft_graph';
+    sync_engine?: 'microsoft_graph' | 'smartermail_api';
     graph_mailbox?: string;
     container_folder: string;
   };

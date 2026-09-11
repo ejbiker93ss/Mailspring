@@ -28,6 +28,7 @@ describe('SmarterMail account setup', () => {
     expect(result.settings.imap_port).toBe(993);
     expect(result.settings.smtp_host).toBe('mail.example.com');
     expect(result.settings.smtp_port).toBe(465);
+    expect(result.settings.sync_engine).toBe('smartermail_api');
     expect(result.settings.caldav_host).toBe('https://mail.example.com/WebDAV/');
     expect(result.settings.carddav_host).toBe('https://mail.example.com/WebDAV/');
     expect(result.settings.caldav_username).toBe('alice@example.com');

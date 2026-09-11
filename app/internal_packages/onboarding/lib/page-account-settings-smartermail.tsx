@@ -84,7 +84,7 @@ class AccountSmarterMailSettingsForm extends React.Component<AccountSmarterMailS
         />
         <FormField
           field="settings.imap_password"
-          title={localized('Mail password (IMAP/SMTP)')}
+          title={localized('Mail password (API / SMTP)')}
           type="password"
           {...this.props}
         />
@@ -96,7 +96,7 @@ class AccountSmarterMailSettingsForm extends React.Component<AccountSmarterMailS
         />
         <p>
           {localized(
-            'With two-factor authentication, enter the separate IMAP/SMTP and WebDAV app passwords from SmarterMail. Do not enter a one-time code. Without two-factor authentication, you can leave WebDAV blank to use the mail password.'
+            'With two-factor authentication, enter the separate API/SMTP and WebDAV app passwords from SmarterMail. Do not enter a one-time code. Without two-factor authentication, you can leave WebDAV blank to use the mail password.'
           )}
         </p>
       </form>

@@ -463,6 +463,7 @@ export function buildSmarterMailAccount(account: Account) {
   populated.settings = {
     ...populated.settings,
     smartermail_server: serverOrigin,
+    sync_engine: 'smartermail_api',
     imap_host: server.hostname,
     imap_port: 993,
     imap_username: populated.emailAddress,
