@@ -299,6 +299,36 @@ summermail-workspace {
   }
 }
 
+.app-tab-groupme .app-tab-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  flex-basis: 15px;
+  height: 12px;
+  width: 15px;
+
+  &::before {
+    content: '#';
+    font-size: 10px;
+    font-weight: 700;
+    left: 3px;
+    line-height: 9px;
+    position: absolute;
+    top: 0;
+  }
+
+  &::after {
+    border-bottom: 1.5px solid currentColor;
+    border-left: 1.5px solid currentColor;
+    bottom: -3px;
+    content: '';
+    height: 4px;
+    left: 2px;
+    position: absolute;
+    transform: skewY(-35deg);
+    width: 4px;
+  }
+}
+
 .app-tab-unread-count {
   align-items: center;
   background: @accent-primary;

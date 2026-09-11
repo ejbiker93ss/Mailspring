@@ -5,8 +5,9 @@ import { SheetDeclaration } from './flux/stores/workspace-store';
 import { AppNavigationMenu } from '../internal_packages/account-sidebar/lib/components/app-navigation-menu';
 import { windowsTitleBarOverlayColors, WINDOWS_TITLE_BAR_HEIGHT } from './windows-title-bar';
 import MatrixChatStore from '../internal_packages/matrix-chat/lib/matrix-chat-store';
+import GroupMeChatStore from '../internal_packages/matrix-chat/lib/groupme-store';
 
-type HomeTabId = 'Threads' | 'Kanban' | 'Calendar' | 'Contacts' | 'Activity' | 'Matrix';
+type HomeTabId = 'Threads' | 'Kanban' | 'Calendar' | 'Contacts' | 'Activity' | 'Matrix' | 'GroupMe';
 
 interface ConversationTab {
   id: string;
@@ -20,6 +21,7 @@ interface AppTabsState {
   conversations: ConversationTab[];
   rootSheets: HomeTabId[];
   matrixUnreadCount: number;
+  groupMeUnreadCount: number;
 }
 
 const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
@@ -29,6 +31,7 @@ const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
   { id: 'Contacts', label: 'Contacts' },
   { id: 'Activity', label: 'Activity' },
   { id: 'Matrix', label: 'Chat' },
+  { id: 'GroupMe', label: 'GroupMe' },
 ];
 
 /**
@@ -52,6 +55,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       conversations: [],
       rootSheets: this._availableRootSheets(),
       matrixUnreadCount: MatrixChatStore.unreadCount(),
+      groupMeUnreadCount: GroupMeChatStore.unreadCount(),
     };
   }
 
@@ -61,6 +65,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       Actions.setFocus.listen(this._onRegularFocus),
       Actions.openThreadInTab.listen(this._onOpenThreadInTab),
       MatrixChatStore.listen(this._onMatrixChatChange),
+      GroupMeChatStore.listen(this._onGroupMeChatChange),
     ];
     this.themeDisposable = AppEnv.themes.onDidChangeActiveThemes(
       this._queueNativeWindowControlColorSync
@@ -126,6 +131,10 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
 
   _onMatrixChatChange = () => {
     this.setState({ matrixUnreadCount: MatrixChatStore.unreadCount() });
+  };
+
+  _onGroupMeChatChange = () => {
+    this.setState({ groupMeUnreadCount: GroupMeChatStore.unreadCount() });
   };
 
   _onOpenThreadInTab = (thread: Thread) => this._openConversation(thread);
@@ -272,6 +281,14 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
                   aria-label={localized(`%@ unread chats`, this.state.matrixUnreadCount)}
                 >
                   {this.state.matrixUnreadCount > 99 ? '99+' : this.state.matrixUnreadCount}
+                </span>
+              ) : null}
+              {id === 'GroupMe' && this.state.groupMeUnreadCount > 0 ? (
+                <span
+                  className="app-tab-unread-count"
+                  aria-label={localized(`%@ unread chats`, this.state.groupMeUnreadCount)}
+                >
+                  {this.state.groupMeUnreadCount > 99 ? '99+' : this.state.groupMeUnreadCount}
                 </span>
               ) : null}
               {id === 'Threads' ? (

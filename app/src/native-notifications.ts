@@ -343,8 +343,8 @@ ${actionsXml}
       messageId,
     };
 
-    // macOS-specific features
-    if (platform === 'darwin') {
+    // Native inline reply and actions are supported by Electron on macOS and Windows.
+    if (platform === 'darwin' || platform === 'win32') {
       if (canReply) {
         options.hasReply = true;
         options.replyPlaceholder = replyPlaceholder || 'Reply...';
@@ -354,8 +354,9 @@ ${actionsXml}
       }
     }
 
-    // Windows toast XML for rich notifications with actions and/or reply
-    if (platform === 'win32' && (actions?.length > 0 || canReply)) {
+    // Keep protocol-activated Windows actions for notifications that do not need
+    // inline input. Custom XML supersedes Electron's native reply fields.
+    if (platform === 'win32' && actions?.length > 0 && !canReply) {
       options.toastXml = this.buildWindowsToastXml({
         id,
         title,

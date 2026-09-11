@@ -11,7 +11,8 @@ type IconName =
   | 'search'
   | 'admin'
   | 'settings'
-  | 'matrix';
+  | 'matrix'
+  | 'groupme';
 
 const Icon = ({ name }: { name: IconName }) => {
   const common = {
@@ -62,6 +63,15 @@ const Icon = ({ name }: { name: IconName }) => {
         <svg {...common}>
           <path d="M21 11.5a8 8 0 0 1-8.5 8A9.5 9.5 0 0 1 8 18.3L3 20l1.7-4.4A8 8 0 1 1 21 11.5Z" />
           <path d="M8 10h8M8 14h5" />
+        </svg>
+      );
+    case 'groupme':
+      return (
+        <svg {...common}>
+          <circle cx="8" cy="9" r="3" />
+          <circle cx="16" cy="9" r="3" />
+          <path d="M4 19c0-2.2 1.8-4 4-4" />
+          <path d="M14 15.5c.6-.3 1.3-.5 2-.5 2.2 0 4 1.8 4 4" />
         </svg>
       );
     case 'tasks':
@@ -123,6 +133,12 @@ export const AppNavigationMenu = () => {
     run(() => {
       if (WorkspaceStore.Sheet.Matrix) {
         Actions.selectRootSheet(WorkspaceStore.Sheet.Matrix);
+      }
+    });
+  const openGroupMe = () =>
+    run(() => {
+      if (WorkspaceStore.Sheet.GroupMe) {
+        Actions.selectRootSheet(WorkspaceStore.Sheet.GroupMe);
       }
     });
   const openSearch = () =>
@@ -187,6 +203,16 @@ export const AppNavigationMenu = () => {
             label: localized('Chat'),
             action: openMatrix,
             active: rootSheet === WorkspaceStore.Sheet.Matrix,
+          },
+        ]
+      : []),
+    ...(WorkspaceStore.Sheet.GroupMe
+      ? [
+          {
+            name: 'groupme' as const,
+            label: localized('GroupMe'),
+            action: openGroupMe,
+            active: rootSheet === WorkspaceStore.Sheet.GroupMe,
           },
         ]
       : []),

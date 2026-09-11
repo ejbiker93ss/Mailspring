@@ -1,6 +1,7 @@
 import React from 'react';
 import { DOMUtils, localized } from 'summermail-exports';
 import MatrixChatStore, { MatrixRoomSummary } from './matrix-chat-store';
+import GroupMeChatStore from './groupme-store';
 
 interface State {
   rooms: MatrixRoomSummary[];
@@ -67,6 +68,15 @@ export default class MatrixRoomList extends React.Component<Record<string, never
             placeholder={localized('Search chats')}
             onChange={(event) => MatrixChatStore.setSearchQuery(event.target.value)}
           />
+          {AppEnv.config.get('groupme-chat.enabled') === true ? null : (
+            <button
+              type="button"
+              className="btn matrix-connect-groupme"
+              onClick={() => GroupMeChatStore.openFromChatArea()}
+            >
+              {localized('Connect GroupMe')}
+            </button>
+          )}
         </div>
         {visible.length === 0 ? (
           <div className="matrix-room-empty">{localized('No chats match that search.')}</div>

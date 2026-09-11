@@ -288,6 +288,47 @@
       border: 1px solid #eee;
       padding: 3px;
     }
+    .preview-chrome {
+      align-items: center;
+      background: #191b22;
+      color: #f4f6fb;
+      display: flex;
+      height: 40px;
+      justify-content: space-between;
+      left: 0;
+      padding: 0 10px 0 14px;
+      position: fixed;
+      right: 0;
+      top: 0;
+      -webkit-app-region: drag;
+      z-index: 20;
+    }
+    .preview-chrome-title {
+      font: 13px/40px 'Segoe UI', sans-serif;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .preview-chrome-close {
+      -webkit-app-region: no-drag;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+      font-size: 22px;
+      height: 32px;
+      line-height: 28px;
+      width: 36px;
+    }
+    .preview-chrome-close:hover {
+      background: #c42b1c;
+    }
+    body.has-preview-chrome {
+      margin-top: 40px;
+    }
+    body.has-preview-chrome .xlsx-tabs {
+      left: 0;
+    }
 
     html.media-preview,
     body.media-preview {
@@ -418,6 +459,26 @@
 
   <script>
     const div = document.getElementById('the-doc');
+
+    function ensurePreviewChrome() {
+      if (document.querySelector('.preview-chrome')) return;
+      document.body.classList.add('has-preview-chrome');
+      const chrome = document.createElement('div');
+      chrome.className = 'preview-chrome';
+      const title = document.createElement('div');
+      title.className = 'preview-chrome-title';
+      title.textContent = (filePath || '').split(/[\\/]/).pop() || 'Preview';
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'preview-chrome-close';
+      close.title = 'Close';
+      close.setAttribute('aria-label', 'Close');
+      close.textContent = '×';
+      close.addEventListener('click', () => window.close());
+      chrome.appendChild(title);
+      chrome.appendChild(close);
+      document.body.insertBefore(chrome, document.body.firstChild);
+    }
 
     function finishWithWindowCapture(previewToken, startedAt = Date.now()) {
       // Remove scroll bars or they appear in the capture on Windows
@@ -689,6 +750,7 @@
     }
 
     async function runXLSX({ previewToken }) {
+      if (mode === 'display') ensurePreviewChrome();
       const data = await window.electronAPI.previewFileAsBuffer();
       const xlsx = document.createElement('script');
       xlsx.onload = () => {
@@ -752,6 +814,7 @@
     }
 
     async function runPrism({ filePath, previewToken, mode }) {
+      if (mode === 'display') ensurePreviewChrome();
       const ext = filePath.split('.').pop();
       const str = await window.electronAPI.previewFileAsString({
         truncate: mode === 'capture',
@@ -833,6 +896,7 @@
     }
 
     async function runMammoth({ previewToken, mode }) {
+      if (mode === 'display') ensurePreviewChrome();
       const rawHTML = await window.electronAPI.previewFileAsMammothHTML();
       div.innerHTML = sanitizeHTML(rawHTML);
       if (mode === 'capture') {
@@ -841,6 +905,7 @@
     }
 
     async function runSnarkdown({ previewToken, mode }) {
+      if (mode === 'display') ensurePreviewChrome();
       const rawHTML = await window.electronAPI.previewFileAsSnarkdownHTML();
       div.innerHTML = sanitizeHTML(rawHTML);
       div.style.fontFamily =

@@ -34,7 +34,6 @@ import {
   loginToMatrix,
   clearMatrixLocalStores,
 } from './matrix-session';
-import groupMeBridge from './groupme-bridge';
 
 const SESSION_CONFIG_KEY = 'matrix-chat.session';
 const SESSION_SECRET_KEY = 'matrix-chat-session';
@@ -357,7 +356,6 @@ export class MatrixChatStoreClass extends SummerMailStore {
       // Keep local logout even if the homeserver call fails.
     }
     await clearMatrixLocalStores();
-    groupMeBridge.attachMatrixClient(null);
   }
 
   selectRoom(roomId: string) {
@@ -406,8 +404,6 @@ export class MatrixChatStoreClass extends SummerMailStore {
       } else {
         await client.sendTextMessage(roomId, body);
       }
-      const sent = this._selectedRoom()?.getLiveTimeline().getEvents().slice(-1)[0]?.getId();
-      await groupMeBridge.handleOutgoingMatrixMessage(roomId, body, sent);
       this._replyTo = null;
       this._refreshTimeline();
       this._refreshRooms();
@@ -517,8 +513,6 @@ export class MatrixChatStoreClass extends SummerMailStore {
     client.on(RoomEvent.Name, this._onRoomsChanged);
     client.on(CryptoEvent.VerificationRequestReceived, this._onVerificationRequest);
     await client.startClient({ initialSyncLimit: 30, lazyLoadMembers: true });
-    groupMeBridge.attachMatrixClient(client);
-    void groupMeBridge.restore();
     await this._refreshDeviceVerified();
     this._refreshRooms();
     this.trigger(this);

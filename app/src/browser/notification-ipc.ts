@@ -120,6 +120,16 @@ const displayNotification = (
     }
   }
 
+  if (platform === 'win32' && !options.toastXml) {
+    if (options.hasReply) {
+      notifOptions.hasReply = true;
+      notifOptions.replyPlaceholder = options.replyPlaceholder || 'Reply...';
+    }
+    if (options.actions && options.actions.length > 0) {
+      notifOptions.actions = options.actions;
+    }
+  }
+
   // Linux-specific options
   if (platform === 'linux') {
     if (options.urgency) {
@@ -171,11 +181,12 @@ const displayNotification = (
     sendToAllWindows('notification:closed', { id: options.id });
   });
 
-  // Handle reply event (macOS only)
+  // Handle native reply events on macOS and Windows.
   notification.on('reply', (replyEvent, reply) => {
+    const response = typeof reply === 'string' ? reply : (replyEvent as any)?.reply;
     sendToAllWindows('notification:replied', {
       id: options.id,
-      reply,
+      reply: response || '',
       threadId: options.threadId,
       messageId: options.messageId,
     });

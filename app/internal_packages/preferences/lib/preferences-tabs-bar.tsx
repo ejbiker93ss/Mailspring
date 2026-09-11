@@ -107,8 +107,15 @@ class PreferencesTabsBar extends React.Component<PreferencesTabBarProps> {
   };
 
   renderTabs() {
-    return this.props.tabs.map((tabItem) => (
-      <PreferencesTabItem key={tabItem.tabId} tabItem={tabItem} selection={this.props.selection} />
+    return this.props.tabs.map((tabItem, index) => (
+      <React.Fragment key={tabItem.tabId}>
+        {tabItem.group && tabItem.group !== this.props.tabs[index - 1]?.group ? (
+          <div className="preferences-group-heading" role="presentation">
+            {tabItem.group}
+          </div>
+        ) : null}
+        <PreferencesTabItem tabItem={tabItem} selection={this.props.selection} />
+      </React.Fragment>
     ));
   }
 

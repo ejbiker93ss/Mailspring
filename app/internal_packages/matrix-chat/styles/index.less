@@ -1,5 +1,18 @@
 @import 'ui-variables';
 
+.groupme-custom-emoji {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.groupme-reply-preview .groupme-custom-emoji {
+  width: 24px;
+  height: 24px;
+}
+
 .matrix-login,
 .matrix-conversation-status {
   align-items: center;
@@ -14,6 +27,10 @@
   text-align: center;
 }
 
+.matrix-login {
+  overflow: auto;
+}
+
 .matrix-login-card {
   background: var(--fm-surface, @background-primary);
   border: 1px solid var(--fm-border, @border-color-divider);
@@ -25,6 +42,10 @@
   padding: 28px;
   text-align: left;
   width: 100%;
+
+  + .matrix-login-card {
+    margin-top: 12px;
+  }
 
   h2 {
     font-size: 22px;
@@ -63,12 +84,67 @@
   color: @color-error;
 }
 
+.groupme-verification-help {
+  color: @text-color-subtle;
+  margin: 0 0 4px;
+}
+
+.matrix-login-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+  max-width: 420px;
+  text-align: center;
+  width: 100%;
+
+  p {
+    color: @text-color-subtle;
+    margin: 0;
+  }
+
+  .btn {
+    align-self: center;
+  }
+}
+
+.matrix-login-secondary {
+  margin-top: 16px;
+}
+
+.matrix-connect-groupme {
+  margin-top: 10px;
+}
+
+.groupme-message-image {
+  border-radius: 10px;
+  display: block;
+  margin-top: 8px;
+  max-height: 280px;
+  max-width: 360px;
+  width: 100%;
+}
+
+.matrix-conversation .groupme-message-image {
+  background: @background-secondary;
+  border: 1px solid var(--fm-border, @border-color-divider);
+  max-width: 360px;
+  object-fit: contain;
+}
+
 .matrix-room-list {
   background: @source-list-bg;
+  color: @text-color;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-width: 220px;
+
+  &.collapsed {
+    align-items: center;
+    min-width: 0;
+    padding-top: 10px;
+  }
 }
 
 .matrix-room-list-header {
@@ -84,13 +160,76 @@
     margin: 0;
   }
 
-  span {
+  .matrix-panel-heading > div > span {
     color: color-mix(in srgb, @text-color 78%, @text-color-subtle);
     font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.matrix-panel-heading {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+
+  > div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+}
+
+.matrix-sidebar-toggle,
+.matrix-sidebar-rail-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: color-mix(in srgb, @text-color 72%, @text-color-subtle);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+
+  &:hover {
+    background: color-mix(in srgb, @text-color 9%, transparent);
+    color: @text-color;
+  }
+
+  &:focus-visible {
+    border-color: @accent-primary;
+    outline: none;
+  }
+}
+
+.matrix-sidebar-chevron {
+  border-right: 1.5px solid currentColor;
+  border-top: 1.5px solid currentColor;
+  display: block;
+  height: 7px;
+  width: 7px;
+
+  &.left {
+    transform: rotate(-135deg);
+  }
+
+  &.right {
+    transform: rotate(45deg);
+  }
+}
+
+.sheet[data-id='GroupMe'] .column-GroupMeRooms:has(.matrix-room-list.collapsed),
+.sheet[data-id='GroupMe'] .column-GroupMePeople:has(.matrix-people.collapsed) {
+  flex: 0 0 48px !important;
+  max-width: 48px !important;
+  min-width: 48px !important;
+  width: 48px !important;
 }
 
 .matrix-room-list-header input[type='search'] {
@@ -101,6 +240,29 @@
   height: 32px;
   margin-top: 8px;
   padding: 0 10px;
+}
+
+.matrix-hidden-chats-button {
+  align-self: flex-start;
+  background: transparent;
+  border: 0;
+  color: color-mix(in srgb, @text-color 76%, @text-color-subtle);
+  font-size: 12px;
+  margin-top: 6px;
+  padding: 2px 0;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    color: @text-color;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: 2px;
+  }
 }
 
 .matrix-room-section {
@@ -146,7 +308,7 @@
   padding: 8px;
 }
 
-.matrix-room-list button {
+.matrix-room-list ul > li > button {
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
@@ -233,6 +395,7 @@
 
 .matrix-conversation {
   background: @background-primary;
+  color: @text-color;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -426,7 +589,7 @@
 .matrix-reply-preview,
 .matrix-replying {
   background: color-mix(in srgb, @accent-primary 12%, @background-primary);
-  border-left: 3px solid @accent-primary;
+  border: 1px solid color-mix(in srgb, @accent-primary 38%, @border-color-divider);
   border-radius: 8px;
   color: @text-color;
   display: flex;
@@ -442,6 +605,55 @@
   flex-direction: row;
   justify-content: space-between;
   margin: 0 16px 8px;
+
+  button {
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: @text-color;
+    font-size: 20px;
+    height: 30px;
+    width: 30px;
+
+    &:hover,
+    &:focus-visible {
+      background: color-mix(in srgb, @text-color 10%, transparent);
+      outline: none;
+    }
+  }
+}
+
+.matrix-replying-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  span {
+    color: color-mix(in srgb, @text-color 76%, @text-color-subtle);
+    max-width: 64ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.groupme-reply-preview {
+  max-width: 72ch;
+
+  span {
+    color: color-mix(in srgb, @text-color 78%, @text-color-subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.groupme-mention {
+  background: color-mix(in srgb, @accent-primary 18%, transparent);
+  border-radius: 4px;
+  color: color-mix(in srgb, @accent-primary 72%, @text-color);
+  font-weight: 650;
+  padding: 0 2px;
 }
 
 .matrix-message-actions,
@@ -462,6 +674,12 @@
   position: absolute;
   right: 12px;
   top: -12px;
+
+  &.picker-open {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 6;
+  }
 }
 .matrix-message-actions button,
 .matrix-reactions button {
@@ -478,12 +696,52 @@
   }
 }
 
+.groupme-reaction-picker {
+  background: color-mix(in srgb, @background-primary 96%, @text-color);
+  border: 1px solid color-mix(in srgb, @text-color 20%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px color-mix(in srgb, black 28%, transparent);
+  display: grid;
+  gap: 3px;
+  grid-template-columns: repeat(5, 32px);
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: 32px;
+  z-index: 7;
+
+  button {
+    align-items: center;
+    border: 0;
+    display: inline-flex;
+    font-size: 18px;
+    height: 32px;
+    justify-content: center;
+    padding: 0;
+    width: 32px;
+
+    &:hover,
+    &:focus-visible {
+      background: color-mix(in srgb, @accent-primary 20%, @background-primary);
+      outline: none;
+      transform: scale(1.08);
+    }
+  }
+}
+
 .matrix-people {
   background: @source-list-bg;
+  color: @text-color;
   border-left: 1px solid var(--fm-border, @border-color-divider);
   display: flex;
   flex-direction: column;
   height: 100%;
+
+  &.collapsed {
+    align-items: center;
+    min-width: 0;
+    padding-top: 10px;
+  }
 
   header {
     border-bottom: 1px solid var(--fm-border, @border-color-divider);
@@ -565,7 +823,7 @@
     border: 1px solid color-mix(in srgb, @text-color 22%, @border-color-divider);
     border-radius: 10px;
     color: @text-color;
-    flex: 1;
+    width: 100%;
     font: inherit;
     min-height: 44px;
     padding: 10px 12px;
@@ -578,6 +836,73 @@
     }
     &::placeholder {
       color: color-mix(in srgb, @text-color 62%, transparent);
+    }
+  }
+}
+
+.matrix-composer-field {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.matrix-composer-tool {
+  align-items: center;
+  background: color-mix(in srgb, @text-color 8%, @background-primary);
+  border: 1px solid color-mix(in srgb, @text-color 20%, @border-color-divider);
+  border-radius: 50%;
+  color: @text-color;
+  display: inline-flex;
+  font-size: 18px;
+  font-weight: 700;
+  height: 38px;
+  justify-content: center;
+  margin-bottom: 3px;
+  width: 38px;
+
+  &:hover,
+  &:focus-visible {
+    background: color-mix(in srgb, @accent-primary 18%, @background-primary);
+    border-color: @accent-primary;
+    outline: none;
+  }
+}
+
+.groupme-mention-picker {
+  background: color-mix(in srgb, @background-primary 96%, @text-color);
+  border: 1px solid color-mix(in srgb, @text-color 20%, transparent);
+  border-radius: 12px;
+  bottom: calc(100% + 8px);
+  box-shadow: 0 12px 32px color-mix(in srgb, black 32%, transparent);
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  max-width: 380px;
+  max-height: 300px;
+  min-width: 260px;
+  overflow-y: auto;
+  padding: 6px;
+  position: absolute;
+  width: 90%;
+  z-index: 9;
+
+  button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: @text-color;
+    display: flex;
+    gap: 10px;
+    padding: 7px 8px;
+    text-align: left;
+
+    &:hover,
+    &:focus-visible,
+    &.selected {
+      background: color-mix(in srgb, @accent-primary 18%, @background-primary);
+      outline: none;
     }
   }
 }

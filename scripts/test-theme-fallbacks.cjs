@@ -13,6 +13,7 @@ const files = [
   'app/internal_packages/main-calendar/styles/main-calendar.less',
   'app/internal_packages/main-calendar/styles/nylas-calendar.less',
   'app/internal_packages/mail-kanban/styles/mail-kanban.less',
+  'app/internal_packages/matrix-chat/styles/index.less',
   'app/static/style/modern-ui.less',
 ];
 const themes = ['ui-light', 'ui-dark', 'ui-darkside', 'ui-less-is-more', 'ui-taiga', 'ui-ubuntu'];
@@ -49,16 +50,21 @@ async function main() {
         <h1>${theme} — legacy theme fallbacks</h1><div class="fixture">
         <div class="preferences-wrap"><div class="account-calendar-settings"><h3>Calendar and Contacts</h3><label>WebDAV app password</label><input type="password" value="example"><p class="account-calendar-help">Separate from your mail password.</p><button class="btn btn-emphasis">Save and Sync</button><select><option>SmarterMail</option></select></div></div>
         <div class="composer-ai-review-card"><h2>Spelling &amp; grammar</h2><p>Choose which corrections to keep.</p><div class="composer-ai-corrected-preview composer-ai-change-diff"><label class="composer-ai-correction"><input type="checkbox" checked><del class="diff-removed">helo</del><ins class="diff-added">Hello</ins></label> everyone.</div><div class="composer-ai-review-actions"><button class="btn">Send Anyway</button><button class="btn btn-emphasis">Apply and Send</button></div></div>
-        <div class="contact-detail-column"><h3>Contact details</h3><div class="contact-attributes"><div class="contact-attribute"><a href="mailto:example@example.com">example@example.com</a></div></div><textarea class="contact-notes-textarea">Contact notes</textarea></div></div><span class="reference-link">Reference link</span>`);
+        <div class="contact-detail-column"><h3>Contact details</h3><div class="contact-attributes"><div class="contact-attribute"><a href="mailto:example@example.com">example@example.com</a></div></div><textarea class="contact-notes-textarea">Contact notes</textarea></div>
+        <section class="matrix-conversation" style="width:360px;height:330px;border:1px solid @border-color-divider"><header class="matrix-conversation-header"><div><h2>Family</h2><span>4 here</span></div><button class="btn">Sign out</button></header><div class="matrix-timeline"><div class="matrix-day">Today</div><div class="matrix-message"><span class="matrix-room-avatar">JS</span><div class="matrix-message-body"><div class="matrix-message-meta"><strong>Jordan Smith</strong><time>9:35 AM</time></div><p>See you there.</p></div></div><div class="matrix-message own"><span class="matrix-room-avatar">YO</span><div class="matrix-message-body"><div class="matrix-message-meta"><strong>You</strong><time>9:36 AM</time></div><p>Sounds good!</p></div></div></div><form class="matrix-composer"><textarea placeholder="Write a message"></textarea><button class="btn btn-emphasis">Send</button></form></section></div><span class="reference-link">Reference link</span>`);
       const colors = await page.evaluate(() => {
         const style = s => getComputedStyle(document.querySelector(s));
         return {link:style('.contact-attribute a').color, reference:style('.reference-link').color,
           panel:style('.composer-ai-review-card').color, added:style('.diff-added').color,
-          notes:style('.contact-notes-textarea').color, input:style('input[type=password]').color};
+          notes:style('.contact-notes-textarea').color, input:style('input[type=password]').color,
+          groupmePanel:style('.matrix-conversation').color, groupmeMessage:style('.matrix-message p').color,
+          groupmeInput:style('.matrix-composer textarea').color};
       });
       assert.strictEqual(colors.link, colors.reference);
       assert.strictEqual(colors.panel, colors.added);
       assert.strictEqual(colors.notes, colors.input);
+      assert.strictEqual(colors.groupmePanel, colors.groupmeMessage);
+      assert.strictEqual(colors.groupmePanel, colors.groupmeInput);
       await page.screenshot({path:path.join(root, `.tmp-theme-${theme}.png`),fullPage:true});
       console.log(`PASS legacy computed colors: ${theme}`);
 

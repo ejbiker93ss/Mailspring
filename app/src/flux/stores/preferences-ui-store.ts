@@ -11,17 +11,20 @@ export class PreferencesUIStoreTab {
   order: number;
   tabId: string;
   displayName: string;
+  group?: string;
   componentClassFn: () => any;
 
   constructor(opts: {
     tabId: string;
     displayName: string;
+    group?: string;
     componentClassFn: () => any;
     order?: number;
   }) {
     this.tabId = opts.tabId;
     this.componentClassFn = opts.componentClassFn;
     this.displayName = opts.displayName;
+    this.group = opts.group;
     this.order = opts.order || Infinity;
   }
 }
@@ -104,7 +107,7 @@ class _PreferencesUIStore extends SummerMailStore {
   */
   registerPreferencesTab = (tabItem: PreferencesUIStoreTab) => {
     this._tabs.push(tabItem);
-    this._tabs.sort((a, b) => (a.order > b.order) as any);
+    this._tabs.sort((a, b) => a.order - b.order);
     if (tabItem.tabId === MAIN_TAB_ITEM_ID) {
       this._selection.tabId = tabItem.tabId;
     }

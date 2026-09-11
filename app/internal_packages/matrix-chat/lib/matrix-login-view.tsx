@@ -1,6 +1,7 @@
 import React from 'react';
 import { localized } from 'summermail-exports';
 import MatrixChatStore from './matrix-chat-store';
+import GroupMeChatStore from './groupme-store';
 
 interface State {
   error: string | null;
@@ -91,6 +92,12 @@ export default class MatrixLoginView extends React.Component<Record<string, neve
             {submitting ? localized('Signing in…') : localized('Sign in')}
           </button>
         </form>
+        <div className="matrix-login-alt">
+          <p>{localized('Or connect another chat')}</p>
+          <button type="button" className="btn" onClick={() => GroupMeChatStore.openFromChatArea()}>
+            {localized('Connect GroupMe')}
+          </button>
+        </div>
       </div>
     );
   }

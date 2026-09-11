@@ -1,10 +1,23 @@
 # SummerMail Changelog
 
+## 1.23.62 (9/11/2026)
+
+Improvements:
+
+- Finish the independent native GroupMe client: GroupMe works without a Matrix account and supports groups, direct messages, replies, mentions, custom GroupMe emoji, reactions, hiding chats, and desktop notifications.
+- Consolidate Matrix and GroupMe under one Settings > Chat page, where either or both providers can be enabled before signing in from their own tab.
+
+Bug Fixes:
+
+- Synchronize GroupMe read state without false unread badges from stale direct-message receipts.
+- Keep external IMAP mailbox changes synchronized in the bundled native sync engine.
+
 ## 1.23.61 (9/11/2026)
 
 Improvements:
 
 - Show Matrix Chat in Settings > General and in the Settings sidebar so it can be enabled after install.
+- Add a native GroupMe tab as an unofficial client, with sign-in from Chat and groups plus direct messages.
 
 ## 1.23.60 (9/11/2026)
 

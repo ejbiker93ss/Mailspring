@@ -190,7 +190,7 @@ export default class Sheet extends React.Component<SheetProps, SheetState> {
 
         if (maxWidth > widestWidth) {
           widestWidth = maxWidth;
-          widest = idx;
+          widest = state.columns.length - 1;
         }
       });
     }
