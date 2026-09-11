@@ -41,7 +41,7 @@ export function activate() {
     tabId: 'Matrix Chat',
     displayName: localized('Chat'),
     componentClassFn: () => require('./preferences-matrix-chat').default,
-    order: 9,
+    order: 3,
   });
   PreferencesUIStore.registerPreferencesTab(preferencesTab);
 }

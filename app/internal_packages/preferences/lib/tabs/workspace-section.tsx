@@ -149,6 +149,16 @@ const WorkspaceSection = (props: { config: any; configSchema: any }) => {
 
       <LaunchSystemStartItem />
 
+      <div className="item">
+        <input
+          type="checkbox"
+          id="enable-matrix-chat"
+          checked={props.config.get('matrix-chat.enabled') === true}
+          onChange={() => props.config.toggle('matrix-chat.enabled')}
+        />
+        <label htmlFor="enable-matrix-chat">{localized('Enable Matrix Chat')}</label>
+      </div>
+
       <ConfigSchemaItem
         configSchema={props.configSchema.properties.workspace.properties.systemTray}
         keyPath="core.workspace.systemTray"

@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.61 (9/11/2026)
+
+Improvements:
+
+- Show Matrix Chat in Settings > General and in the Settings sidebar so it can be enabled after install.
+
 ## 1.23.60 (9/11/2026)
 
 Improvements:
