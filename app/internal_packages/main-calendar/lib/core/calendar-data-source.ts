@@ -110,6 +110,11 @@ export function occurrencesForEvents(
   results: Event[],
   { startUnix, endUnix }: { startUnix: number; endUnix: number }
 ) {
+  // Expansion has no occurrence-count cutoff, so it requires a finite visible range.
+  if (!Number.isFinite(startUnix) || !Number.isFinite(endUnix) || startUnix > endUnix) {
+    throw new RangeError('Calendar expansion requires a finite, ordered date range');
+  }
+
   const occurrences: EventOccurrence[] = [];
 
   // Group events by icsUID to handle master/exception relationships
@@ -135,7 +140,9 @@ export function occurrencesForEvents(
     // Expand the master event's ICS (handles exceptions in same ICS file)
     if (master) {
       try {
-        const icalExpander = new IcalExpander({ ics: master.ics, maxIterations: 100 });
+        // The iterator starts at DTSTART, not the visible range. A count limit
+        // silently hides older series; between() stops at the visible end date.
+        const icalExpander = new IcalExpander({ ics: master.ics, maxIterations: 0 });
         const expanded = icalExpander.between(new Date(startUnix * 1000), new Date(endUnix * 1000));
 
         const masterIsRecurring = ICSEventHelpers.isRecurringEvent(master.ics);

@@ -1,5 +1,15 @@
 # SummerMail Changelog
 
+## 1.23.64 (9/11/2026)
+
+Bug Fixes:
+
+- Keep older recurring calendar meetings visible beyond their first 100 occurrences.
+
+Improvements:
+
+- Start GroupMe direct messages from people.
+
 ## 1.23.63 (9/11/2026)
 
 Bug Fixes:
