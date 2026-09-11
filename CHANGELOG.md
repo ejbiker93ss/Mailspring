@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.62 (9/11/2026)
+
+Bug Fixes:
+
+- Keep changes made in SmarterMail and other email clients synchronized, including read state, folder moves, deletions, and sent mail.
+- Protect local synchronization checkpoints when an IMAP folder status request fails, and poll servers without IDLE more frequently.
+
 ## 1.23.61 (9/11/2026)
 
 Improvements:
