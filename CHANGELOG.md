@@ -1,5 +1,17 @@
 # SummerMail Changelog
 
+## 1.23.66 (9/11/2026)
+
+Improvements:
+
+- Synchronize SmarterMail mailboxes through its native REST API instead of IMAP, including nested folders, paginated messages, read and starred state, moves, deletes, raw message downloads, and folder operations.
+- Continue using SMTP for standards-compliant delivery while storing Sent copies and cleaning drafts through the SmarterMail API.
+
+Bug Fixes:
+
+- Reflect messages read, moved, archived, or deleted in SmarterMail, phones, and other mail apps during the next mailbox poll.
+- Never treat an API failure as an empty mailbox or prune local messages after an incomplete paginated scan.
+
 ## 1.23.65 (9/11/2026)
 
 Bug Fixes:
@@ -33,7 +45,8 @@ Improvements:
 Bug Fixes:
 
 - Synchronize GroupMe read state without false unread badges from stale direct-message receipts.
-- Keep external IMAP mailbox changes synchronized in the bundled native sync engine.
+- Keep changes made in SmarterMail and other email clients synchronized, including read state, folder moves, deletions, and sent mail.
+- Protect local synchronization checkpoints when an IMAP folder status request fails, and poll servers without IDLE more frequently.
 
 ## 1.23.61 (9/11/2026)
 
