@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.65 (9/11/2026)
+
+Bug Fixes:
+
+- Recover calendar items when a server returns an unreadable DAV XML batch by downloading individual calendar files.
+- Keep Calendar tab activation responsive while expanding older recurring meetings and reuse unchanged results.
+
 ## 1.23.64 (9/11/2026)
 
 Bug Fixes:

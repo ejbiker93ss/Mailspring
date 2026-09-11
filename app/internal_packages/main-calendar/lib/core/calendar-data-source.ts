@@ -3,6 +3,7 @@ import {
   Event,
   Matcher,
   DatabaseStore,
+  AccountStore,
   CalendarUtils,
   ICSEventHelpers,
   AndCompositeMatcher,
@@ -10,6 +11,9 @@ import {
   Contact,
 } from 'summermail-exports';
 import IcalExpander from 'ical-expander';
+import { CalendarOccurrenceLoader } from './calendar-occurrence-loader';
+
+const occurrenceLoader = new CalendarOccurrenceLoader(occurrencesForEvents);
 
 /** Participation status values from iCalendar spec */
 export type ParticipationStatus = 'NEEDS-ACTION' | 'ACCEPTED' | 'DECLINED' | 'TENTATIVE' | string;
@@ -96,7 +100,11 @@ export class CalendarDataSource {
 
     const query = DatabaseStore.findAll<Event>(Event).where(matcher);
     this.observable = Rx.Observable.fromQuery(query).flatMapLatest((results) =>
-      Rx.Observable.from([{ events: occurrencesForEvents(results, { startUnix, endUnix }) }])
+      occurrenceLoader.load(
+        results,
+        { startUnix, endUnix },
+        JSON.stringify(AccountStore.emailAddresses())
+      )
     );
     return this.observable;
   }

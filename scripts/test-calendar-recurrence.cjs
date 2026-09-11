@@ -11,6 +11,15 @@ const code = ts.transpileModule(source, { compilerOptions: {
   module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true,
 } }).outputText;
 const context = { exports: {}, console, require: name => {
+  if (name === './calendar-occurrence-loader') {
+    const loaderSource = fs.readFileSync(path.join(root, 'app/internal_packages/main-calendar/lib/core/calendar-occurrence-loader.ts'), 'utf8');
+    const loaderCode = ts.transpileModule(loaderSource, { compilerOptions: {
+      module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true,
+    } }).outputText;
+    const loaderContext = { exports: {}, require: context.require };
+    vm.runInNewContext(loaderCode, loaderContext);
+    return loaderContext.exports;
+  }
   if (name === 'summermail-exports') return {
     ICSEventHelpers: { isRecurringEvent: ics => new ICAL.Event(new ICAL.Component(ICAL.parse(ics)).getFirstSubcomponent('vevent')).isRecurring() },
     Contact: class { isMe() { return false; } },
