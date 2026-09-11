@@ -1,0 +1,143 @@
+.summermail-brand-theme(
+  @spectrum,
+  @spectrum-soft,
+  @focus-color,
+  @focus-contrast,
+  @chrome-wash,
+  @titlebar-color,
+  @titlebar-symbol-color,
+  @selection-color,
+  @elevation-color
+) {
+  :root {
+    --sm-brand-spectrum: @spectrum;
+    --sm-brand-spectrum-soft: @spectrum-soft;
+    --sm-focus-color: @focus-color;
+    --sm-focus-contrast: @focus-contrast;
+    // Electron's Windows caption overlay cannot render a CSS gradient. Keep a
+    // solid companion token so its native buttons track the active theme.
+    --sm-titlebar-color: @titlebar-color;
+    --sm-titlebar-symbol-color: @titlebar-symbol-color;
+    --fm-surface: color-mix(in srgb, @background-primary 96%, @focus-color 4%);
+    --fm-surface-raised: color-mix(in srgb, @background-primary 98%, @text-color 2%);
+    --fm-surface-muted: color-mix(in srgb, @background-secondary 88%, @focus-color 12%);
+    --fm-border: color-mix(in srgb, @text-color 12%, transparent);
+    --fm-border-strong: color-mix(in srgb, @text-color 20%, transparent);
+    --fm-accent-soft: color-mix(in srgb, @focus-color 14%, transparent);
+    --fm-accent-medium: color-mix(in srgb, @focus-color 25%, transparent);
+    --fm-shadow-sm: 0 1px 3px @elevation-color;
+    --fm-shadow-md: 0 12px 32px @elevation-color;
+  }
+
+  ::selection {
+    background: @selection-color;
+    color: @text-color;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'] {
+    caret-color: @focus-color;
+  }
+
+  a:not(.btn) {
+    text-decoration-color: color-mix(in srgb, @focus-color 48%, transparent);
+    text-underline-offset: 2px;
+
+    &:hover {
+      text-decoration-color: currentColor;
+    }
+  }
+
+  body,
+  summermail-workspace {
+    background: @background-primary;
+  }
+
+  // The Windows caption overlay is a native solid-color surface. Use the
+  // exact same token across the adjoining app tab strip so no seam appears
+  // between HTML chrome and the minimize/maximize/close button region.
+  .app-tab-bar {
+    background: var(--sm-titlebar-color);
+  }
+
+  .composer-window-titlebar,
+  .sheet-toolbar {
+    background: @chrome-wash;
+  }
+
+  .app-tab.active {
+    border-top-color: @focus-color;
+    box-shadow:
+      inset 0 2px 0 @focus-color,
+      0 -1px 8px @elevation-color;
+  }
+
+  .btn.item-compose,
+  .item-compose.btn,
+  .composer-action-bar-content .btn-emphasis {
+    border-color: transparent !important;
+    background: @spectrum !important;
+    color: @focus-contrast !important;
+    box-shadow: 0 5px 14px color-mix(in srgb, @focus-color 22%, transparent) !important;
+
+    img.content-mask {
+      background-color: @focus-contrast !important;
+    }
+
+    &:hover:not(.btn-disabled) {
+      filter: saturate(1.08) brightness(1.03);
+    }
+
+    &:focus-visible {
+      outline: 2px solid @focus-color;
+      outline-offset: 2px;
+    }
+  }
+
+  .account-sidebar .outline-view .item.selected,
+  .contacts-perspective-list .outline-view .item.selected {
+    background: @spectrum-soft;
+    box-shadow: inset 1px 0 0 @focus-color;
+    color: @focus-color;
+  }
+
+  summermail-workspace .thread-list.thread-list-narrow {
+    .list-item.unread:before {
+      width: 1px;
+      background: @spectrum;
+    }
+
+    .list-item.selected,
+    .list-item.focused,
+    .list-item.selected.focused {
+      background: @spectrum-soft;
+    }
+  }
+
+  .sticky-thread-header {
+    box-shadow: 0 4px 16px color-mix(in srgb, @elevation-color 55%, transparent);
+  }
+
+  .composer-inner-wrap,
+  .contact-detail-column .contact-detail-content-wrap,
+  #message-list.message-list .message-item-wrap > .message-item-white-wrap {
+    box-shadow: 0 8px 28px color-mix(in srgb, @elevation-color 72%, transparent);
+  }
+
+  summermail-workspace *.scrollbar-active {
+    scrollbar-color: color-mix(in srgb, @focus-color 45%, @text-color 30%) transparent;
+  }
+
+  summermail-workspace *.scrollbar-active::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, @focus-color 45%, @text-color 30%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn.item-compose,
+    .item-compose.btn,
+    .composer-action-bar-content .btn-emphasis {
+      transition: none;
+    }
+  }
+}

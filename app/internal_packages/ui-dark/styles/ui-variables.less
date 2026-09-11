@@ -1,55 +1,82 @@
 @import 'base/ui-variables';
 
 @gray-base: #ffffff;
-@gray-darker: darken(@gray-base, 13.5%);
-@gray-dark: darken(@gray-base, 20%);
-@gray: darken(@gray-base, 33.5%);
-@gray-light: darken(@gray-base, 46.7%);
-@gray-lighter: darken(@gray-base, 92.5%);
-@white: #0a0a0a;
+@gray-darker: #eef1ff;
+@gray-dark: #d8dced;
+@gray: #aab1ca;
+@gray-light: #77809c;
+@gray-lighter: #1b2036;
+@white: #090c18;
 
-@accent-primary: var(--system-accent, #58b660);
-// @accent-primary-dark falls through to base/ui-variables.less, which derives
-// it from @accent-primary via color-mix (10% darker). Override here only if
-// a different shade is desired for this theme.
+@accent-primary: var(--system-accent, #91a2ff);
+@accent-primary-dark: var(--system-accent-dark, color-mix(in srgb, @accent-primary, white 12%));
 
-@background-primary: #212121;
-@background-off-primary: #212121;
-@background-secondary: #121212;
-@background-tertiary: #6d7987;
+@background-primary: #121627;
+@background-off-primary: #0e1221;
+@background-secondary: #090c18;
+@background-tertiary: #7f8aa7;
+@background-gradient: linear-gradient(to bottom, #171b30 0%, #111526 100%);
 
-@border-color-primary: lighten(@background-primary, 10%);
-@border-color-secondary: lighten(@background-secondary, 10%);
-@border-color-tertiary: lighten(@background-tertiary, 10%);
-@border-color-divider: @border-color-secondary;
+@border-color-primary: #2d344f;
+@border-color-secondary: #232941;
+@border-color-tertiary: #58627e;
+@border-color-divider: #242b43;
 
-@text-color: #eee;
-@text-color-subtle: fadeout(@text-color, 20%);
-@text-color-very-subtle: fadeout(@text-color, 40%);
-@text-color-inverse: white;
-@text-color-inverse-subtle: fadeout(@text-color-inverse, 20%);
-@text-color-inverse-very-subtle: fadeout(@text-color-inverse, 50%);
-@text-color-heading: #fff;
-@component-active-bg: @text-color;
+@text-color: #eef1ff;
+@text-color-subtle: #bbc2d9;
+@text-color-very-subtle: #8e98b5;
+@text-color-inverse: #080b17;
+@text-color-inverse-subtle: rgba(8, 11, 23, 0.82);
+@text-color-inverse-very-subtle: rgba(8, 11, 23, 0.66);
+@text-color-heading: #f7f8ff;
+@component-active-color: @accent-primary;
+@component-active-bg: #171c30;
 
 @text-color-link: @accent-primary;
 @text-color-link-hover: @accent-primary-dark;
 @text-color-link-active: @accent-primary-dark;
 
-@btn-default-bg-color: lighten(@background-primary, 5%);
-@btn-border-color: fadeout(@text-color, 65%);
-@dropdown-default-bg-color: #404040;
+@standard-shadow-color: rgba(0, 0, 0, 0.42);
+@standard-shadow: 0 1px 3px @standard-shadow-color;
+@standard-shadow-up: 0 -1px 3px @standard-shadow-color;
+@shadow-border: 0 0 0 1px rgba(174, 185, 220, 0.12);
 
-@input-bg: #2e2e2e;
+@btn-default-bg-color: #1a2036;
+@btn-default-text-color: @text-color;
+@btn-border-color: rgba(190, 200, 232, 0.2);
+@btn-emphasis-bg-color: #91a2ff;
+@btn-emphasis-text-color: @text-color-inverse;
+@btn-action-bg-color: #91a2ff;
+@btn-action-text-color: @text-color-inverse;
+@dropdown-default-bg-color: #1a2034;
+@dropdown-default-text-color: @text-color;
+@dropdown-default-border-color: @border-color-primary;
+
+@input-bg: #181d30;
+@input-bg-disabled: #20263d;
 @input-border: @border-color-divider;
+@input-border-color: #353d5a;
+@input-border-color-blurred: #2a314b;
 
-@list-bg: #333;
-@list-border: #383838;
-@list-selected-color: @text-color-inverse;
-@list-focused-color: @text-color;
+@list-bg: @background-primary;
+@list-border: @border-color-divider;
+@list-hover-bg: #181e33;
+@list-selected-color: @text-color;
+@list-focused-color: @text-color-inverse;
+@list-focused-bg: @accent-primary;
+@list-focused-border: @accent-primary;
+@list-selected-bg: color-mix(in srgb, @accent-primary 16%, @background-primary);
+@list-selected-border: color-mix(in srgb, @accent-primary 34%, @background-primary);
 
-@toolbar-background-color: #121212;
-@panel-background-color: #121212;
+@toolbar-background-color: #0c1020;
+@panel-background-color: #0a0e1c;
+@source-list-bg: @panel-background-color;
+@source-list-active-bg: @panel-background-color;
+@source-list-active-color: @accent-primary;
+
+@menu-item-color-hover: color-mix(in srgb, @accent-primary 12%, transparent);
+@menu-item-color-selected: @accent-primary;
+@menu-text-color-selected: @text-color-inverse;
 
 .thread-icon:not(.thread-icon-unread):not(.thread-icon-star) {
   filter: invert(100%);
@@ -66,28 +93,28 @@ img.content-light {
 }
 
 #message-list .message-item-wrap .message-item-white-wrap {
-  box-shadow: 0 0 0.5px rgba(255, 255, 255, 0.28), 0 1px 1.5px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.36);
 }
 
 .thread-list .list-item:not(.unread):not(.selected):not(.focused) {
-  color: #aaa;
+  color: @text-color-subtle;
 }
 
 .thread-list .list-item.thread-list-reminder-item {
-  background-color: #312856;
+  background-color: color-mix(in srgb, @accent-primary 14%, @background-primary);
 
   &.unread {
-    background-color: #312856;
+    background-color: color-mix(in srgb, @accent-primary 14%, @background-primary);
     &:not(.focused):not(.selected) {
-      background-color: #312856;
+      background-color: color-mix(in srgb, @accent-primary 14%, @background-primary);
     }
   }
 }
 
 .send-reminders-header {
-  color: #7d5bef;
-  background: #312856;
-  border-bottom: 1px solid #4d3b8a;
+  color: @accent-primary;
+  background: color-mix(in srgb, @accent-primary 14%, @background-primary);
+  border-bottom: 1px solid color-mix(in srgb, @accent-primary 30%, @background-primary);
 }
 
 .sheet-toolbar {
@@ -98,5 +125,5 @@ img.content-light {
   background: @panel-background-color;
 }
 body.is-blurred .sheet-toolbar-container {
-  background: #000;
+  background: @background-secondary;
 }

@@ -1,0 +1,30 @@
+@import 'ui-variables';
+@import '../../../static/style/base/summermail-brand-theme';
+
+@summermail-spectrum: linear-gradient(
+  108deg,
+  #21c7f3 0%,
+  #3f72f4 28%,
+  #6f4cf4 50%,
+  #d946c5 72%,
+  #ff657e 86%,
+  #ffd269 100%
+);
+@summermail-spectrum-soft: linear-gradient(
+  108deg,
+  rgba(33, 199, 243, 0.1) 0%,
+  rgba(111, 76, 244, 0.12) 52%,
+  rgba(255, 101, 126, 0.09) 100%
+);
+
+.summermail-brand-theme(
+  @summermail-spectrum,
+  @summermail-spectrum-soft,
+  @accent-primary,
+  #ffffff,
+  linear-gradient(135deg, #f0f5fc 0%, #f8faff 58%, #f7f2ff 100%),
+  #f0f5fc,
+  #171a2f,
+  rgba(102, 92, 238, 0.24),
+  rgba(27, 38, 77, 0.16)
+);

@@ -1,5 +1,18 @@
 # SummerMail Changelog
 
+## 1.23.60 (9/11/2026)
+
+Improvements:
+
+- Add a native Matrix Chat tab with login, encrypted rooms, unread counts, search, people, replies, and reactions.
+- Verify this Chat device from Element or another Matrix app with an emoji match, then hide the prompt once it is trusted.
+- Pair GroupMe chats as ordinary Matrix rooms so GroupMe friends still see your normal account.
+
+Bug Fixes:
+
+- Keep Chat membership events as compact notices instead of repeating join messages.
+- Restore Chat sign-in after a leftover encryption store from a previous device.
+
 ## 1.23.59 (9/9/2026)
 
 Improvements:

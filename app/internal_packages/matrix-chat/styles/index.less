@@ -1,0 +1,628 @@
+@import 'ui-variables';
+
+.matrix-login,
+.matrix-conversation-status {
+  align-items: center;
+  background: @background-primary;
+  color: @text-color;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.matrix-login-card {
+  background: var(--fm-surface, @background-primary);
+  border: 1px solid var(--fm-border, @border-color-divider);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  padding: 28px;
+  text-align: left;
+  width: 100%;
+
+  h2 {
+    font-size: 22px;
+    font-weight: 650;
+    margin: 0 0 4px;
+  }
+
+  p,
+  label {
+    color: @text-color-subtle;
+    line-height: 1.45;
+  }
+
+  input {
+    background: @input-bg;
+    border: 1px solid @border-color-divider;
+    border-radius: 8px;
+    color: @text-color;
+    height: 36px;
+    padding: 0 12px;
+
+    &:focus {
+      border-color: @accent-primary;
+      box-shadow: 0 0 0 3px color-mix(in srgb, @accent-primary 18%, transparent);
+      outline: none;
+    }
+  }
+
+  .btn {
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+}
+
+.matrix-login-error {
+  color: @color-error;
+}
+
+.matrix-room-list {
+  background: @source-list-bg;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 220px;
+}
+
+.matrix-room-list-header {
+  border-bottom: 1px solid var(--fm-border, @border-color-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 16px 12px;
+
+  h2 {
+    font-size: 16px;
+    font-weight: 650;
+    margin: 0;
+  }
+
+  span {
+    color: color-mix(in srgb, @text-color 78%, @text-color-subtle);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.matrix-room-list-header input[type='search'] {
+  background: color-mix(in srgb, @text-color 8%, @background-primary);
+  border: 1px solid color-mix(in srgb, @text-color 18%, transparent);
+  border-radius: 8px;
+  color: @text-color;
+  height: 32px;
+  margin-top: 8px;
+  padding: 0 10px;
+}
+
+.matrix-room-section {
+  color: color-mix(in srgb, @text-color 70%, @text-color-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 10px 12px 4px;
+  text-transform: uppercase;
+}
+
+.matrix-room-avatar-wrap {
+  position: relative;
+}
+
+.matrix-presence {
+  background: color-mix(in srgb, @text-color 35%, transparent);
+  border: 2px solid @source-list-bg;
+  border-radius: 99px;
+  bottom: -1px;
+  height: 10px;
+  position: absolute;
+  right: -1px;
+  width: 10px;
+
+  &.online {
+    background: #3dcc8a;
+  }
+  &.unavailable {
+    background: #f5c542;
+  }
+  &.offline,
+  &.unknown {
+    background: color-mix(in srgb, @text-color 35%, transparent);
+  }
+}
+
+.matrix-room-list ul {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.matrix-room-list button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: @text-color;
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    background: color-mix(in srgb, @text-color 8%, @source-list-bg);
+  }
+
+  &.selected {
+    background: color-mix(in srgb, @text-color 12%, @source-list-bg);
+    border-color: color-mix(in srgb, @accent-primary 45%, transparent);
+  }
+}
+
+.matrix-room-avatar {
+  align-items: center;
+  background: color-mix(in srgb, @accent-primary 28%, @background-secondary);
+  color: @text-color;
+  border-radius: 10px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
+.matrix-room-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.matrix-room-name {
+  align-items: baseline;
+  display: flex;
+  font-weight: 600;
+  gap: 8px;
+
+  em {
+    color: color-mix(in srgb, @text-color 72%, @accent-primary);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+}
+
+.matrix-room-preview,
+.matrix-room-empty {
+  color: color-mix(in srgb, @text-color 76%, @text-color-subtle);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matrix-room-empty {
+  padding: 18px;
+}
+
+.matrix-room-unread {
+  background: @accent-primary;
+  border-radius: 999px;
+  color: white;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 18px;
+  padding: 1px 6px;
+  text-align: center;
+}
+
+.matrix-conversation {
+  background: @background-primary;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.matrix-conversation-header {
+  align-items: center;
+  border-bottom: 1px solid var(--fm-border, @border-color-divider);
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 18px;
+
+  h2 {
+    font-size: 16px;
+    font-weight: 650;
+    margin: 0;
+  }
+
+  span {
+    color: color-mix(in srgb, @text-color 78%, @text-color-subtle);
+    font-size: 13px;
+  }
+}
+
+.matrix-verification,
+.matrix-verification-hint {
+  align-items: flex-start;
+  background: color-mix(in srgb, @text-color 8%, @background-primary);
+  border-bottom: 1px solid color-mix(in srgb, @text-color 16%, transparent);
+  color: @text-color;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 14px 18px;
+
+  h3 {
+    font-size: 15px;
+    font-weight: 650;
+    margin: 0 0 4px;
+  }
+
+  p,
+  span {
+    color: color-mix(in srgb, @text-color 84%, @text-color-subtle);
+    line-height: 1.45;
+    margin: 0;
+    max-width: 62ch;
+  }
+}
+
+.matrix-verification-emojis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+
+  li {
+    align-items: center;
+    background: color-mix(in srgb, @text-color 10%, @background-primary);
+    border: 1px solid color-mix(in srgb, @text-color 16%, transparent);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 64px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+
+  span {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  em {
+    color: color-mix(in srgb, @text-color 78%, @text-color-subtle);
+    font-size: 11px;
+    font-style: normal;
+    text-transform: lowercase;
+  }
+}
+
+.matrix-verification-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.matrix-timeline {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 18px 22px 8px;
+}
+
+.matrix-timeline-empty,
+.matrix-conversation-status p {
+  color: color-mix(in srgb, @text-color 80%, @text-color-subtle);
+}
+
+.matrix-message {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  max-width: 100%;
+  padding: 2px 8px;
+  position: relative;
+
+  p {
+    background: transparent;
+    border: 0;
+    color: @text-color;
+    line-height: 1.45;
+    margin: 0;
+    padding: 8px 12px;
+    white-space: pre-wrap;
+  }
+
+  .matrix-room-avatar {
+    flex: 0 0 auto;
+    margin-top: 2px;
+  }
+
+  &.grouped .matrix-room-avatar {
+    background: transparent;
+    color: transparent;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, @text-color 5%, transparent);
+    border-radius: 8px;
+  }
+
+  &:hover .matrix-message-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.pending p {
+    opacity: 0.7;
+  }
+
+  &.failed p {
+    background: color-mix(in srgb, @color-error 12%, @background-primary);
+  }
+
+  &.undecrypted p {
+    background: color-mix(in srgb, @text-color 14%, @background-primary);
+    border-style: dashed;
+    color: color-mix(in srgb, @text-color 88%, @text-color-subtle);
+  }
+}
+
+.matrix-message-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.matrix-day {
+  align-items: center;
+  color: color-mix(in srgb, @text-color 70%, @text-color-subtle);
+  display: flex;
+  font-size: 12px;
+  font-weight: 650;
+  gap: 12px;
+  justify-content: center;
+  margin: 16px 0 10px;
+
+  &::before,
+  &::after {
+    background: color-mix(in srgb, @text-color 16%, transparent);
+    content: '';
+    flex: 1;
+    height: 1px;
+  }
+}
+
+.matrix-notice {
+  color: color-mix(in srgb, @text-color 62%, @text-color-subtle);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 6px 48px;
+  text-align: center;
+}
+
+.matrix-reply-preview,
+.matrix-replying {
+  background: color-mix(in srgb, @accent-primary 12%, @background-primary);
+  border-left: 3px solid @accent-primary;
+  border-radius: 8px;
+  color: @text-color;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.matrix-replying {
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0 16px 8px;
+}
+
+.matrix-message-actions,
+.matrix-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.matrix-message-actions {
+  background: color-mix(in srgb, @background-primary 92%, @text-color);
+  border: 1px solid color-mix(in srgb, @text-color 16%, transparent);
+  border-radius: 999px;
+  opacity: 0;
+  padding: 2px;
+  pointer-events: none;
+  position: absolute;
+  right: 12px;
+  top: -12px;
+}
+.matrix-message-actions button,
+.matrix-reactions button {
+  background: color-mix(in srgb, @text-color 8%, @background-primary);
+  border: 1px solid color-mix(in srgb, @text-color 16%, transparent);
+  border-radius: 999px;
+  color: @text-color;
+  font-size: 12px;
+  padding: 2px 8px;
+
+  &.mine {
+    background: color-mix(in srgb, @accent-primary 28%, @background-primary);
+    border-color: color-mix(in srgb, @accent-primary 45%, transparent);
+  }
+}
+
+.matrix-people {
+  background: @source-list-bg;
+  border-left: 1px solid var(--fm-border, @border-color-divider);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  header {
+    border-bottom: 1px solid var(--fm-border, @border-color-divider);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px;
+
+    h2 {
+      font-size: 16px;
+      margin: 0;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    overflow: auto;
+    padding: 8px;
+  }
+
+  li {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    padding: 8px;
+    position: relative;
+  }
+}
+
+.matrix-people-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  em {
+    color: color-mix(in srgb, @text-color 74%, @text-color-subtle);
+    font-size: 12px;
+    font-style: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.matrix-people-empty {
+  color: color-mix(in srgb, @text-color 74%, @text-color-subtle);
+  padding: 16px;
+}
+
+.matrix-message-meta {
+  color: color-mix(in srgb, @text-color 82%, @text-color-subtle);
+  display: flex;
+  font-size: 12px;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.matrix-conversation-banner {
+  color: @color-error;
+  padding: 0 22px 8px;
+}
+
+.matrix-composer {
+  align-items: flex-end;
+  border-top: 1px solid var(--fm-border, @border-color-divider);
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px 16px;
+
+  textarea {
+    background: color-mix(in srgb, @text-color 8%, @background-primary);
+    border: 1px solid color-mix(in srgb, @text-color 22%, @border-color-divider);
+    border-radius: 10px;
+    color: @text-color;
+    flex: 1;
+    font: inherit;
+    min-height: 44px;
+    padding: 10px 12px;
+    resize: none;
+
+    &:focus {
+      border-color: @accent-primary;
+      box-shadow: 0 0 0 3px color-mix(in srgb, @accent-primary 18%, transparent);
+      outline: none;
+    }
+    &::placeholder {
+      color: color-mix(in srgb, @text-color 62%, transparent);
+    }
+  }
+}
+
+.matrix-chat-spinner {
+  animation: matrix-chat-spin 750ms linear infinite;
+  border: 2px solid color-mix(in srgb, @text-color 18%, transparent);
+  border-radius: 50%;
+  border-top-color: @accent-primary;
+  height: 22px;
+  margin-bottom: 10px;
+  width: 22px;
+}
+
+.matrix-chat-toggle-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.container-matrix-chat-preferences {
+  margin: 0 auto;
+  max-width: 720px;
+  width: 100%;
+
+  section {
+    margin-bottom: 24px;
+  }
+}
+
+.matrix-chat-description,
+.matrix-chat-help {
+  color: @text-color-subtle;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+
+@keyframes matrix-chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matrix-chat-spinner {
+    animation-duration: 1500ms;
+  }
+}

@@ -236,7 +236,9 @@ export default class WindowLauncher {
       hotWindowOpts.titleBarStyle = 'hidden';
       hotWindowOpts.titleBarOverlay = WINDOWS_COMPOSER_TITLE_BAR_OVERLAY;
     }
-    hotWindowOpts.hidden = DEBUG_SHOW_HOT_WINDOW;
+    // The spare renderer is an implementation detail and must remain hidden.
+    // SHOW_HOT_WINDOW is an explicit debugging escape hatch for inspecting it.
+    hotWindowOpts.hidden = !DEBUG_SHOW_HOT_WINDOW;
     return hotWindowOpts;
   }
 }

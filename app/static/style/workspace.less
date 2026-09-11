@@ -282,6 +282,40 @@ summermail-workspace {
   }
 }
 
+.app-tab-matrix .app-tab-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 5px;
+
+  &::after {
+    border-left: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    bottom: -3px;
+    content: '';
+    height: 4px;
+    left: 2px;
+    position: absolute;
+    transform: skewY(-35deg);
+    width: 4px;
+  }
+}
+
+.app-tab-unread-count {
+  align-items: center;
+  background: @accent-primary;
+  border-radius: 999px;
+  color: white;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  height: 18px;
+  justify-content: center;
+  line-height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+}
+
 .app-tab-conversation {
   min-width: 135px;
 
@@ -954,8 +988,10 @@ body.platform-win32.window-type-default {
     .sheet-toolbar-container
     [data-column] {
     height: 34px;
-    background: color-mix(in srgb, @background-primary 96%, @background-secondary 4%);
-    border-bottom: 1px solid @border-color-divider;
+    // This shell stylesheet is compiled once with the base palette. Runtime
+    // theme tokens keep each toolbar cell aligned with the selected theme.
+    background: var(--fm-surface, @background-primary);
+    border-bottom: 1px solid var(--fm-border, @border-color-divider);
     pointer-events: auto;
   }
 

@@ -10,7 +10,10 @@ import {
   InflatesDraftClientId,
 } from 'summermail-exports';
 import ComposerView from './composer-view';
-import { electronHexColor, WINDOWS_TITLE_BAR_HEIGHT } from '../../../src/windows-title-bar';
+import {
+  windowsTitleBarOverlayColors,
+  WINDOWS_TITLE_BAR_HEIGHT,
+} from '../../../src/windows-title-bar';
 
 const ComposerViewForDraftClientId = InflatesDraftClientId(ComposerView);
 
@@ -52,12 +55,10 @@ class ComposerWindowTitleBar extends React.Component<{ title: string }, { title:
     window.requestAnimationFrame(() => {
       if (!this.titleBar.current) return;
       const style = window.getComputedStyle(this.titleBar.current);
-      const color = electronHexColor(style.backgroundColor);
-      const symbolColor = electronHexColor(style.color);
-      if (!color || !symbolColor) return;
+      const colors = windowsTitleBarOverlayColors(style);
+      if (!colors) return;
       AppEnv.getCurrentWindow().setTitleBarOverlay({
-        color,
-        symbolColor,
+        ...colors,
         height: WINDOWS_TITLE_BAR_HEIGHT,
       });
     });

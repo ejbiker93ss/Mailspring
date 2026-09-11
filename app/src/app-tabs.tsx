@@ -3,9 +3,10 @@ import { localized, Actions, WorkspaceStore } from 'summermail-exports';
 import { Thread } from './flux/models/thread';
 import { SheetDeclaration } from './flux/stores/workspace-store';
 import { AppNavigationMenu } from '../internal_packages/account-sidebar/lib/components/app-navigation-menu';
-import { electronHexColor, WINDOWS_TITLE_BAR_HEIGHT } from './windows-title-bar';
+import { windowsTitleBarOverlayColors, WINDOWS_TITLE_BAR_HEIGHT } from './windows-title-bar';
+import MatrixChatStore from '../internal_packages/matrix-chat/lib/matrix-chat-store';
 
-type HomeTabId = 'Threads' | 'Kanban' | 'Calendar' | 'Contacts' | 'Activity';
+type HomeTabId = 'Threads' | 'Kanban' | 'Calendar' | 'Contacts' | 'Activity' | 'Matrix';
 
 interface ConversationTab {
   id: string;
@@ -18,6 +19,7 @@ interface AppTabsState {
   activeId: string;
   conversations: ConversationTab[];
   rootSheets: HomeTabId[];
+  matrixUnreadCount: number;
 }
 
 const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
@@ -26,6 +28,7 @@ const HOME_TABS: Array<{ id: HomeTabId; label: string }> = [
   { id: 'Calendar', label: 'Calendar' },
   { id: 'Contacts', label: 'Contacts' },
   { id: 'Activity', label: 'Activity' },
+  { id: 'Matrix', label: 'Chat' },
 ];
 
 /**
@@ -48,6 +51,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       activeId: WorkspaceStore.rootSheet()?.id || 'Threads',
       conversations: [],
       rootSheets: this._availableRootSheets(),
+      matrixUnreadCount: MatrixChatStore.unreadCount(),
     };
   }
 
@@ -56,6 +60,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
       WorkspaceStore.listen(this._onWorkspaceChange),
       Actions.setFocus.listen(this._onRegularFocus),
       Actions.openThreadInTab.listen(this._onOpenThreadInTab),
+      MatrixChatStore.listen(this._onMatrixChatChange),
     ];
     this.themeDisposable = AppEnv.themes.onDidChangeActiveThemes(
       this._queueNativeWindowControlColorSync
@@ -84,12 +89,10 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     window.requestAnimationFrame(() => {
       if (!this.titleBar.current) return;
       const style = window.getComputedStyle(this.titleBar.current);
-      const color = electronHexColor(style.backgroundColor);
-      const symbolColor = electronHexColor(style.color);
-      if (!color || !symbolColor) return;
+      const colors = windowsTitleBarOverlayColors(style);
+      if (!colors) return;
       AppEnv.getCurrentWindow().setTitleBarOverlay({
-        color,
-        symbolColor,
+        ...colors,
         height: WINDOWS_TITLE_BAR_HEIGHT,
       });
     });
@@ -119,6 +122,10 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     ) {
       this.setState({ activeId: 'Threads' });
     }
+  };
+
+  _onMatrixChatChange = () => {
+    this.setState({ matrixUnreadCount: MatrixChatStore.unreadCount() });
   };
 
   _onOpenThreadInTab = (thread: Thread) => this._openConversation(thread);
@@ -259,6 +266,14 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
             >
               <span className="app-tab-icon" aria-hidden="true" />
               <span className="app-tab-title">{localized(label)}</span>
+              {id === 'Matrix' && this.state.matrixUnreadCount > 0 ? (
+                <span
+                  className="app-tab-unread-count"
+                  aria-label={localized(`%@ unread chats`, this.state.matrixUnreadCount)}
+                >
+                  {this.state.matrixUnreadCount > 99 ? '99+' : this.state.matrixUnreadCount}
+                </span>
+              ) : null}
               {id === 'Threads' ? (
                 <button
                   type="button"

@@ -1,0 +1,81 @@
+@import 'base/ui-variables';
+
+// SummerMail Light: blue-white stationery with crisp ink and restrained
+// chromatic accents drawn from the ribbon-and-envelope mark.
+@black: #171a2f;
+@gray-base: #111426;
+@gray-darker: #2c3149;
+@gray-dark: #454c68;
+@gray: #69718d;
+@gray-light: #8c95ad;
+@gray-lighter: #edf1f8;
+@white: #ffffff;
+
+@accent-primary: var(--system-accent, #4656e8);
+@accent-primary-dark: var(--system-accent-dark, color-mix(in srgb, @accent-primary, black 16%));
+
+@background-primary: #fbfcff;
+@background-off-primary: #f7f9fe;
+@background-secondary: #f0f4fb;
+@background-tertiary: #66718d;
+@background-gradient: linear-gradient(to bottom, #f6f8fe 0%, #fbfcff 100%);
+
+@border-color-primary: #d8deeb;
+@border-color-secondary: #e2e7f1;
+@border-color-tertiary: #aeb7ca;
+@border-color-divider: #e0e5ef;
+
+@text-color: #171a2f;
+@text-color-subtle: #4f5872;
+@text-color-very-subtle: #626c88;
+@text-color-inverse: #ffffff;
+@text-color-inverse-subtle: rgba(255, 255, 255, 0.82);
+@text-color-inverse-very-subtle: rgba(255, 255, 255, 0.68);
+@text-color-heading: #10142c;
+@text-color-link: #3159d9;
+@text-color-link-hover: #263fac;
+@text-color-link-active: #263fac;
+
+@component-active-color: @accent-primary;
+@component-active-bg: #ffffff;
+
+@standard-shadow-color: rgba(27, 38, 77, 0.12);
+@standard-shadow: 0 1px 3px @standard-shadow-color;
+@standard-shadow-up: 0 -1px 3px @standard-shadow-color;
+@shadow-border: 0 0 0 1px rgba(27, 38, 77, 0.1);
+
+@btn-default-bg-color: #ffffff;
+@btn-default-text-color: @text-color;
+@btn-border-color: rgba(27, 38, 77, 0.16);
+@btn-emphasis-bg-color: #4656e8;
+@btn-emphasis-text-color: #ffffff;
+@btn-action-bg-color: #4656e8;
+@btn-action-text-color: #ffffff;
+
+@dropdown-default-bg-color: #ffffff;
+@dropdown-default-text-color: @text-color;
+@dropdown-default-border-color: @border-color-primary;
+@input-bg: #ffffff;
+@input-bg-disabled: #edf1f8;
+@input-border-color: #cfd6e5;
+@input-border-color-blurred: #dce1eb;
+
+@list-bg: #fbfcff;
+@list-border: #e0e5ef;
+@list-hover-bg: #f2f5fc;
+@list-focused-color: #ffffff;
+@list-focused-bg: @accent-primary;
+@list-focused-border: @accent-primary;
+@list-selected-color: @text-color;
+@list-selected-bg: color-mix(in srgb, @accent-primary 11%, @background-primary);
+@list-selected-border: color-mix(in srgb, @accent-primary 28%, @background-primary);
+
+@toolbar-background-color: #f1f5fc;
+@panel-background-color: #eef3fb;
+@source-list-bg: @panel-background-color;
+@source-list-active-bg: @panel-background-color;
+@source-list-active-color: @accent-primary;
+
+@menu-item-color-hover: color-mix(in srgb, @accent-primary 9%, transparent);
+@menu-item-color-selected: @accent-primary;
+@menu-text-color-selected: #ffffff;

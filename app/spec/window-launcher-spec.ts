@@ -39,6 +39,7 @@ describe('WindowLauncher hot window readiness', () => {
       symbolColor: '#ffffff',
       height: 40,
     });
+    expect(options.hidden).toBe(true);
   });
 
   it('keeps the themed Windows composer compatible with the hot window', () => {

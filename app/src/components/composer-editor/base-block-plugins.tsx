@@ -81,11 +81,28 @@ export const BLOCK_CONFIG: {
       if (targetIsHTML && nodeIsEmpty(node)) {
         return <br {...attributes} />;
       }
+      const className = node.data['className'] || node.data.get('className');
+      const classes = String(className || '').split(/\s+/);
+      // Email recipients do not have the composer's stylesheet. Include the
+      // summary's neutral presentation in both editor and outgoing HTML.
+      const summaryStyle: React.CSSProperties | undefined = classes.includes('ai-composer-summary')
+        ? {
+            margin: '10px 0 12px',
+            padding: '10px 12px',
+            border: '1px solid #999999',
+            fontSize: '12px',
+            lineHeight: '1.42',
+            fontStyle: 'italic',
+          }
+        : classes.includes('ai-composer-summary-label')
+          ? { marginBottom: '6px', fontStyle: 'normal', fontWeight: 'bold' }
+          : undefined;
       return (
         <div
           {...attributes}
           {...explicitHTMLAttributes}
-          className={node.data['className'] || node.data.get('className')}
+          {...(summaryStyle ? { style: { ...attributes.style, ...summaryStyle } } : {})}
+          className={className}
         >
           {children}
         </div>

@@ -10,7 +10,8 @@ type IconName =
   | 'tasks'
   | 'search'
   | 'admin'
-  | 'settings';
+  | 'settings'
+  | 'matrix';
 
 const Icon = ({ name }: { name: IconName }) => {
   const common = {
@@ -54,6 +55,13 @@ const Icon = ({ name }: { name: IconName }) => {
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case 'matrix':
+      return (
+        <svg {...common}>
+          <path d="M21 11.5a8 8 0 0 1-8.5 8A9.5 9.5 0 0 1 8 18.3L3 20l1.7-4.4A8 8 0 1 1 21 11.5Z" />
+          <path d="M8 10h8M8 14h5" />
         </svg>
       );
     case 'tasks':
@@ -111,6 +119,12 @@ export const AppNavigationMenu = () => {
         Actions.selectRootSheet(WorkspaceStore.Sheet.Activity);
       }
     });
+  const openMatrix = () =>
+    run(() => {
+      if (WorkspaceStore.Sheet.Matrix) {
+        Actions.selectRootSheet(WorkspaceStore.Sheet.Matrix);
+      }
+    });
   const openSearch = () =>
     run(() => {
       Actions.selectRootSheet(WorkspaceStore.Sheet.Threads);
@@ -166,6 +180,16 @@ export const AppNavigationMenu = () => {
       action: openTasks,
       active: rootSheet === WorkspaceStore.Sheet.Activity,
     },
+    ...(WorkspaceStore.Sheet.Matrix
+      ? [
+          {
+            name: 'matrix' as const,
+            label: localized('Chat'),
+            action: openMatrix,
+            active: rootSheet === WorkspaceStore.Sheet.Matrix,
+          },
+        ]
+      : []),
     { name: 'search', label: localized('Search'), action: openSearch },
     { name: 'admin', label: localized('Admin'), action: openAdmin },
     { name: 'settings', label: localized('Settings'), action: openSettings },
