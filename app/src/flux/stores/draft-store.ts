@@ -138,12 +138,34 @@ class DraftStore extends SummerMailStore {
 
   _onBeforeUnload = (readyToUnload: () => void) => {
     const promises = [];
+    let waitingForAttachments = false;
 
     // Normally we'd just append all promises, even the ones already
     // fulfilled (nothing to save), but in this case we only want to
     // block window closing if we have to do real work. Calling
     // window.close() within on onbeforeunload could do weird things.
     Object.values(this._draftSessions).forEach((session) => {
+      if (session.hasPendingAttachmentWork()) {
+        waitingForAttachments = true;
+        promises.push(
+          session.waitForPendingAttachmentWork().then(async () => {
+            const completedDraft = session.draft();
+            if (!completedDraft || !completedDraft.id) return;
+            if (completedDraft.pristine && !AppEnv.isMainWindow()) {
+              Actions.queueTask(
+                new DestroyDraftTask({
+                  messageIds: [completedDraft.id],
+                  accountId: completedDraft.accountId,
+                })
+              );
+            } else if (session.changes.isDirty()) {
+              await session.changes.commit();
+            }
+          })
+        );
+        return;
+      }
+
       const draft = session.draft();
       if (!draft || !draft.id) {
         return;
@@ -173,12 +195,16 @@ class DraftStore extends SummerMailStore {
         setTimeout(readyToUnload, 15);
       };
 
-      // Stop and wait before closing, but never wait for more than 700ms.
+      // Ordinary draft writes should not hold window closing for more than 700ms.
       // We may not be able to save the draft once the main window has closed
       // and the mailsync bridge is unavailable, don't want to hang forever.
-      setTimeout(() => {
-        if (done) done();
-      }, 700);
+      // Pasted files are different: closing early would irreversibly discard user
+      // content, so keep the renderer alive until the local file copy completes.
+      if (!waitingForAttachments) {
+        setTimeout(() => {
+          if (done) done();
+        }, 700);
+      }
       Promise.all(promises).then(() => {
         if (done) done();
       });
@@ -646,6 +672,10 @@ class DraftStore extends SummerMailStore {
     // We need to call `changes.commit` here to ensure the body of the draft is
     // completely saved and the user won't see old content briefly.
     const session = await this.sessionForClientId(headerMessageId);
+
+    // Pasted files are read and copied asynchronously. Keep the composer alive until
+    // every pending image has been added to the draft and inserted into the HTML body.
+    await session.waitForPendingAttachmentWork();
 
     // Collect diagnostic context as we proceed so we can attach it to any error
     // report if the draft is not found at the end. This helps us understand which

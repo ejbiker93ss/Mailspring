@@ -457,6 +457,7 @@ class AttachmentStore extends SummerMailStore {
     filePath,
     inline = false,
     onCreated = (file: File) => {},
+    onError = (error: Error) => {},
   }) => {
     this._assertIdPresent(headerMessageId);
 
@@ -494,6 +495,7 @@ class AttachmentStore extends SummerMailStore {
       onCreated(file);
     } catch (err) {
       AppEnv.showErrorDialog(err.message);
+      onError(err);
     }
   };
 

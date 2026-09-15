@@ -113,6 +113,7 @@ export class Account extends ModelWithMetadata {
     smtp_security: 'SSL / TLS' | 'STARTTLS' | 'none';
     refresh_token: string;
     sync_engine?: 'microsoft_graph' | 'smartermail_api';
+    mail_sync_interval_minutes?: number;
     graph_mailbox?: string;
     container_folder: string;
   };
@@ -189,6 +190,11 @@ export class Account extends ModelWithMetadata {
 
   usesMicrosoftGraph() {
     return this.settings && this.settings.sync_engine === 'microsoft_graph';
+  }
+
+  mailSyncIntervalMinutes() {
+    const configured = Number(this.settings && this.settings.mail_sync_interval_minutes);
+    return [1, 2, 5, 10, 15, 30, 60].includes(configured) ? configured : 0;
   }
 
   // Public: Returns the localized, properly capitalized provider name,

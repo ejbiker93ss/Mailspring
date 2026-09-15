@@ -191,6 +191,7 @@ export class DraftEditingSession extends SummerMailStore {
   _draftPromise: Promise<Message> = null;
   _destroyed = false;
   _mountedEditor: Editor | null = null;
+  _pendingAttachmentWork = new Set<Promise<void>>();
 
   headerMessageId: string;
   changes = new DraftChangeSet({
@@ -252,6 +253,28 @@ export class DraftEditingSession extends SummerMailStore {
 
   setMountedEditor(editor: Editor | null) {
     this._mountedEditor = editor;
+  }
+
+  trackPendingAttachmentWork(operation: Promise<void>) {
+    const tracked = operation.then(
+      () => undefined,
+      (error) => {
+        console.error('Attachment work failed before the draft could be sent.', error);
+      }
+    );
+    this._pendingAttachmentWork.add(tracked);
+    tracked.then(() => this._pendingAttachmentWork.delete(tracked));
+    return tracked;
+  }
+
+  async waitForPendingAttachmentWork() {
+    while (this._pendingAttachmentWork.size > 0) {
+      await Promise.all(Array.from(this._pendingAttachmentWork));
+    }
+  }
+
+  hasPendingAttachmentWork() {
+    return this._pendingAttachmentWork.size > 0;
   }
 
   validateDraftForSending() {

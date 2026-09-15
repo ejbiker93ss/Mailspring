@@ -354,30 +354,36 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     }
   };
 
-  _onFileReceived = (filePath: string) => {
+  _onFileReceived = (filePath: string): Promise<void> => {
     // called from onDrop and onFilePaste - assume images should be inline
-    Actions.addAttachment({
-      filePath: filePath,
-      headerMessageId: this.props.draft.headerMessageId,
-      onCreated: (file: File) => {
-        if (!this._mounted) return;
-        if (this.props.draft.plaintext) return;
-
-        if (Utils.shouldDisplayAsImage(file)) {
-          const { draft, session } = this.props;
-          const match = draft.files.find((f) => f.id === file.id);
-          if (!match) {
+    const operation = new Promise<void>((resolve) => {
+      Actions.addAttachment({
+        filePath: filePath,
+        headerMessageId: this.props.draft.headerMessageId,
+        onCreated: (file: File) => {
+          if (!this._mounted || this.props.draft.plaintext) {
+            resolve();
             return;
           }
-          match.contentId = Utils.generateContentId();
-          session.changes.add({
-            files: [...draft.files],
-          });
 
-          this.editor.current.insertInlineAttachment(file);
-        }
-      },
+          if (Utils.shouldDisplayAsImage(file)) {
+            const { draft, session } = this.props;
+            const match = draft.files.find((f) => f.id === file.id);
+            if (match) {
+              match.contentId = Utils.generateContentId();
+              session.changes.add({
+                files: [...draft.files],
+              });
+
+              this.editor.current.insertInlineAttachment(file);
+            }
+          }
+          resolve();
+        },
+        onError: () => resolve(),
+      });
     });
+    return this.props.session.trackPendingAttachmentWork(operation);
   };
 
   _isValidDraft = (

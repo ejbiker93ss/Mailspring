@@ -1,5 +1,16 @@
 # SummerMail Changelog
 
+## 1.23.67 (9/15/2026)
+
+Improvements:
+
+- Choose an automatic or 1, 2, 5, 10, 15, 30, or 60-minute mail-check schedule independently for each account.
+
+Bug Fixes:
+
+- Preserve one or more images pasted into rich-text or plain-text messages, and finish importing them before sending or closing the draft.
+- Keep common pasted JPEG, PNG, GIF, BMP, WebP, and TIFF images identifiable as images so they remain inline in the sent message.
+
 ## 1.23.66 (9/11/2026)
 
 Improvements:

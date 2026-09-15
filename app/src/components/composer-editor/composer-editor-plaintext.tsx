@@ -1,6 +1,6 @@
 import React from 'react';
 import { wrapPlaintextWithSelection } from './plaintext';
-import { handleFilePasted } from './composer-editor';
+import { handleFilePasted, trackFilePasteCompletion } from './composer-editor';
 
 interface ComposerEditorPlaintextProps {
   value: string;
@@ -9,7 +9,7 @@ interface ComposerEditorPlaintextProps {
   className?: string;
   onBlur?: (e: React.FocusEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
-  onFileReceived?: (path: string) => void;
+  onFileReceived?: (path: string) => Promise<void> | void;
 }
 
 export class ComposerEditorPlaintext extends React.Component<ComposerEditorPlaintextProps> {
@@ -128,8 +128,11 @@ export class ComposerEditorPlaintext extends React.Component<ComposerEditorPlain
 
   onPaste = (event: React.ClipboardEvent<any>) => {
     const { onFileReceived } = this.props;
-    if (onFileReceived && handleFilePasted(event.nativeEvent, onFileReceived)) {
+    const pasteCompletion = onFileReceived && handleFilePasted(event.nativeEvent, onFileReceived);
+    if (pasteCompletion) {
       event.preventDefault();
+      const session = this.props.propsForPlugins && this.props.propsForPlugins.session;
+      trackFilePasteCompletion(pasteCompletion, session);
     }
   };
 

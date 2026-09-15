@@ -113,6 +113,31 @@ describe('Account', function () {
     });
   });
 
+  describe('mailSyncIntervalMinutes()', function () {
+    it('uses automatic scheduling by default', function () {
+      const account = new Account({ id: 'test-id', emailAddress: 'test@example.com' });
+      expect(account.mailSyncIntervalMinutes()).toBe(0);
+    });
+
+    it('returns a supported per-account interval', function () {
+      const account = new Account({
+        id: 'test-id',
+        emailAddress: 'test@example.com',
+        settings: { mail_sync_interval_minutes: 15 },
+      });
+      expect(account.mailSyncIntervalMinutes()).toBe(15);
+    });
+
+    it('falls back to automatic scheduling for unsupported values', function () {
+      const account = new Account({
+        id: 'test-id',
+        emailAddress: 'test@example.com',
+        settings: { mail_sync_interval_minutes: 3 },
+      });
+      expect(account.mailSyncIntervalMinutes()).toBe(0);
+    });
+  });
+
   describe('hasSyncStateError()', function () {
     it("returns false when syncState is 'ok'", function () {
       const account = new Account({

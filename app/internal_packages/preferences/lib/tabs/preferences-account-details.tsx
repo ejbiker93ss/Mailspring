@@ -12,6 +12,8 @@ import {
   AccountAutoaddress,
 } from 'summermail-exports';
 
+const MAIL_SYNC_INTERVALS = [1, 2, 5, 10, 15, 30, 60];
+
 interface AutoaddressControlProps {
   autoaddress: AccountAutoaddress;
   onChange: (obj: AccountAutoaddress) => void;
@@ -179,6 +181,25 @@ class PreferencesAccountDetails extends Component<
 
   _onResetCache = () => {
     AppEnv.mailsyncBridge.resetCacheForAccount(this.state.account);
+  };
+
+  _onSyncIntervalChanged = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const account = this.state.account.clone();
+    account.settings = {
+      ...account.settings,
+      mail_sync_interval_minutes: Number(event.target.value),
+    };
+
+    await new Promise<void>((resolve) => this.setState({ account }, resolve));
+    this._saveChanges();
+
+    try {
+      await AppEnv.mailsyncBridge.forceRelaunchClient(account);
+    } catch {
+      AppEnv.showErrorDialog(
+        localized('Sync frequency saved. Restart SummerMail to apply the new schedule.')
+      );
+    }
   };
 
   _onAccountTypeVerified = (candidate: Account) => {
@@ -439,6 +460,29 @@ class PreferencesAccountDetails extends Component<
           </div>
         </div>
         <h6>{localized('Account Settings')}</h6>
+        <div className="account-sync-settings">
+          <label htmlFor={`account-sync-interval-${account.id}`}>
+            {localized('Check for mail')}
+          </label>
+          <select
+            id={`account-sync-interval-${account.id}`}
+            aria-describedby={`account-sync-interval-help-${account.id}`}
+            value={account.mailSyncIntervalMinutes()}
+            onChange={this._onSyncIntervalChanged}
+          >
+            <option value={0}>{localized('Automatically (recommended)')}</option>
+            {MAIL_SYNC_INTERVALS.map((minutes) => (
+              <option key={minutes} value={minutes}>
+                {minutes === 1 ? localized('Every minute') : localized('Every %@ minutes', minutes)}
+              </option>
+            ))}
+          </select>
+          <p id={`account-sync-interval-help-${account.id}`} className="account-sync-help">
+            {localized(
+              'Controls full mailbox checks for this account. Push-enabled inboxes may update sooner.'
+            )}
+          </p>
+        </div>
         <AccountTypeControl
           key={account.id}
           account={account}

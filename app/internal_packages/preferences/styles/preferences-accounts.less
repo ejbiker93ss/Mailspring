@@ -2,18 +2,47 @@
 
 .account-type-settings {
   margin-bottom: 16px;
-  .account-type-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-  [role='alert'] { color: @color-error; }
+  .account-type-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  [role='alert'] {
+    color: @color-error;
+  }
 }
 
 // Nested settings use the same controls and spacing as the original account form.
 .account-type-settings,
-.account-calendar-settings {
+.account-calendar-settings,
+.account-sync-settings {
   color: inherit;
-  label { display: block; margin-top: @spacing-half; }
-  input, select { width: 100%; min-width: 0; font-size: 0.9em; }
-  select { color: @text-color; background: @input-bg; border: 1px solid @input-border-color; }
-  .account-calendar-help { color: @text-color-subtle; line-height: @line-height-base; overflow-wrap: anywhere; }
+  label {
+    display: block;
+    margin-top: @spacing-half;
+  }
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.9em;
+  }
+  select {
+    color: @text-color;
+    background: @input-bg;
+    border: 1px solid @input-border-color;
+  }
+  .account-calendar-help {
+    color: @text-color-subtle;
+    line-height: @line-height-base;
+    overflow-wrap: anywhere;
+  }
+  .account-sync-help {
+    color: @text-color-subtle;
+    line-height: @line-height-base;
+    margin-bottom: @spacing-standard;
+  }
 }
 @import '../../onboarding/styles/outlook-import';
 

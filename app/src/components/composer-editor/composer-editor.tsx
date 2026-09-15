@@ -89,7 +89,7 @@ interface ComposerEditorProps {
   readOnly?: boolean;
   onBlur?: (e: React.FocusEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
-  onFileReceived?: (path: string) => void;
+  onFileReceived?: (path: string) => Promise<void> | void;
   onUpdatedSlateEditor?: (editor: Editor | null) => void;
   toolbarExtras?: React.ReactNode;
 }
@@ -341,8 +341,11 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
     }
 
     if (onFileReceived && event.clipboardData.items.length > 0) {
-      event.preventDefault();
-      if (handleFilePasted(event, onFileReceived)) {
+      const pasteCompletion = handleFilePasted(event, onFileReceived);
+      if (pasteCompletion) {
+        event.preventDefault();
+        const session = this.props.propsForPlugins && this.props.propsForPlugins.session;
+        trackFilePasteCompletion(pasteCompletion, session);
         return;
       }
     }
@@ -480,39 +483,96 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
 
 // Helpers
 
-export function handleFilePasted(event: ClipboardEvent, onFileReceived: (path: string) => void) {
+export function extensionForClipboardMimeType(mimeType: string): string {
+  return (
+    {
+      'image/png': '.png',
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/gif': '.gif',
+      'image/bmp': '.bmp',
+      'image/webp': '.webp',
+      'image/tiff': '.tiff',
+    }[mimeType.toLowerCase()] || ''
+  );
+}
+
+function readClipboardFile(item: DataTransferItem): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const blob = item.getAsFile();
+    if (!blob) {
+      reject(new Error('SummerMail could not read the pasted image. Please try again.'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => resolve(reader.result as ArrayBuffer));
+    reader.addEventListener('error', () =>
+      reject(new Error('SummerMail could not read the pasted image. Please try again.'))
+    );
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+async function receiveClipboardFile(
+  item: DataTransferItem,
+  onFileReceived: (path: string) => Promise<void> | void
+) {
+  const contents = await readClipboardFile(item);
+  const tmpFolder = path.join(os.tmpdir(), `-summermail-attachment-${crypto.randomUUID()}`);
+  const tmpPath = path.join(tmpFolder, `Pasted Image${extensionForClipboardMimeType(item.type)}`);
+  await fs.promises.mkdir(tmpFolder, { recursive: true });
+  await fs.promises.writeFile(tmpPath, Buffer.from(new Uint8Array(contents)));
+  await onFileReceived(tmpPath);
+}
+
+export function waitForFilePasteOperations(operations: Promise<void>[]): Promise<void> {
+  let firstError: unknown = null;
+  return Promise.all(
+    operations.map((operation) =>
+      operation.catch((error) => {
+        firstError = firstError || error;
+      })
+    )
+  ).then(() => {
+    if (firstError) throw firstError;
+  });
+}
+
+export function trackFilePasteCompletion(pasteCompletion: Promise<void>, session?: any) {
+  const guardedCompletion = pasteCompletion.catch((error) => {
+    AppEnv.showErrorDialog(
+      error instanceof Error
+        ? error.message
+        : 'SummerMail could not paste the image. Please try again.'
+    );
+  });
+  if (session && session.trackPendingAttachmentWork) {
+    return session.trackPendingAttachmentWork(guardedCompletion);
+  }
+  return guardedCompletion;
+}
+
+export function handleFilePasted(
+  event: ClipboardEvent,
+  onFileReceived: (path: string) => Promise<void> | void
+): Promise<void> | null {
   if (event.clipboardData.items.length === 0) {
-    return false;
+    return null;
   }
   // If you right-click + Copy Image in Chrome,
   // the image file is item 1, not item 0. We want to prefer the files whenever one is present.
+  const fileItems: DataTransferItem[] = [];
   for (const i in event.clipboardData.items) {
     const item = event.clipboardData.items[i];
-    // If the pasteboard has a file on it, stream it to a temporary
-    // file and fire our `onFilePaste` event.
     if (item.kind === 'file') {
-      const blob = item.getAsFile();
-      const ext =
-        {
-          'image/png': '.png',
-          'image/jpg': '.jpg',
-          'image/tiff': '.tiff',
-        }[item.type] || '';
-
-      const reader = new FileReader();
-      reader.addEventListener('loadend', () => {
-        const buffer = Buffer.from(new Uint8Array(reader.result as any));
-        const tmpFolder = path.join(os.tmpdir(), `-summermail-attachment-${crypto.randomUUID()}`);
-        const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
-        fs.mkdir(tmpFolder, () => {
-          fs.writeFile(tmpPath, buffer, () => {
-            onFileReceived(tmpPath);
-          });
-        });
-      });
-      reader.readAsArrayBuffer(blob);
-      return true;
+      fileItems.push(item);
     }
+  }
+  if (fileItems.length > 0) {
+    return waitForFilePasteOperations(
+      fileItems.map((item) => receiveClipboardFile(item, onFileReceived))
+    );
   }
 
   const macCopiedFile = decodeURI(ElectronClipboard.read('public.file-url').replace('file://', ''));
@@ -526,13 +586,13 @@ export function handleFilePasted(event: ClipboardEvent, onFileReceived: (path: s
     .map((path) => path.replace('file://', ''))
     .filter((path) => path.length);
   if (macCopiedFile.length || winCopiedFile.length) {
-    onFileReceived(macCopiedFile || winCopiedFile);
-    return true;
+    return Promise.resolve(onFileReceived(macCopiedFile || winCopiedFile));
   }
   if (xdgCopiedFiles.length) {
-    xdgCopiedFiles.forEach(onFileReceived);
-    return true;
+    return waitForFilePasteOperations(
+      xdgCopiedFiles.map((filePath) => Promise.resolve(onFileReceived(filePath)))
+    );
   }
 
-  return false;
+  return null;
 }
