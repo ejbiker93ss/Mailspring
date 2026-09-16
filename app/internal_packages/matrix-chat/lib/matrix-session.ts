@@ -17,7 +17,7 @@ export interface MatrixSessionCredentials {
 
 export function parseMatrixLogin(raw: string): { username: string; domain: string } | null {
   const value = String(raw || '').trim();
-  const match = /^@?([^:@\s]+):([^:@\s]+)$/.exec(value);
+  const match = /^@?([^:@/\\\s]+):([^:@/\\\s]+)$/.exec(value);
   if (!match) return null;
   return { username: match[1], domain: match[2].toLowerCase() };
 }

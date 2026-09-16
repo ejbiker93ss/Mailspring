@@ -101,7 +101,7 @@ export const BLOCK_CONFIG: {
         <div
           {...attributes}
           {...explicitHTMLAttributes}
-          {...(summaryStyle ? { style: { ...attributes.style, ...summaryStyle } } : {})}
+          {...(summaryStyle ? { style: { ...(attributes?.style || {}), ...summaryStyle } } : {})}
           className={className}
         >
           {children}

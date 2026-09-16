@@ -24,9 +24,11 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
     spyOn(this.component, 'setState');
   });
 
-  function assertAccountState(actual, expected) {
+  function assertAccountState(component, actual, expected) {
+    const resolved =
+      typeof actual === 'function' ? actual(component.state, component.props) : actual;
     for (const key of Object.keys(expected)) {
-      expect(actual.account[key]).toEqual(expected[key]);
+      expect(resolved.account[key]).toEqual(expected[key]);
     }
   }
 
@@ -60,19 +62,25 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
   describe('_setState', () => {
     it('sets the correct state', () => {
       this.component._setState({ aliases: ['something'] });
-      assertAccountState(this.component.setState.calls[0].args[0], { aliases: ['something'] });
+      assertAccountState(this.component, this.component.setState.calls[0].args[0], {
+        aliases: ['something'],
+      });
     });
   });
 
   describe('_onDefaultAliasSelected', () => {
     it('sets the default alias correctly when set to None', () => {
       this.component._onDefaultAliasSelected({ target: { value: 'None' } });
-      assertAccountState(this.component.setState.calls[0].args[0], { defaultAlias: null });
+      assertAccountState(this.component, this.component.setState.calls[0].args[0], {
+        defaultAlias: null,
+      });
     });
 
     it('sets the default alias correctly when set to any value', () => {
       this.component._onDefaultAliasSelected({ target: { value: 'my alias' } });
-      assertAccountState(this.component.setState.calls[0].args[0], { defaultAlias: 'my alias' });
+      assertAccountState(this.component, this.component.setState.calls[0].args[0], {
+        defaultAlias: 'my alias',
+      });
     });
   });
 
@@ -91,7 +99,7 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
     describe('_onAccountAliasCreated', () => {
       it('creates alias correctly', () => {
         this.component._onAccountAliasCreated(this.newAlias);
-        assertAccountState(this.component.setState.calls[0].args[0], {
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
           aliases: [this.currentAlias, this.newAlias],
         });
       });
@@ -100,7 +108,9 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
     describe('_onAccountAliasUpdated', () => {
       it('updates alias correctly when no default alias present', () => {
         this.component._onAccountAliasUpdated(this.newAlias, this.currentAlias, 0);
-        assertAccountState(this.component.setState.calls[0].args[0], { aliases: [this.newAlias] });
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
+          aliases: [this.newAlias],
+        });
       });
 
       it('updates alias correctly when default alias present and it is being updated', () => {
@@ -113,7 +123,7 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
         spyOn(this.component, 'setState');
 
         this.component._onAccountAliasUpdated(this.newAlias, this.currentAlias, 0);
-        assertAccountState(this.component.setState.calls[0].args[0], {
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
           aliases: [this.newAlias],
           defaultAlias: this.newAlias,
         });
@@ -130,7 +140,7 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
         spyOn(this.component, 'setState');
 
         this.component._onAccountAliasUpdated(this.newAlias, 'otheralias', 1);
-        assertAccountState(this.component.setState.calls[0].args[0], {
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
           aliases: [this.currentAlias, this.newAlias],
           defaultAlias: this.currentAlias,
         });
@@ -140,7 +150,9 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
     describe('_onAccountAliasRemoved', () => {
       it('removes alias correctly when no default alias present', () => {
         this.component._onAccountAliasRemoved(this.currentAlias, 0);
-        assertAccountState(this.component.setState.calls[0].args[0], { aliases: [] });
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
+          aliases: [],
+        });
       });
 
       it('removes alias correctly when default alias present and it is being removed', () => {
@@ -153,7 +165,7 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
         spyOn(this.component, 'setState');
 
         this.component._onAccountAliasRemoved(this.currentAlias, 0);
-        assertAccountState(this.component.setState.calls[0].args[0], {
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
           aliases: [],
           defaultAlias: null,
         });
@@ -170,7 +182,7 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
         spyOn(this.component, 'setState');
 
         this.component._onAccountAliasRemoved('otheralias', 1);
-        assertAccountState(this.component.setState.calls[0].args[0], {
+        assertAccountState(this.component, this.component.setState.calls[0].args[0], {
           aliases: [this.currentAlias],
           defaultAlias: this.currentAlias,
         });

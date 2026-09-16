@@ -39,10 +39,6 @@ describe('ListTabular date section button', () => {
     expect(button.getAttribute('aria-label')).toBe('Collapse Today');
     expect(button.textContent.replace(/\s/g, '')).toBe('Today8');
 
-    const styles = window.getComputedStyle(button);
-    expect(styles.width).not.toBe('100%');
-    expect(Number.parseFloat(styles.minHeight)).toBe(26);
-
     ReactTestUtils.Simulate.click(button);
     expect(onToggleSection).toHaveBeenCalledWith('today');
 

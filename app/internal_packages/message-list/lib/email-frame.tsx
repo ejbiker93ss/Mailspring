@@ -24,6 +24,10 @@ export function localPathForInlineImageSource(source: string) {
   if (!source || !/^file:/i.test(source)) return null;
 
   try {
+    const windowsPath = /^file:\/{2,3}([a-z]:\/.*)$/i.exec(source);
+    if (windowsPath) {
+      return decodeURIComponent(windowsPath[1]).replace(/\//g, '\\');
+    }
     return fileURLToPath(source);
   } catch (_error) {
     // Older message bodies used file:// followed by a Windows path instead of

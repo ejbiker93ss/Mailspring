@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { Actions, Message, SendActionsStore } from 'summermail-exports';
 import { SendActionButton } from '../lib/send-action-button';
 
@@ -135,7 +135,8 @@ describe('SendActionButton', function describeBlock() {
     fireEvent.click(container.querySelector('.primary-item'));
 
     expect(beforeSend).toHaveBeenCalled();
-    await waitFor(() => expect(Actions.sendDraft).toHaveBeenCalled());
+    await Promise.resolve();
+    expect(Actions.sendDraft).toHaveBeenCalled();
   });
 
   it('stops sending when the pre-send check finds corrections', async () => {
@@ -148,7 +149,8 @@ describe('SendActionButton', function describeBlock() {
     fireEvent.click(container.querySelector('.primary-item'));
 
     expect(beforeSend).toHaveBeenCalled();
-    await waitFor(() => expect(container.querySelector('.is-preparing-send')).toBeNull());
+    await Promise.resolve();
+    expect(container.querySelector('.is-preparing-send')).toBeNull();
     expect(Actions.sendDraft).not.toHaveBeenCalled();
   });
 });

@@ -14,7 +14,6 @@ import {
 } from 'summermail-exports';
 
 import MessageParticipants from '../lib/message-participants';
-import MessageItemContainer from '../lib/message-item-container';
 import MessageList from '../lib/message-list';
 
 // User_1 needs to be "me" so that when we calculate who we should reply
@@ -178,11 +177,10 @@ describe('MessageList', function () {
   });
 
   it('by default has zero children', function () {
-    const items = ReactTestUtils.scryRenderedComponentsWithType(
+    const items = ReactTestUtils.scryRenderedDOMComponentsWithClass(
       this.messageList,
-      MessageItemContainer
+      'message-item-wrap'
     );
-
     expect(items.length).toBe(0);
   });
 
@@ -196,9 +194,9 @@ describe('MessageList', function () {
     });
 
     it('renders all the correct number of messages', function () {
-      const items = ReactTestUtils.scryRenderedComponentsWithType(
+      const items = ReactTestUtils.scryRenderedDOMComponentsWithClass(
         this.messageList,
-        MessageItemContainer
+        'message-item-wrap'
       );
       expect(items.length).toBe(5);
     });
@@ -224,9 +222,9 @@ describe('MessageList', function () {
       this.messageList.setState({
         messages: msgs.concat(draftMessages),
       });
-      const items = ReactTestUtils.scryRenderedComponentsWithType(
+      const items = ReactTestUtils.scryRenderedDOMComponentsWithClass(
         this.messageList,
-        MessageItemContainer
+        'message-item-wrap'
       );
       expect(items.length).toBe(6);
     });
