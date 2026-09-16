@@ -61,7 +61,13 @@
     background: var(--sm-titlebar-color);
   }
 
-  .composer-window-titlebar,
+  .composer-window-titlebar {
+    // Windows' native caption buttons can only render a solid color. Use the
+    // same theme token on both sides of the overlay boundary so the title bar
+    // remains visually continuous in light and dark themes.
+    background: var(--sm-titlebar-color);
+  }
+
   .sheet-toolbar {
     background: @chrome-wash;
   }
