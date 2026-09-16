@@ -52,6 +52,36 @@ interface ComposerViewState {
   quotedTextPresent: boolean;
   isDropping: boolean;
 }
+
+export function addFileToComposer({
+  filePath,
+  headerMessageId,
+  plaintext,
+  isMounted,
+  onInlineCreated,
+}: {
+  filePath: string;
+  headerMessageId: string;
+  plaintext: boolean;
+  isMounted: () => boolean;
+  onInlineCreated: (file: File) => void;
+}): Promise<void> {
+  return new Promise<void>((resolve) => {
+    Actions.addAttachment({
+      filePath,
+      headerMessageId,
+      inline: !plaintext,
+      onCreated: (file: File) => {
+        if (isMounted() && !plaintext && file.contentId) {
+          onInlineCreated(file);
+        }
+        resolve();
+      },
+      onError: () => resolve(),
+    });
+  });
+}
+
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
@@ -356,32 +386,12 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
 
   _onFileReceived = (filePath: string): Promise<void> => {
     // called from onDrop and onFilePaste - assume images should be inline
-    const operation = new Promise<void>((resolve) => {
-      Actions.addAttachment({
-        filePath: filePath,
-        headerMessageId: this.props.draft.headerMessageId,
-        onCreated: (file: File) => {
-          if (!this._mounted || this.props.draft.plaintext) {
-            resolve();
-            return;
-          }
-
-          if (Utils.shouldDisplayAsImage(file)) {
-            const { draft, session } = this.props;
-            const match = draft.files.find((f) => f.id === file.id);
-            if (match) {
-              match.contentId = Utils.generateContentId();
-              session.changes.add({
-                files: [...draft.files],
-              });
-
-              this.editor.current.insertInlineAttachment(file);
-            }
-          }
-          resolve();
-        },
-        onError: () => resolve(),
-      });
+    const operation = addFileToComposer({
+      filePath,
+      headerMessageId: this.props.draft.headerMessageId,
+      plaintext: this.props.draft.plaintext,
+      isMounted: () => this._mounted,
+      onInlineCreated: (file) => this.editor.current.insertInlineAttachment(file),
     });
     return this.props.session.trackPendingAttachmentWork(operation);
   };

@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.69 (9/16/2026)
+
+Bug Fixes:
+
+- Insert pasted images inline in rich-text messages without also showing them as regular attachments.
+- Match Windows composer title-bar controls to the active light or dark theme.
+- Keep the selected recipient suggestion readable against the account accent color.
+
 ## 1.23.68 (9/16/2026)
 
 Improvements:

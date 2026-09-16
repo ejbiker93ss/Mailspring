@@ -474,13 +474,15 @@ class AttachmentStore extends SummerMailStore {
         );
       }
 
+      const shouldAttachInline =
+        inline && Utils.shouldDisplayAsImage({ filename, size: stats.size });
       const file = new File({
         id: Utils.generateTempId(),
         filename: filename,
         size: stats.size,
         contentType: null,
         messageId: null,
-        contentId: inline ? Utils.generateContentId() : null,
+        contentId: shouldAttachInline ? Utils.generateContentId() : null,
       });
 
       await _fs.promises.mkdir(path.dirname(this.pathForFile(file)), { recursive: true });
