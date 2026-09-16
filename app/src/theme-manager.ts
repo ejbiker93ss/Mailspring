@@ -5,6 +5,7 @@ import fs from 'fs';
 import { localized } from './intl';
 import LessCompileCache from './compile-cache-less';
 import PackageManager from './package-manager';
+import { readableForegroundForSystemAccent } from './system-accent-colors';
 
 const CONFIG_THEME_KEY = 'core.theme';
 const CONFIG_USE_SYSTEM_ACCENT_KEY = 'core.appearance.useSystemAccent';
@@ -16,9 +17,11 @@ export const LIGHT_THEME_NAME = 'ui-light';
 export const DARK_THEME_NAME = 'ui-dark';
 
 function buildSystemAccentCSS(color: string): string {
+  const contrastColor = readableForegroundForSystemAccent(color);
   return `:root {
   --system-accent: ${color};
   --system-accent-dark: color-mix(in srgb, ${color}, black 10%);
+  --system-accent-contrast: ${contrastColor};
 }`;
 }
 

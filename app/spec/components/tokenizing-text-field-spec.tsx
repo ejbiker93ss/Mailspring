@@ -44,7 +44,11 @@ const participant5 = new Contact({
 });
 
 describe('TokenizingTextField', function () {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    document.documentElement.style.removeProperty('--system-accent');
+    document.documentElement.style.removeProperty('--system-accent-contrast');
+  });
 
   beforeEach(function () {
     this.completions = [];
@@ -282,6 +286,16 @@ describe('TokenizingTextField', function () {
       const items = this.container.querySelectorAll('.item:not(.divider)');
       // The first item should have the 'selected' class
       expect(items[0].classList.contains('selected')).toBe(true);
+    });
+
+    it('uses the readable foreground supplied for a dark system accent', function () {
+      document.documentElement.style.setProperty('--system-accent', '#800080');
+      document.documentElement.style.setProperty('--system-accent-contrast', '#ffffff');
+      this.completions = [participant4];
+      fireEvent.change(this.renderedInput, { target: { value: 'abc' } });
+
+      const selected = this.container.querySelector('.item.selected');
+      expect(window.getComputedStyle(selected).color).toBe('rgb(255, 255, 255)');
     });
 
     it('select the clicked element', function () {

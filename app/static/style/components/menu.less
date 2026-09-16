@@ -90,12 +90,12 @@
   .item:active {
     text-decoration: none;
     background-color: @accent-primary;
-    color: @text-color-inverse;
+    color: var(--system-accent-contrast, @menu-text-color-selected);
     .primary {
-      color: @text-color-inverse;
+      color: var(--system-accent-contrast, @menu-text-color-selected);
     }
     .secondary {
-      color: @text-color-inverse-very-subtle;
+      color: var(--system-accent-contrast, @menu-text-color-selected);
     }
   }
 
