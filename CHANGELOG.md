@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.70 (9/16/2026)
+
+Bug Fixes:
+
+- Use clipboard image metadata so pasted images without filename extensions are inserted inline instead of shown as regular attachments.
+
 ## 1.23.69 (9/16/2026)
 
 Bug Fixes:

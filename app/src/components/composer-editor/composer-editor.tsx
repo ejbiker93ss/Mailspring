@@ -89,7 +89,7 @@ interface ComposerEditorProps {
   readOnly?: boolean;
   onBlur?: (e: React.FocusEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
-  onFileReceived?: (path: string) => Promise<void> | void;
+  onFileReceived?: (path: string, options?: ComposerFileReceiveOptions) => Promise<void> | void;
   onUpdatedSlateEditor?: (editor: Editor | null) => void;
   toolbarExtras?: React.ReactNode;
 }
@@ -487,8 +487,10 @@ export function extensionForClipboardMimeType(mimeType: string): string {
   return (
     {
       'image/png': '.png',
+      'image/x-png': '.png',
       'image/jpeg': '.jpg',
       'image/jpg': '.jpg',
+      'image/pjpeg': '.jpg',
       'image/gif': '.gif',
       'image/bmp': '.bmp',
       'image/webp': '.webp',
@@ -497,7 +499,69 @@ export function extensionForClipboardMimeType(mimeType: string): string {
   );
 }
 
-function readClipboardFile(item: DataTransferItem): Promise<ArrayBuffer> {
+export interface ComposerFileReceiveOptions {
+  inline?: boolean;
+}
+
+interface ClipboardFileData {
+  contents: ArrayBuffer;
+  mimeType: string;
+  originalName: string;
+}
+
+export function extensionForClipboardImageContents(contents: ArrayBuffer): string {
+  const bytes = new Uint8Array(contents);
+  const matches = (...signature: number[]) =>
+    signature.every((byte, index) => bytes[index] === byte);
+
+  if (matches(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return '.png';
+  if (matches(0xff, 0xd8, 0xff)) return '.jpg';
+  if (matches(0x47, 0x49, 0x46, 0x38, 0x37, 0x61)) return '.gif';
+  if (matches(0x47, 0x49, 0x46, 0x38, 0x39, 0x61)) return '.gif';
+  if (matches(0x42, 0x4d)) return '.bmp';
+  if (
+    matches(0x52, 0x49, 0x46, 0x46) &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return '.webp';
+  }
+  if (matches(0x49, 0x49, 0x2a, 0x00) || matches(0x4d, 0x4d, 0x00, 0x2a)) return '.tiff';
+  return '';
+}
+
+export function clipboardFileIsImage(
+  mimeType: string,
+  originalName = '',
+  contents?: ArrayBuffer
+): boolean {
+  if ((mimeType || '').toLowerCase().startsWith('image/')) {
+    return true;
+  }
+  const extension = path.extname(originalName).toLowerCase();
+  return (
+    ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tif', '.tiff'].includes(extension) ||
+    (!!contents && !!extensionForClipboardImageContents(contents))
+  );
+}
+
+export function clipboardFileMetadata(
+  mimeType: string,
+  originalName: string,
+  contents: ArrayBuffer
+): { extension: string; inline: boolean } {
+  return {
+    extension:
+      extensionForClipboardMimeType(mimeType) ||
+      path.extname(originalName).toLowerCase() ||
+      extensionForClipboardImageContents(contents),
+    inline: clipboardFileIsImage(mimeType, originalName, contents),
+  };
+}
+
+function readClipboardFile(item: DataTransferItem): Promise<ClipboardFileData> {
   return new Promise((resolve, reject) => {
     const blob = item.getAsFile();
     if (!blob) {
@@ -506,7 +570,13 @@ function readClipboardFile(item: DataTransferItem): Promise<ArrayBuffer> {
     }
 
     const reader = new FileReader();
-    reader.addEventListener('load', () => resolve(reader.result as ArrayBuffer));
+    reader.addEventListener('load', () =>
+      resolve({
+        contents: reader.result as ArrayBuffer,
+        mimeType: item.type || blob.type || '',
+        originalName: blob.name || '',
+      })
+    );
     reader.addEventListener('error', () =>
       reject(new Error('SummerMail could not read the pasted image. Please try again.'))
     );
@@ -516,14 +586,15 @@ function readClipboardFile(item: DataTransferItem): Promise<ArrayBuffer> {
 
 async function receiveClipboardFile(
   item: DataTransferItem,
-  onFileReceived: (path: string) => Promise<void> | void
+  onFileReceived: (path: string, options?: ComposerFileReceiveOptions) => Promise<void> | void
 ) {
-  const contents = await readClipboardFile(item);
+  const { contents, mimeType, originalName } = await readClipboardFile(item);
+  const metadata = clipboardFileMetadata(mimeType, originalName, contents);
   const tmpFolder = path.join(os.tmpdir(), `-summermail-attachment-${crypto.randomUUID()}`);
-  const tmpPath = path.join(tmpFolder, `Pasted Image${extensionForClipboardMimeType(item.type)}`);
+  const tmpPath = path.join(tmpFolder, `Pasted Image${metadata.extension}`);
   await fs.promises.mkdir(tmpFolder, { recursive: true });
   await fs.promises.writeFile(tmpPath, Buffer.from(new Uint8Array(contents)));
-  await onFileReceived(tmpPath);
+  await onFileReceived(tmpPath, { inline: metadata.inline });
 }
 
 export function waitForFilePasteOperations(operations: Promise<void>[]): Promise<void> {
@@ -555,7 +626,7 @@ export function trackFilePasteCompletion(pasteCompletion: Promise<void>, session
 
 export function handleFilePasted(
   event: ClipboardEvent,
-  onFileReceived: (path: string) => Promise<void> | void
+  onFileReceived: (path: string, options?: ComposerFileReceiveOptions) => Promise<void> | void
 ): Promise<void> | null {
   if (event.clipboardData.items.length === 0) {
     return null;

@@ -23,6 +23,7 @@ import {
   ComposerSupport,
   RovingTabIndexToolbar,
 } from 'summermail-component-kit';
+import type { ComposerFileReceiveOptions } from '../../../src/components/composer-editor/composer-editor';
 import { ComposerHeader } from './composer-header';
 import { SendActionButton } from './send-action-button';
 import { ActionBarPlugins } from './action-bar-plugins';
@@ -57,12 +58,14 @@ export function addFileToComposer({
   filePath,
   headerMessageId,
   plaintext,
+  inline,
   isMounted,
   onInlineCreated,
 }: {
   filePath: string;
   headerMessageId: string;
   plaintext: boolean;
+  inline?: boolean;
   isMounted: () => boolean;
   onInlineCreated: (file: File) => void;
 }): Promise<void> {
@@ -70,7 +73,7 @@ export function addFileToComposer({
     Actions.addAttachment({
       filePath,
       headerMessageId,
-      inline: !plaintext,
+      inline: plaintext ? false : inline === undefined ? 'auto' : inline,
       onCreated: (file: File) => {
         if (isMounted() && !plaintext && file.contentId) {
           onInlineCreated(file);
@@ -384,12 +387,13 @@ export default class ComposerView extends React.Component<ComposerViewProps, Com
     }
   };
 
-  _onFileReceived = (filePath: string): Promise<void> => {
+  _onFileReceived = (filePath: string, options: ComposerFileReceiveOptions = {}): Promise<void> => {
     // called from onDrop and onFilePaste - assume images should be inline
     const operation = addFileToComposer({
       filePath,
       headerMessageId: this.props.draft.headerMessageId,
       plaintext: this.props.draft.plaintext,
+      inline: options.inline,
       isMounted: () => this._mounted,
       onInlineCreated: (file) => this.editor.current.insertInlineAttachment(file),
     });

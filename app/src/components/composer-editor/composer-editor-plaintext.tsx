@@ -1,6 +1,7 @@
 import React from 'react';
 import { wrapPlaintextWithSelection } from './plaintext';
 import { handleFilePasted, trackFilePasteCompletion } from './composer-editor';
+import type { ComposerFileReceiveOptions } from './composer-editor';
 
 interface ComposerEditorPlaintextProps {
   value: string;
@@ -9,7 +10,7 @@ interface ComposerEditorPlaintextProps {
   className?: string;
   onBlur?: (e: React.FocusEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
-  onFileReceived?: (path: string) => Promise<void> | void;
+  onFileReceived?: (path: string, options?: ComposerFileReceiveOptions) => Promise<void> | void;
 }
 
 export class ComposerEditorPlaintext extends React.Component<ComposerEditorPlaintextProps> {

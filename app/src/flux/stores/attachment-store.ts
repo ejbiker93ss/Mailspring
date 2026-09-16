@@ -33,6 +33,14 @@ const fileAccessibleAtPath = async (filePath) => {
 
 export type AttachmentDownloadData = null;
 
+export function shouldAttachInline(
+  inline: boolean | 'auto',
+  filename: string,
+  size: number
+): boolean {
+  return inline === true || (inline === 'auto' && Utils.shouldDisplayAsImage({ filename, size }));
+}
+
 class AttachmentStore extends SummerMailStore {
   _filePreviewPaths = {};
   _filesDirectory: string = path.join(AppEnv.getConfigDirPath(), 'files');
@@ -474,15 +482,14 @@ class AttachmentStore extends SummerMailStore {
         );
       }
 
-      const shouldAttachInline =
-        inline && Utils.shouldDisplayAsImage({ filename, size: stats.size });
+      const attachInline = shouldAttachInline(inline, filename, stats.size);
       const file = new File({
         id: Utils.generateTempId(),
         filename: filename,
         size: stats.size,
         contentType: null,
         messageId: null,
-        contentId: shouldAttachInline ? Utils.generateContentId() : null,
+        contentId: attachInline ? Utils.generateContentId() : null,
       });
 
       await _fs.promises.mkdir(path.dirname(this.pathForFile(file)), { recursive: true });
