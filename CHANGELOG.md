@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.68 (9/16/2026)
+
+Improvements:
+
+- Give recent messages substantially more influence in search results while preserving clearly stronger text matches.
+- Sort sender and recipient searches newest-first, match participant names and email addresses, and open the newest message in a thread that actually matched.
+
 ## 1.23.67 (9/15/2026)
 
 Improvements:
