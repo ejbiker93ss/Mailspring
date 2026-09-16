@@ -38,6 +38,45 @@ describe('SearchQuerySubscription matching messages', () => {
     expect(querySpy.calls[0].args[0]).toContain('AS matchingMessageId');
   });
 
+  it('matches sender names against message participants and sorts newest-first', async () => {
+    const subscription = Object.create(SearchQuerySubscription.prototype);
+    subscription._accountIds = ['account-1'];
+
+    const querySpy = (DatabaseStore as any)._query as jasmine.Spy;
+    querySpy.andCallFake((sql: string) => {
+      if (sql.startsWith('SELECT COUNT(*)')) {
+        return Promise.resolve([{ count: 2 }]);
+      }
+      return Promise.resolve([]);
+    });
+
+    await subscription._rankedSearchResults(SearchQueryParser.parse('from:Kent'));
+
+    const [rankSQL, values] = querySpy.calls[0].args;
+    expect(rankSQL).toContain("json_extract(address.value, '$.name')");
+    expect(rankSQL).toContain("json_extract(address.value, '$.email')");
+    expect(rankSQL.indexOf('`Thread`.lastMessageReceivedTimestamp DESC')).toBeLessThan(
+      rankSQL.indexOf('exactMatches DESC')
+    );
+    expect(values.filter((value) => value === 'kent').length).toBe(6);
+  });
+
+  it('matches recipient names across to, cc, and bcc participants', async () => {
+    const subscription = Object.create(SearchQuerySubscription.prototype);
+    subscription._accountIds = [];
+
+    const querySpy = (DatabaseStore as any)._query as jasmine.Spy;
+    querySpy.andReturn(Promise.resolve([]));
+
+    await subscription._rankedSearchResults(SearchQueryParser.parse('to:Kent'));
+
+    const [rankSQL, values] = querySpy.calls[0].args;
+    expect(rankSQL).toContain("json_each(strictMessage.data, '$.to')");
+    expect(rankSQL).toContain("json_each(strictMessage.data, '$.cc')");
+    expect(rankSQL).toContain("json_each(strictMessage.data, '$.bcc')");
+    expect(values.filter((value) => value === 'kent').length).toBe(18);
+  });
+
   it('sorts comparable matches newest-first while preserving stronger relevance bands', async () => {
     const subscription = Object.create(SearchQuerySubscription.prototype);
     subscription._accountIds = ['account-1'];
@@ -57,6 +96,7 @@ describe('SearchQuerySubscription matching messages', () => {
     const dateOrder = rankSQL.indexOf('`Thread`.lastMessageReceivedTimestamp DESC');
     const rawRelevanceOrder = rankSQL.lastIndexOf('relevance ASC');
     expect(rankSQL).toContain('AS relevanceBand');
+    expect(rankSQL).toContain('/ 4 AS INTEGER');
     expect(bandOrder).toBeGreaterThan(-1);
     expect(dateOrder).toBeGreaterThan(bandOrder);
     expect(rawRelevanceOrder).toBeGreaterThan(dateOrder);

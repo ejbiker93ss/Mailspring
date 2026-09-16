@@ -23,12 +23,13 @@ type RankedSearchResult = {
 type AddressOperator = {
   field: 'from' | 'to';
   value: string;
+  exactEmail: boolean;
 };
 
-// FTS5's BM25 scores are negative (more negative is a stronger match). Group
-// nearby scores so small ranking differences do not bury recent messages, while
-// still allowing a materially stronger match to outrank a newer weak match.
-const RELEVANCE_BAND_WIDTH = 1.5;
+// FTS5's BM25 scores are negative (more negative is a stronger match). Use broad
+// bands so recency decides among reasonably comparable matches. A materially
+// stronger match can still move into a better band and outrank a newer weak one.
+const RELEVANCE_BAND_WIDTH = 4;
 
 class RankedIdSortOrder {
   attr = Thread.attributes.lastMessageReceivedTimestamp;
@@ -46,31 +47,37 @@ class RankedIdSortOrder {
   }
 }
 
-function exactAddressOperator(ast: QueryExpression): AddressOperator | null {
+function addressOperator(ast: QueryExpression): AddressOperator | null {
   if (!(ast instanceof FromQueryExpression) && !(ast instanceof ToQueryExpression)) {
     return null;
   }
   const value = ast.text.token.s.trim().toLowerCase();
-  if (!value.includes('@')) {
+  if (!value) {
     return null;
   }
-  return { field: ast instanceof FromQueryExpression ? 'from' : 'to', value };
+  return {
+    field: ast instanceof FromQueryExpression ? 'from' : 'to',
+    value,
+    exactEmail: value.includes('@'),
+  };
 }
 
 function jsonAddressMatchSQL(messageAlias: string, operator: AddressOperator) {
   const paths = operator.field === 'from' ? ['from'] : ['to', 'cc', 'bcc'];
   return `(${paths
-    .map(
-      (path) =>
-        `EXISTS (SELECT 1 FROM json_each(${messageAlias}.data, '$.${path}') address WHERE lower(json_extract(address.value, '$.email')) = ?)`
-    )
+    .map((path) => {
+      const participantMatch = operator.exactEmail
+        ? `lower(json_extract(address.value, '$.email')) = ?`
+        : `(instr(lower(coalesce(json_extract(address.value, '$.name'), '')), ?) > 0 OR instr(lower(coalesce(json_extract(address.value, '$.email'), '')), ?) > 0)`;
+      return `EXISTS (SELECT 1 FROM json_each(${messageAlias}.data, '$.${path}') address WHERE ${participantMatch})`;
+    })
     .join(' OR ')})`;
 }
 
 function addressValues(operator: AddressOperator) {
-  return operator.field === 'from'
-    ? [operator.value]
-    : [operator.value, operator.value, operator.value];
+  const pathCount = operator.field === 'from' ? 1 : 3;
+  const valuesPerPath = operator.exactEmail ? 1 : 2;
+  return Array(pathCount * valuesPerPath).fill(operator.value);
 }
 
 export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
@@ -154,7 +161,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       return null;
     }
 
-    const operator = exactAddressOperator(parsedQuery);
+    const operator = addressOperator(parsedQuery);
     const accountSQL = this._accountIds.length
       ? `AND \`Thread\`.\`accountId\` IN (${this._accountIds.map(() => '?').join(', ')})`
       : '';
@@ -194,7 +201,13 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     // Favor intent-bearing metadata over incidental body text; content_id is unindexed.
     const bm25SQL = 'bm25(`ThreadSearch`, 12, 6, 8, 1, 3, 0)';
     const relevanceBandSQL = `CAST(${bm25SQL} / ${RELEVANCE_BAND_WIDTH} AS INTEGER)`;
-    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, ${bm25SQL} AS relevance, ${relevanceBandSQL} AS relevanceBand, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY exactMatches DESC, relevanceBand ASC, \`Thread\`.lastMessageReceivedTimestamp DESC, relevance ASC LIMIT 1000`;
+    // A fielded participant search is a mailbox lookup, not a relevance search.
+    // Match Outlook's expected behavior by showing the newest matching thread first.
+    // Generic text searches still use relevance bands, with recency inside each band.
+    const orderSQL = operator
+      ? '`Thread`.lastMessageReceivedTimestamp DESC, exactMatches DESC, relevanceBand ASC, relevance ASC'
+      : 'relevanceBand ASC, `Thread`.lastMessageReceivedTimestamp DESC, relevance ASC';
+    const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, ${bm25SQL} AS relevance, ${relevanceBandSQL} AS relevanceBand, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY ${orderSQL} LIMIT 1000`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
 
     const [rows, countRows] = await Promise.all([
