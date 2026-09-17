@@ -130,10 +130,21 @@ export default class Application extends EventEmitter {
       if (buttonIndex === 0) {
         app.quit();
       } else {
-        this._deleteDatabase(() => {
+        try {
+          await this._deleteDatabase();
           app.relaunch();
           app.quit();
-        });
+        } catch (deleteErr) {
+          dialog.showMessageBoxSync({
+            type: 'error',
+            buttons: [localized('Quit')],
+            message: localized(
+              `SummerMail could not remove the damaged local email database. Close any other SummerMail processes and try again.\n\n%@`,
+              deleteErr.toString()
+            ),
+          });
+          app.quit();
+        }
       }
       return;
     }
@@ -306,28 +317,25 @@ export default class Application extends EventEmitter {
   // we close windows and log out, we need to wait for these processes to completely
   // exit and then delete the file. It's hard to tell when this happens, so we just
   // retry the deletion a few times.
-  deleteFileWithRetry(filePath, callback = () => {}, retries = 5) {
-    const callbackWithRetry = (err: NodeJS.ErrnoException | null) => {
-      if (err && err.message.indexOf('no such file') === -1) {
-        console.log(`File Error: ${err.message} - retrying in 150msec`);
+  deleteFileWithRetry(filePath: string, retries = 40): Promise<void> {
+    return new Promise((resolve, reject) => {
+      fs.unlink(filePath, (err: NodeJS.ErrnoException | null) => {
+        if (!err || err.code === 'ENOENT') {
+          resolve();
+          return;
+        }
+
+        if (retries <= 0) {
+          reject(err);
+          return;
+        }
+
+        console.log(`File Error: ${err.message} - retrying in 250msec`);
         setTimeout(() => {
-          this.deleteFileWithRetry(filePath, callback, retries - 1);
-        }, 150);
-      } else {
-        callback();
-      }
-    };
-
-    if (!fs.existsSync(filePath)) {
-      callback();
-      return;
-    }
-
-    if (retries > 0) {
-      fs.unlink(filePath, callbackWithRetry);
-    } else {
-      fs.unlink(filePath, callback);
-    }
+          this.deleteFileWithRetry(filePath, retries - 1).then(resolve, reject);
+        }, 250);
+      });
+    });
   }
 
   ensureWindowsForTokenState(behavior?: { preserveHiddenOrMinimized: boolean }) {
@@ -364,7 +372,7 @@ export default class Application extends EventEmitter {
     primary.focus();
   }
 
-  _resetDatabaseAndRelaunch = ({ errorMessage }: { errorMessage?: string } = {}) => {
+  _resetDatabaseAndRelaunch = async ({ errorMessage }: { errorMessage?: string } = {}) => {
     if (this._resettingAndRelaunching) return;
     this._resettingAndRelaunching = true;
 
@@ -384,13 +392,29 @@ export default class Application extends EventEmitter {
       app.quit();
     };
     this.windowManager.destroyAllWindows();
-    this._deleteDatabase(done);
+    try {
+      await this._deleteDatabase();
+      done();
+    } catch (err) {
+      dialog.showMessageBoxSync({
+        type: 'error',
+        buttons: [localized('Quit')],
+        message: localized(
+          `SummerMail could not remove the local email database. Close any other SummerMail processes, restart SummerMail, and try rebuilding again.\n\n%@`,
+          err.toString()
+        ),
+      });
+      app.quit();
+    }
   };
 
-  _deleteDatabase = (callback) => {
-    this.deleteFileWithRetry(path.join(this.configDirPath, 'edgehill.db'), callback);
-    this.deleteFileWithRetry(path.join(this.configDirPath, 'edgehill.db-wal'));
-    this.deleteFileWithRetry(path.join(this.configDirPath, 'edgehill.db-shm'));
+  _deleteDatabase = async () => {
+    // Waiting for the main database deletion also gives active SQLite clients time
+    // to exit before we remove their sidecars. Do not relaunch until every deletion
+    // has been confirmed, or a stale WAL could be applied to the replacement database.
+    await this.deleteFileWithRetry(path.join(this.configDirPath, 'edgehill.db'));
+    await this.deleteFileWithRetry(path.join(this.configDirPath, 'edgehill.db-wal'));
+    await this.deleteFileWithRetry(path.join(this.configDirPath, 'edgehill.db-shm'));
   };
 
   // Registers basic application commands, non-idempotent.

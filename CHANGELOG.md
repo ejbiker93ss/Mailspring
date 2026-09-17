@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.71 (9/17/2026)
+
+Bug Fixes:
+
+- Render HTML-only messages returned by the SmarterMail API as formatted email instead of displaying their source markup.
+- Wait for the local mail database and SQLite sidecar files to be removed before relaunching after a cache rebuild, and report a clear error if another process keeps them locked.
+
 ## 1.23.70 (9/16/2026)
 
 Bug Fixes:
