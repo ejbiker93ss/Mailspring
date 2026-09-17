@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.73 (9/17/2026)
+
+- Fixed SmarterMail messages that displayed only a multipart boundary by repairing missing or mismatched MIME envelope metadata.
+- Automatically clears previously cached one-line MIME boundary bodies so the affected message refetches on its next open.
+
 ## 1.23.72 (9/17/2026)
 
 Improvements:
