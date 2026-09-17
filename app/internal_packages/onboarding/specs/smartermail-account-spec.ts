@@ -10,7 +10,7 @@ describe('SmarterMail account setup', () => {
     expect(() => normalizeSmarterMailServerURL('http://mail.example.com')).toThrow();
   });
 
-  it('builds mail and WebDAV settings from one server URL', () => {
+  it('builds native API and SMTP settings without DAV credentials', () => {
     const account = new Account({
       name: 'Alice',
       emailAddress: 'alice@example.com',
@@ -18,7 +18,7 @@ describe('SmarterMail account setup', () => {
       settings: {
         smartermail_server: 'https://mail.example.com',
         imap_password: 'secret',
-        caldav_password: 'separate-webdav-secret',
+        caldav_password: 'obsolete-webdav-secret',
       },
     });
 
@@ -29,10 +29,10 @@ describe('SmarterMail account setup', () => {
     expect(result.settings.smtp_host).toBe('mail.example.com');
     expect(result.settings.smtp_port).toBe(465);
     expect(result.settings.sync_engine).toBe('smartermail_api');
-    expect(result.settings.caldav_host).toBe('https://mail.example.com/WebDAV/');
-    expect(result.settings.carddav_host).toBe('https://mail.example.com/WebDAV/');
-    expect(result.settings.caldav_username).toBe('alice@example.com');
-    expect(result.settings.caldav_password).toBe('separate-webdav-secret');
+    expect(result.settings.caldav_host).toBeUndefined();
+    expect(result.settings.carddav_host).toBeUndefined();
+    expect(result.settings.caldav_username).toBeUndefined();
+    expect(result.settings.caldav_password).toBeUndefined();
     expect(result.settings.imap_password).toBe('secret');
     expect(result.settings.smtp_password).toBe('secret');
   });

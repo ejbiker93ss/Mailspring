@@ -1,5 +1,17 @@
 # SummerMail Changelog
 
+## 1.23.72 (9/17/2026)
+
+Improvements:
+
+- Sync SmarterMail calendars, contacts, and contact groups through SmarterMail's native API instead of CalDAV and CardDAV.
+- Use one SmarterMail API credential for mail, calendars, and contacts, and remove the obsolete WebDAV password from setup and account conversion.
+
+Bug Fixes:
+
+- Preserve shared-calendar ownership, read-only access, event time zones, contact fields, and group membership while synchronizing through the native API.
+- Reject malformed successful responses before pruning local calendar or contact caches, and retire legacy DAV cache rows only after a complete native snapshot.
+
 ## 1.23.71 (9/17/2026)
 
 Bug Fixes:

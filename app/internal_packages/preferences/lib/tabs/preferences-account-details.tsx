@@ -503,7 +503,7 @@ class PreferencesAccountDetails extends Component<
             </div>
           )}
         </div>
-        {(account.provider === 'imap' || account.provider === 'smartermail') && (
+        {account.provider === 'imap' && (
           <div className="account-calendar-settings">
             <h6>{localized('Calendar and Contacts')} (CalDAV / CardDAV)</h6>
             <p className="account-calendar-help">
@@ -544,11 +544,6 @@ class PreferencesAccountDetails extends Component<
               autoComplete="new-password"
               onChange={(event) => this.setState({ calendarPassword: event.target.value })}
             />
-            <p className="account-calendar-help">
-              {localized(
-                'For SmarterMail with two-factor authentication, use the WebDAV application password from webmail Settings → Account → Two-Factor Authentication. It is separate from the IMAP/SMTP app password. Do not enter a one-time verification code. WebDAV access must also be enabled for this user.'
-              )}
-            </p>
             <div className="btn btn-emphasis" onClick={this._onSyncCalendar}>
               {localized('Save and Sync Calendar and Contacts')}
             </div>
