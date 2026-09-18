@@ -1,5 +1,14 @@
 # SummerMail Changelog
 
+## 1.23.74 (9/18/2026)
+
+- Wake API mail workers immediately when opening messages instead of waiting for the polling timeout.
+- Prefer structured SmarterMail message bodies and refetch previously cached MIME-boundary-only bodies.
+- Update existing SmarterMail calendar events without duplicate-ID failures, and apply calendar snapshots atomically.
+- Display SmarterMail's account-specific Scheduled folders as "Scheduled" without changing their server paths.
+
+Known issue: SmarterMail calendar saves returning HTTP 403 are not resolved by this release.
+
 ## 1.23.73 (9/17/2026)
 
 - Fixed SmarterMail messages that displayed only a multipart boundary by repairing missing or mismatched MIME envelope metadata.
