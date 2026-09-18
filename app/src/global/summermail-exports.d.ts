@@ -156,6 +156,10 @@ export const SearchableComponentStore: SearchableComponentStore;
 
 export type ServiceRegistry = typeof import('../registries/service-registry').default;
 export const ServiceRegistry: ServiceRegistry;
+export type AutomationActionRegistry =
+  typeof import('../registries/automation-action-registry').default;
+export const AutomationActionRegistry: AutomationActionRegistry;
+export * from '../registries/automation-action-registry';
 
 // Decorators
 export type InflatesDraftClientId = typeof import('../decorators/inflates-draft-client-id').default;

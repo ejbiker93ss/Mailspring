@@ -78,10 +78,11 @@ class ComposerWindowTitleBar extends React.Component<{ title: string }, { title:
         onDoubleClick={this._onDoubleClick}
       >
         <span className="composer-window-app-mark" aria-hidden="true">
-          <svg viewBox="0 0 20 20">
-            <path d="M3.25 5.25h13.5v9.5H3.25z" />
-            <path d="m3.75 6 6.25 5 6.25-5" />
-          </svg>
+          <img
+            src="summermail://account-sidebar/assets/summermail-app-icon@2x.png"
+            alt=""
+            draggable={false}
+          />
         </span>
         <span className="composer-window-title" title={this.state.title}>
           {this.state.title}

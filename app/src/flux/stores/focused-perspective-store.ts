@@ -188,6 +188,11 @@ class FocusedPerspectiveStore extends SummerMailStore {
     }
 
     if (shouldTrigger) {
+      // Account visibility is part of the window state, but the dev runner and
+      // crash recovery can replace the renderer without a normal unload. Save
+      // immediately so a newly added account (or an explicit account switch)
+      // is not hidden again the next time the window starts.
+      AppEnv.saveWindowState();
       this.trigger();
     }
 

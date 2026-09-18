@@ -33,6 +33,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
+
+  > select {
+    max-width: 230px;
+  }
 }
 
 .mail-kanban-search {
@@ -211,6 +215,17 @@
 .mail-kanban-card-subject {
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+.mail-kanban-card-account {
+  max-width: 100%;
+  margin-bottom: 7px;
+  color: @component-active-color;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mail-kanban-card-participants {
   margin-top: 4px;

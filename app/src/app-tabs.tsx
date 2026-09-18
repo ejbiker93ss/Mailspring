@@ -6,6 +6,7 @@ import { AppNavigationMenu } from '../internal_packages/account-sidebar/lib/comp
 import { windowsTitleBarOverlayColors, WINDOWS_TITLE_BAR_HEIGHT } from './windows-title-bar';
 import MatrixChatStore from '../internal_packages/matrix-chat/lib/matrix-chat-store';
 import GroupMeChatStore from '../internal_packages/matrix-chat/lib/groupme-store';
+import { AppTabIcon } from './components/app-tab-icon';
 
 type HomeTabId = 'Threads' | 'Kanban' | 'Calendar' | 'Contacts' | 'Activity' | 'Matrix' | 'GroupMe';
 
@@ -255,8 +256,13 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
           aria-label={localized('Application menu')}
           title={localized('Application menu')}
         >
-          <span className="app-mark" aria-hidden="true">
-            ✉
+          <span className="app-mark-frame" aria-hidden="true">
+            <img
+              className="app-mark"
+              src="summermail://account-sidebar/assets/summermail-app-icon@2x.png"
+              alt=""
+              draggable={false}
+            />
           </span>
         </button>
 
@@ -273,7 +279,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
               onClick={() => this._activateHome(id)}
               onKeyDown={(event) => this._onHomeTabKeyDown(event, id)}
             >
-              <span className="app-tab-icon" aria-hidden="true" />
+              <AppTabIcon id={id} />
               <span className="app-tab-title">{localized(label)}</span>
               {id === 'Matrix' && this.state.matrixUnreadCount > 0 ? (
                 <span
@@ -299,9 +305,9 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
                   aria-label={localized('Compose new message')}
                   onClick={this._composeNewMessage}
                 >
-                  <svg aria-hidden="true" viewBox="0 0 20 20">
-                    <path d="M4 14.5V17h2.5L15 8.5 11.5 5 4 12.5v2Z" />
-                    <path d="m12.5 4 1.75-1.75a1.4 1.4 0 0 1 2 0l1.5 1.5a1.4 1.4 0 0 1 0 2L16 7.5" />
+                  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                    <path d="M13 19H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2v5" />
+                    <path d="m3 6 8.5 6L20 6M19 14v8m-4-4h8" />
                   </svg>
                 </button>
               ) : null}
@@ -321,7 +327,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
               onKeyDown={(event) => this._onConversationKeyDown(event, tab)}
               title={tab.title}
             >
-              <span className="app-tab-icon" aria-hidden="true" />
+              <AppTabIcon id="Conversation" />
               <span className="app-tab-title">{tab.title}</span>
               <button
                 type="button"

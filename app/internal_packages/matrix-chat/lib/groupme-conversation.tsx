@@ -10,6 +10,7 @@ import {
   GroupMeMessage,
 } from './groupme-client';
 import GroupMeLoginView from './groupme-login-view';
+import GroupMeMarkdown from './groupme-markdown';
 
 interface State {
   composerDraft: string;
@@ -98,7 +99,7 @@ function renderReplyText(message?: GroupMeMessage) {
     : localized('Original message');
 }
 
-export default class GroupMeConversation extends React.Component<Record<string, never>, State> {
+export default class GroupMeConversation extends React.Component<{ chatId?: string }, State> {
   static displayName = 'GroupMeConversation';
   static containerStyles = {
     minWidth: 420,
@@ -120,7 +121,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
     this._scrollToBottom();
   }
 
-  componentDidUpdate(_prevProps: Record<string, never>, prevState: State) {
+  componentDidUpdate(_prevProps: { chatId?: string }, prevState: State) {
     if (
       prevState.timeline.length !== this.state.timeline.length ||
       prevState.chat?.id !== this.state.chat?.id
@@ -135,16 +136,16 @@ export default class GroupMeConversation extends React.Component<Record<string, 
 
   _stateFromStore(): Omit<State, 'mentionIndex' | 'mentionRange' | 'reactionPickerMessageId'> {
     return {
-      composerDraft: GroupMeChatStore.composerDraft(),
+      composerDraft: GroupMeChatStore.composerDraft(this.props.chatId),
       connectionState: GroupMeChatStore.connectionState(),
       error: GroupMeChatStore.error(),
       loggedIn: GroupMeChatStore.isLoggedIn(),
-      members: GroupMeChatStore.members(),
+      members: GroupMeChatStore.members(this.props.chatId),
       restoring: GroupMeChatStore.restoring(),
-      replyingTo: GroupMeChatStore.replyingTo(),
-      chat: GroupMeChatStore.selectedChat(),
-      sending: GroupMeChatStore.sending(),
-      timeline: GroupMeChatStore.timeline(),
+      replyingTo: GroupMeChatStore.replyingTo(this.props.chatId),
+      chat: GroupMeChatStore.selectedChat(this.props.chatId),
+      sending: GroupMeChatStore.sending(this.props.chatId),
+      timeline: GroupMeChatStore.timeline(this.props.chatId),
     };
   }
 
@@ -159,7 +160,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
   _onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     this.setState({ mentionRange: null });
-    void GroupMeChatStore.sendMessage();
+    void GroupMeChatStore.sendMessage(this.props.chatId);
   };
 
   _onComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -186,7 +187,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
     }
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      void GroupMeChatStore.sendMessage();
+      void GroupMeChatStore.sendMessage(this.props.chatId);
     }
   };
 
@@ -219,11 +220,11 @@ export default class GroupMeConversation extends React.Component<Record<string, 
   _selectMention(member: GroupMeMember) {
     const range = this.state.mentionRange;
     if (!range) return;
-    const value = GroupMeChatStore.composerDraft();
+    const value = GroupMeChatStore.composerDraft(this.props.chatId);
     const insertion = `@${member.name} `;
     const next = `${value.slice(0, range.start)}${insertion}${value.slice(range.end)}`;
     const cursor = range.start + insertion.length;
-    GroupMeChatStore.setComposerDraft(next);
+    GroupMeChatStore.setComposerDraft(next, this.props.chatId);
     this.setState({ mentionIndex: 0, mentionRange: null }, () => {
       this.composer.current?.focus();
       this.composer.current?.setSelectionRange(cursor, cursor);
@@ -232,13 +233,13 @@ export default class GroupMeConversation extends React.Component<Record<string, 
 
   _openMentionPicker = () => {
     const textarea = this.composer.current;
-    const value = GroupMeChatStore.composerDraft();
+    const value = GroupMeChatStore.composerDraft(this.props.chatId);
     const cursor = textarea?.selectionStart ?? value.length;
     const needsSpace = cursor > 0 && !/\s/.test(value[cursor - 1]);
     const insertion = `${needsSpace ? ' ' : ''}@`;
     const next = `${value.slice(0, cursor)}${insertion}${value.slice(cursor)}`;
     const nextCursor = cursor + insertion.length;
-    GroupMeChatStore.setComposerDraft(next);
+    GroupMeChatStore.setComposerDraft(next, this.props.chatId);
     this.setState(
       {
         mentionIndex: 0,
@@ -294,7 +295,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
             <span>
               {chat.kind === 'direct'
                 ? localized('Direct message')
-                : localized('%@ here', GroupMeChatStore.members().length)}
+                : localized('%@ here', this.state.members.length)}
             </span>
           </div>
           <button type="button" className="btn" onClick={() => void GroupMeChatStore.logout()}>
@@ -361,7 +362,16 @@ export default class GroupMeConversation extends React.Component<Record<string, 
                         </div>
                       ) : null}
                       {item.text && item.text !== 'Image' ? (
-                        <p>{renderMessageText(item.text, item.mentions, item.customEmoji)}</p>
+                        <GroupMeMarkdown
+                          text={item.text}
+                          renderText={(text, offset) =>
+                            renderMessageText(
+                              text,
+                              item.mentions.map((m) => ({ ...m, start: m.start - offset })),
+                              item.customEmoji.map((e) => ({ ...e, start: e.start - offset }))
+                            )
+                          }
+                        />
                       ) : null}
                       {item.imageUrl ? (
                         <img className="groupme-message-image" src={item.imageUrl} alt="" />
@@ -375,7 +385,11 @@ export default class GroupMeConversation extends React.Component<Record<string, 
                               className={reaction.likedByMe ? 'mine' : ''}
                               title={localized('React with %@', reaction.emoji)}
                               onClick={() =>
-                                void GroupMeChatStore.setReaction(item, reaction.emoji)
+                                void GroupMeChatStore.setReaction(
+                                  item,
+                                  reaction.emoji,
+                                  this.props.chatId
+                                )
                               }
                             >
                               {reaction.emoji} {reaction.count}
@@ -394,7 +408,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
                         title={localized('Reply')}
                         aria-label={localized('Reply')}
                         onClick={() => {
-                          GroupMeChatStore.setReplyingTo(item);
+                          GroupMeChatStore.setReplyingTo(item, this.props.chatId);
                           this.composer.current?.focus();
                         }}
                       >
@@ -428,7 +442,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
                               title={localized('React with %@', emoji)}
                               onClick={() => {
                                 this.setState({ reactionPickerMessageId: null });
-                                void GroupMeChatStore.setReaction(item, emoji);
+                                void GroupMeChatStore.setReaction(item, emoji, this.props.chatId);
                               }}
                             >
                               {emoji}
@@ -460,7 +474,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
               type="button"
               aria-label={localized('Cancel reply')}
               title={localized('Cancel reply')}
-              onClick={() => GroupMeChatStore.setReplyingTo(null)}
+              onClick={() => GroupMeChatStore.setReplyingTo(null, this.props.chatId)}
             >
               ×
             </button>
@@ -500,7 +514,7 @@ export default class GroupMeConversation extends React.Component<Record<string, 
               rows={2}
               value={composerDraft}
               onChange={(event) => {
-                GroupMeChatStore.setComposerDraft(event.target.value);
+                GroupMeChatStore.setComposerDraft(event.target.value, this.props.chatId);
                 this._updateMention(event.target.value, event.target.selectionStart);
               }}
               onClick={(event) =>

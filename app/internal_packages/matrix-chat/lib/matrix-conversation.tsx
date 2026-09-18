@@ -42,7 +42,7 @@ function initials(name: string) {
   return ((parts[0] || '?').slice(0, 1) + (parts[1] || '').slice(0, 1)).toUpperCase();
 }
 
-export default class MatrixConversation extends React.Component<Record<string, never>, State> {
+export default class MatrixConversation extends React.Component<{ chatId?: string }, State> {
   static displayName = 'MatrixConversation';
   static containerStyles = {
     minWidth: 420,
@@ -58,7 +58,7 @@ export default class MatrixConversation extends React.Component<Record<string, n
     this._scrollToBottom();
   }
 
-  componentDidUpdate(_prevProps: Record<string, never>, prevState: State) {
+  componentDidUpdate(_prevProps: { chatId?: string }, prevState: State) {
     if (
       prevState.timeline.length !== this.state.timeline.length ||
       prevState.room?.id !== this.state.room?.id
@@ -73,17 +73,17 @@ export default class MatrixConversation extends React.Component<Record<string, n
 
   _stateFromStore(): State {
     return {
-      composerDraft: MatrixChatStore.composerDraft(),
+      composerDraft: MatrixChatStore.composerDraft(this.props.chatId),
       connectionState: MatrixChatStore.connectionState(),
       error: MatrixChatStore.error(),
       loggedIn: MatrixChatStore.isLoggedIn(),
       restoring: MatrixChatStore.restoring(),
-      room: MatrixChatStore.selectedRoom(),
-      sending: MatrixChatStore.sending(),
-      timeline: MatrixChatStore.timeline(),
+      room: MatrixChatStore.selectedRoom(this.props.chatId),
+      sending: MatrixChatStore.sending(this.props.chatId),
+      timeline: MatrixChatStore.timeline(this.props.chatId),
       verification: MatrixChatStore.verification(),
       deviceVerified: MatrixChatStore.isDeviceVerified(),
-      replyTo: MatrixChatStore.replyTo(),
+      replyTo: MatrixChatStore.replyTo(this.props.chatId),
     };
   }
 
@@ -97,13 +97,13 @@ export default class MatrixConversation extends React.Component<Record<string, n
 
   _onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    void MatrixChatStore.sendMessage();
+    void MatrixChatStore.sendMessage(this.props.chatId);
   };
 
   _onComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      void MatrixChatStore.sendMessage();
+      void MatrixChatStore.sendMessage(this.props.chatId);
     }
   };
 
@@ -149,7 +149,7 @@ export default class MatrixConversation extends React.Component<Record<string, n
             <span>
               {connectionState === 'reconnecting'
                 ? localized('Reconnecting…')
-                : localized('%@ here', MatrixChatStore.members().length)}
+                : localized('%@ here', MatrixChatStore.members(this.props.chatId).length)}
             </span>
           </div>
           <button type="button" className="btn" onClick={() => void MatrixChatStore.logout()}>
@@ -302,7 +302,11 @@ export default class MatrixConversation extends React.Component<Record<string, n
                               type="button"
                               className={reaction.mine ? 'mine' : ''}
                               onClick={() =>
-                                void MatrixChatStore.toggleReaction(item.eventId, reaction.key)
+                                void MatrixChatStore.toggleReaction(
+                                  item.eventId,
+                                  reaction.key,
+                                  this.props.chatId
+                                )
                               }
                             >
                               {reaction.key} {reaction.count}
@@ -315,7 +319,7 @@ export default class MatrixConversation extends React.Component<Record<string, n
                       <button
                         type="button"
                         title={localized('Reply')}
-                        onClick={() => MatrixChatStore.setReplyTo(item)}
+                        onClick={() => MatrixChatStore.setReplyTo(item, this.props.chatId)}
                       >
                         ↩
                       </button>
@@ -323,7 +327,13 @@ export default class MatrixConversation extends React.Component<Record<string, n
                         <button
                           key={emoji}
                           type="button"
-                          onClick={() => void MatrixChatStore.toggleReaction(item.eventId, emoji)}
+                          onClick={() =>
+                            void MatrixChatStore.toggleReaction(
+                              item.eventId,
+                              emoji,
+                              this.props.chatId
+                            )
+                          }
                         >
                           {emoji}
                         </button>
@@ -347,7 +357,11 @@ export default class MatrixConversation extends React.Component<Record<string, n
             <span>
               {localized('Replying to %@', replyTo.senderName)}: {replyTo.body}
             </span>
-            <button type="button" className="btn" onClick={() => MatrixChatStore.setReplyTo(null)}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => MatrixChatStore.setReplyTo(null, this.props.chatId)}
+            >
               {localized('Cancel')}
             </button>
           </div>
@@ -358,7 +372,9 @@ export default class MatrixConversation extends React.Component<Record<string, n
             placeholder={localized('Write a message')}
             rows={2}
             value={composerDraft}
-            onChange={(event) => MatrixChatStore.setComposerDraft(event.target.value)}
+            onChange={(event) =>
+              MatrixChatStore.setComposerDraft(event.target.value, this.props.chatId)
+            }
             onKeyDown={this._onComposerKeyDown}
           />
           <button

@@ -106,7 +106,41 @@ function initials(name: string) {
 
 export class GroupMeChatStoreClass extends SummerMailStore {
   private _chats: GroupMeChat[] = [];
-  private _composerDraft = '';
+  private _conversationStates = new Map<
+    string,
+    { draft: string; reply: GroupMeMessage | null; sending: boolean; timeline: GroupMeMessage[] }
+  >();
+  private _visibleChatIds: string[] = [];
+  private conversationState(id = this._selectedChatId) {
+    const key = id || '';
+    if (!this._conversationStates.has(key))
+      this._conversationStates.set(key, { draft: '', reply: null, sending: false, timeline: [] });
+    return this._conversationStates.get(key)!;
+  }
+  private get _composerDraft() {
+    return this.conversationState().draft;
+  }
+  private set _composerDraft(value: string) {
+    this.conversationState().draft = value;
+  }
+  private get _replyingTo() {
+    return this.conversationState().reply;
+  }
+  private set _replyingTo(value: GroupMeMessage | null) {
+    this.conversationState().reply = value;
+  }
+  private get _sending() {
+    return this.conversationState().sending;
+  }
+  private set _sending(value: boolean) {
+    this.conversationState().sending = value;
+  }
+  private get _timeline() {
+    return this.conversationState().timeline;
+  }
+  private set _timeline(value: GroupMeMessage[]) {
+    this.conversationState().timeline = value;
+  }
   private _connectionState: GroupMeConnectionState = 'idle';
   private _error: string | null = null;
   private _hiddenChatIds = new Set(hiddenChatIds());
@@ -117,12 +151,9 @@ export class GroupMeChatStoreClass extends SummerMailStore {
   private _pendingPassword = '';
   private _pendingUsername = '';
   private _readReceipts = new Map<string, string | null>();
-  private _replyingTo: GroupMeMessage | null = null;
   private _restoring = false;
   private _searchQuery = '';
   private _selectedChatId: string | null = null;
-  private _sending = false;
-  private _timeline: GroupMeMessage[] = [];
   private _token: string | null = null;
   private _unreadStates = savedUnreadStates();
   private _user: GroupMeUser | null = null;
@@ -144,8 +175,8 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     return this._hiddenChatIds.has(chatId);
   }
 
-  composerDraft() {
-    return this._composerDraft;
+  composerDraft(id = this._selectedChatId) {
+    return this.conversationState(id).draft;
   }
 
   connectionState() {
@@ -160,8 +191,8 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     return !!this._token && !!this._user;
   }
 
-  members() {
-    return this._members;
+  members(id = this._selectedChatId) {
+    return id === this._selectedChatId ? this._members : this.selectedChat(id)?.members || [];
   }
 
   roomsCollapsed() {
@@ -180,28 +211,33 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     return this._restoring;
   }
 
-  replyingTo() {
-    return this._replyingTo;
+  replyingTo(id = this._selectedChatId) {
+    return this.conversationState(id).reply;
   }
 
   searchQuery() {
     return this._searchQuery;
   }
 
-  selectedChat() {
-    return this._chats.find((chat) => chatKey(chat) === this._selectedChatId) || null;
+  selectedChat(id = this._selectedChatId) {
+    return this._chats.find((chat) => chatKey(chat) === id) || null;
   }
 
   selectedChatId() {
     return this._selectedChatId;
   }
 
-  sending() {
-    return this._sending;
+  sending(id = this._selectedChatId) {
+    return this.conversationState(id).sending;
   }
 
-  timeline() {
-    return this._timeline;
+  timeline(id = this._selectedChatId) {
+    return this.conversationState(id).timeline;
+  }
+
+  setVisibleChats(ids: string[]) {
+    this._visibleChatIds = ids;
+    for (const id of ids) void this._loadSelected(false, id);
   }
 
   unreadCount() {
@@ -221,15 +257,15 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     return this._user?.id || null;
   }
 
-  setComposerDraft(value: string) {
-    if (this._composerDraft === value) return;
-    this._composerDraft = value;
+  setComposerDraft(value: string, id = this._selectedChatId) {
+    if (this.conversationState(id).draft === value) return;
+    this.conversationState(id).draft = value;
     this.trigger(this);
   }
 
-  setReplyingTo(message: GroupMeMessage | null) {
-    if (this._replyingTo?.id === message?.id) return;
-    this._replyingTo = message;
+  setReplyingTo(message: GroupMeMessage | null, id = this._selectedChatId) {
+    if (this.conversationState(id).reply?.id === message?.id) return;
+    this.conversationState(id).reply = message;
     this.trigger(this);
   }
 
@@ -415,6 +451,8 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     this._timeline = [];
     this._token = null;
     this._user = null;
+    this._conversationStates.clear();
+    this._visibleChatIds = [];
     this.trigger(this);
     await KeyManager.deletePassword(TOKEN_KEY);
     if (token) await groupmeLogout(token);
@@ -423,9 +461,6 @@ export class GroupMeChatStoreClass extends SummerMailStore {
   selectChat(chatId: string) {
     if (this._selectedChatId === chatId) return;
     this._selectedChatId = chatId;
-    this._composerDraft = '';
-    this._replyingTo = null;
-    this._timeline = [];
     const chat = this.selectedChat();
     this._members = chat?.members || [];
     this.trigger(this);
@@ -440,6 +475,7 @@ export class GroupMeChatStoreClass extends SummerMailStore {
       const conversationId = [this._user?.id || '', member.id].filter(Boolean).sort().join('+');
       this._chats = [
         {
+          avatarUrl: null,
           conversationId,
           id: member.id,
           kind: 'direct',
@@ -457,14 +493,15 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     this.selectChat(id);
   }
 
-  async sendMessage() {
-    const chat = this.selectedChat();
-    const body = this._composerDraft.trim();
-    if (!this._token || !chat || !body || this._sending) return;
-    const replyingTo = this._replyingTo;
-    const mentions = buildGroupMeMentions(body, this._members);
-    this._sending = true;
-    this._composerDraft = '';
+  async sendMessage(id = this._selectedChatId) {
+    const chat = this.selectedChat(id);
+    const state = this.conversationState(id);
+    const body = state.draft.trim();
+    if (!this._token || !chat || !body || state.sending) return;
+    const replyingTo = state.reply;
+    const mentions = buildGroupMeMentions(body, this.members(id));
+    state.sending = true;
+    state.draft = '';
     this.trigger(this);
     try {
       await groupmeSend(this._token, chat, body, {
@@ -472,19 +509,19 @@ export class GroupMeChatStoreClass extends SummerMailStore {
         mentions,
         replyToId: replyingTo?.id,
       });
-      this._replyingTo = null;
-      await this._loadSelected(false);
+      state.reply = null;
+      await this._loadSelected(false, id);
       await this.refreshChats();
     } catch (error) {
       this._error = error instanceof Error ? error.message : String(error);
-      this._composerDraft = body;
+      state.draft = state.draft ? `${body}\n${state.draft}` : body;
     } finally {
-      this._sending = false;
+      state.sending = false;
       this.trigger(this);
     }
   }
 
-  async setReaction(message: GroupMeMessage, emoji: string) {
+  async setReaction(message: GroupMeMessage, emoji: string, id = this._selectedChatId) {
     if (!this._token) return;
     try {
       const current = message.reactions.find((reaction) => reaction.likedByMe)?.emoji;
@@ -494,7 +531,7 @@ export class GroupMeChatStoreClass extends SummerMailStore {
         message.id,
         current === emoji ? null : emoji
       );
-      await this._loadSelected(true);
+      await this._loadSelected(true, id);
     } catch (error) {
       this._error = error instanceof Error ? error.message : String(error);
       this.trigger(this);
@@ -637,25 +674,28 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     this.trigger(this);
   }
 
-  private async _loadSelected(replace: boolean) {
-    const chat = this.selectedChat();
+  private async _loadSelected(replace: boolean, id = this._selectedChatId) {
+    const chat = this.selectedChat(id);
     if (!this._token || !chat) return;
+    const token = this._token;
+    const state = this.conversationState(id);
     try {
-      const latest = this._timeline[this._timeline.length - 1];
+      const latest = state.timeline[state.timeline.length - 1];
       const messages = await groupmeMessages(this._token, chat, {
         sinceId: replace ? undefined : latest?.id,
         userId: this._user?.id,
       });
+      if (token !== this._token) return;
       if (replace) {
-        this._timeline = messages;
+        state.timeline = messages;
       } else if (messages.length) {
-        const seen = new Set(this._timeline.map((item) => item.id));
-        this._timeline = [...this._timeline, ...messages.filter((item) => !seen.has(item.id))];
+        const seen = new Set(state.timeline.map((item) => item.id));
+        state.timeline = [...state.timeline, ...messages.filter((item) => !seen.has(item.id))];
       }
-      const last = this._timeline[this._timeline.length - 1];
+      const last = state.timeline[state.timeline.length - 1];
       const key = chatKey(chat);
       const visible =
-        this._selectedChatId === key &&
+        (this._selectedChatId === key || this._visibleChatIds.includes(key)) &&
         WorkspaceStore.rootSheet()?.id === 'GroupMe' &&
         AppEnv.getCurrentWindow().isFocused();
       if (last && visible && this._readReceipts.get(key) !== last.id) {
@@ -692,7 +732,8 @@ export class GroupMeChatStoreClass extends SummerMailStore {
     this._stopPolling();
     this._listTimer = window.setInterval(() => void this.refreshChats(), LIST_POLL_MS);
     this._messageTimer = window.setInterval(() => {
-      if (this._selectedChatId) void this._loadSelected(false);
+      const ids = this._visibleChatIds.length ? this._visibleChatIds : [this._selectedChatId];
+      for (const id of ids) if (id) void this._loadSelected(false, id);
     }, MESSAGE_POLL_MS);
   }
 

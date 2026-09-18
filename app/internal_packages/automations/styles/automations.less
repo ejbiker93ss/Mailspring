@@ -1,0 +1,34 @@
+.container-automations {
+  display: flex;
+  min-width: 620px;
+  max-width: 1040px;
+  margin: 0 auto;
+  border: 1px solid rgba(127, 127, 127, 0.3);
+  border-radius: 4px;
+  background: inherit;
+  min-height: 520px;
+
+  .automation-list { width: 235px; flex: none; padding: 14px; background: rgba(127, 127, 127, 0.06); border-right: 1px solid rgba(127, 127, 127, 0.3); }
+  .automation-list-heading, .automation-editor-heading, .automation-footer, .automation-step-heading { display: flex; align-items: center; gap: 10px; }
+  .automation-list-heading h2 { margin: 0; flex: 1; }
+  .automation-list-item { display: flex; width: 100%; border: 0; border-radius: 4px; background: transparent; color: inherit; text-align: left; padding: 9px 10px; margin-top: 7px; flex-direction: column; gap: 2px; }
+  .automation-list-item span, .automation-step-heading > span { opacity: 0.68; font-size: 0.93em; }
+  .automation-list-item:hover, .automation-list-item.selected { background: rgba(127, 127, 127, 0.16); }
+  .automation-editor { flex: 1; min-width: 0; padding: 22px; }
+  .automation-editor-heading > div { flex: 1; display: flex; gap: 12px; }
+  .automation-field { display: block; margin: 0 0 14px; }
+  .automation-field > span { display: block; margin-bottom: 5px; opacity: 0.76; font-size: 0.93em; font-weight: 600; }
+  .automation-field input, .automation-field select, .automation-field textarea { width: 100%; }
+  .automation-field textarea { min-height: 88px; resize: vertical; }
+  .automation-checkbox { display: flex; align-items: center; gap: 7px; margin: 8px 0 14px; }
+  .automation-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .automation-step { border: 1px solid rgba(127, 127, 127, 0.3); border-radius: 4px; padding: 12px; background: rgba(127, 127, 127, 0.06); }
+  .automation-step-heading strong { flex: 1; }
+  .automation-step-heading { flex-wrap: wrap; }
+  .automation-step-buttons { display: flex; gap: 5px; margin-left: auto; }
+  .automation-step-editor { margin-top: 10px; }
+  .automation-error { color: #d9534f; margin-top: 8px; font-size: 0.93em; }
+  .automation-help, .automation-empty { opacity: 0.68; line-height: 1.45; }
+  .automation-footer { margin-top: 22px; border-top: 1px solid rgba(127, 127, 127, 0.3); padding-top: 14px; }
+  .automation-footer > span { flex: 1; }
+}

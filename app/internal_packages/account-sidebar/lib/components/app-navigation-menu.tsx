@@ -1,6 +1,5 @@
 import React from 'react';
-import { shell } from 'electron';
-import { AccountStore, Actions, localized, WorkspaceStore } from 'summermail-exports';
+import { Actions, localized, WorkspaceStore } from 'summermail-exports';
 
 type IconName =
   | 'mail'
@@ -9,10 +8,10 @@ type IconName =
   | 'contacts'
   | 'tasks'
   | 'search'
-  | 'admin'
   | 'settings'
   | 'matrix'
-  | 'groupme';
+  | 'groupme'
+  | 'exit';
 
 const Icon = ({ name }: { name: IconName }) => {
   const common = {
@@ -88,18 +87,18 @@ const Icon = ({ name }: { name: IconName }) => {
           <path d="m20 20-4-4" />
         </svg>
       );
-    case 'admin':
-      return (
-        <svg {...common}>
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
-          <path d="M12 8v4M12 16h.01" />
-        </svg>
-      );
     case 'settings':
       return (
         <svg {...common}>
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.4 4a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.16.37.37.7.6 1 .28.35.67.55 1.1.6h.09v4h-.09c-.43.05-.82.25-1.1.6-.23.3-.44.63-.6 1Z" />
+        </svg>
+      );
+    case 'exit':
+      return (
+        <svg {...common}>
+          <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5" />
+          <path d="m15 8 4 4-4 4M8 12h11" />
         </svg>
       );
     default:
@@ -146,19 +145,8 @@ export const AppNavigationMenu = () => {
       Actions.selectRootSheet(WorkspaceStore.Sheet.Threads);
       window.setTimeout(() => AppEnv.commands.dispatch('core:focus-search'), 0);
     });
-  const openAdmin = () =>
-    run(() => {
-      const account = AccountStore.accounts().find(
-        (candidate) => candidate.provider === 'smartermail' && candidate.settings.smartermail_server
-      );
-      if (account) {
-        shell.openExternal(account.settings.smartermail_server);
-      } else {
-        Actions.switchPreferencesTab('Accounts');
-        Actions.openPreferences();
-      }
-    });
   const openSettings = () => run(() => Actions.openPreferences());
+  const exitApplication = () => run(() => AppEnv.quit());
 
   const items: Array<{
     name: IconName;
@@ -217,7 +205,6 @@ export const AppNavigationMenu = () => {
         ]
       : []),
     { name: 'search', label: localized('Search'), action: openSearch },
-    { name: 'admin', label: localized('Admin'), action: openAdmin },
     { name: 'settings', label: localized('Settings'), action: openSettings },
   ];
 
@@ -235,6 +222,16 @@ export const AppNavigationMenu = () => {
           <span>{item.label}</span>
         </button>
       ))}
+      <div className="app-navigation-menu-separator" role="separator" />
+      <button
+        type="button"
+        role="menuitem"
+        className="app-navigation-menu-item"
+        onClick={exitApplication}
+      >
+        <Icon name="exit" />
+        <span>{localized('Exit')}</span>
+      </button>
     </div>
   );
 };

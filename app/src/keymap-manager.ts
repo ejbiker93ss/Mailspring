@@ -147,6 +147,7 @@ export default class KeymapManager {
   _removeTemplate?: Disposable;
   _bindingsCache: any;
   _commandsCache: any;
+  _runtimeBindings: { [sourceId: string]: { [command: string]: string[] } } = {};
   _altKeyDown = false;
   _altKeyTimer: NodeJS.Timeout = null;
 
@@ -255,6 +256,29 @@ export default class KeymapManager {
     });
   }
 
+  /**
+   * Register bindings owned by a live feature rather than a user-editable JSON
+   * file. This is used for dynamic commands such as saved automations. User
+   * keymap overrides remain authoritative because they are applied after these
+   * bindings while rebuilding the cache.
+   */
+  setRuntimeBindings(sourceId: string, bindings: { [command: string]: string | string[] }) {
+    const normalized: { [command: string]: string[] } = {};
+    for (const command of Object.keys(bindings || {})) {
+      const values = bindings[command] instanceof Array ? bindings[command] : [bindings[command]];
+      normalized[command] = values.filter(Boolean);
+      normalized[command].forEach((keystrokes) => this.ensureKeystrokesRegistered(keystrokes));
+    }
+    this._runtimeBindings[sourceId] = normalized;
+    this.keymapCacheInvalidated();
+    return new Disposable(() => {
+      if (this._runtimeBindings[sourceId] === normalized) {
+        delete this._runtimeBindings[sourceId];
+        this.keymapCacheInvalidated();
+      }
+    });
+  }
+
   ensureKeystrokesRegistered(keystrokes: string) {
     const platformKeystrokes = normalizePlatformKeystrokes(keystrokes);
     if (this._registered[platformKeystrokes]) {
@@ -300,6 +324,14 @@ export default class KeymapManager {
         }
       }
     }
+    for (const sourceId of Object.keys(this._runtimeBindings)) {
+      const bindings = this._runtimeBindings[sourceId];
+      for (const command of Object.keys(bindings)) {
+        this._bindingsCache[command] = (this._bindingsCache[command] || []).concat(
+          bindings[command]
+        );
+      }
+    }
     if (this.userKeymap) {
       const userBindings = this.userKeymap.bindings();
       for (const command of Object.keys(userBindings)) {
@@ -333,5 +365,9 @@ export default class KeymapManager {
 
   getBindingsForCommand(command: string) {
     return this._bindingsCache[command] || [];
+  }
+
+  getCommandsForKeystrokes(keystrokes: string) {
+    return ((this._commandsCache || {})[normalizePlatformKeystrokes(keystrokes)] || []).slice();
   }
 }

@@ -388,6 +388,33 @@
     padding-bottom: 20px;
   }
 }
+
+// SmarterMail includes an explanatory credential note below its fields. Keep
+// the complete form and actions visible in the fixed onboarding window at
+// common Windows display scaling levels, while retaining scrolling as a safe
+// fallback for smaller work areas and longer localized copy.
+.page.account-setup.AccountSmarterMailSettingsForm {
+  overflow-y: auto;
+  padding-bottom: 20px;
+
+  .logo-container {
+    padding-top: 18px;
+  }
+
+  h2 {
+    margin-top: 10px;
+    margin-bottom: 8px;
+  }
+
+  form {
+    padding-top: 8px;
+
+    p {
+      margin: 6px 0 12px;
+      line-height: 1.45;
+    }
+  }
+}
 .page.account-setup.google,
 .page.account-setup.office,
 .page.account-setup.outlook,

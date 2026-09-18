@@ -1,5 +1,17 @@
 # SummerMail Changelog
 
+## 1.23.75 (9/18/2026)
+
+- Gradually hydrate missing SmarterMail previews and reply headers in small background batches, with failure backoff to avoid overloading the server.
+- Repair SmarterMail conversation threading from RFC Message-ID, References, and In-Reply-To data while preserving stable local message IDs.
+- Preserve downloaded preview text when SmarterMail's list endpoint returns an empty preview.
+- Complete native SmarterMail calendar create, update, and delete synchronization.
+- Add responsive multi-chat workspaces to GroupMe and Matrix, keeping the newest chat nearest the list and preserving per-chat drafts and replies.
+- Render safe Markdown in GroupMe conversations.
+- Replace the ambiguous mail-tab pencil with a compact envelope-plus compose button.
+- Add combined-account Kanban lanes, draggable unthreaded messages, persistent account visibility, and the Automations workspace.
+- Improve onboarding sizing and account settings for native SmarterMail calendar and contact synchronization.
+
 ## 1.23.74 (9/18/2026)
 
 - Wake API mail workers immediately when opening messages instead of waiting for the polling timeout.

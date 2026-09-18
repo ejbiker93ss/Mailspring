@@ -1,5 +1,31 @@
 @import 'ui-variables';
 
+.groupme-multichat {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  > .matrix-conversation { flex: 1 1 0; min-width: 0; }
+  > .matrix-conversation + .matrix-conversation { border-left: 1px solid @border-color-divider; }
+  .matrix-conversation-header { gap: 8px; min-width: 0; }
+  .matrix-conversation-header > div { min-width: 0; overflow-wrap: anywhere; }
+  .matrix-conversation .groupme-message-image { max-width: 100%; }
+}
+
+.matrix-message-body .groupme-markdown {
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+  p { background: none; border: none; padding: 0; margin: 4px 0; white-space: pre-wrap; }
+  h1, h2, h3, h4, h5, h6 { font-size: 1.1em; line-height: 1.35; margin: 14px 0 6px; font-weight: 600; }
+  > :first-child { margin-top: 0; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  blockquote { margin: 8px 0; padding-left: 12px; border-left: 1px solid @border-color-divider; color: @text-color-subtle; }
+  pre { max-width: 100%; overflow-x: auto; padding: 10px; background: @background-secondary; border-radius: 4px; white-space: pre; }
+  code { font-family: monospace; background: @background-secondary; }
+  hr { border: 0; border-top: 1px solid @border-color-divider; margin: 12px 0; }
+  a { color: @accent-primary; text-decoration: underline; }
+}
+
 .groupme-custom-emoji {
   display: inline-block;
   width: 60px;
@@ -341,7 +367,17 @@
   font-weight: 700;
   height: 32px;
   justify-content: center;
+  overflow: hidden;
+  position: relative;
   width: 32px;
+
+  img {
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    position: absolute;
+    width: 100%;
+  }
 }
 
 .matrix-room-copy {

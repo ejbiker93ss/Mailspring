@@ -215,17 +215,18 @@ function replyPreview(room: Room, event: MatrixEvent): MatrixTimelineItem['reply
 
 export class MatrixChatStoreClass extends SummerMailStore {
   private _client: MatrixClient | null = null;
-  private _composerDraft = '';
+  private _drafts = new Map<string, string>();
+  private _replies = new Map<string, MatrixTimelineItem | null>();
+  private _sendingRooms = new Set<string>();
+  private _timelines = new Map<string, MatrixTimelineItem[]>();
+  private _visibleRooms: string[] = [];
   private _connectionState: MatrixConnectionState = 'idle';
   private _error: string | null = null;
   private _members: MatrixMemberSummary[] = [];
-  private _replyTo: MatrixTimelineItem | null = null;
   private _restoring = false;
   private _rooms: MatrixRoomSummary[] = [];
   private _searchQuery = '';
   private _selectedRoomId: string | null = null;
-  private _sending = false;
-  private _timeline: MatrixTimelineItem[] = [];
   private _userId: string | null = null;
   private _verification: MatrixVerificationState | null = null;
   private _verificationRequest: VerificationRequest | null = null;
@@ -238,16 +239,23 @@ export class MatrixChatStoreClass extends SummerMailStore {
     void this.restoreSession();
   }
 
-  composerDraft() {
-    return this._composerDraft;
+  composerDraft(id = this._selectedRoomId) {
+    return this._drafts.get(id || '') || '';
   }
 
-  members() {
+  members(id = this._selectedRoomId) {
+    if (id && id !== this._selectedRoomId)
+      return (this._client?.getRoom(id)?.getJoinedMembers() || []).map((member) => ({
+        id: member.userId,
+        name: member.name || member.userId,
+        presence: normalizePresence(member.user?.presence),
+        status: String(member.user?.presenceStatusMsg || '').trim(),
+      }));
     return this._members;
   }
 
-  replyTo() {
-    return this._replyTo;
+  replyTo(id = this._selectedRoomId) {
+    return this._replies.get(id || '') || null;
   }
 
   searchQuery() {
@@ -274,20 +282,26 @@ export class MatrixChatStoreClass extends SummerMailStore {
     return this._rooms;
   }
 
-  selectedRoom() {
-    return this._rooms.find((room) => room.id === this._selectedRoomId) || null;
+  selectedRoom(id = this._selectedRoomId) {
+    return this._rooms.find((room) => room.id === id) || null;
   }
 
   selectedRoomId() {
     return this._selectedRoomId;
   }
 
-  sending() {
-    return this._sending;
+  sending(id = this._selectedRoomId) {
+    return this._sendingRooms.has(id || '');
   }
 
-  timeline() {
-    return this._timeline;
+  timeline(id = this._selectedRoomId) {
+    return this._timelines.get(id || '') || [];
+  }
+
+  setVisibleRooms(ids: string[]) {
+    this._visibleRooms = ids;
+    for (const id of ids) this._refreshTimeline(id);
+    this.trigger(this);
   }
 
   unreadCount() {
@@ -307,9 +321,9 @@ export class MatrixChatStoreClass extends SummerMailStore {
     return this._deviceVerified;
   }
 
-  setComposerDraft(value: string) {
-    if (this._composerDraft === value) return;
-    this._composerDraft = value;
+  setComposerDraft(value: string, id = this._selectedRoomId) {
+    if (!id || this.composerDraft(id) === value) return;
+    this._drafts.set(id, value);
     this.trigger(this);
   }
 
@@ -332,15 +346,17 @@ export class MatrixChatStoreClass extends SummerMailStore {
   async logout() {
     const client = this._client;
     this._client = null;
-    this._composerDraft = '';
+    this._drafts.clear();
+    this._sendingRooms.clear();
+    this._visibleRooms = [];
     this._connectionState = 'idle';
     this._error = null;
     this._members = [];
-    this._replyTo = null;
+    this._replies.clear();
     this._rooms = [];
     this._searchQuery = '';
     this._selectedRoomId = null;
-    this._timeline = [];
+    this._timelines.clear();
     this._userId = null;
     this._clearVerification();
     this._deviceVerified = false;
@@ -361,8 +377,6 @@ export class MatrixChatStoreClass extends SummerMailStore {
   selectRoom(roomId: string) {
     if (this._selectedRoomId === roomId) return;
     this._selectedRoomId = roomId;
-    this._composerDraft = '';
-    this._replyTo = null;
     this._refreshTimeline();
     this._refreshMembers();
     this.trigger(this);
@@ -384,34 +398,36 @@ export class MatrixChatStoreClass extends SummerMailStore {
     }
   }
 
-  async sendMessage() {
+  async sendMessage(roomId = this._selectedRoomId) {
     const client = this._client;
-    const roomId = this._selectedRoomId;
-    const body = this._composerDraft.trim();
-    if (!client || !roomId || !body || this._sending) return;
-    this._sending = true;
-    this._composerDraft = '';
+    const body = this.composerDraft(roomId).trim();
+    if (!client || !roomId || !body || this.sending(roomId)) return;
+    const reply = this.replyTo(roomId);
+    this._sendingRooms.add(roomId);
+    this._drafts.set(roomId, '');
     this.trigger(this);
     try {
-      if (this._replyTo) {
+      if (reply) {
         await client.sendEvent(roomId, EventType.RoomMessage, {
           msgtype: MsgType.Text,
           body,
           'm.relates_to': {
-            'm.in_reply_to': { event_id: this._replyTo.eventId },
+            'm.in_reply_to': { event_id: reply.eventId },
           },
         });
       } else {
         await client.sendTextMessage(roomId, body);
       }
-      this._replyTo = null;
-      this._refreshTimeline();
+      if (client !== this._client) return;
+      this._replies.set(roomId, null);
+      this._refreshTimeline(roomId);
       this._refreshRooms();
     } catch (error) {
       this._error = formatLoginError(error);
-      this._composerDraft = body;
+      if (client === this._client)
+        this._drafts.set(roomId, [body, this.composerDraft(roomId)].filter(Boolean).join('\n'));
     } finally {
-      this._sending = false;
+      this._sendingRooms.delete(roomId);
       this.trigger(this);
     }
   }
@@ -422,14 +438,15 @@ export class MatrixChatStoreClass extends SummerMailStore {
     this.trigger(this);
   }
 
-  setReplyTo(item: MatrixTimelineItem | null) {
-    this._replyTo = item;
+  setReplyTo(item: MatrixTimelineItem | null, id = this._selectedRoomId) {
+    if (!id) return;
+    this._replies.set(id, item);
     this.trigger(this);
   }
 
-  async toggleReaction(eventId: string, key: string) {
+  async toggleReaction(eventId: string, key: string, id = this._selectedRoomId) {
     const client = this._client;
-    const room = this._selectedRoom();
+    const room = id ? client?.getRoom(id) : null;
     if (!client || !room || !this._userId) return;
     const existing = room
       .getLiveTimeline()
@@ -458,7 +475,7 @@ export class MatrixChatStoreClass extends SummerMailStore {
           },
         });
       }
-      this._refreshTimeline();
+      this._refreshTimeline(id);
       this.trigger(this);
     } catch (error) {
       this._error = formatLoginError(error);
@@ -727,9 +744,9 @@ export class MatrixChatStoreClass extends SummerMailStore {
   private _onTimeline = (event: MatrixEvent, room?: Room, toStartOfTimeline?: boolean) => {
     if (toStartOfTimeline || !room) return;
     this._refreshRooms();
-    if (room.roomId === this._selectedRoomId) {
-      this._refreshTimeline();
-      void this.markSelectedRoomRead();
+    if (room.roomId === this._selectedRoomId || this._visibleRooms.includes(room.roomId)) {
+      this._refreshTimeline(room.roomId);
+      if (room.roomId === this._selectedRoomId) void this.markSelectedRoomRead();
     } else {
       this._notifyIfNeeded(event, room);
     }
@@ -801,35 +818,39 @@ export class MatrixChatStoreClass extends SummerMailStore {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  private _refreshTimeline() {
-    const room = this._selectedRoom();
+  private _refreshTimeline(id = this._selectedRoomId) {
+    if (!id) return;
+    const room = this._client?.getRoom(id);
     if (!room || !this._userId) {
-      this._timeline = [];
+      this._timelines.set(id, []);
       return;
     }
-    this._timeline = room
-      .getLiveTimeline()
-      .getEvents()
-      .map((event) => {
-        const body = eventBody(event);
-        if (!body) return null;
-        return {
-          body,
-          encrypted: event.isEncrypted(),
-          eventId: event.getId() || String(event.getTs()) + '-' + String(event.getSender() || ''),
-          failed: event.status === EventStatus.NOT_SENT,
-          pending: event.status === EventStatus.SENDING || event.isSending(),
-          own: event.getSender() === this._userId,
-          reactions: eventReactions(room, event, this._userId),
-          replyTo: replyPreview(room, event),
-          senderId: event.getSender() || '',
-          senderName: senderName(room, event),
-          timestamp: event.getTs(),
-          undecrypted: event.isDecryptionFailure(),
-          kind: isNoticeEvent(event) ? 'notice' : 'message',
-        } as MatrixTimelineItem;
-      })
-      .filter(Boolean) as MatrixTimelineItem[];
+    this._timelines.set(
+      id,
+      room
+        .getLiveTimeline()
+        .getEvents()
+        .map((event) => {
+          const body = eventBody(event);
+          if (!body) return null;
+          return {
+            body,
+            encrypted: event.isEncrypted(),
+            eventId: event.getId() || String(event.getTs()) + '-' + String(event.getSender() || ''),
+            failed: event.status === EventStatus.NOT_SENT,
+            pending: event.status === EventStatus.SENDING || event.isSending(),
+            own: event.getSender() === this._userId,
+            reactions: eventReactions(room, event, this._userId),
+            replyTo: replyPreview(room, event),
+            senderId: event.getSender() || '',
+            senderName: senderName(room, event),
+            timestamp: event.getTs(),
+            undecrypted: event.isDecryptionFailure(),
+            kind: isNoticeEvent(event) ? 'notice' : 'message',
+          } as MatrixTimelineItem;
+        })
+        .filter(Boolean) as MatrixTimelineItem[]
+    );
   }
 }
 

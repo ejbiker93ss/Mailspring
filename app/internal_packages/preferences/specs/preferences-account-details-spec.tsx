@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { renderIntoDocument } from 'react-dom/test-utils';
 import { Account } from 'summermail-exports';
 
@@ -65,6 +66,42 @@ describe('PreferencesAccountDetails', function preferencesAccountDetails() {
       assertAccountState(this.component, this.component.setState.calls[0].args[0], {
         aliases: ['something'],
       });
+    });
+  });
+
+  describe('calendar and contact connection settings', () => {
+    it('shows CalDAV and CardDAV settings for generic IMAP accounts', () => {
+      const imapAccount = new Account({
+        id: 'imap-account',
+        name: 'IMAP User',
+        emailAddress: 'imap@example.com',
+        provider: 'imap',
+        settings: {},
+      });
+      const component = makeComponent({
+        account: imapAccount,
+        onAccountUpdated: this.onAccountUpdated,
+      });
+      const node = ReactDOM.findDOMNode(component) as HTMLElement;
+
+      expect(node.querySelector('.account-calendar-settings')).not.toBeNull();
+    });
+
+    it('hides CalDAV and CardDAV settings for SmarterMail API accounts', () => {
+      const smarterMailAccount = new Account({
+        id: 'smartermail-account',
+        name: 'SmarterMail User',
+        emailAddress: 'smartermail@example.com',
+        provider: 'smartermail',
+        settings: { sync_engine: 'smartermail_api' },
+      });
+      const component = makeComponent({
+        account: smarterMailAccount,
+        onAccountUpdated: this.onAccountUpdated,
+      });
+      const node = ReactDOM.findDOMNode(component) as HTMLElement;
+
+      expect(node.querySelector('.account-calendar-settings')).toBeNull();
     });
   });
 

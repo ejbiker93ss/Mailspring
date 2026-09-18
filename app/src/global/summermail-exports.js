@@ -62,8 +62,14 @@ lazyLoad(`SummerMailAPIRequest`, 'flux/summermail-api-request');
 lazyLoad(`MailsyncProcess`, 'mailsync-process');
 // The Database
 lazyLoad(`Matcher`, 'flux/attributes/matcher');
-lazyLoadWithGetter('AndCompositeMatcher', () => require('../flux/attributes/matcher').AndCompositeMatcher);
-lazyLoadWithGetter('OrCompositeMatcher', () => require('../flux/attributes/matcher').OrCompositeMatcher);
+lazyLoadWithGetter(
+  'AndCompositeMatcher',
+  () => require('../flux/attributes/matcher').AndCompositeMatcher
+);
+lazyLoadWithGetter(
+  'OrCompositeMatcher',
+  () => require('../flux/attributes/matcher').OrCompositeMatcher
+);
 lazyLoad(`DatabaseStore`, 'flux/stores/database-store');
 lazyLoad(`QueryResultSet`, 'flux/models/query-result-set');
 lazyLoad(`QuerySubscription`, 'flux/models/query-subscription');
@@ -161,6 +167,7 @@ load(`CrossAccountTransferStore`, 'flux/stores/cross-account-transfer-store');
 load(`SearchableComponentStore`, 'flux/stores/searchable-component-store');
 
 lazyLoad(`ServiceRegistry`, `registries/service-registry`);
+lazyLoad(`AutomationActionRegistry`, `registries/automation-action-registry`);
 
 // Decorators
 lazyLoad(`InflatesDraftClientId`, 'decorators/inflates-draft-client-id');

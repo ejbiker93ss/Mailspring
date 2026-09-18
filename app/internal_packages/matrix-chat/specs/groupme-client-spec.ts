@@ -9,6 +9,7 @@ describe('GroupMe unofficial client mapping', () => {
   it('keeps group identity, preview, and members', () => {
     const chat = mapGroupMeGroup({
       id: '111',
+      image_url: 'https://i.groupme.com/group-avatar.jpeg',
       name: 'Family',
       updated_at: 1700000000,
       unread_count: 2,
@@ -19,6 +20,7 @@ describe('GroupMe unofficial client mapping', () => {
       },
     });
     expect(chat).toEqual({
+      avatarUrl: 'https://i.groupme.com/group-avatar.jpeg',
       conversationId: '111',
       id: '111',
       kind: 'group',
@@ -36,7 +38,11 @@ describe('GroupMe unofficial client mapping', () => {
     const chat = mapGroupMeDirect(
       {
         updated_at: 1700000100,
-        other_user: { id: '22', name: 'Bob' },
+        other_user: {
+          id: '22',
+          name: 'Bob',
+          avatar_url: 'https://i.groupme.com/bob-avatar.jpeg',
+        },
         last_message: {
           conversation_id: '11+22',
           created_at: 1700000100,
@@ -49,6 +55,12 @@ describe('GroupMe unofficial client mapping', () => {
     expect(chat.kind).toBe('direct');
     expect(chat.conversationId).toBe('11+22');
     expect(chat.lastMessage).toBe('On my way');
+    expect(chat.avatarUrl).toBe('https://i.groupme.com/bob-avatar.jpeg');
+  });
+
+  it('keeps a null avatar fallback when GroupMe has no image', () => {
+    expect(mapGroupMeGroup({ id: '111', name: 'Family' }).avatarUrl).toBe(null);
+    expect(mapGroupMeDirect({ other_user: { id: '22', name: 'Bob' } }).avatarUrl).toBe(null);
   });
 
   it('uses GroupMe server read state without inventing local unread chats', () => {

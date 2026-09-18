@@ -19,6 +19,7 @@ export interface GroupMeMention {
 }
 
 export interface GroupMeChat {
+  avatarUrl: string | null;
   conversationId: string;
   id: string;
   kind: 'group' | 'direct';
@@ -288,6 +289,7 @@ export function mapGroupMeGroup(raw: any): GroupMeChat {
       }))
     : [];
   return {
+    avatarUrl: group.image_url ? String(group.image_url) : null,
     conversationId: String(group.id),
     id: String(group.id),
     kind: 'group',
@@ -319,6 +321,7 @@ export function mapGroupMeDirect(raw: any, userId?: string | null): GroupMeChat 
       (userId && otherId ? [String(userId), otherId].sort().join('+') : otherId)
   );
   return {
+    avatarUrl: other.avatar_url ? String(other.avatar_url) : null,
     conversationId,
     id: otherId,
     kind: 'direct',

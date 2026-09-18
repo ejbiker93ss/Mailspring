@@ -6,11 +6,11 @@ import {
   WorkspaceStore,
 } from 'summermail-exports';
 import MatrixChatStore from './matrix-chat-store';
-import MatrixConversation from './matrix-conversation';
+import MatrixConversation from './matrix-multichat';
 import MatrixRoomList from './matrix-room-list';
 import MatrixPeople from './matrix-people';
 import GroupMeChatStore from './groupme-store';
-import GroupMeConversation from './groupme-conversation';
+import GroupMeConversation from './groupme-multichat';
 import GroupMeRoomList from './groupme-room-list';
 import GroupMePeople from './groupme-people';
 

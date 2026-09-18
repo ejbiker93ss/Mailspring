@@ -16,6 +16,19 @@ interface State {
   userName: string | null;
 }
 
+export function GroupMeAvatar({ chat }: { chat: GroupMeChat }) {
+  const [imageFailed, setImageFailed] = React.useState(false);
+
+  return (
+    <span className="matrix-room-avatar" aria-hidden="true">
+      {initials(chat.name)}
+      {chat.avatarUrl && !imageFailed ? (
+        <img src={chat.avatarUrl} alt="" onError={() => setImageFailed(true)} />
+      ) : null}
+    </span>
+  );
+}
+
 export default class GroupMeRoomList extends React.Component<Record<string, never>, State> {
   static displayName = 'GroupMeRoomList';
   static containerStyles = {
@@ -143,9 +156,7 @@ export default class GroupMeRoomList extends React.Component<Record<string, neve
           onContextMenu={(event) => this._showChatMenu(event, chat)}
         >
           <span className="matrix-room-avatar-wrap">
-            <span className="matrix-room-avatar" aria-hidden="true">
-              {initials(chat.name)}
-            </span>
+            <GroupMeAvatar key={chat.avatarUrl || 'fallback'} chat={chat} />
           </span>
           <span className="matrix-room-copy">
             <span className="matrix-room-name">{chat.name}</span>

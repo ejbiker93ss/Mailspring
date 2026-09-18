@@ -7,6 +7,7 @@ describe('account setup completion', () => {
     const mainWindow = {
       focus: jasmine.createSpy('focus'),
       show: jasmine.createSpy('show'),
+      sendCommand: jasmine.createSpy('sendCommand'),
       waitForLoad: jasmine.createSpy('waitForLoad'),
     };
     const onboarding = { close: jasmine.createSpy('close') };
@@ -28,7 +29,9 @@ describe('account setup completion', () => {
     expect(mainWindow.show).toHaveBeenCalled();
     expect(mainWindow.focus).toHaveBeenCalled();
     expect(onboarding.close).toHaveBeenCalled();
-    expect(mainWindow.waitForLoad).not.toHaveBeenCalled();
+    expect(mainWindow.waitForLoad).toHaveBeenCalled();
+    (mainWindow.waitForLoad as jasmine.Spy).mostRecentCall.args[0]();
+    expect(mainWindow.sendCommand).toHaveBeenCalledWith('window:select-account-0');
   });
 
   it('retains the delayed main-window handoff on Linux', () => {
@@ -41,6 +44,7 @@ describe('account setup completion', () => {
     expect(onboarding.close).not.toHaveBeenCalled();
     expect(mainWindow.waitForLoad).toHaveBeenCalled();
     (mainWindow.waitForLoad as jasmine.Spy).mostRecentCall.args[0]();
+    expect(mainWindow.sendCommand).toHaveBeenCalledWith('window:select-account-0');
     expect(onboarding.close).toHaveBeenCalled();
   });
 

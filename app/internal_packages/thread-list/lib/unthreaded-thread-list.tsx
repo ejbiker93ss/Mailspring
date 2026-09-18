@@ -9,6 +9,7 @@ import {
   FocusedPerspectiveStore,
   CategoryStore,
   TaskFactory,
+  CanvasUtils,
   localized,
 } from 'summermail-exports';
 import { Spinner, ScrollRegion } from 'summermail-component-kit';
@@ -24,6 +25,32 @@ import {
 } from './date-sections';
 
 const { Message } = require('summermail-exports');
+
+export const dragDataForUnthreadedItem = (item) => {
+  if (!item || !item.thread || !item.message) return null;
+  return {
+    threadIds: [item.thread.id],
+    messageIds: [item.message.id],
+    accountIds: [item.thread.accountId],
+    sourceFolderId: item.message.folder && item.message.folder.id,
+  };
+};
+
+export const beginUnthreadedItemDrag = (event, item) => {
+  const data = dragDataForUnthreadedItem(item);
+  if (!data) {
+    event.preventDefault();
+    return;
+  }
+
+  event.stopPropagation();
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.dropEffect = 'move';
+  const canvas = CanvasUtils.canvasForDragging('threads', data.threadIds.length);
+  event.dataTransfer.setDragImage(canvas, 10, 10);
+  event.dataTransfer.setData('summermail-threads-data', JSON.stringify(data));
+  event.dataTransfer.setData(`summermail-accounts=${data.accountIds.join(',')}`, '1');
+};
 
 const DisclosureChevron = ({ expanded, className = '' }) => (
   <span
@@ -479,6 +506,8 @@ export default class UnthreadedThreadList extends React.Component {
       <div
         key={item.message.id}
         className={`unthreaded-row ${nested ? 'nested' : ''} ${isLast ? 'last' : ''} ${selected ? 'selected' : ''} ${item.message.unread ? 'unread' : ''} ${inTrash ? 'in-trash' : ''}`}
+        draggable
+        onDragStart={(event) => beginUnthreadedItemDrag(event, item)}
         onClick={(event) => {
           event.stopPropagation();
           if (onClick) {

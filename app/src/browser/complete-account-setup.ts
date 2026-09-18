@@ -2,6 +2,7 @@ interface SetupWindow {
   close(): void;
   focus?(): void;
   show?(): void;
+  sendCommand?(command: string, ...args: unknown[]): void;
   waitForLoad?(callback: () => void): void;
 }
 
@@ -20,11 +21,16 @@ export function completeAccountSetup(
   const onboarding = windowManager.get(windowKeys.onboarding);
   if (!mainWindow || !onboarding) return;
 
+  const revealAllAccounts = () => mainWindow.sendCommand?.('window:select-account-0');
+
   if (platform === 'linux' && mainWindow?.waitForLoad) {
     // On Wayland, closing the onboarding window (which holds the activation
     // context) before the main window is visible can prevent show() from
     // presenting the main window. Keep the delayed handoff on Linux.
-    mainWindow.waitForLoad(() => onboarding.close());
+    mainWindow.waitForLoad(() => {
+      revealAllAccounts();
+      onboarding.close();
+    });
     return;
   }
 
@@ -36,6 +42,12 @@ export function completeAccountSetup(
   if (platform === 'win32') {
     mainWindow.show?.();
     mainWindow.focus?.();
+  }
+
+  if (mainWindow.waitForLoad) {
+    mainWindow.waitForLoad(revealAllAccounts);
+  } else {
+    revealAllAccounts();
   }
 
   // Windows and macOS do not need the Wayland activation context.

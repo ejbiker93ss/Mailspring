@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import {
   Account,
@@ -11,11 +13,13 @@ import {
   Rx,
   Thread,
 } from 'summermail-exports';
+import { CrossAccountMoveFolderTask } from '../../../src/flux/tasks/cross-account-move-folder-task';
 import MessageList from '../../message-list/lib/message-list';
 
 const CONFIG_KEY = 'mail-kanban.lanesByAccount';
 const MAX_LANES = 6;
 const THREAD_LIMIT = 1000;
+export const ALL_ACCOUNTS_ID = '__all-accounts__';
 
 type LaneConfig = { id: string; folderId: string };
 
@@ -40,6 +44,21 @@ export const suggestedLaneFolders = (folders: Folder[]) => {
   const archive = folders.find((folder) => folder.role === 'archive');
   const last = done || archive;
   return [inbox, last].filter((folder, index, all) => folder && all.indexOf(folder) === index);
+};
+
+export const suggestedCombinedLaneFolders = (accounts: Account[], folders: Folder[]) => {
+  const suggestions = accounts.map((account) =>
+    suggestedLaneFolders(folders.filter((folder) => folder.accountId === account.id))
+  );
+  const inboxes = suggestions.map((foldersForAccount) => foldersForAccount[0]).filter(Boolean);
+  const finishingFolders = suggestions
+    .map((foldersForAccount) => foldersForAccount[1])
+    .filter(Boolean);
+  return [...inboxes, ...finishingFolders]
+    .filter(
+      (folder, index, all) => all.findIndex((candidate) => candidate.id === folder.id) === index
+    )
+    .slice(0, MAX_LANES);
 };
 
 const storedLanes = (): Record<string, LaneConfig[]> => AppEnv.config.get(CONFIG_KEY) || {};
@@ -87,28 +106,45 @@ export default class MailKanban extends React.Component<Record<string, never>, S
 
   _onAccountsChanged = () => {
     const accounts = this._accounts();
-    const accountId = accounts.some((account) => account.id === this.state.accountId)
-      ? this.state.accountId
-      : accounts[0]?.id || '';
+    const accountId =
+      accounts.length === 0
+        ? ''
+        : this.state.accountId === ALL_ACCOUNTS_ID ||
+            accounts.some((account) => account.id === this.state.accountId)
+          ? this.state.accountId
+          : accounts[0]?.id || '';
     this.setState({ accountId }, () => {
       this._reloadFolders();
       this._subscribeToThreads();
     });
   };
 
-  _foldersForAccount = () =>
-    CategoryStore.categories(this.state.accountId)
+  _foldersForSelection = () => {
+    const accountIds =
+      this.state.accountId === ALL_ACCOUNTS_ID
+        ? this._accounts().map((account) => account.id)
+        : [this.state.accountId];
+    return accountIds
+      .flatMap((accountId) => CategoryStore.categories(accountId))
       .filter((category) => category instanceof Folder && category.role !== 'drafts')
-      .sort((a, b) => a.displayName.localeCompare(b.displayName)) as Folder[];
+      .sort((a, b) => {
+        const accountOrder = accountIds.indexOf(a.accountId) - accountIds.indexOf(b.accountId);
+        return accountOrder || a.displayName.localeCompare(b.displayName);
+      }) as Folder[];
+  };
 
   _reloadFolders = () => {
     if (!this.state.accountId) return;
-    const folders = this._foldersForAccount();
+    const folders = this._foldersForSelection();
     const saved = storedLanes()[this.state.accountId] || [];
     const validSaved = saved.filter((lane) =>
       folders.some((folder) => folder.id === lane.folderId)
     );
-    const suggested = suggestedLaneFolders(folders).map((folder) => ({
+    const suggestedFolders =
+      this.state.accountId === ALL_ACCOUNTS_ID
+        ? suggestedCombinedLaneFolders(this._accounts(), folders)
+        : suggestedLaneFolders(folders);
+    const suggested = suggestedFolders.map((folder) => ({
       id: laneId(),
       folderId: folder.id,
     }));
@@ -121,8 +157,11 @@ export default class MailKanban extends React.Component<Record<string, never>, S
   _subscribeToThreads = () => {
     this.threadsDisposable?.dispose();
     if (!this.state.accountId) return;
-    const query = DatabaseStore.findAll<Thread>(Thread)
-      .where({ accountId: this.state.accountId })
+    let query = DatabaseStore.findAll<Thread>(Thread);
+    if (this.state.accountId !== ALL_ACCOUNTS_ID) {
+      query = query.where({ accountId: this.state.accountId });
+    }
+    query = query
       .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
       .limit(THREAD_LIMIT);
     this.threadsDisposable = Rx.Observable.fromQuery(query).subscribe((threads: Thread[]) =>
@@ -178,12 +217,46 @@ export default class MailKanban extends React.Component<Record<string, never>, S
         this._matchesSearch(thread)
     );
 
+  _canDropThreadOnFolder = (
+    thread: Thread | undefined,
+    sourceFolder: Folder | undefined,
+    folder: Folder
+  ) => {
+    if (!thread || sourceFolder?.id === folder.id) return false;
+    if (thread.accountId === folder.accountId) return true;
+    return (
+      this.state.accountId === ALL_ACCOUNTS_ID &&
+      AppEnv.config.get('core.reading.crossAccountDragEnabled') !== false &&
+      !folder.isLockedCategory()
+    );
+  };
+
   _moveThread = (threadId: string, sourceFolder: Folder | undefined, folder: Folder) => {
     const thread = this.state.threads.find((candidate) => candidate.id === threadId);
     // A conversation can span both lanes (for example, an older completed
     // message and a new Inbox reply). Destination membership must not prevent
     // moving the remaining messages out of the source lane.
-    if (!thread || sourceFolder?.id === folder.id) {
+    if (!this._canDropThreadOnFolder(thread, sourceFolder, folder)) {
+      return;
+    }
+    if (thread.accountId !== folder.accountId) {
+      const transfer = new CrossAccountMoveFolderTask({
+        phase: 'prepare',
+        threads: [thread],
+        sourceAccountId: thread.accountId,
+        targetAccountId: folder.accountId,
+        targetFolder: folder,
+        deleteFromSource:
+          (AppEnv.config.get('core.reading.crossAccountDragBehavior') || 'move') === 'move',
+        source: 'Mail Kanban cross-account drag and drop',
+      });
+      transfer.stagingDirectory = path.join(
+        AppEnv.getConfigDirPath(),
+        'cross-account-transfers',
+        transfer.transferId
+      );
+      fs.mkdirSync(transfer.stagingDirectory, { recursive: true });
+      Actions.queueTask(transfer);
       return;
     }
     Actions.queueTask(
@@ -230,6 +303,14 @@ export default class MailKanban extends React.Component<Record<string, never>, S
       .filter(Boolean)
       .join(', ');
 
+  _accountLabel = (accountId: string) =>
+    this._accounts().find((account) => account.id === accountId)?.emailAddress || accountId;
+
+  _folderLabel = (folder: Folder) =>
+    this.state.accountId === ALL_ACCOUNTS_ID
+      ? `${this._accountLabel(folder.accountId)} · ${folder.displayName}`
+      : folder.displayName;
+
   _openPreview = (thread: Thread) => {
     this.setState({ selectedThreadId: thread.id });
     Actions.setFocus({ collection: 'thread', item: thread, usingClick: true });
@@ -249,7 +330,11 @@ export default class MailKanban extends React.Component<Record<string, never>, S
       draggable
       onDragStart={(event) => {
         event.stopPropagation();
-        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.effectAllowed =
+          this.state.accountId === ALL_ACCOUNTS_ID &&
+          AppEnv.config.get('core.reading.crossAccountDragEnabled') !== false
+            ? 'copyMove'
+            : 'move';
         event.dataTransfer.setData(
           'summermail-threads-data',
           JSON.stringify({
@@ -281,6 +366,9 @@ export default class MailKanban extends React.Component<Record<string, never>, S
       }}
       tabIndex={0}
     >
+      {this.state.accountId === ALL_ACCOUNTS_ID ? (
+        <div className="mail-kanban-card-account">{this._accountLabel(thread.accountId)}</div>
+      ) : null}
       <div className="mail-kanban-card-subject">{thread.subject || localized('No Subject')}</div>
       <div className="mail-kanban-card-participants">{this._participants(thread)}</div>
       {thread.snippet ? <div className="mail-kanban-card-snippet">{thread.snippet}</div> : null}
@@ -301,7 +389,13 @@ export default class MailKanban extends React.Component<Record<string, never>, S
         <header className="mail-kanban-header">
           <div>
             <h1>{localized('Mail Kanban')}</h1>
-            <p>{localized('Drag a card to another lane to move the email to that folder.')}</p>
+            <p>
+              {this.state.accountId === ALL_ACCOUNTS_ID
+                ? localized(
+                    'Drag cards between accounts. Your cross-account move or copy preference applies.'
+                  )
+                : localized('Drag a card to another lane to move the email to that folder.')}
+            </p>
           </div>
           <div className="mail-kanban-controls">
             <label className="mail-kanban-search">
@@ -330,6 +424,7 @@ export default class MailKanban extends React.Component<Record<string, never>, S
                 onChange={this._changeAccount}
                 aria-label={localized('Account')}
               >
+                <option value={ALL_ACCOUNTS_ID}>{localized('All accounts')}</option>
                 {accounts.map((account: Account) => (
                   <option key={account.id} value={account.id}>
                     {account.emailAddress}
@@ -352,7 +447,9 @@ export default class MailKanban extends React.Component<Record<string, never>, S
 
         {!this.state.lanes.length ? (
           <div className="mail-kanban-empty">
-            {localized('No mail folders are available for this account.')}
+            {this.state.accountId === ALL_ACCOUNTS_ID
+              ? localized('No mail folders are available for the selected accounts.')
+              : localized('No mail folders are available for this account.')}
           </div>
         ) : (
           <div className="mail-kanban-workspace">
@@ -371,7 +468,17 @@ export default class MailKanban extends React.Component<Record<string, never>, S
                     key={lane.id}
                     onDragEnter={(event) => {
                       event.preventDefault();
-                      this.setState({ dragOverLaneId: lane.id });
+                      const thread = this.state.threads.find(
+                        (candidate) => candidate.id === this.state.draggingThreadId
+                      );
+                      const sourceFolder = this.state.folders.find(
+                        (candidate) => candidate.id === this.state.draggingSourceFolderId
+                      );
+                      this.setState({
+                        dragOverLaneId: this._canDropThreadOnFolder(thread, sourceFolder, folder)
+                          ? lane.id
+                          : null,
+                      });
                     }}
                     onDragLeave={(event) => {
                       if (!event.currentTarget.contains(event.relatedTarget as Node)) {
@@ -380,7 +487,23 @@ export default class MailKanban extends React.Component<Record<string, never>, S
                     }}
                     onDragOver={(event) => {
                       event.preventDefault();
-                      event.dataTransfer.dropEffect = 'move';
+                      const thread = this.state.threads.find(
+                        (candidate) => candidate.id === this.state.draggingThreadId
+                      );
+                      const sourceFolder = this.state.folders.find(
+                        (candidate) => candidate.id === this.state.draggingSourceFolderId
+                      );
+                      if (!this._canDropThreadOnFolder(thread, sourceFolder, folder)) {
+                        event.dataTransfer.dropEffect = 'none';
+                      } else if (thread.accountId !== folder.accountId) {
+                        event.dataTransfer.dropEffect =
+                          (AppEnv.config.get('core.reading.crossAccountDragBehavior') || 'move') ===
+                          'copy'
+                            ? 'copy'
+                            : 'move';
+                      } else {
+                        event.dataTransfer.dropEffect = 'move';
+                      }
                     }}
                     onDrop={(event) => this._drop(event, folder)}
                   >
@@ -392,7 +515,7 @@ export default class MailKanban extends React.Component<Record<string, never>, S
                       >
                         {this.state.folders.map((candidate) => (
                           <option key={candidate.id} value={candidate.id}>
-                            {candidate.displayName}
+                            {this._folderLabel(candidate)}
                           </option>
                         ))}
                       </select>

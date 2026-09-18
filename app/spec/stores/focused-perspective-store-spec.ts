@@ -210,11 +210,27 @@ describe('FocusedPerspectiveStore', function () {
       expect(FocusedPerspectiveStore.current().categories()).toEqual([this.userCategory]);
     }));
 
-  describe('_setPerspective', () =>
+  describe('_setPerspective', () => {
+    it('persists account visibility immediately when the sidebar selection changes', function () {
+      const saveWindowState = AppEnv.saveWindowState as jasmine.Spy;
+      saveWindowState.reset();
+      FocusedPerspectiveStore._initialized = true;
+      AppEnv.savedState.sidebarAccountIds = [this.account.id];
+
+      FocusedPerspectiveStore._setPerspective(this.inboxPerspective, [
+        this.account.id,
+        'new-account-id',
+      ]);
+
+      expect(AppEnv.savedState.sidebarAccountIds).toEqual([this.account.id, 'new-account-id']);
+      expect(saveWindowState).toHaveBeenCalled();
+    });
+
     it('should not trigger if the perspective is already focused', function () {
       FocusedPerspectiveStore._setPerspective(this.inboxPerspective);
       (FocusedPerspectiveStore.trigger as jasmine.Spy).reset();
       FocusedPerspectiveStore._setPerspective(this.inboxPerspective);
       expect(FocusedPerspectiveStore.trigger).not.toHaveBeenCalled();
-    }));
+    });
+  });
 });

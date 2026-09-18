@@ -583,3 +583,10 @@ export const createTemplate = create('createTemplate', ActionScopeWindow);
 export const showTemplates = create('showTemplates', ActionScopeWindow);
 export const deleteTemplate = create('deleteTemplate', ActionScopeWindow);
 export const renameTemplate = create('renameTemplate', ActionScopeWindow);
+
+// Automations
+export const createAutomation = create('createAutomation', ActionScopeWindow);
+export const updateAutomation = create('updateAutomation', ActionScopeWindow);
+export const deleteAutomation = create('deleteAutomation', ActionScopeWindow);
+export const duplicateAutomation = create('duplicateAutomation', ActionScopeWindow);
+export const runAutomation = create('runAutomation', ActionScopeWindow);

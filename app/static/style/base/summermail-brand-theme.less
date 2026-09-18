@@ -14,6 +14,7 @@
     --sm-brand-spectrum-soft: @spectrum-soft;
     --sm-focus-color: @focus-color;
     --sm-focus-contrast: @focus-contrast;
+    --sm-brand-mark-frame: color-mix(in srgb, #10142c 92%, @focus-color 8%);
     // Electron's Windows caption overlay cannot render a CSS gradient. Keep a
     // solid companion token so its native buttons track the active theme.
     --sm-titlebar-color: @titlebar-color;
@@ -110,8 +111,8 @@
 
   summermail-workspace .thread-list.thread-list-narrow {
     .list-item.unread:before {
-      width: 1px;
-      background: @spectrum;
+      width: 3px;
+      background: @focus-color;
     }
 
     .list-item.selected,
