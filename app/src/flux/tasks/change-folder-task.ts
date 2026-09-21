@@ -21,6 +21,8 @@ export class ChangeFolderTask extends ChangeMailTask {
   static attributes = {
     ...ChangeMailTask.attributes,
 
+    preserveSent: Attributes.Boolean({ modelKey: 'preserveSent' }),
+
     previousFolder: Attributes.Obj({
       modelKey: 'previousFolder',
       itemClass: Folder,
@@ -37,6 +39,7 @@ export class ChangeFolderTask extends ChangeMailTask {
   previousFolder: Folder;
   folder: Folder;
   crossAccountTransferId: string;
+  preserveSent: boolean;
 
   constructor(
     data: AttributeValues<typeof ChangeFolderTask.attributes> & {
@@ -48,13 +51,15 @@ export class ChangeFolderTask extends ChangeMailTask {
       const folders = [];
       const seenFolderIds = new Set<string>();
       for (const t of data.threads || []) {
-        const f = t.folders?.find((f) => f?.id !== data.folder?.id) || t.folders?.[0];
+        const candidates = t.folders?.filter((f) => !data.preserveSent || f.role !== 'sent');
+        const f = candidates?.find((f) => f?.id !== data.folder?.id) || candidates?.[0];
         if (f && !seenFolderIds.has(f.id)) {
           seenFolderIds.add(f.id);
           folders.push(f);
         }
       }
       for (const m of data.messages || []) {
+        if (data.preserveSent && m.folder.role === 'sent') continue;
         if (!seenFolderIds.has(m.folder.id)) {
           seenFolderIds.add(m.folder.id);
           folders.push(m.folder);

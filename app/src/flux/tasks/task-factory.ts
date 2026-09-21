@@ -73,7 +73,12 @@ export const TaskFactory = {
 
       const archive = CategoryStore.getArchiveCategory(accountId);
       if (!archive) return null;
-      return new ChangeFolderTask({ folder: archive, threads: accountThreads, source });
+      return new ChangeFolderTask({
+        folder: archive,
+        threads: accountThreads,
+        source,
+        preserveSent: true,
+      });
     });
   },
 

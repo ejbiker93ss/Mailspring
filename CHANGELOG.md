@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.77 (9/21/2026)
+
+- Archive conversation messages while preserving the account's Sent Items copies, including custom-named Sent folders.
+- Keep explicit Move to Folder behavior unchanged, including when moving a Sent message deliberately.
+
 ## 1.23.76 (9/21/2026)
 
 - Keep archive and folder moves bound to the exact messages selected before background threading changes.
