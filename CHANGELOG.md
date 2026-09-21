@@ -1,5 +1,13 @@
 # SummerMail Changelog
 
+## 1.23.76 (9/21/2026)
+
+- Keep archive and folder moves bound to the exact messages selected before background threading changes.
+- Preserve confirmed progress and restore unconfirmed messages after partial IMAP, SmarterMail API, and Microsoft Graph moves.
+- Stop treating unresolved SmarterMail or Graph message identities as successfully moved.
+- Limit SmarterMail move batches to 100 messages and destination metadata checks to 200 rows; preserve confirmed destination UIDs instead of replacing them with placeholders.
+- Include the latest local mail, calendar, chat, and provider-task improvements.
+
 ## 1.23.75 (9/18/2026)
 
 - Gradually hydrate missing SmarterMail previews and reply headers in small background batches, with failure backoff to avoid overloading the server.

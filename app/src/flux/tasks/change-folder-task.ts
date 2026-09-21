@@ -122,6 +122,15 @@ export class ChangeFolderTask extends ChangeMailTask {
     return this.folder.name === 'archive' || this.folder.name === 'all';
   }
 
+  onError() {
+    AppEnv.showErrorDialog({
+      title: localized('Some messages could not be moved'),
+      message: localized(
+        'The move was not fully confirmed by the server. Completed moves were kept, and unconfirmed messages are available for synchronization again. Check the original and destination folders before retrying; a copy may already exist in the destination.'
+      ),
+    });
+  }
+
   createUndoTask() {
     const task = super.createUndoTask();
     const { folder, previousFolder } = task;
