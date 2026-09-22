@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.78 (9/22/2026)
+
+- Use SmarterMail's confirmed delete-to-Trash operation instead of treating a delete as a normal folder move.
+- Stop showing a false "messages could not be moved" warning when SmarterMail accepts the delete without returning destination UID mappings.
+
 ## 1.23.77 (9/21/2026)
 
 - Archive conversation messages while preserving the account's Sent Items copies, including custom-named Sent folders.
