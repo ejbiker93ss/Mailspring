@@ -50,8 +50,62 @@ export function parseICSString(ics: string) {
   fixJCalDatesWithoutTimes(jcalData);
 
   const root = new ICAL.Component(jcalData);
+  // Register zones before ICAL.Event reads and caches DTSTART / RECURRENCE-ID values.
+  registerTimezones(root);
   const event = new ICAL.Event(root.name === 'vevent' ? root : root.getFirstSubcomponent('vevent'));
   return { root, event };
+}
+
+function registerTimezones(vcalendar: ICALComponent): void {
+  for (const vtz of vcalendar.getAllSubcomponents('vtimezone')) {
+    ICAL.TimezoneService.register(vtz);
+  }
+
+  // RFC 7809 permits servers to omit VTIMEZONE for IANA identifiers. ICAL.js has no IANA
+  // database, so synthesize the fixed offset in force on the property's own date.
+  const momentTz = require('moment-timezone');
+  for (const vevent of vcalendar.getAllSubcomponents('vevent')) {
+    for (const prop of vevent.getAllProperties()) {
+      const tzid = prop.getParameter('tzid');
+      if (typeof tzid !== 'string' || ICAL.TimezoneService.has(tzid)) continue;
+      if (!momentTz.tz.zone(tzid)) continue;
+
+      const [, year, month, day] = /^(\d{4})(\d{2})(\d{2})/.exec(String(prop.toJSON()[3])) || [];
+      const referenceDate = year ? new Date(Date.UTC(+year, +month - 1, +day)) : new Date();
+      ICAL.TimezoneService.register(
+        new ICAL.Component(
+          ICAL.parse(
+            `BEGIN:VCALENDAR\r\nVERSION:2.0\r\n${createVTIMEZONEString(
+              tzid,
+              referenceDate
+            )}\r\nEND:VCALENDAR`
+          )
+        ).getFirstSubcomponent('vtimezone')
+      );
+    }
+  }
+}
+
+export function createVTIMEZONEString(tzId: string, referenceDate: Date): string {
+  const momentTz = require('moment-timezone');
+  const momentInZone = momentTz(referenceDate).tz(tzId);
+  const utcOffsetMin = momentInZone.utcOffset();
+  const absMin = Math.abs(utcOffsetMin);
+  const sign = utcOffsetMin >= 0 ? '+' : '-';
+  const offset = `${sign}${String(Math.floor(absMin / 60)).padStart(2, '0')}${String(
+    absMin % 60
+  ).padStart(2, '0')}`;
+  return [
+    'BEGIN:VTIMEZONE',
+    `TZID:${tzId}`,
+    'BEGIN:STANDARD',
+    'DTSTART:19700101T000000',
+    `TZOFFSETFROM:${offset}`,
+    `TZOFFSETTO:${offset}`,
+    `TZNAME:${momentInZone.zoneAbbr()}`,
+    'END:STANDARD',
+    'END:VTIMEZONE',
+  ].join('\r\n');
 }
 
 export function emailFromParticipantURI(uri: string): string | null {

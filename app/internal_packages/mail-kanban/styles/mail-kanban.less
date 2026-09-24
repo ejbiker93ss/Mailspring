@@ -120,8 +120,9 @@
   max-width: 420px;
   min-height: 0;
   border: 1px solid @border-color-divider;
-  border-radius: 10px;
-  background: @background-secondary;
+  border-radius: var(--fm-radius-lg, 14px);
+  background: var(--fm-surface-muted, @background-secondary);
+  overflow: hidden;
   transition:
     border-color 120ms ease,
     background 120ms ease;
@@ -181,9 +182,9 @@
   margin-bottom: 9px;
   padding: 12px;
   border: 1px solid @border-color-divider;
-  border-radius: 8px;
-  background: @background-primary;
-  box-shadow: 0 1px 2px fade(#000, 8%);
+  border-radius: var(--fm-radius-thread, 12px);
+  background: var(--fm-surface-elevated, @background-primary);
+  box-shadow: var(--fm-shadow-sm, 0 1px 3px fade(#000, 9%));
   cursor: grab;
 
   &:hover {
@@ -264,7 +265,7 @@
 .mail-kanban-lane-empty {
   padding: 48px 10px;
   border: 1px dashed @border-color-divider;
-  border-radius: 7px;
+  border-radius: var(--fm-radius-md, 10px);
 }
 
 .mail-kanban-preview {

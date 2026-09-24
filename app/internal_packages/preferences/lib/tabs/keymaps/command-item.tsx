@@ -177,7 +177,12 @@ export default class CommandKeybinding extends React.Component<
 
     let value: React.ReactChild | React.ReactChild[] = 'None';
     if (bindings.length > 0) {
-      value = [...new Set(bindings)].map(this._renderKeystrokes);
+      // mod and the platform's explicit modifier are the same physical shortcut.
+      const platformModifier = process.platform === 'darwin' ? 'command' : 'ctrl';
+      const byPhysicalKey = new Map(
+        bindings.map((binding) => [binding.replace(/\bmod\b/g, platformModifier), binding])
+      );
+      value = [...byPhysicalKey.values()].map(this._renderKeystrokes);
     }
 
     let classnames = 'shortcut';

@@ -6,6 +6,7 @@ import {
   Folder,
   Label,
   Event as SummerMailEvent,
+  Actions,
 } from 'summermail-exports';
 
 // ---------------------------------------------------------------------------
@@ -228,6 +229,31 @@ describe('ChangeFolderTask', function () {
       const task = new ChangeFolderTask({ threads: [t1], folder: archive } as any);
       const undoTask = task.createUndoTask();
       expect(() => undoTask.createUndoTask()).toThrow();
+    });
+  });
+
+  describe('onError()', function () {
+    beforeEach(function () {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(600000));
+      spyOn(Actions, 'showSyncStatusNotice');
+    });
+
+    afterEach(function () {
+      jasmine.clock().uninstall();
+    });
+
+    it('coalesces repeated move failures into one status notice per five minutes', function () {
+      const first = new ChangeFolderTask({ threadIds: ['t1'], folder: archive } as any);
+      const second = new ChangeFolderTask({ threadIds: ['t2'], folder: archive } as any);
+
+      first.onError();
+      second.onError();
+      expect(Actions.showSyncStatusNotice).toHaveBeenCalledTimes(1);
+
+      jasmine.clock().tick(300001);
+      second.onError();
+      expect(Actions.showSyncStatusNotice).toHaveBeenCalledTimes(2);
     });
   });
 });

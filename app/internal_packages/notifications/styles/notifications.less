@@ -45,6 +45,27 @@
       color: @text-color-very-subtle;
       float: right;
     }
+
+    &.sync-status-notice {
+      .inner {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        border-bottom: 0;
+        color: @text-color-subtle;
+        animation: sync-status-notice-in 120ms ease-out;
+
+        &::before {
+          width: 7px;
+          height: 7px;
+          flex: 0 0 7px;
+          border-radius: 50%;
+          background: @color-warning;
+          content: '';
+        }
+      }
+    }
+
     .btn {
       display: block;
       text-align: center;
@@ -116,6 +137,19 @@
 
   transition: height 0.4s;
   transition-delay: 2s;
+}
+
+@keyframes sync-status-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-activity .item.sync-status-notice .inner {
+    animation: none;
+  }
 }
 
 .notifications-sticky {

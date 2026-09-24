@@ -27,17 +27,25 @@ const _findCorrespondingThread = (
 ) => {
   const dateClause = date
     ? new Matcher.And([
-        Thread.attributes.firstMessageTimestamp.lessThan(date + dateEpsilon),
-        Thread.attributes.firstMessageTimestamp.greaterThan(date - dateEpsilon),
+        Thread.attributes.firstMessageTimestamp.lessThan(new Date((date + dateEpsilon) * 1000)),
+        Thread.attributes.firstMessageTimestamp.greaterThan(new Date((date - dateEpsilon) * 1000)),
       ])
     : new Matcher.Or([
         new Matcher.And([
-          Thread.attributes.lastMessageSentTimestamp.lessThan(lastDate + dateEpsilon),
-          Thread.attributes.lastMessageSentTimestamp.greaterThan(lastDate - dateEpsilon),
+          Thread.attributes.lastMessageSentTimestamp.lessThan(
+            new Date((lastDate + dateEpsilon) * 1000)
+          ),
+          Thread.attributes.lastMessageSentTimestamp.greaterThan(
+            new Date((lastDate - dateEpsilon) * 1000)
+          ),
         ]),
         new Matcher.And([
-          Thread.attributes.lastMessageReceivedTimestamp.lessThan(lastDate + dateEpsilon),
-          Thread.attributes.lastMessageReceivedTimestamp.greaterThan(lastDate - dateEpsilon),
+          Thread.attributes.lastMessageReceivedTimestamp.lessThan(
+            new Date((lastDate + dateEpsilon) * 1000)
+          ),
+          Thread.attributes.lastMessageReceivedTimestamp.greaterThan(
+            new Date((lastDate - dateEpsilon) * 1000)
+          ),
         ]),
       ]);
 

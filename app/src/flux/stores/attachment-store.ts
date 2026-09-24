@@ -45,6 +45,7 @@ class AttachmentStore extends SummerMailStore {
   _filePreviewPaths = {};
   _filesDirectory: string = path.join(AppEnv.getConfigDirPath(), 'files');
   _lastDownloadDirectory: string;
+  _pendingAddsByDraft: { [headerMessageId: string]: Promise<void> } = {};
 
   constructor() {
     super();
@@ -460,7 +461,7 @@ class AttachmentStore extends SummerMailStore {
     });
   };
 
-  _onAddAttachment = async ({
+  _onAddAttachment = ({
     headerMessageId,
     filePath,
     inline = false,
@@ -469,6 +470,25 @@ class AttachmentStore extends SummerMailStore {
   }) => {
     this._assertIdPresent(headerMessageId);
 
+    // Copies can finish in a different order than the user selected or pasted them. Serialize
+    // attachment writes per draft so the visible and sent order remains deterministic.
+    const previous = this._pendingAddsByDraft[headerMessageId] || Promise.resolve();
+    const current = previous
+      .catch(() => {})
+      .then(() =>
+        this._addAttachmentNow({ headerMessageId, filePath, inline, onCreated, onError })
+      );
+    this._pendingAddsByDraft[headerMessageId] = current;
+    const cleanup = () => {
+      if (this._pendingAddsByDraft[headerMessageId] === current) {
+        delete this._pendingAddsByDraft[headerMessageId];
+      }
+    };
+    current.then(cleanup, cleanup);
+    return current;
+  };
+
+  async _addAttachmentNow({ headerMessageId, filePath, inline, onCreated, onError }) {
     try {
       const filename = path.basename(filePath);
       const stats = await this._getFileStats(filePath);
@@ -506,7 +526,7 @@ class AttachmentStore extends SummerMailStore {
       AppEnv.showErrorDialog(err.message);
       onError(err);
     }
-  };
+  }
 
   _onRemoveAttachment = async (headerMessageId: string, fileToRemove: File) => {
     if (!fileToRemove) {

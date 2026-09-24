@@ -148,9 +148,16 @@ export function occurrencesForEvents(
     // Expand the master event's ICS (handles exceptions in same ICS file)
     if (master) {
       try {
-        // The iterator starts at DTSTART, not the visible range. A count limit
-        // silently hides older series; between() stops at the visible end date.
-        const icalExpander = new IcalExpander({ ics: master.ics, maxIterations: 0 });
+        // ical-expander starts at DTSTART. Use a series-aware finite budget so old meetings
+        // remain visible without allowing hostile secondly rules to run without a bound.
+        const icalExpander = new IcalExpander({
+          ics: master.ics,
+          maxIterations: ICSEventHelpers.expansionIterationBudget(
+            master.ics,
+            master.recurrenceStart,
+            endUnix
+          ),
+        });
         const expanded = icalExpander.between(new Date(startUnix * 1000), new Date(endUnix * 1000));
 
         const masterIsRecurring = ICSEventHelpers.isRecurringEvent(master.ics);

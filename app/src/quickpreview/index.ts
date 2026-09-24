@@ -42,6 +42,8 @@ const filesRoot = __dirname.replace('app.asar', 'app.asar.unpacked');
 const FileSizeLimit = 5 * 1024 * 1024;
 const HeicFileSizeLimit = 25 * 1000 * 1000;
 const ThumbnailWidth = 320 * (11 / 8.5);
+// Budget for generating a single thumbnail, shared by both strategies.
+const PreviewTimeout = 5000;
 const QuicklookIsAvailable = process.platform === 'darwin';
 const ImageExtensions = ['avif', 'bmp', 'gif', 'ico', 'jpeg', 'jpg', 'png', 'svg', 'webp'];
 
@@ -461,7 +463,7 @@ async function _generateNextCrossplatformPreview() {
   const timer = setTimeout(() => {
     console.warn(`Thumbnail generation timed out for ${filePath}`);
     onFinalize(false);
-  }, 5000);
+  }, PreviewTimeout);
 
   const onRendererSuccess = () => {
     onFinalize(true);
@@ -501,18 +503,32 @@ async function _generateQuicklookPreview({ filePath }: { filePath: string }) {
       pathQuoted,
     ];
 
-    execFile(cmd, args, (error, stdout, stderr) => {
-      // Note: sometimes qlmanage outputs to stderr but still successfully
-      // produces a thumbnail. It complains about bad plugins pretty often.
-      if (
-        error ||
-        stdout.match(/No thumbnail created/i) ||
-        (stderr && !stdout.includes('produced one thumbnail'))
-      ) {
-        resolve(false);
-      } else {
-        resolve(true);
+    // qlmanage can hang indefinitely rather than failing -- an attachment saved
+    // without an extension is enough to do it, and SummerMail writes those out
+    // as "noname". Without a timeout the callback never fires and the child is
+    // never reaped, so each one leaks holding a pkd connection open; enough of
+    // them exhausts pkd's thread pool and every app that builds a Share menu
+    // then deadlocks on a synchronous XPC call to it.
+    // SIGKILL rather than the default SIGTERM: qlmanage handles SIGTERM and
+    // exits 0, so the timeout would look like a success and we would report a
+    // thumbnail that was never written.
+    execFile(
+      cmd,
+      args,
+      { timeout: PreviewTimeout, killSignal: 'SIGKILL' },
+      (error, stdout, stderr) => {
+        // Note: sometimes qlmanage outputs to stderr but still successfully
+        // produces a thumbnail. It complains about bad plugins pretty often.
+        if (
+          error ||
+          stdout.match(/No thumbnail created/i) ||
+          (stderr && !stdout.includes('produced one thumbnail'))
+        ) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
       }
-    });
+    );
   });
 }

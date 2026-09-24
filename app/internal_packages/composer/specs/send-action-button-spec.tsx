@@ -2,6 +2,7 @@ import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import { Actions, Message, SendActionsStore } from 'summermail-exports';
 import { SendActionButton } from '../lib/send-action-button';
+import { ALWAYS_CHECK_GRAMMAR_CONFIG_KEY } from '../lib/composer-ai-actions';
 
 const GoodSendAction = {
   title: 'Good Send Action',
@@ -63,6 +64,74 @@ describe('SendActionButton', function describeBlock() {
     expect(container.querySelector('.button-dropdown') !== null).toBe(true);
     expect(container.querySelectorAll('button').length).toBe(0);
     expect(container.querySelector('.primary-item').getAttribute('title')).toBe('Send');
+  });
+
+  it('opens alternate send actions above the composer footer', () => {
+    spyOn(SendActionsStore, 'orderedSendActionsForDraft').andReturn([
+      SendActionsStore.DefaultSendAction,
+      GoodSendAction,
+    ]);
+    const container = renderButton(this.draft);
+
+    fireEvent.click(container.querySelector('.secondary-picker'));
+
+    expect(container.querySelector('.button-dropdown').classList.contains('open-up')).toBe(true);
+    expect(container.textContent).toContain('Good Send Action');
+  });
+
+  it('offers Send without checking when the automatic AI check is enabled', () => {
+    const originalConfigGet = AppEnv.config.get.bind(AppEnv.config);
+    spyOn(AppEnv.config, 'get').andCallFake((key) =>
+      key === ALWAYS_CHECK_GRAMMAR_CONFIG_KEY ? true : originalConfigGet(key)
+    );
+    spyOn(SendActionsStore, 'orderedSendActionsForDraft').andReturn([
+      SendActionsStore.DefaultSendAction,
+      GoodSendAction,
+    ]);
+    const container = renderButton(this.draft);
+
+    fireEvent.click(container.querySelector('.secondary-picker'));
+
+    expect(container.textContent).toContain('Send without checking');
+  });
+
+  it('hides Send without checking when the automatic AI check is disabled', () => {
+    const originalConfigGet = AppEnv.config.get.bind(AppEnv.config);
+    spyOn(AppEnv.config, 'get').andCallFake((key) =>
+      key === ALWAYS_CHECK_GRAMMAR_CONFIG_KEY ? false : originalConfigGet(key)
+    );
+    spyOn(SendActionsStore, 'orderedSendActionsForDraft').andReturn([
+      SendActionsStore.DefaultSendAction,
+      GoodSendAction,
+    ]);
+    const container = renderButton(this.draft);
+
+    fireEvent.click(container.querySelector('.secondary-picker'));
+
+    expect(container.textContent).not.toContain('Send without checking');
+  });
+
+  it('sends normally without running the automatic AI check', () => {
+    const originalConfigGet = AppEnv.config.get.bind(AppEnv.config);
+    spyOn(AppEnv.config, 'get').andCallFake((key) =>
+      key === ALWAYS_CHECK_GRAMMAR_CONFIG_KEY ? true : originalConfigGet(key)
+    );
+    spyOn(SendActionsStore, 'orderedSendActionsForDraft').andReturn([
+      SendActionsStore.DefaultSendAction,
+    ]);
+    const beforeSend = jasmine.createSpy('beforeSend').andReturn(Promise.resolve(false));
+    const container = renderButton(this.draft, { beforeSend });
+
+    fireEvent.click(container.querySelector('.secondary-picker'));
+    const item = Array.from(container.querySelectorAll('.menu .item')).find((node) =>
+      node.textContent.includes('Send without checking')
+    );
+    fireEvent.mouseDown(item);
+
+    expect(beforeSend).not.toHaveBeenCalled();
+    expect(Actions.sendDraft).toHaveBeenCalledWith(this.draft.headerMessageId, {
+      actionKey: 'send',
+    });
   });
 
   it('has the correct primary item', () => {

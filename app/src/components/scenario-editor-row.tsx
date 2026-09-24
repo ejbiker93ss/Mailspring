@@ -63,9 +63,12 @@ class SourceSelect extends React.Component<SourceSelectProps, SourceSelectState>
   }
 
   _onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value === SOURCE_SELECT_NULL ? null : event.target.value;
+    const option = this.state.options.find((item) => item.value === value);
     this.props.onChange({
       target: {
-        value: event.target.value === SOURCE_SELECT_NULL ? null : event.target.value,
+        value,
+        name: option ? option.name : undefined,
       },
     });
   };
@@ -92,6 +95,7 @@ interface ScenarioEditorRowValue {
   templateKey: string;
   comparatorKey: string;
   value: string;
+  valueName?: string;
 }
 
 interface ScenarioEditorRowProps {
@@ -105,9 +109,14 @@ interface ScenarioEditorRowProps {
 export default class ScenarioEditorRow extends React.Component<ScenarioEditorRowProps> {
   static displayName = 'ScenarioEditorRow';
 
-  _onChangeValue = (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  _onChangeValue = (event: { target: { value: string; name?: string } }) => {
     const instance = JSON.parse(JSON.stringify(this.props.instance));
     instance.value = event.target.value;
+    if (event.target.name) {
+      instance.valueName = event.target.name;
+    } else {
+      delete instance.valueName;
+    }
     this.props.onChange(instance);
   };
 

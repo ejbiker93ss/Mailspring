@@ -1,5 +1,5 @@
 import { ComponentRegistry, WorkspaceStore } from 'summermail-exports';
-import MailKanban from './mail-kanban';
+import MailKanban from './kanban-workspace';
 
 export function activate() {
   WorkspaceStore.defineSheet('Kanban', { root: true }, { list: ['KanbanContent'] });

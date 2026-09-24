@@ -1,5 +1,66 @@
 @import 'ui-variables';
 
+.meeting-accounts-settings {
+  width: 800px;
+  max-width: calc(100vw - 48px);
+  margin: 0 auto 18px;
+  padding: 16px 18px;
+  border: 1px solid @border-color-divider;
+  border-radius: 8px;
+  background: @background-secondary;
+
+  .meeting-accounts-copy {
+    margin-bottom: 12px;
+
+    h5 {
+      margin: 0 0 4px;
+      color: @text-color;
+      font-size: @font-size-large;
+    }
+
+    p {
+      margin: 0;
+      color: @text-color-subtle;
+      line-height: 1.45;
+    }
+  }
+
+  .meeting-account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .meeting-account-identity {
+    min-width: 0;
+
+    span,
+    strong,
+    small {
+      display: block;
+    }
+
+    .meeting-account-provider {
+      margin-bottom: 2px;
+      color: @text-color-subtle;
+      font-size: @font-size-small;
+    }
+
+    small {
+      margin-top: 2px;
+      overflow: hidden;
+      color: @text-color-very-subtle;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .meeting-account-status {
+    margin: 10px 0 0;
+    color: @text-color-subtle;
+  }
+}
+
 .account-type-settings {
   margin-bottom: 16px;
   .account-type-actions {

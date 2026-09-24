@@ -19,6 +19,7 @@ type ButtonDropdownProps = {
   attachment?: string;
   className?: string;
   disabled?: boolean;
+  direction?: 'auto' | 'up' | 'down';
 };
 
 export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonDropdownState> {
@@ -27,6 +28,7 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
   static defaultProps = {
     style: {},
     attachment: 'left',
+    direction: 'auto',
   };
 
   constructor(props) {
@@ -134,6 +136,10 @@ export class ButtonDropdown extends React.Component<ButtonDropdownProps, ButtonD
     if (this.state.open !== false) {
       this.setState({ open: false });
     } else {
+      if (this.props.direction === 'up' || this.props.direction === 'down') {
+        this.setState({ open: this.props.direction });
+        return;
+      }
       const buttonBottom = (ReactDOM.findDOMNode(this) as HTMLElement).getBoundingClientRect()
         .bottom;
       if (buttonBottom + 200 > window.innerHeight) {

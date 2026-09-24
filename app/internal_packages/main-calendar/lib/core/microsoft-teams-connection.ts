@@ -208,7 +208,7 @@ export async function disconnectMicrosoftTeams(): Promise<void> {
 export async function getMicrosoftTeamsGraphAccessToken(): Promise<string> {
   const refreshToken = await KeyManager.getPassword(MICROSOFT_TEAMS_REFRESH_TOKEN_KEY);
   if (!refreshToken) {
-    throw new Error(localized('Connect Microsoft Teams in AI Assistant settings first.'));
+    throw new Error(localized('Connect Microsoft Teams in Accounts settings first.'));
   }
   const response = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
     method: 'POST',

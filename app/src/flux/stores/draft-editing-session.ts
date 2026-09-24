@@ -1,5 +1,6 @@
+import * as Immutable from 'immutable';
 import SummerMailStore from 'summermail-store';
-import { Editor, Value, Block } from 'slate';
+import { Editor, Value, Block, Text } from 'slate';
 
 import RegExpUtils from '../../regexp-utils';
 import { localized } from '../../intl';
@@ -86,8 +87,12 @@ function hotwireDraftBodyState(draft: any, session: DraftEditingSession): Messag
             }
           }
 
+          // Slate cannot calculate a document range for an empty block with no text child.
           edits = edits
-            .replaceNodeByKey(first.key, Block.create({ type: 'div' }))
+            .replaceNodeByKey(
+              first.key,
+              Block.create({ type: 'div', nodes: Immutable.List([Text.create('')]) })
+            )
             .moveToRangeOfDocument()
             .insertFragment(inHTMLEditorValue.document);
 
@@ -439,6 +444,9 @@ export class DraftEditingSession extends SummerMailStore {
           files: draft.files,
           replyTo: draft.replyTo,
           subject: draft.subject,
+          // Carry over plugin metadata (open/link tracking, send-later) so toggles the
+          // user enabled aren't silently reset when the draft moves between accounts.
+          pluginMetadata: draft.pluginMetadata,
           headerMessageId: draft.headerMessageId,
           accountId: account.id,
           unread: false,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { webUtils } from 'electron';
-import { localized, SummerMailAPIRequest, IdentityStore } from 'summermail-exports';
+import { localized, SummerMailAPIRequest, IdentityStore, Utils } from 'summermail-exports';
 import { RetinaImg, DropZone } from 'summermail-component-kit';
 
 const MAX_IMAGE_RES = 250;
@@ -117,7 +117,9 @@ export default class SignaturePhotoPicker extends React.Component<
     this.setState({ isUploading: true });
 
     const ext = { 'image/jpg': 'jpg', 'image/png': 'png' }[blob.type];
-    const filename = `sig-${this.props.id}.${ext}`;
+    // A stable filename overwrites the asset referenced by already-sent messages. Give every
+    // upload its own key so replacing a signature image only affects future mail.
+    const filename = `sig-${this.props.id}-${Utils.generateTempId().replace('local-', '')}.${ext}`;
     let link = null;
 
     try {

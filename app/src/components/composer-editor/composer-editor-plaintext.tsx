@@ -1,6 +1,10 @@
 import React from 'react';
 import { wrapPlaintextWithSelection } from './plaintext';
-import { handleFilePasted, trackFilePasteCompletion } from './composer-editor';
+import {
+  handleFilePasted,
+  shouldAttachPastedFile,
+  trackFilePasteCompletion,
+} from './composer-editor';
 import type { ComposerFileReceiveOptions } from './composer-editor';
 
 interface ComposerEditorPlaintextProps {
@@ -129,7 +133,10 @@ export class ComposerEditorPlaintext extends React.Component<ComposerEditorPlain
 
   onPaste = (event: React.ClipboardEvent<any>) => {
     const { onFileReceived } = this.props;
-    const pasteCompletion = onFileReceived && handleFilePasted(event.nativeEvent, onFileReceived);
+    const pasteCompletion =
+      onFileReceived &&
+      shouldAttachPastedFile(event.nativeEvent.clipboardData) &&
+      handleFilePasted(event.nativeEvent, onFileReceived);
     if (pasteCompletion) {
       event.preventDefault();
       const session = this.props.propsForPlugins && this.props.propsForPlugins.session;

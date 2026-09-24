@@ -17,7 +17,7 @@ describe('QuotedHTMLTransformer', function () {
     );
   };
 
-  for (let n = 1; n <= 28; n++) {
+  for (let n = 1; n <= 29; n++) {
     it(`properly parses email_${n}`, function () {
       const opts = { keepIfWholeBodyIsQuote: true };
       const actual = removeQuotedHTML(`email_${n}.html`, opts).trim();
@@ -350,7 +350,9 @@ On Thu, Mar 3, 2016 I went to my writing club and wrote:
     it('works with these manual test cases', () =>
       (() => {
         const result = [];
-        for (let { before, after, options } of tests) {
+        for (const testCase of tests) {
+          const { before, after } = testCase;
+          let { options } = testCase;
           if (!options) {
             options = { keepIfWholeBodyIsQuote: true };
           }

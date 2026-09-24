@@ -5,6 +5,8 @@
   display: inline-block;
 
   &.open {
+    z-index: 20;
+
     .secondary-items {
       visibility: inherit;
     }
@@ -16,8 +18,9 @@
       box-shadow: 0 0.5px 0 @standard-shadow-color, 0 -0.5px 0 @standard-shadow-color,
         0.5px 0 0 @standard-shadow-color, -0.5px 0 0 @standard-shadow-color,
         0 -3px 12px @standard-shadow-color;
-      top: -100%;
-      transform: translate(0, -6px);
+      top: auto;
+      bottom: calc(100% + 6px);
+      transform: none;
     }
     .secondary-picker {
       border-top-right-radius: 0;
@@ -29,7 +32,9 @@
       box-shadow: 0 0.5px 0 @standard-shadow-color, 0 -0.5px 0 @standard-shadow-color,
         0.5px 0 0 @standard-shadow-color, -0.5px 0 0 @standard-shadow-color,
         0 5px 12px @standard-shadow-color;
-      transform: translate(0, 1.5px);
+      top: calc(100% + 2px);
+      bottom: auto;
+      transform: none;
     }
     .secondary-picker {
       border-bottom-right-radius: 0;

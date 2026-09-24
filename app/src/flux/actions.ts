@@ -569,6 +569,7 @@ export const selectSignature = create('selectSignature', ActionScopeWindow);
 export const toggleAccount = create('toggleAccount', ActionScopeWindow);
 
 export const expandSyncState = create('expandSyncState', ActionScopeWindow);
+export const showSyncStatusNotice = create('showSyncStatusNotice', ActionScopeWindow);
 
 export const searchQuerySubmitted = create('searchQuerySubmitted', ActionScopeWindow);
 export const searchQueryChanged = create('searchQueryChanged', ActionScopeWindow);

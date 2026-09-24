@@ -3,6 +3,7 @@ import { ipcRenderer } from 'electron';
 import { AccountStore, Actions, Account } from 'summermail-exports';
 import PreferencesAccountList from './preferences-account-list';
 import PreferencesAccountDetails from './preferences-account-details';
+import PreferencesMeetingAccounts from './preferences-meeting-accounts';
 import OutlookImportPanel from '../../../onboarding/lib/outlook-import-panel';
 
 interface PreferencesAccountsState {
@@ -86,6 +87,7 @@ class PreferencesAccounts extends React.Component<
             })
           }
         />
+        <PreferencesMeetingAccounts />
         <div className="accounts-content">
           <PreferencesAccountList
             accounts={this.state.accounts}

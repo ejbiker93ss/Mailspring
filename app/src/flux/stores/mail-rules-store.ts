@@ -33,6 +33,8 @@ export interface MailRule extends Template {
   actions: [
     {
       value: string;
+      /** Stable display-name fallback when a server changes a folder or label id. */
+      valueName?: string;
       templateKey: string;
     },
   ];
@@ -43,7 +45,7 @@ class MailRulesStore extends SummerMailStore {
   _reprocessing: {
     [accountId: string]: {
       count: number;
-      lastTimestamp: number;
+      lastTimestamp: Date | null;
       inboxCategoryId: string;
     };
   } = {};

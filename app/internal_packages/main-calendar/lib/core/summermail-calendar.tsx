@@ -527,6 +527,19 @@ export class SummerMailCalendar extends React.Component<
       // Check if this is a recurring event (and not already an exception)
       const isRecurring = ICSEventHelpers.isRecurringEvent(event.ics);
 
+      if (event.isRecurrenceException()) {
+        const master = await DatabaseStore.findBy<Event>(Event, {
+          accountId: event.accountId,
+          calendarId: event.calendarId,
+          icsuid: event.icsuid,
+          recurrenceId: '',
+        });
+        if (!master) {
+          throw new Error('Could not find the master event for this recurring occurrence.');
+        }
+        return this._cancelExceptionOccurrence(master, event);
+      }
+
       if (isRecurring && !event.isRecurrenceException()) {
         // Show recurring event dialog
         const choice = await showRecurringEventDialog('delete', occurrence.title);
@@ -583,6 +596,30 @@ export class SummerMailCalendar extends React.Component<
       description: localized('Delete occurrence'),
     });
     Actions.queueTask(task);
+  }
+
+  async _cancelExceptionOccurrence(masterEvent: Event, exceptionEvent: Event): Promise<boolean> {
+    const undoData = {
+      ics: masterEvent.ics,
+      recurrenceStart: masterEvent.recurrenceStart,
+      recurrenceEnd: masterEvent.recurrenceEnd,
+    };
+    const updated = ICSEventHelpers.removeInlineException(
+      masterEvent.ics,
+      exceptionEvent.recurrenceId
+    );
+    if (updated === masterEvent.ics) {
+      throw new Error('Could not find this occurrence inside its recurring series.');
+    }
+    masterEvent.ics = updated;
+    Actions.queueTask(
+      SyncbackEventTask.forUpdating({
+        event: masterEvent,
+        undoData,
+        description: localized('Delete occurrence'),
+      })
+    );
+    return true;
   }
 
   /**

@@ -13,12 +13,6 @@ import {
   saveMailAssistantProviderKey,
   saveMailAssistantProviderSettings,
 } from './ai-provider-settings';
-import {
-  connectMicrosoftTeams,
-  disconnectMicrosoftTeams,
-  getMicrosoftTeamsConnection,
-  MicrosoftTeamsConnection,
-} from '../../main-calendar/lib/core/microsoft-teams-connection';
 
 export const MODEL_CONFIG_KEY = 'core.mailAssistant.model';
 export const INCLUDE_TEXT_CONFIG_KEY = 'core.mailAssistant.includeRedactedText';
@@ -41,9 +35,6 @@ interface State {
   redactPersonalInfo: boolean;
   saving: boolean;
   status: string;
-  teamsConnection: MicrosoftTeamsConnection | null;
-  teamsConnecting: boolean;
-  teamsStatus: string;
   threadSummariesEnabled: boolean;
   quotedTextSummariesEnabled: boolean;
   useCurrentThread: boolean;
@@ -76,9 +67,6 @@ export default class PreferencesMailAssistant extends React.Component<
     redactPersonalInfo: AppEnv.config.get(REDACT_PERSONAL_INFO_CONFIG_KEY) !== false,
     saving: false,
     status: '',
-    teamsConnection: getMicrosoftTeamsConnection(),
-    teamsConnecting: false,
-    teamsStatus: '',
     threadSummariesEnabled: AppEnv.config.get(THREAD_SUMMARIES_CONFIG_KEY) !== false,
     quotedTextSummariesEnabled: AppEnv.config.get(QUOTED_SUMMARIES_CONFIG_KEY) !== false,
     useCurrentThread: AppEnv.config.get(USE_THREAD_CONFIG_KEY) !== false,
@@ -141,31 +129,6 @@ export default class PreferencesMailAssistant extends React.Component<
   _clearKey = async () => {
     await KeyManager.deletePassword(providerKeyName(this.state.provider));
     this.setState({ apiKey: '', hasSavedKey: false, status: localized('API key removed.') });
-  };
-
-  _connectTeams = async () => {
-    this.setState({ teamsConnecting: true, teamsStatus: localized('Waiting for Microsoft…') });
-    try {
-      const teamsConnection = await connectMicrosoftTeams();
-      this.setState({
-        teamsConnection,
-        teamsConnecting: false,
-        teamsStatus: localized('Microsoft Teams connected.'),
-      });
-    } catch (error) {
-      this.setState({
-        teamsConnecting: false,
-        teamsStatus: error.message || String(error),
-      });
-    }
-  };
-
-  _disconnectTeams = async () => {
-    await disconnectMicrosoftTeams();
-    this.setState({
-      teamsConnection: null,
-      teamsStatus: localized('Microsoft Teams disconnected.'),
-    });
   };
 
   render() {
@@ -365,38 +328,6 @@ export default class PreferencesMailAssistant extends React.Component<
               'Mailbox-wide questions use the read-only tools and account/folder permissions configured under MCP Server. Matching mail content is sent to the selected AI provider to answer your question.'
             )}
           </p>
-        </section>
-        <section className="mail-assistant-teams-connection">
-          <h2>{localized('Microsoft Teams meetings')}</h2>
-          <p>
-            {localized(
-              'Connect Microsoft through Graph to create Teams links and phone dial-in details. This connection does not use IMAP or SMTP and does not add the Microsoft mailbox to SummerMail.'
-            )}
-          </p>
-          {this.state.teamsConnection ? (
-            <div className="mail-assistant-connection-row">
-              <div>
-                <strong>{this.state.teamsConnection.name}</strong>
-                <small>{this.state.teamsConnection.emailAddress}</small>
-              </div>
-              <button className="btn" onClick={this._disconnectTeams}>
-                {localized('Disconnect')}
-              </button>
-            </div>
-          ) : (
-            <button
-              className="btn btn-emphasis"
-              disabled={this.state.teamsConnecting}
-              onClick={this._connectTeams}
-            >
-              {this.state.teamsConnecting
-                ? localized('Connecting…')
-                : localized('Connect Microsoft Teams')}
-            </button>
-          )}
-          {this.state.teamsStatus && (
-            <p className="mail-assistant-connection-status">{this.state.teamsStatus}</p>
-          )}
         </section>
         <div className="mail-assistant-settings-actions">
           <button className="btn btn-emphasis" disabled={this.state.saving} onClick={this._save}>

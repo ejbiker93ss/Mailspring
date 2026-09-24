@@ -9,6 +9,16 @@ const { safeStorage } = require('@electron/remote');
 
 const configCredentialsKey = 'credentials';
 
+// Keep the platform keychain behind a small, replaceable boundary so failures can be
+// exercised without talking to the real OS credential store.
+export const secureStorage = {
+  isAvailable: (): Promise<boolean> => Promise.resolve(safeStorage.isEncryptionAvailable()),
+  encrypt: (plaintext: string): Promise<Buffer> =>
+    Promise.resolve(safeStorage.encryptString(plaintext)),
+  decrypt: (encrypted: Buffer): Promise<string> =>
+    Promise.resolve(safeStorage.decryptString(encrypted)),
+};
+
 /**
  * A basic wrap around electron's secure key management. Consolidates all of
  * our keys under a single namespaced keymap and provides migration
@@ -18,6 +28,8 @@ const configCredentialsKey = 'credentials';
  * and every key we want to access.
  */
 class KeyManager {
+  private _fatalErrorReported = false;
+
   async deleteAccountSecrets(account: Account) {
     try {
       const keys = await this._getKeyHash();
@@ -93,22 +105,31 @@ class KeyManager {
     }
   }
 
-  async _getKeyHash() {
-    let raw = '{}';
+  async _getKeyHash(): Promise<KeySet> {
     const encryptedCredentials = AppEnv.config.get(configCredentialsKey);
     // Check for different null values to prevent issues if a migration from keytar has failed
     if (
-      encryptedCredentials !== undefined &&
-      encryptedCredentials !== null &&
-      encryptedCredentials !== 'null'
+      encryptedCredentials === undefined ||
+      encryptedCredentials === null ||
+      encryptedCredentials === 'null'
     ) {
-      try {
-        raw = await safeStorage.decryptString(Buffer.from(encryptedCredentials, 'utf-8'));
-      } catch (err) {
-        console.error('SummerMail encountered an error reading passwords from the keychain.');
-        console.error(err);
-      }
+      return {} as KeySet;
     }
+
+    let raw: string;
+    try {
+      raw = await secureStorage.decrypt(Buffer.from(encryptedCredentials, 'utf-8'));
+    } catch (err) {
+      // Treat an unreadable credential blob as fatal. Returning an empty object here lets the
+      // next password update overwrite every saved account secret while the keyring is locked.
+      this._reportFatalError(
+        new Error(
+          localized('SummerMail could not read your saved passwords and cannot continue.') +
+            this._encryptionUnavailableHint()
+        )
+      );
+    }
+
     try {
       return JSON.parse(raw) as KeySet;
     } catch (err) {
@@ -116,25 +137,35 @@ class KeyManager {
     }
   }
 
+  _encryptionUnavailableHint() {
+    return process.platform === 'linux'
+      ? localized(
+          ' On Linux, SummerMail requires a secret service such as GNOME Keyring or KWallet. Please ensure one is installed and running, then restart SummerMail.'
+        )
+      : '';
+  }
+
   async _writeKeyHash(keys: KeySet) {
-    if (!safeStorage.isEncryptionAvailable()) {
-      const platformHint =
-        process.platform === 'linux'
-          ? localized(
-              ' On Linux, SummerMail requires a secret service such as GNOME Keyring or KWallet. Please ensure one is installed and running, then restart SummerMail.'
-            )
-          : '';
+    if (!(await secureStorage.isAvailable())) {
       throw new Error(
         localized(
           `SummerMail could not store your password securely because encryption is not available on this system.`
-        ) + platformHint
+        ) + this._encryptionUnavailableHint()
       );
     }
-    const enrcyptedCredentials = await safeStorage.encryptString(JSON.stringify(keys));
+    const enrcyptedCredentials = await secureStorage.encrypt(JSON.stringify(keys));
     AppEnv.config.set(configCredentialsKey, enrcyptedCredentials);
   }
 
-  _reportFatalError(err: Error) {
+  _reportFatalError(err: Error): never {
+    // Several credential consumers can fail together during startup. Show the user one dialog,
+    // but continue throwing every error so no caller proceeds with missing credentials.
+    if (this._fatalErrorReported) {
+      (err as any).noSentry = true;
+      throw err;
+    }
+    this._fatalErrorReported = true;
+
     require('@electron/remote').dialog.showMessageBoxSync({
       type: 'error',
       buttons: [localized('Quit')],

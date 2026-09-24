@@ -1,5 +1,15 @@
 # SummerMail Changelog
 
+## 1.23.79 (9/24/2026)
+
+- Restore SmarterMail API inline images and downloadable attachments without replacing valid message bodies with malformed raw MIME responses.
+- Reconcile SmarterMail moves and deletes in the background when the server accepts an operation without returning a destination UID, and surface failures as a subtle sync notice instead of repeated modal dialogs.
+- Add a themed task Kanban organized by task status, along with refreshed mail Kanban styling and provider task support.
+- Add richer calendar meeting creation, attendee entry, Microsoft Teams account placement, and calendar synchronization safeguards.
+- Improve GroupMe and Matrix multi-chat layouts and render Markdown tables and other safe formatting correctly.
+- Add an explicit **Send without checking** action when automatic AI writing review is enabled.
+- Improve Windows packaging verification and assorted reliability, keyboard, printing, attachment, reminder, and window-management behavior.
+
 ## 1.23.78 (9/22/2026)
 
 - Use SmarterMail's confirmed delete-to-Trash operation instead of treating a delete as a normal folder move.

@@ -1,4 +1,6 @@
-import { parseICSString } from './calendar-utils';
+import { parseICSString, createVTIMEZONEString } from './calendar-utils';
+
+export { createVTIMEZONEString };
 
 type ICAL = typeof import('ical.js').default;
 type ICALComponent = InstanceType<ICAL['Component']>;
@@ -12,6 +14,11 @@ function getICAL(): ICAL {
     ICAL = require('ical.js');
   }
   return ICAL;
+}
+
+/** DTSTAMP is required to be UTC by RFC 5545. ICAL.Time.now() is floating local time. */
+function nowUTC(ical: ICAL) {
+  return ical.Time.fromJSDate(new Date(), true);
 }
 
 /**
@@ -68,6 +75,40 @@ export function generateUID(): string {
   const random = Math.random().toString(36).substring(2, 15);
   return `${timestamp}-${random}@summermail`;
 }
+
+export function expansionIterationBudget(
+  ics: string,
+  seriesStartUnix: number,
+  windowEndUnix: number
+): number {
+  if (!Number.isFinite(seriesStartUnix) || !Number.isFinite(windowEndUnix)) {
+    return MIN_EXPANSION_ITERATIONS;
+  }
+  const unfolded = ics.replace(/\r\n[ \t]/g, '').replace(/\n[ \t]/g, '');
+  const vevent = unfolded.split(/^BEGIN:VEVENT$/m)[1];
+  const rule = vevent && /^RRULE:(.*)$/im.exec(vevent.split(/^END:VEVENT$/m)[0]);
+  if (!rule) return MIN_EXPANSION_ITERATIONS;
+
+  const frequency = /FREQ=([A-Z]+)/i.exec(rule[1]);
+  const interval = parseInt((/INTERVAL=(\d+)/i.exec(rule[1]) || [])[1], 10) || 1;
+  const step =
+    (EXPANSION_STEP_SECONDS[(frequency ? frequency[1] : '').toUpperCase()] ||
+      EXPANSION_STEP_SECONDS.DAILY) * interval;
+  const steps = Math.ceil(Math.max(0, windowEndUnix - seriesStartUnix) / step) + 100;
+  return Math.min(MAX_EXPANSION_ITERATIONS, Math.max(MIN_EXPANSION_ITERATIONS, steps));
+}
+
+const EXPANSION_STEP_SECONDS: { [frequency: string]: number } = {
+  SECONDLY: 1,
+  MINUTELY: 60,
+  HOURLY: 3600,
+  DAILY: 86400,
+  WEEKLY: 604800,
+  MONTHLY: 28 * 86400,
+  YEARLY: 365 * 86400,
+};
+const MIN_EXPANSION_ITERATIONS = 1000;
+const MAX_EXPANSION_ITERATIONS = 50000;
 
 /**
  * Formats a Date as an ICS date-only string (YYYYMMDD)
@@ -265,28 +306,6 @@ function validateTimestamps(start: number, end: number): void {
  * @param referenceDate - Date used to determine the current UTC offset / abbreviation
  * @returns A VTIMEZONE ICS string (no surrounding VCALENDAR wrapper)
  */
-export function createVTIMEZONEString(tzId: string, referenceDate: Date): string {
-  const momentTz = require('moment-timezone');
-  const m = momentTz(referenceDate).tz(tzId);
-  const utcOffsetMin = m.utcOffset(); // e.g. -360 for CST (UTC-6)
-  const absMin = Math.abs(utcOffsetMin);
-  const sign = utcOffsetMin >= 0 ? '+' : '-';
-  const offsetStr = `${sign}${String(Math.floor(absMin / 60)).padStart(2, '0')}${String(
-    absMin % 60
-  ).padStart(2, '0')}`;
-  return [
-    'BEGIN:VTIMEZONE',
-    `TZID:${tzId}`,
-    'BEGIN:STANDARD',
-    'DTSTART:19700101T000000',
-    `TZOFFSETFROM:${offsetStr}`,
-    `TZOFFSETTO:${offsetStr}`,
-    `TZNAME:${m.zoneAbbr()}`,
-    'END:STANDARD',
-    'END:VTIMEZONE',
-  ].join('\r\n');
-}
-
 /**
  * Creates a new ICS string for an event
  *
@@ -412,7 +431,7 @@ export function createICSString(options: CreateEventOptions): string {
   }
 
   // Set timestamp
-  vevent.addPropertyWithValue('dtstamp', ical.Time.now());
+  vevent.addPropertyWithValue('dtstamp', nowUTC(ical));
 
   calendar.addSubcomponent(vevent);
   return calendar.toString();
@@ -504,7 +523,7 @@ export function updateEventTimes(ics: string, options: UpdateTimesOptions): stri
   }
 
   // Update DTSTAMP to indicate modification
-  vevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+  vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
 
   // Increment SEQUENCE if present (for proper sync)
   const sequence = vevent.getFirstPropertyValue('sequence');
@@ -603,7 +622,7 @@ export function createRecurrenceException(
   exceptionICALEvent.endDate = createICALTime(newEndDate, isAllDay, ical, originalStartZone);
 
   // Update DTSTAMP and increment SEQUENCE on the exception
-  const now = ical.Time.now();
+  const now = nowUTC(ical);
   masterVevent.updatePropertyWithValue('dtstamp', now);
   exceptionVevent.updatePropertyWithValue('dtstamp', now);
   const sequence = exceptionVevent.getFirstPropertyValue('sequence');
@@ -701,7 +720,7 @@ export function applyEditsToException(
     }
   }
 
-  exceptionVevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+  exceptionVevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
 
   return root.toString();
 }
@@ -732,22 +751,44 @@ export function shiftInlineExceptions(ics: string, deltaMs: number): string {
   // Register VTIMEZONE components so toJSDate() converts TZID-relative times correctly.
   registerTimezones(vcalendar, ical);
 
+  const shiftTime = (value: ICALTime) => {
+    const original = value.toJSDate();
+    if (value.isDate) {
+      const shiftedDate = new Date(original);
+      shiftedDate.setDate(shiftedDate.getDate() + Math.round(deltaMs / 86400000));
+      return createAllDayTime(shiftedDate, ical);
+    }
+    const shifted = ical.Time.fromJSDate(new Date(original.getTime() + deltaMs), true);
+    const zone = value.zone;
+    const hasNamedZone = zone && zone.tzid && zone.tzid !== 'UTC' && zone.tzid !== 'floating';
+    return hasNamedZone ? shifted.convertToZone(zone) : shifted;
+  };
+
   for (const vevent of vcalendar.getAllSubcomponents('vevent')) {
     const ridProp = vevent.getFirstProperty('recurrence-id');
-    if (!ridProp) continue; // Skip the master VEVENT (no RECURRENCE-ID)
+    if (!ridProp) {
+      // EXDATEs identify generated slots. When the series moves, leaving them behind makes
+      // previously deleted occurrences reappear.
+      let shiftedExdates = false;
+      for (const exdate of vevent.getAllProperties('exdate')) {
+        const values = exdate.getValues() as ICALTime[];
+        const shiftedValues = values
+          .filter((value) => value && typeof value.toJSDate === 'function')
+          .map(shiftTime);
+        if (shiftedValues.length === values.length && shiftedValues.length > 0) {
+          exdate.setValues(shiftedValues);
+          shiftedExdates = true;
+        }
+      }
+      if (shiftedExdates) vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
+      continue;
+    }
 
-    const ridValue = ridProp.getFirstValue() as any;
+    const ridValue = ridProp.getFirstValue() as ICALTime;
     if (!ridValue || typeof ridValue.toJSDate !== 'function') continue;
 
-    const ridDate = ridValue.toJSDate();
-    const newRidDate = new Date(ridDate.getTime() + deltaMs);
-
-    const newRidTime = (ridValue.isDate as boolean)
-      ? createAllDayTime(newRidDate, ical)
-      : ical.Time.fromJSDate(newRidDate, true); // Keep as UTC (same format as createRecurrenceException)
-
-    vevent.updatePropertyWithValue('recurrence-id', newRidTime);
-    vevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+    vevent.updatePropertyWithValue('recurrence-id', shiftTime(ridValue));
+    vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
   }
 
   return root.toString();
@@ -859,7 +900,7 @@ export function addExclusionDate(ics: string, occurrenceStart: number, isAllDay:
   addExdateProperty(vevent, exdateTime, ical, originalZone);
 
   // Update DTSTAMP to indicate modification
-  vevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+  vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
 
   // Increment SEQUENCE if present (for proper sync)
   const sequence = vevent.getFirstPropertyValue('sequence');
@@ -867,6 +908,49 @@ export function addExclusionDate(ics: string, occurrenceStart: number, isAllDay:
     vevent.updatePropertyWithValue('sequence', (parseInt(String(sequence), 10) || 0) + 1);
   }
 
+  return root.toString();
+}
+
+/** Remove an inline exception and exclude the RRULE slot it replaced. */
+export function removeInlineException(ics: string, recurrenceId: string): string {
+  const ical = getICAL();
+  const { root } = parseICSString(ics);
+  const vcalendar = root.name === 'vcalendar' ? root : null;
+  if (!vcalendar) return ics;
+
+  registerTimezones(vcalendar, ical);
+  const wanted = recurrenceId.replace(/[-:]/g, '');
+  const utc = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(wanted);
+  const wantedMs = utc ? Date.UTC(+utc[1], +utc[2] - 1, +utc[3], +utc[4], +utc[5], +utc[6]) : null;
+
+  let master: ICALComponent | null = null;
+  let exception: ICALComponent | null = null;
+  let slot: ICALTime | null = null;
+  for (const vevent of vcalendar.getAllSubcomponents('vevent')) {
+    const ridProperty = vevent.getFirstProperty('recurrence-id');
+    if (!ridProperty) {
+      if (!master) master = vevent;
+      continue;
+    }
+    const ridValue = ridProperty.getFirstValue() as ICALTime | null;
+    if (!ridValue || typeof ridValue.toJSDate !== 'function') continue;
+    if (
+      ridValue.toICALString() === wanted ||
+      (wantedMs !== null && ridValue.toJSDate().getTime() === wantedMs)
+    ) {
+      exception = vevent;
+      slot = ridValue;
+    }
+  }
+  if (!master || !exception || !slot) return ics;
+
+  vcalendar.removeSubcomponent(exception);
+  addExdateProperty(master, slot.clone(), ical, slot.zone);
+  master.updatePropertyWithValue('dtstamp', nowUTC(ical));
+  const sequence = master.getFirstPropertyValue('sequence');
+  if (sequence !== null) {
+    master.updatePropertyWithValue('sequence', (parseInt(String(sequence), 10) || 0) + 1);
+  }
   return root.toString();
 }
 
@@ -906,7 +990,7 @@ export function updateRecurrenceRule(ics: string, rruleString: string | null): s
   }
 
   // Update DTSTAMP to indicate modification
-  vevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+  vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
 
   return root.toString();
 }
@@ -948,7 +1032,7 @@ export function updateAttendees(
   }
 
   // Update DTSTAMP
-  vevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+  vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
 
   return root.toString();
 }
@@ -994,7 +1078,7 @@ export function updateEventProperty(
   if (!vevent) {
     throw new Error('Invalid ICS: no VEVENT component found');
   }
-  vevent.updatePropertyWithValue('dtstamp', ical.Time.now());
+  vevent.updatePropertyWithValue('dtstamp', nowUTC(ical));
 
   return root.toString();
 }

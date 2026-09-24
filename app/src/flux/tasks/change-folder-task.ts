@@ -5,6 +5,10 @@ import { localized } from '../../intl';
 import { Message } from '../models/message';
 import { Thread } from '../models/thread';
 import { AttributeValues } from '../models/model';
+import * as Actions from '../actions';
+
+const MOVE_STATUS_NOTICE_COOLDOWN_MS = 5 * 60 * 1000;
+let lastMoveStatusNoticeAt = 0;
 
 // Public: Create a new task to apply labels to a message or thread.
 //
@@ -128,12 +132,12 @@ export class ChangeFolderTask extends ChangeMailTask {
   }
 
   onError() {
-    AppEnv.showErrorDialog({
-      title: localized('Some messages could not be moved'),
-      message: localized(
-        'The move was not fully confirmed by the server. Completed moves were kept, and unconfirmed messages are available for synchronization again. Check the original and destination folders before retrying; a copy may already exist in the destination.'
-      ),
-    });
+    const now = Date.now();
+    if (now - lastMoveStatusNoticeAt < MOVE_STATUS_NOTICE_COOLDOWN_MS) {
+      return;
+    }
+    lastMoveStatusNoticeAt = now;
+    Actions.showSyncStatusNotice(localized('Move not confirmed — checking folders…'));
   }
 
   createUndoTask() {

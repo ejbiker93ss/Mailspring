@@ -374,7 +374,18 @@ class _MessageStore extends SummerMailStore {
   }
 
   _fetchMissingBodies(items: Message[]) {
-    const missing = items.filter((i) => i.body === null);
+    // Older SmarterMail API syncs persisted the display HTML before loading
+    // its MIME parts. Treat that body as incomplete so opening the
+    // conversation upgrades it once and restores attachments / inline CIDs.
+    const missing = items.filter(
+      (i) =>
+        i.body === null ||
+        (i.smHasAttachments && !i.smAttachmentHydratedV1) ||
+        // A malformed SmarterMail response can be only its final MIME
+        // delimiter. Do not keep displaying a poisoned cached body: opening
+        // it asks native sync for the raw MIME fallback.
+        /^[_-][A-Za-z0-9_+=./-]{10,}--$/.test((i.body || '').trim())
+    );
     if (missing.length > 0) {
       return Actions.fetchBodies(missing);
     }

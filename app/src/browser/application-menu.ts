@@ -307,7 +307,12 @@ export default class ApplicationMenu {
   // Returns a String containing the keystroke in a format that can be interpreted
   //   by Electron to provide nice icons where available.
   acceleratorForCommand(command: string, keystrokesByCommand: Record<string, string[]>) {
-    let firstKeystroke = keystrokesByCommand[command] && keystrokesByCommand[command][0];
+    const keystrokes = keystrokesByCommand[command] || [];
+    const nativeKeystrokes =
+      process.platform === 'darwin'
+        ? keystrokes
+        : keystrokes.filter((keystroke) => !/\b(command|meta)\b/.test(keystroke));
+    let firstKeystroke = nativeKeystrokes[0] || keystrokes[0];
     if (!firstKeystroke) {
       return null;
     }

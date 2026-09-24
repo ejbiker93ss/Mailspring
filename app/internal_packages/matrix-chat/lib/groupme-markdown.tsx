@@ -5,6 +5,51 @@ interface Props {
   renderText?: (text: string, offset: number) => React.ReactNode;
 }
 
+type TableCell = { text: string; offset: number };
+type TableAlignment = 'left' | 'center' | 'right' | undefined;
+
+function tableCells(line: { text: string; offset: number }): TableCell[] | null {
+  const pipeIndexes: number[] = [];
+  for (let i = 0; i < line.text.length; i++) {
+    if (line.text[i] === '|' && (i === 0 || line.text[i - 1] !== '\\')) pipeIndexes.push(i);
+  }
+  if (!pipeIndexes.length) return null;
+
+  const startsWithPipe = /^\s*\|/.test(line.text);
+  const endsWithPipe = /\|\s*$/.test(line.text);
+  const boundaries = [...pipeIndexes];
+  if (!startsWithPipe) boundaries.unshift(-1);
+  if (!endsWithPipe) boundaries.push(line.text.length);
+
+  const cells: TableCell[] = [];
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const rawStart = boundaries[i] + 1;
+    const rawEnd = boundaries[i + 1];
+    const raw = line.text.slice(rawStart, rawEnd);
+    const leadingSpace = raw.length - raw.trimStart().length;
+    cells.push({ text: raw.trim(), offset: line.offset + rawStart + leadingSpace });
+  }
+  return cells;
+}
+
+function tableAlignments(cells: TableCell[]): TableAlignment[] | null {
+  const alignments: TableAlignment[] = [];
+  for (const cell of cells) {
+    const marker = cell.text.replace(/\s/g, '');
+    if (!/^:?-{3,}:?$/.test(marker)) return null;
+    alignments.push(
+      marker.startsWith(':') && marker.endsWith(':')
+        ? 'center'
+        : marker.endsWith(':')
+          ? 'right'
+          : marker.startsWith(':')
+            ? 'left'
+            : undefined
+    );
+  }
+  return alignments;
+}
+
 // Render to React nodes, never HTML. Raw HTML remains text and links use a
 // protocol allowlist. Original offsets keep GroupMe mentions/emoji aligned.
 export default function GroupMeMarkdown({ text, renderText = (value) => value }: Props) {
@@ -69,14 +114,61 @@ export default function GroupMeMarkdown({ text, renderText = (value) => value }:
       blocks.push(<hr key={line.offset} />);
       continue;
     }
+    const headerCells = tableCells(line);
+    const dividerCells = lines[i + 1] ? tableCells(lines[i + 1]) : null;
+    const alignments = dividerCells ? tableAlignments(dividerCells) : null;
+    if (
+      headerCells &&
+      alignments &&
+      headerCells.length === alignments.length &&
+      headerCells.length > 1
+    ) {
+      const rows: TableCell[][] = [];
+      i += 2;
+      while (i < lines.length) {
+        const cells = tableCells(lines[i]);
+        if (!cells || cells.length !== headerCells.length) break;
+        rows.push(cells);
+        i++;
+      }
+      i--;
+      blocks.push(
+        <div className="groupme-markdown-table-wrap" key={line.offset}>
+          <table>
+            <thead>
+              <tr>
+                {headerCells.map((cell, index) => (
+                  <th key={cell.offset} style={{ textAlign: alignments[index] }}>
+                    {inline(cell.text, cell.offset)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((cells, rowIndex) => (
+                <tr key={cells[0]?.offset ?? `${line.offset}-${rowIndex}`}>
+                  {cells.map((cell, index) => (
+                    <td key={cell.offset} style={{ textAlign: alignments[index] }}>
+                      {inline(cell.text, cell.offset)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
     const listPattern = /^(\s*(?:[-+*]|\d+\.)\s+)(.*)$/;
     const list = listPattern.exec(line.text);
     if (list) {
       const ordered = /^\s*\d/.test(line.text);
       const items: React.ReactNode[] = [];
       do {
-        const current = lines[i],
-          match = listPattern.exec(current.text)!;
+        const current = lines[i];
+        const match = listPattern.exec(current.text);
+        if (!match) break;
         items.push(
           <li key={current.offset}>{inline(match[2], current.offset + match[1].length)}</li>
         );

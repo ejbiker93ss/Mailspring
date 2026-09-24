@@ -21,6 +21,7 @@ interface ActivitySidebarState {
   syncSummary: { phrase: any; progress: number };
   syncState: { [accountId: string]: { [folderPath: string]: any } };
   expanded: boolean;
+  syncStatusNotice: string | null;
 }
 
 export default class ActivitySidebar extends React.Component<
@@ -37,10 +38,14 @@ export default class ActivitySidebar extends React.Component<
   };
 
   _unlisteners: Array<() => void>;
+  _syncStatusNoticeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(props: Record<string, unknown>) {
     super(props);
-    this.state = Object.assign({ expanded: false }, this._getStateFromStores(false));
+    this.state = Object.assign(
+      { expanded: false, syncStatusNotice: null },
+      this._getStateFromStores(false)
+    );
   }
 
   _onDataChanged = () => {
@@ -67,8 +72,20 @@ export default class ActivitySidebar extends React.Component<
       TaskQueue.listen(this._onDataChanged),
       FolderSyncProgressStore.listen(this._onDataChanged),
       Actions.expandSyncState.listen(this._onExpand),
+      Actions.showSyncStatusNotice.listen(this._onSyncStatusNotice),
     ];
   }
+
+  _onSyncStatusNotice = (message: string) => {
+    if (this._syncStatusNoticeTimer) {
+      clearTimeout(this._syncStatusNoticeTimer);
+    }
+    this.setState({ syncStatusNotice: message });
+    this._syncStatusNoticeTimer = setTimeout(() => {
+      this._syncStatusNoticeTimer = null;
+      this.setState({ syncStatusNotice: null });
+    }, 8000);
+  };
 
   _onExpand = () => {
     this.setState(Object.assign({ expanded: true }, this._getStateFromStores(true)));
@@ -79,13 +96,16 @@ export default class ActivitySidebar extends React.Component<
   };
 
   componentWillUnmount() {
+    if (this._syncStatusNoticeTimer) {
+      clearTimeout(this._syncStatusNoticeTimer);
+    }
     for (const unlisten of this._unlisteners) {
       unlisten();
     }
   }
 
   render() {
-    const { tasks, syncSummary, syncState, expanded } = this.state;
+    const { tasks, syncSummary, syncState, expanded, syncStatusNotice } = this.state;
 
     const sendTasks: SendDraftTask[] = [];
     const exportTasks: GetManyRFC2822Task[] = [];
@@ -133,6 +153,11 @@ export default class ActivitySidebar extends React.Component<
                   <SyncActivity syncState={syncState} />
                 </div>
               )}
+            </div>
+          ) : null}
+          {syncStatusNotice ? (
+            <div className="item sync-status-notice" role="status" aria-live="polite">
+              <div className="inner">{syncStatusNotice}</div>
             </div>
           ) : null}
         </div>

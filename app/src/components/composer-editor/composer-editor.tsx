@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import * as Immutable from 'immutable';
 import { Editor, Value, Operation, Range, Block, Text, Point } from 'slate';
 import { Editor as SlateEditorComponent, EditorProps, Plugin } from 'slate-react';
+import Plain from 'slate-plain-serializer';
 import { clipboard as ElectronClipboard } from 'electron';
 import { InlineStyleTransformer, SanitizeTransformer } from 'summermail-exports';
 import os from 'os';
@@ -80,6 +81,10 @@ function isSelectionBroken(value: Value, operations: Immutable.List<Operation>):
 const AEditor = SlateEditorComponent as any as React.ComponentType<
   EditorProps & { ref: any; propsForPlugins: any }
 >;
+
+export function normalizePlainTextForPaste(text: string) {
+  return text.replace(/\r\n?/g, '\n');
+}
 
 interface ComposerEditorProps {
   value: Value;
@@ -340,7 +345,7 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
       return next();
     }
 
-    if (onFileReceived && event.clipboardData.items.length > 0) {
+    if (onFileReceived && shouldAttachPastedFile(event.clipboardData)) {
       const pasteCompletion = handleFilePasted(event, onFileReceived);
       if (pasteCompletion) {
         event.preventDefault();
@@ -374,7 +379,29 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
       }
     }
 
-    // fall back to Slate's default behavior
+    // Slate's plain-text paste handler splits on `\n` without first normalizing Windows
+    // CRLF line endings. This leaves a stray `\r` in every block; a blank line becomes a
+    // block containing only `\r`, which our HTML serializer later emits as `&nbsp;`.
+    // Handle plain text here so the editor model, composer preview, and sent HTML all
+    // represent blank lines the same way.
+    const text = event.clipboardData.getData('text/plain');
+    if (text) {
+      const { document, selection, startBlock } = editor.value;
+      // Slate's runtime Editor includes isVoid, but the version's public TypeScript
+      // declaration omits it.
+      if (!startBlock || (editor as any).isVoid(startBlock)) return next();
+
+      const fragment = Plain.deserialize(normalizePlainTextForPaste(text), {
+        defaultBlock: startBlock as any,
+        defaultMarks: document.getInsertMarksAtRange(selection as any) as any,
+      }).document;
+
+      editor.insertFragment(fragment);
+      event.preventDefault();
+      return;
+    }
+
+    // Fall back to Slate for clipboard types we do not handle.
     return next();
   };
 
@@ -482,6 +509,21 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
 }
 
 // Helpers
+
+// Spreadsheet apps often place both an HTML table and a rendered image on the clipboard.
+// Prefer the editable table; a bare copied image has no text/table and still takes the file path.
+export function clipboardHasRichText(clipboardData: DataTransfer) {
+  const html = clipboardData.getData('text/html');
+  if (!html) return false;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('style, script').forEach((element) => element.remove());
+  return !!doc.querySelector('table') || doc.body.textContent.trim().length > 0;
+}
+
+export function shouldAttachPastedFile(clipboardData: DataTransfer) {
+  const hasFileItem = Array.from(clipboardData.items).some((item) => item.kind === 'file');
+  return hasFileItem && !clipboardHasRichText(clipboardData);
+}
 
 export function extensionForClipboardMimeType(mimeType: string): string {
   return (

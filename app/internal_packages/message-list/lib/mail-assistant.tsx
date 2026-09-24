@@ -611,9 +611,7 @@ export default class MailAssistant extends React.Component<Record<string, never>
             microsoftHosts.find((host) => host.id === preferredHostId) || microsoftHosts[0];
           if (!teamsHost) {
             throw new Error(
-              localized(
-                'Connect Microsoft Teams in AI Assistant settings before creating a meeting.'
-              )
+              localized('Connect Microsoft Teams in Accounts settings before creating a meeting.')
             );
           }
           teamsHostAccountId = teamsHost.id;

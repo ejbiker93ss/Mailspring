@@ -64,6 +64,7 @@ export const O365_SCOPES = [
   'Contacts.ReadWrite.Shared', // contacts
   'Calendars.ReadWrite', // calendar
   'Calendars.ReadWrite.Shared', // calendar
+  'Tasks.ReadWrite', // Microsoft To Do
   'Mail.ReadWrite', // mail sync through Microsoft Graph
   'Mail.ReadWrite.Shared', // shared mailboxes granted to the signed-in user
   'Mail.Send', // sending through Microsoft Graph

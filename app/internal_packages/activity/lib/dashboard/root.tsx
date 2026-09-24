@@ -299,8 +299,8 @@ class RootWithTimespan extends React.Component<
         DatabaseStore.findAll<Message>(Message)
           .background()
           .where(Message.attributes.accountId.in(accountIds))
-          .where(Message.attributes.date.greaterThan(startUnix))
-          .where(Message.attributes.date.lessThan(endUnix))
+          .where(Message.attributes.date.greaterThan(new Date(startUnix * 1000)))
+          .where(Message.attributes.date.lessThan(new Date(endUnix * 1000)))
           .order(Message.attributes.date.ascending())
           .limit(CHUNK_SIZE)
           .then(resolve);

@@ -9,6 +9,20 @@ import {
   Message,
 } from 'summermail-exports';
 import { Menu, RetinaImg, ButtonDropdown } from 'summermail-component-kit';
+import { ALWAYS_CHECK_GRAMMAR_CONFIG_KEY } from './composer-ai-actions';
+
+interface SendActionMenuItem extends ISendAction {
+  skipWritingCheck?: boolean;
+}
+
+const SEND_WITHOUT_CHECKING_ACTION: SendActionMenuItem = {
+  title: 'Send without checking',
+  iconUrl: null,
+  configKey: 'send-without-checking',
+  isAvailableForDraft: () => true,
+  performSendAction: () => {},
+  skipWritingCheck: true,
+};
 
 interface SendActionButtonProps {
   tabIndex: number;
@@ -21,6 +35,7 @@ interface SendActionButtonProps {
 interface SendActionButtonState {
   sendActions: ISendAction[];
   isPreparingSend: boolean;
+  autoWritingCheckEnabled: boolean;
 }
 
 export class SendActionButton extends React.Component<
@@ -33,12 +48,14 @@ export class SendActionButton extends React.Component<
 
   _unlisteners = [];
   _composedComponent: any;
+  _configDisposable: { dispose: () => void } | null = null;
 
   constructor(props: SendActionButtonProps) {
     super(props);
     this.state = {
       sendActions: SendActionsStore.orderedSendActionsForDraft(props.draft),
       isPreparingSend: false,
+      autoWritingCheckEnabled: AppEnv.config.get(ALWAYS_CHECK_GRAMMAR_CONFIG_KEY) === true,
     };
   }
 
@@ -48,8 +65,14 @@ export class SendActionButton extends React.Component<
         this.setState({
           sendActions: SendActionsStore.orderedSendActionsForDraft(this.props.draft),
         });
-      })
+      }),
+      () => this._configDisposable?.dispose()
     );
+    this._configDisposable = AppEnv.config.onDidChange(ALWAYS_CHECK_GRAMMAR_CONFIG_KEY, () => {
+      this.setState({
+        autoWritingCheckEnabled: AppEnv.config.get(ALWAYS_CHECK_GRAMMAR_CONFIG_KEY) === true,
+      });
+    });
   }
 
   componentDidUpdate(prevProps: SendActionButtonProps) {
@@ -72,6 +95,7 @@ export class SendActionButton extends React.Component<
   shouldComponentUpdate(nextProps: SendActionButtonProps, nextState: SendActionButtonState) {
     return (
       nextState.isPreparingSend !== this.state.isPreparingSend ||
+      nextState.autoWritingCheckEnabled !== this.state.autoWritingCheckEnabled ||
       nextState.sendActions.map((a) => a.configKey).join(',') !==
         this.state.sendActions.map((a) => a.configKey).join(',')
     );
@@ -85,10 +109,14 @@ export class SendActionButton extends React.Component<
     this._onSendWithAction(this.state.sendActions[0]);
   };
 
-  _onSendWithAction = async (sendAction: ISendAction) => {
+  _onSendWithAction = async (selectedAction: SendActionMenuItem) => {
     if (this.state.isPreparingSend || !this.props.isValidDraft()) return;
 
-    if (this.props.beforeSend) {
+    const sendAction = selectedAction.skipWritingCheck
+      ? SendActionsStore.DefaultSendAction
+      : selectedAction;
+
+    if (this.props.beforeSend && !selectedAction.skipWritingCheck) {
       this.setState({ isPreparingSend: true });
       let readyToSend = false;
       try {
@@ -131,7 +159,19 @@ export class SendActionButton extends React.Component<
     );
   };
 
+  _renderSendActionMenuItem = ({ title, iconUrl }: ISendAction) => (
+    <span className="send-action-menu-item">
+      {iconUrl ? <RetinaImg url={iconUrl} mode={RetinaImg.Mode.ContentIsMask} /> : null}
+      <span className="text">{localized(title)}</span>
+    </span>
+  );
+
   render() {
+    const menuActions: SendActionMenuItem[] = [
+      ...(this.state.autoWritingCheckEnabled ? [SEND_WITHOUT_CHECKING_ACTION] : []),
+      ...this.state.sendActions.slice(1),
+    ];
+
     return (
       <ButtonDropdown
         className={`btn-send btn-emphasis btn-text ${
@@ -150,11 +190,12 @@ export class SendActionButton extends React.Component<
         }
         primaryClick={this._onPrimaryClick}
         closeOnMenuClick
+        direction="up"
         menu={
           <Menu
-            items={this.state.sendActions.slice(1)}
+            items={menuActions}
             itemKey={(actionConfig) => actionConfig.configKey}
-            itemContent={(actionConfig) => this._renderSendActionItem(actionConfig)}
+            itemContent={this._renderSendActionMenuItem}
             onSelect={this._onSendWithAction}
           />
         }

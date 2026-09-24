@@ -25,6 +25,13 @@ async function main() {
   assert(!html.includes('<script>'));
   assert(!html.includes('href="javascript:'));
   assert(html.includes('href="https://example.com"'));
+  const tableHtml = renderToStaticMarkup(React.createElement(Markdown, { text: '| Stage | Cervix | What You Do |\n| :--- | :---: | ---: |\n| **Early Labor** | 0–3 cm | Stay home |\n| Active Labor | 4–7 cm | Go in |' }));
+  for (const tag of ['table', 'thead', 'tbody', 'th', 'td']) assert(tableHtml.includes('<' + tag), tag);
+  assert(tableHtml.includes('<strong>Early Labor</strong>'));
+  assert(tableHtml.includes('text-align:center'));
+  assert(tableHtml.includes('text-align:right'));
+  const malformedTable = renderToStaticMarkup(React.createElement(Markdown, { text: '| A | B |\n| nope | --- |\n| 1 | 2 |' }));
+  assert(!malformedTable.includes('<table'));
   const offsets = [];
   renderToStaticMarkup(React.createElement(Markdown, { text: '# **Hi** @User', renderText: (text, offset) => { if (text.includes('@User')) offsets.push(offset + text.indexOf('@User')); return text; } }));
   assert.deepStrictEqual(offsets, [9]);

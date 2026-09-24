@@ -103,6 +103,8 @@ interface CalendarEventPopoverState {
   // New fields for enhanced editing
   allDay: boolean;
   repeat: RepeatOption;
+  /** The loaded repeat value, used to avoid flattening an untouched complex RRULE. */
+  originalRepeat: RepeatOption;
   alert: AlertTiming;
   showAs: ShowAsOption;
   calendarColor: string;
@@ -140,11 +142,12 @@ export class CalendarEventPopover extends React.Component<
       // Initialize new fields with defaults
       allDay: isAllDay || false,
       repeat: 'none',
+      originalRepeat: 'none',
       alert: '10min',
       showAs: 'busy',
       calendarColor: '#419bf9',
       timezone: DateUtils.timeZone,
-      showInvitees: attendees && attendees.length > 0,
+      showInvitees: !!this.props.isNewEvent || (attendees && attendees.length > 0),
       showNotes: !!description,
       selectedCalendarId: this.props.event.calendarId,
       selectedAccountId: this.props.event.accountId,
@@ -200,7 +203,7 @@ export class CalendarEventPopover extends React.Component<
     } catch (e) {
       // Fall back to defaults if we can't read the event
     }
-    this.setState({ editing: true, repeat, timezone });
+    this.setState({ editing: true, repeat, timezone, originalRepeat: repeat });
   };
 
   getStartMoment = () => moment(this.state.start * 1000);
@@ -316,9 +319,11 @@ export class CalendarEventPopover extends React.Component<
       });
     }
 
-    // Update recurrence rule (only for master event edits)
-    const rrule = repeatOptionToRRule(this.state.repeat);
-    ics = ICSEventHelpers.updateRecurrenceRule(ics, rrule);
+    // The Repeat control cannot express INTERVAL, BYDAY, COUNT, UNTIL or RDATE. Only write it
+    // back when the user changed it, otherwise an ordinary edit would flatten a complex rule.
+    if (this.state.repeat !== this.state.originalRepeat) {
+      ics = ICSEventHelpers.updateRecurrenceRule(ics, repeatOptionToRRule(this.state.repeat));
+    }
 
     event.ics = ics;
     event.recurrenceStart = this.state.start;
@@ -495,7 +500,7 @@ export class CalendarEventPopover extends React.Component<
             videoActive={teamsEnabled}
             onVideoToggle={() => {
               if (!microsoftHosts.length) {
-                Actions.switchPreferencesTab('AI Assistant');
+                Actions.switchPreferencesTab('Accounts');
                 Actions.openPreferences();
                 return;
               }

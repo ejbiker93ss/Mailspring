@@ -24,6 +24,30 @@
   code { font-family: monospace; background: @background-secondary; }
   hr { border: 0; border-top: 1px solid @border-color-divider; margin: 12px 0; }
   a { color: @accent-primary; text-decoration: underline; }
+  .groupme-markdown-table-wrap {
+    max-width: 100%;
+    margin: 10px 0;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border: 1px solid @border-color-divider;
+    border-collapse: collapse;
+    font-size: 0.94em;
+  }
+  th, td {
+    min-width: 92px;
+    padding: 7px 9px;
+    border: 1px solid @border-color-divider;
+    line-height: 1.4;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: @background-secondary;
+    font-weight: 600;
+  }
+  tbody tr:nth-child(even) { background: fade(@background-secondary, 45%); }
 }
 
 .groupme-custom-emoji {

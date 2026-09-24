@@ -7,7 +7,12 @@ import { Emitter, Disposable } from 'event-kit';
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
 
+type KeymapLayer = 'base' | 'template' | 'package';
+const keymapLayerOrder: KeymapLayer[] = ['base', 'template', 'package'];
+
 interface KeymapLoadOptions {
+  layer?: KeymapLayer;
+  /** Backward-compatible alias used by older package code and specs. */
   replaceExistingCommands?: boolean;
 }
 
@@ -79,16 +84,16 @@ class KeymapFile {
   _disposable = null;
   _path: string;
   _manager: KeymapManager;
-  _replaceExistingCommands: boolean;
+  _layer: KeymapLayer;
 
   constructor(
     manager: KeymapManager,
     filePath: string,
-    { replaceExistingCommands = false }: KeymapLoadOptions = {}
+    { layer, replaceExistingCommands = false }: KeymapLoadOptions = {}
   ) {
     this._manager = manager;
     this._path = filePath;
-    this._replaceExistingCommands = replaceExistingCommands;
+    this._layer = layer || (replaceExistingCommands ? 'template' : 'package');
   }
 
   load = () => {
@@ -131,8 +136,8 @@ class KeymapFile {
     return this._bindings;
   }
 
-  replacesExistingCommands() {
-    return this._replaceExistingCommands;
+  layer() {
+    return this._layer;
   }
 }
 
@@ -206,8 +211,10 @@ export default class KeymapManager {
 
   loadKeymaps = () => {
     // Load the base keymap and the base.platform keymap
-    this.loadKeymap(path.join(this.resourcePath, 'keymaps', 'base.json'));
-    this.loadKeymap(path.join(this.resourcePath, 'keymaps', `base-${process.platform}.json`));
+    this.loadKeymap(path.join(this.resourcePath, 'keymaps', 'base.json'), { layer: 'base' });
+    this.loadKeymap(path.join(this.resourcePath, 'keymaps', `base-${process.platform}.json`), {
+      layer: 'base',
+    });
 
     // Load the template keymap (Gmail, Mail.app, etc.) the user has chosen
     if (this._unobserveTemplate) {
@@ -237,16 +244,12 @@ export default class KeymapManager {
         'templates',
         `${templateFile}.json`
       );
-      // Templates describe a complete binding for each command they include.
-      // Commands omitted by the template continue to inherit the base keymap.
-      this._removeTemplate = this.loadKeymap(templateKeymapPath, {
-        replaceExistingCommands: true,
-      });
+      this._removeTemplate = this.loadKeymap(templateKeymapPath, { layer: 'template' });
     }
   };
 
-  loadKeymap(filePath: string, { replaceExistingCommands = false }: KeymapLoadOptions = {}) {
-    const file = new KeymapFile(this, filePath, { replaceExistingCommands });
+  loadKeymap(filePath: string, options: KeymapLoadOptions = {}) {
+    const file = new KeymapFile(this, filePath, options);
     this._files.push(file);
     file.load();
 
@@ -311,11 +314,16 @@ export default class KeymapManager {
   keymapCacheInvalidated() {
     this._bindingsCache = {};
 
-    for (const file of this._files) {
+    // Recompute by semantic layer rather than file load timing. The config observer can load a
+    // template before packages, and templates must never erase package-provided shortcuts.
+    const files = keymapLayerOrder.flatMap((layer) =>
+      this._files.filter((file) => file.layer() === layer)
+    );
+    for (const file of files) {
       const fileBindings = file.bindings();
       for (const command of Object.keys(fileBindings)) {
         const keystrokesArray = fileBindings[command];
-        if (file.replacesExistingCommands()) {
+        if (file.layer() === 'template') {
           this._bindingsCache[command] = keystrokesArray.slice();
         } else {
           this._bindingsCache[command] = (this._bindingsCache[command] || []).concat(

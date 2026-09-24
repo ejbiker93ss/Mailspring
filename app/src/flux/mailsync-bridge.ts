@@ -214,6 +214,30 @@ export default class MailsyncBridge {
     }
   }
 
+  private providerTaskRequests = new Map<string, (response: any) => void>();
+
+  requestProviderTasks(accountId: string, request: Record<string, unknown>): Promise<any> {
+    if (!AppEnv.isMainWindow() || !this._clients[accountId]) {
+      return Promise.reject(
+        new Error(localized('Open Tasks in the main window with the account connected.'))
+      );
+    }
+    const requestId = require('crypto').randomUUID();
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.providerTaskRequests.delete(requestId);
+        reject(new Error(localized('Task request timed out. Refresh before retrying a change.')));
+      }, 60000);
+      this.providerTaskRequests.set(requestId, (response) => {
+        clearTimeout(timeout);
+        this.providerTaskRequests.delete(requestId);
+        if (response.error) reject(new Error(response.error));
+        else resolve(response.result);
+      });
+      this._clients[accountId].sendMessage({ ...request, type: 'provider-tasks', requestId });
+    });
+  }
+
   sendSyncCalendarNow(accountId?: string) {
     if (!AppEnv.isMainWindow()) {
       ipcRenderer.send('request-calendar-sync', accountId);
@@ -501,6 +525,11 @@ export default class MailsyncBridge {
     }
 
     const { type, modelJSONs, modelClass } = json;
+    if (modelClass === 'ProviderTaskResponse') {
+      for (const response of modelJSONs || [])
+        this.providerTaskRequests.get(response.id)?.(response);
+      return;
+    }
     if (!modelJSONs || !type || !modelClass) {
       console.log(`Sync worker sent a JSON formatted message with unexpected keys: ${msg}`);
       return;

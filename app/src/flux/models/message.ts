@@ -107,6 +107,17 @@ export class Message extends ModelWithMetadata {
       itemClass: File,
     }),
 
+    // SmarterMail's fast message list tells us whether a message has
+    // attachments. The native sync process uses this to upgrade an older
+    // cached display body to the complete MIME representation on first open.
+    smHasAttachments: Attributes.Boolean({
+      modelKey: 'smHasAttachments',
+    }),
+
+    smAttachmentHydratedV1: Attributes.Boolean({
+      modelKey: 'smAttachmentHydratedV1',
+    }),
+
     unread: Attributes.Boolean({
       queryable: true,
       modelKey: 'unread',
@@ -167,6 +178,8 @@ export class Message extends ModelWithMetadata {
       modelKey: 'replyToHeaderMessageId',
     }),
 
+    replyToMessageId: Attributes.String({ modelKey: 'replyToMessageId' }),
+
     forwardedHeaderMessageId: Attributes.String({
       jsonKey: 'fwdMsgId',
       modelKey: 'forwardedHeaderMessageId',
@@ -196,6 +209,8 @@ export class Message extends ModelWithMetadata {
   public from: Contact[];
   public replyTo: Contact[];
   public files: File[];
+  public smHasAttachments: boolean;
+  public smAttachmentHydratedV1: boolean;
   public events: Event[];
   public date: Date;
   public headerMessageId: string;
@@ -206,6 +221,7 @@ export class Message extends ModelWithMetadata {
   public pristine: boolean;
   public draft: boolean;
   public replyToHeaderMessageId: string;
+  public replyToMessageId: string;
   public forwardedHeaderMessageId: string;
   public folder: Folder;
   public listUnsubscribe: string;

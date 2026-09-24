@@ -200,6 +200,8 @@ describe('DraftFactory', function draftFactory() {
             type: 'reply',
           }).then((draft) => {
             expect(draft.replyToHeaderMessageId).toEqual(fakeMessage1.headerMessageId);
+            expect(draft.replyToMessageId).toEqual(fakeMessage1.id);
+            expect(draft.toJSON().replyToMessageId).toEqual(fakeMessage1.id);
           });
         });
       });
