@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.83 (9/25/2026)
+
+- Preserve Drafts as well as Sent messages when archiving a conversation, including stale Drafts entries without a draft flag.
+- Continue IMAP moves in other folders after an unconfirmed batch, preserving successful moves while reporting the unresolved messages.
+
 ## 1.23.82 (9/25/2026)
 
 - Add a bounded IMAP move recovery for stale cached UIDs when Message-ID lookup is unavailable or non-unique, using an exact one-result Subject, sender, and sent-date query.
