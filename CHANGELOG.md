@@ -2,7 +2,8 @@
 
 ## 1.23.83 (9/25/2026)
 
-- Preserve Drafts as well as Sent messages when archiving a conversation, including stale Drafts entries without a draft flag.
+- Exclude hidden draft-deletion placeholders from conversation operations so obsolete Drafts identities cannot block archive or drag-and-drop moves.
+- Complete local cleanup for deleted IMAP drafts that were never uploaded to the server.
 - Continue IMAP moves in other folders after an unconfirmed batch, preserving successful moves while reporting the unresolved messages.
 
 ## 1.23.82 (9/25/2026)
