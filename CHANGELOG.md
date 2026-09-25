@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.81 (9/25/2026)
+
+- Recover IMAP archive and folder moves when another client changes a message's folder-specific UID before the queued move runs.
+- Use one targeted server-side Message-ID lookup, retry the corrected UID only once, and verify the destination without scanning or downloading large mailboxes.
+
 ## 1.23.80 (9/25/2026)
 
 - Keep IMAP archive and folder moves from popping back into the source folder when the server completes the move but returns an incomplete UID mapping.

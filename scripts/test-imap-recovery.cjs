@@ -35,7 +35,7 @@ async function serverCase(exe, mode) {
   const server = net.createServer(socket => {
     sockets.add(socket); socket.on('close', () => sockets.delete(socket));
     socket.on('error', () => {}); // Native test processes close connections on exit.
-    socket.write('* OK test IMAP ready\r\n'); let buffer = '', authTag = '';
+    socket.write('* OK test IMAP ready\r\n'); let buffer = '', authTag = '', selected = '';
     socket.on('data', data => {
       buffer += data;
       while (buffer.includes('\r\n')) {
@@ -45,12 +45,19 @@ async function serverCase(exe, mode) {
         if (cmd.startsWith('CAPABILITY')) socket.write(`* CAPABILITY IMAP4rev1 AUTH=PLAIN UIDPLUS${mode !== 'copy' ? ' MOVE' : ''}\r\n${tag} OK capability\r\n`);
         else if (cmd.startsWith('AUTHENTICATE')) {authTag=tag; socket.write('+ \r\n');}
         else if (cmd.startsWith('LIST')) socket.write(`* LIST (\\Noselect) "/" ""\r\n${tag} OK list\r\n`);
-        else if (cmd.startsWith('SELECT')) socket.write(`* 2 EXISTS\r\n* OK [UIDVALIDITY 1] valid\r\n* OK [UIDNEXT 200] next\r\n* FLAGS (\\Seen \\Deleted)\r\n${tag} OK [READ-WRITE] selected\r\n`);
+        else if (cmd.startsWith('SELECT')) {
+          selected = line.slice(line.indexOf(' ') + 1).replace(/^SELECT\s+/i, '').replace(/^"|"$/g, '');
+          socket.write(`* 2 EXISTS\r\n* OK [UIDVALIDITY 1] valid\r\n* OK [UIDNEXT 200] next\r\n* FLAGS (\\Seen \\Deleted)\r\n${tag} OK [READ-WRITE] selected\r\n`);
+        }
         else if (cmd.startsWith('UID MOVE 1 ')) socket.write(`${tag} OK [COPYUID 1 1 101] moved\r\n`);
+        else if (mode === 'stale' && cmd.startsWith('UID MOVE 2 ')) socket.write(`${tag} OK moved no matching UID\r\n`);
+        else if (mode === 'stale' && cmd.startsWith('UID MOVE 42 ')) socket.write(`${tag} OK [COPYUID 1 42 142] moved\r\n`);
         else if (cmd.startsWith('UID MOVE')) socket.write(`${tag} NO simulated move failure\r\n`);
         else if (cmd.startsWith('UID COPY')) socket.write(`${tag} OK [COPYUID 1 1 101] copied\r\n`);
         else if (cmd.startsWith('UID STORE')) socket.write(`${tag} NO simulated delete-flag failure\r\n`);
         else if (mode === 'noop' && cmd.startsWith('UID FETCH')) socket.write(`* 1 FETCH (UID 1 FLAGS ())\r\n${tag} OK fetched\r\n`);
+        else if (mode === 'stale' && cmd.startsWith('UID SEARCH') && selected === 'B') socket.write(`* SEARCH 42\r\n${tag} OK searched\r\n`);
+        else if (mode === 'stale' && cmd.startsWith('UID SEARCH')) socket.write(`* SEARCH\r\n${tag} OK searched\r\n`);
         else socket.write(`${tag} OK complete\r\n`);
       }
     });
@@ -69,4 +76,5 @@ async function serverCase(exe, mode) {
   await run(build('imap-physical-copy-test'), []);
   const exe = build('imap-move-recovery-test');
   await serverCase(exe, 'partial'); await serverCase(exe, 'copy'); await serverCase(exe, 'noop');
+  await serverCase(exe, 'stale');
 })().catch(e => {console.error(e); process.exitCode=1;});
