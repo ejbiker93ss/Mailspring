@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.80 (9/25/2026)
+
+- Keep IMAP archive and folder moves from popping back into the source folder when the server completes the move but returns an incomplete UID mapping.
+- Recover missing IMAP destination UIDs with one bounded header lookup instead of scanning large Archive folders.
+- Reconcile delayed SmarterMail API move results without duplicating the optimistic local message or hiding a genuinely failed move forever.
+- Keep the Send dropdown fully visible inside narrow inline composers.
+
 ## 1.23.79 (9/24/2026)
 
 - Restore SmarterMail API inline images and downloadable attachments without replacing valid message bodies with malformed raw MIME responses.

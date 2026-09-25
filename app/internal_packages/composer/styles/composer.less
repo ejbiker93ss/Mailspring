@@ -633,6 +633,15 @@ body.platform-win32 {
       white-space: nowrap;
       border-radius: var(--fm-radius-sm);
 
+      // The send control sits at the left edge of narrow inline composers.
+      // Expand its menu toward the available content area instead of toward
+      // the clipped edge of the message card.
+      .secondary-items {
+        left: 0;
+        right: auto;
+        max-width: calc(100vw - 32px);
+      }
+
       // Keep the primary composer action in the active theme instead of the
       // legacy Windows-only blue treatment applied by button-dropdown.less.
       .primary-item,
