@@ -50,14 +50,14 @@ async function serverCase(exe, mode) {
           socket.write(`* 2 EXISTS\r\n* OK [UIDVALIDITY 1] valid\r\n* OK [UIDNEXT 200] next\r\n* FLAGS (\\Seen \\Deleted)\r\n${tag} OK [READ-WRITE] selected\r\n`);
         }
         else if (cmd.startsWith('UID MOVE 1 ')) socket.write(`${tag} OK [COPYUID 1 1 101] moved\r\n`);
-        else if (mode === 'stale' && cmd.startsWith('UID MOVE 2 ')) socket.write(`${tag} OK moved no matching UID\r\n`);
-        else if (mode === 'stale' && cmd.startsWith('UID MOVE 42 ')) socket.write(`${tag} OK [COPYUID 1 42 142] moved\r\n`);
+        else if (mode.startsWith('stale') && cmd.startsWith('UID MOVE 2 ')) socket.write(`${tag} OK moved no matching UID\r\n`);
+        else if (mode.startsWith('stale') && cmd.startsWith('UID MOVE 42 ')) socket.write(`${tag} OK [COPYUID 1 42 142] moved\r\n`);
         else if (cmd.startsWith('UID MOVE')) socket.write(`${tag} NO simulated move failure\r\n`);
         else if (cmd.startsWith('UID COPY')) socket.write(`${tag} OK [COPYUID 1 1 101] copied\r\n`);
         else if (cmd.startsWith('UID STORE')) socket.write(`${tag} NO simulated delete-flag failure\r\n`);
         else if (mode === 'noop' && cmd.startsWith('UID FETCH')) socket.write(`* 1 FETCH (UID 1 FLAGS ())\r\n${tag} OK fetched\r\n`);
-        else if (mode === 'stale' && cmd.startsWith('UID SEARCH') && selected === 'B') socket.write(`* SEARCH 42\r\n${tag} OK searched\r\n`);
-        else if (mode === 'stale' && cmd.startsWith('UID SEARCH')) socket.write(`* SEARCH\r\n${tag} OK searched\r\n`);
+        else if (mode.startsWith('stale') && cmd.startsWith('UID SEARCH') && selected === 'B') socket.write(`* SEARCH 42\r\n${tag} OK searched\r\n`);
+        else if (mode.startsWith('stale') && cmd.startsWith('UID SEARCH')) socket.write(`* SEARCH\r\n${tag} OK searched\r\n`);
         else socket.write(`${tag} OK complete\r\n`);
       }
     });
@@ -76,5 +76,5 @@ async function serverCase(exe, mode) {
   await run(build('imap-physical-copy-test'), []);
   const exe = build('imap-move-recovery-test');
   await serverCase(exe, 'partial'); await serverCase(exe, 'copy'); await serverCase(exe, 'noop');
-  await serverCase(exe, 'stale');
+  await serverCase(exe, 'stale'); await serverCase(exe, 'stale-no-mid');
 })().catch(e => {console.error(e); process.exitCode=1;});

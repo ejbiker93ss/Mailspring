@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.82 (9/25/2026)
+
+- Add a bounded IMAP move recovery for stale cached UIDs when Message-ID lookup is unavailable or non-unique, using an exact one-result Subject, sender, and sent-date query.
+- Record non-content diagnostics for IMAP identity lookup results so provider-specific no-op moves can be distinguished without logging message data.
+
 ## 1.23.81 (9/25/2026)
 
 - Recover IMAP archive and folder moves when another client changes a message's folder-specific UID before the queued move runs.
