@@ -1,5 +1,6 @@
 import React from 'react';
 import { correctionParts, applySelectedCorrections } from './composer-corrections';
+import { buildComposerWordDiff } from '../../../src/components/composer-editor/composer-text-corrections';
 import {
   Actions,
   DatabaseStore,
@@ -29,7 +30,7 @@ export interface ComposerDiffSegment {
   text: string;
 }
 
-const GRAMMAR_PROMPT = `You edit email drafts. Review the ENTIRE draft and correct ALL spelling, grammar, punctuation, capitalization, and obvious typo issues in one comprehensive pass. Do not stop after the first few corrections or limit the number of issues. Check the complete corrected draft for remaining errors before returning it. Preserve the author's meaning, tone, paragraph breaks, and level of formality. Do not add facts, greetings, sign-offs, commentary, or markdown. Preserve every token shaped like [[PRIVATE_1]] exactly. Return the entire corrected draft text, not an excerpt.`;
+const GRAMMAR_PROMPT = `You edit email drafts. Review the ENTIRE draft and correct ALL spelling, grammar, punctuation, capitalization, and obvious typo issues in one comprehensive pass. Do not stop after the first few corrections or limit the number of issues. Check the complete corrected draft for remaining errors before returning it. Preserve the author's meaning, tone, every line break (including blank lines), and level of formality. Make text corrections only; do not reformat lists or add or remove formatting markers. Do not add facts, greetings, sign-offs, commentary, or markdown. Preserve every token shaped like [[PRIVATE_1]] exactly. Return the entire corrected draft text, not an excerpt.`;
 
 export const ALWAYS_CHECK_GRAMMAR_CONFIG_KEY = 'core.sending.alwaysCheckSpellingAndGrammar';
 
@@ -48,46 +49,7 @@ export function composerTextsMatch(before: string, after: string) {
   return normalize(before) === normalize(after);
 }
 
-function diffTokens(value: string) {
-  return value.match(/\s+|[A-Za-z0-9_']+|[^A-Za-z0-9_'\s]/g) || [];
-}
-
-export function buildComposerWordDiff(before: string, after: string): ComposerDiffSegment[] {
-  const left = diffTokens(before);
-  const right = diffTokens(after);
-  if (left.length * right.length > 2_000_000) {
-    return [
-      { type: 'removed', text: before },
-      { type: 'added', text: after },
-    ];
-  }
-  const table = Array.from({ length: left.length + 1 }, () => new Uint16Array(right.length + 1));
-  for (let i = left.length - 1; i >= 0; i--) {
-    for (let j = right.length - 1; j >= 0; j--) {
-      table[i][j] =
-        left[i] === right[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
-    }
-  }
-  const raw: ComposerDiffSegment[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < left.length || j < right.length) {
-    if (i < left.length && j < right.length && left[i] === right[j]) {
-      raw.push({ type: 'same', text: left[i++] });
-      j++;
-    } else if (j < right.length && (i === left.length || table[i][j + 1] >= table[i + 1][j])) {
-      raw.push({ type: 'added', text: right[j++] });
-    } else {
-      raw.push({ type: 'removed', text: left[i++] });
-    }
-  }
-  return raw.reduce<ComposerDiffSegment[]>((segments, segment) => {
-    const previous = segments[segments.length - 1];
-    if (previous?.type === segment.type) previous.text += segment.text;
-    else segments.push({ ...segment });
-    return segments;
-  }, []);
-}
+export { buildComposerWordDiff } from '../../../src/components/composer-editor/composer-text-corrections';
 
 export function parseComposerToneResult(value: string): ComposerToneResult {
   const parsed = JSON.parse(stripCodeFence(value));
@@ -382,8 +344,15 @@ export default class ComposerAIActions extends React.Component<
                 );
                 return;
               }
-              editor.replaceEditableText(selectedText);
-              Actions.closePopover();
+              try {
+                editor.replaceEditableText(selectedText);
+                Actions.closePopover();
+              } catch (error) {
+                require('@electron/remote').dialog.showErrorBox(
+                  localized('Corrections were not applied'),
+                  error.message || localized('Review the draft and apply corrections manually.')
+                );
+              }
             }}
           />,
           anchor

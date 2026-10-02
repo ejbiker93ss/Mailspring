@@ -343,7 +343,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
 
     return (
       <KeyCommandsRegion
-        className={`thread-search-bar ${showPlaceholder ? 'placeholder' : ''}`}
+        className={`thread-search-bar ${showPlaceholder ? 'placeholder' : ''} ${this.state.focused ? 'is-focused' : ''}`}
         role="combobox"
         aria-expanded={suggestionsVisible}
         aria-haspopup="listbox"

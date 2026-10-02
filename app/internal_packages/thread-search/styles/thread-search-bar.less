@@ -1,7 +1,8 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
-@token-color: @accent-primary;
+// Search operators must remain legible on both light and dark theme inputs.
+@token-color: color-mix(in srgb, @accent-primary 55%, @text-color 45%);
 
 .thread-search-bar {
   position: relative;
@@ -70,7 +71,7 @@
 
   .suggestions {
     left: 0;
-    top: 23px;
+    top: 100%;
     width: 100%;
     position: absolute;
     background: @input-bg;
@@ -86,7 +87,7 @@
     padding-top: @padding-small-vertical;
 
     .suggestion {
-      color: @text-color-very-subtle;
+      color: mix(@text-color, @input-bg, 82%);
       padding: @padding-small-vertical @padding-small-horizontal;
 
       &.selected {

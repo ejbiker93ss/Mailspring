@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.84 (10/2/2026)
+
+- Add rich Copy and Copy as Plain Text next to Quote for selected message text.
+- Keep Apply and Send text-only so spelling corrections preserve pasted lists, links, bold text, inline images, signatures, and other formatting.
+- Expand focused mail search to the message-list width and improve search suggestion contrast.
+- Recover SmarterMail reply and forward drafts when a stale local parent placeholder has one unambiguous physical message copy on the account.
+
 ## 1.23.83 (9/25/2026)
 
 - Exclude hidden draft-deletion placeholders from conversation operations so obsolete Drafts identities cannot block archive or drag-and-drop moves.

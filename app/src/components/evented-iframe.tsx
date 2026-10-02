@@ -313,6 +313,7 @@ export class EventedIFrame extends React.Component<
     if (!selectedText) return false;
 
     const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
+    const selectedHTML = this._selectionHTML(node, selection.getRangeAt(0));
     const quoteHTML = buildSelectionQuoteHTML(selectedText, this.props.selectionQuoteAuthor);
     const quoteText = buildSelectionQuotePlainText(selectedText, this.props.selectionQuoteAuthor);
     const { clipboard } = require('@electron/remote');
@@ -324,6 +325,17 @@ export class EventedIFrame extends React.Component<
           label: localized('Quote'),
           click: () => this.props.onQuoteSelection(selectedText),
         },
+        {
+          label: localized('Copy'),
+          confirmation: localized('Copied'),
+          click: () => clipboard.write({ text: selectedText, html: selectedHTML }),
+        },
+        {
+          label: localized('Copy as Plain Text'),
+          confirmation: localized('Copied'),
+          click: () => clipboard.writeText(selectedText),
+        },
+        { type: 'separator' },
         {
           label: localized('Copy Quote'),
           confirmation: localized('Quote copied'),
@@ -342,6 +354,14 @@ export class EventedIFrame extends React.Component<
       }
     );
     return true;
+  }
+
+  _selectionHTML(node: HTMLIFrameElement, range: Range) {
+    const frameDocument = node.contentDocument;
+    if (!frameDocument) return '';
+    const container = frameDocument.createElement('div');
+    container.appendChild(range.cloneContents());
+    return container.innerHTML;
   }
 
   _onIFrameKeyEvent = (event: KeyboardEvent) => {
@@ -479,13 +499,14 @@ export class EventedIFrame extends React.Component<
     // Menu actions for text
     let text = '';
     let selectedText = '';
-    const selection = (
-      ReactDOM.findDOMNode(this) as HTMLIFrameElement
-    ).contentDocument.getSelection();
+    const frame = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
+    const selection = frame.contentDocument.getSelection();
+    let selectedHTML = '';
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       text = range.toString();
       selectedText = text.trim();
+      if (selectedText) selectedHTML = this._selectionHTML(frame, range);
     }
     if (!text || text.length === 0) {
       text = (linkTarget != null ? linkTarget : (event.target as HTMLElement)).innerText;
@@ -513,6 +534,22 @@ export class EventedIFrame extends React.Component<
         );
         menu.append(
           new MenuItem({
+            label: localized('Copy'),
+            click() {
+              clipboard.write({ text: selectedText, html: selectedHTML });
+            },
+          })
+        );
+        menu.append(
+          new MenuItem({
+            label: localized('Copy as Plain Text'),
+            click() {
+              clipboard.writeText(selectedText);
+            },
+          })
+        );
+        menu.append(
+          new MenuItem({
             label: localized('Copy Quote'),
             click() {
               clipboard.write({ text: quoteText, html: quoteHTML });
@@ -521,14 +558,16 @@ export class EventedIFrame extends React.Component<
         );
         menu.append(new MenuItem({ type: 'separator' }));
       }
-      menu.append(
-        new MenuItem({
-          label: localized('Copy'),
-          click() {
-            clipboard.writeText(text);
-          },
-        })
-      );
+      if (!selectedText) {
+        menu.append(
+          new MenuItem({
+            label: localized('Copy'),
+            click() {
+              clipboard.writeText(text);
+            },
+          })
+        );
+      }
       menu.append(
         new MenuItem({
           label: localized(`Search Google for '%@'`, textPreview),

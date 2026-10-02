@@ -18,6 +18,10 @@ import { schema, plugins, convertFromHTML, convertToHTML, convertToPlainText } f
 import { lastUnquotedNode, removeQuotedText, isQuoteNode } from './base-block-plugins';
 import { UNEDITABLE_TYPE } from './uneditable-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
+import {
+  applyEditableTextCorrections,
+  editableTextForWritingCheck,
+} from './composer-text-corrections';
 
 const snarkdown = require('snarkdown');
 
@@ -200,37 +204,15 @@ export class ComposerEditor extends React.Component<ComposerEditorProps, Compose
   }
 
   getEditableText = () => {
-    return this._editableLeadingNodes()
-      .map((node) => node.text)
-      .join('\n')
-      .replace(/\u00a0/g, ' ')
-      .trim();
+    if (!this.editor) return '';
+    return editableTextForWritingCheck(this.editor, this._editableLeadingNodes()).trim();
   };
 
   replaceEditableText = (text: string) => {
     if (!this.editor || !text.trim()) return;
     const nodes = this._editableLeadingNodes();
-    const firstText = nodes[0]?.getFirstText();
-    const lastText = nodes[nodes.length - 1]?.getLastText();
-    if (!firstText || !lastText) return;
-    const escapeHTML = (value: string) =>
-      value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const html = text
-      .replace(/\r\n/g, '\n')
-      .split('\n')
-      .map((line) => `<div>${line ? escapeHTML(line) : '<br>'}</div>`)
-      .join('');
-    const replacement = convertFromHTML(html);
-    this.editor
-      .select({
-        anchor: { key: firstText.key, offset: 0 },
-        focus: { key: lastText.key, offset: lastText.text.length },
-        isFocused: true,
-        isBackward: false,
-      } as any)
-      .delete()
-      .insertFragment(replacement.document)
-      .focus();
+    applyEditableTextCorrections(this.editor, nodes, text);
+    this.editor.focus();
   };
 
   removeQuotedText = () => {

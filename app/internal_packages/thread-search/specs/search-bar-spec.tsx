@@ -88,4 +88,30 @@ describe('ThreadSearchBar', function () {
     expect(document.activeElement).toBe(container.querySelector('[contenteditable]'));
     expect(container.querySelector('.thread-search-result-count').textContent).toBe('1 result');
   });
+
+  it('expands the search layout only while the editor is focused', function () {
+    const query = 'in:sent';
+    const perspective = {
+      accountIds: [],
+      isInbox: () => true,
+      searchQuery: query,
+      name: 'Sent',
+    } as any;
+    const { container } = render(
+      <ThreadSearchBarComponent
+        query={query}
+        isSearching={false}
+        resultCount={null}
+        perspective={perspective}
+      />
+    );
+    const field = container.querySelector('[contenteditable]');
+    const bar = container.querySelector('.thread-search-bar');
+
+    expect(bar.classList.contains('is-focused')).toBe(false);
+    fireEvent.focus(field);
+    expect(bar.classList.contains('is-focused')).toBe(true);
+    fireEvent.blur(field);
+    expect(bar.classList.contains('is-focused')).toBe(false);
+  });
 });

@@ -306,6 +306,17 @@ button.btn,
   gap: 6px;
 }
 
+// Give an active search the full message-list width. The toolbar actions
+// remain in their normal order, just beyond the field in the reading pane.
+.toolbar-ThreadList:has(.thread-search-bar.is-focused) {
+  z-index: 20;
+}
+
+.toolbar-ThreadList .thread-search-bar.is-focused {
+  flex: 0 0 100%;
+  max-width: none;
+}
+
 .thread-list,
 .draft-list {
   background: @background-primary;
