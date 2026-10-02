@@ -360,7 +360,24 @@ export class EventedIFrame extends React.Component<
     const frameDocument = node.contentDocument;
     if (!frameDocument) return '';
     const container = frameDocument.createElement('div');
-    container.appendChild(range.cloneContents());
+    // cloneContents omits the common ancestor. A selection entirely inside a
+    // bold span or a link still needs that wrapper to retain its formatting.
+    let content: Node = range.cloneContents();
+    let ancestor =
+      range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+        ? range.commonAncestorContainer.parentElement
+        : (range.commonAncestorContainer as Element);
+    while (
+      ancestor &&
+      ancestor !== frameDocument.body &&
+      ancestor !== frameDocument.documentElement
+    ) {
+      const wrapper = ancestor.cloneNode(false);
+      wrapper.appendChild(content);
+      content = wrapper;
+      ancestor = ancestor.parentElement;
+    }
+    container.appendChild(content);
     return container.innerHTML;
   }
 
