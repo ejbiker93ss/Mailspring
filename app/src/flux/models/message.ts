@@ -118,6 +118,10 @@ export class Message extends ModelWithMetadata {
       modelKey: 'smAttachmentHydratedV1',
     }),
 
+    smImageRepairAttempt: Attributes.Number({
+      modelKey: 'smImageRepairAttempt',
+    }),
+
     unread: Attributes.Boolean({
       queryable: true,
       modelKey: 'unread',
@@ -211,6 +215,7 @@ export class Message extends ModelWithMetadata {
   public files: File[];
   public smHasAttachments: boolean;
   public smAttachmentHydratedV1: boolean;
+  public smImageRepairAttempt: number;
   public events: Event[];
   public date: Date;
   public headerMessageId: string;

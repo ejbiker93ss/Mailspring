@@ -13,6 +13,7 @@ import { MessageViewExtension } from 'summermail-exports';
 import { DatabaseChangeRecord } from './database-change-record';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
+const SmarterMailImageRepairCooldownSeconds = 15 * 60;
 
 class _MessageStore extends SummerMailStore {
   FolderNamesHiddenByDefault = FolderNamesHiddenByDefault;
@@ -381,6 +382,14 @@ class _MessageStore extends SummerMailStore {
       (i) =>
         i.body === null ||
         (i.smHasAttachments && !i.smAttachmentHydratedV1) ||
+        // SmarterMail's server-side image blocking can poison display HTML
+        // with spacer sources. Repair only opened messages, at most once per
+        // fifteen minutes; the regular image privacy extension still applies.
+        ((i.smImageRepairAttempt || 0) <
+          Date.now() / 1000 - SmarterMailImageRepairCooldownSeconds &&
+          /<img\b[^>]*\bsrc\s*=\s*["'](?:https?:\/\/[^/"']+)?\/interface\/img\/s\.png(?:\?[^"']*)?["']/i.test(
+            i.body || ''
+          )) ||
         // A malformed SmarterMail response can be only its final MIME
         // delimiter. Do not keep displaying a poisoned cached body: opening
         // it asks native sync for the raw MIME fallback.

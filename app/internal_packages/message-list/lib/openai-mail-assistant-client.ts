@@ -184,7 +184,7 @@ const TOOLS = [
     type: 'function',
     name: 'search_mail',
     description:
-      'Search permitted mailboxes. Supports from:, to:, subject:, in:, is:unread, has:attachment, before:, and after:. Use this for mailbox-wide questions and keep limit at 30 or less.',
+      'Search all dates in the local cache of permitted mailboxes, not the live server. Supports from:, to:, subject:, in:, is:unread, has:attachment, before:, and after:. Results contain threads and nextOffset: use nextOffset with the same query to continue into older results. Keep limit at 30 or less. For file types, first search recipient + has:attachment, then get_thread to inspect filenames; do not assume the body mentions CSV or spreadsheet.',
     parameters: {
       type: 'object',
       properties: {
@@ -618,7 +618,7 @@ export async function askMailAssistant(options: {
   }. ${
     options.allowAllAccounts
       ? 'The user explicitly requested an all-account search for this turn.'
-      : 'Do not search or discuss other accounts unless the user explicitly asks for all accounts or all mailboxes.'
+      : 'Do not search or discuss other accounts unless the user explicitly asks for all accounts or all mailboxes. If no match is found, name the account you searched and suggest switching accounts or asking to search all accounts; do not imply that searching further back changes the account scope.'
   }`;
   const boundedMessages = buildAssistantRequestMessages(options.messages);
   let input: any[] = [...boundedMessages];
@@ -651,6 +651,7 @@ export async function askMailAssistant(options: {
   let response: any;
   const knownThreads = new Map<string, any>();
   const knownFolders = new Map<string, any>();
+  const hydrationBudget = { remaining: 12 };
 
   for (let round = 0; round < 6; round++) {
     if (options.signal && options.signal.aborted) throw new Error('Request stopped.');
@@ -684,6 +685,7 @@ export async function askMailAssistant(options: {
           output = await callMailboxReadTool(item.name, args, {
             defaultAccountId: options.defaultAccountId,
             allowAllAccounts: options.allowAllAccounts,
+            hydrationBudget,
           });
           try {
             const parsed = JSON.parse(output);
@@ -692,7 +694,7 @@ export async function askMailAssistant(options: {
               item.name === 'list_threads' ||
               item.name === 'get_thread'
             ) {
-              (Array.isArray(parsed) ? parsed : [parsed]).forEach((thread) => {
+              (Array.isArray(parsed) ? parsed : parsed.threads || [parsed]).forEach((thread) => {
                 if (thread && thread.id) knownThreads.set(thread.id, thread);
               });
             }

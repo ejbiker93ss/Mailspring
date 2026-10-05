@@ -33,6 +33,59 @@ const testMessage3 = new Message({
 });
 
 describe('MessageStore', function () {
+  describe('repairing SmarterMail blocked-image bodies', function () {
+    const blockedBody = '<html><img src="https://mail.example.com/interface/img/s.png"></html>';
+
+    beforeEach(function () {
+      spyOn(Actions, 'fetchBodies');
+    });
+
+    it('refetches cached spacer HTML alongside missing bodies, not healthy messages', function () {
+      const blocked = new Message({ id: 'blocked', body: blockedBody });
+      const missing = new Message({ id: 'missing', body: null });
+      const healthy = new Message({
+        id: 'healthy',
+        body: '<img src="https://example.com/logo.png">',
+      });
+
+      MessageStore._fetchMissingBodies([blocked, missing, healthy]);
+
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([blocked, missing]);
+    });
+
+    it('does not repeatedly refetch a failed image repair during its cooldown', function () {
+      const blocked = new Message({
+        id: 'blocked',
+        body: blockedBody,
+        smImageRepairAttempt: Date.now() / 1000,
+      });
+
+      MessageStore._fetchMissingBodies([blocked]);
+
+      expect(Actions.fetchBodies).not.toHaveBeenCalled();
+    });
+
+    it('retries an unresolved image repair after the cooldown', function () {
+      const blocked = new Message({
+        id: 'blocked',
+        body: blockedBody,
+        smImageRepairAttempt: Date.now() / 1000 - 16 * 60,
+      });
+
+      MessageStore._fetchMissingBodies([blocked]);
+
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([blocked]);
+    });
+
+    it('does not mistake a link to the spacer for a blocked image', function () {
+      MessageStore._fetchMissingBodies([
+        new Message({ id: 'link', body: '<a href="/interface/img/s.png">Link</a>' }),
+      ]);
+
+      expect(Actions.fetchBodies).not.toHaveBeenCalled();
+    });
+  });
+
   describe('when a search result identifies a matching message', function () {
     beforeEach(function () {
       MessageStore._thread = testThread;

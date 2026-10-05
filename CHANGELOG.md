@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.85 (10/5/2026)
+
+- Recover original HTML image sources when SmarterMail returns blank spacer images, with bounded repair of affected cached messages when reopened.
+- Make the mail search field taller and improve vertical alignment of text and controls.
+- Improve local AI mail search pagination and attachment filename visibility, with bounded loading of selected-thread metadata and explicit local-cache coverage.
+- Include SmarterMail attachment hints in local attachment searches before files are loaded.
+
 ## 1.23.84 (10/2/2026)
 
 - Add rich Copy and Copy as Plain Text next to Quote for selected message text.

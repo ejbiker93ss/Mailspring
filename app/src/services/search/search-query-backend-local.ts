@@ -267,9 +267,19 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitHasAttachment(/* node */) {
-    // Note: The sync engine populates attachmentCount in the data blob, but the
-    // column is not queryable in the schema. This LIKE clause is a workaround.
-    this._result = `(\`${this._className}\`.\`data\` NOT LIKE '%"attachmentCount":0%')`;
+    const data = `\`${this._className}\`.\`data\``;
+    const metadataHasAttachment = (messageData: string) =>
+      `(COALESCE(json_extract(${messageData}, '$.smHasAttachments'), 0) = 1 OR COALESCE(json_array_length(${messageData}, '$.files'), 0) > 0)`;
+    if (this._className === 'Thread') {
+      // SmarterMail lists know an attachment exists before its MIME parts are
+      // hydrated. Thread.attachmentCount only counts materialized File models.
+      // Preserve that cheap provider signal so older unopened mail is searchable.
+      const messageMatch = metadataHasAttachment('attachmentMessage.data');
+      const messageExists = `EXISTS (SELECT 1 FROM \`Message\` attachmentMessage WHERE attachmentMessage.threadId = \`Thread\`.id AND ${messageMatch})`;
+      this._result = `(COALESCE(json_extract(${data}, '$.attachmentCount'), 0) > 0 OR ${messageExists})`;
+    } else {
+      this._result = metadataHasAttachment(data);
+    }
   }
 
   visitDate(node) {

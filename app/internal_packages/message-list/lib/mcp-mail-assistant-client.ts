@@ -1,5 +1,6 @@
 import {
   AccountStore,
+  Actions,
   CategoryStore,
   DatabaseStore,
   Message,
@@ -11,6 +12,7 @@ import {
   checkFolderAccess,
   getAllowedAccountIds,
   isFolderAllowed,
+  isMessageAllowed,
   isThreadAllowed,
 } from '../../mcp-server/lib/mcp-access-control';
 import {
@@ -28,6 +30,55 @@ export const MAILBOX_READ_TOOL_NAMES = [
 ] as const;
 
 export type MailboxReadToolName = (typeof MAILBOX_READ_TOOL_NAMES)[number];
+
+export type MailboxReadScope = {
+  defaultAccountId?: string;
+  allowAllAccounts?: boolean;
+  hydrationBudget?: { remaining: number };
+};
+
+const SEARCH_PAGE_SIZE = 30;
+const THREAD_MESSAGE_LIMIT = 100;
+const THREAD_HYDRATION_LIMIT = 3;
+const HYDRATION_POLL_ATTEMPTS = 6;
+const HYDRATION_POLL_INTERVAL_MS = 500;
+
+async function hydrateThreadMessages(messages: Message[], scope: MailboxReadScope) {
+  const pending = messages
+    .filter(isMessageAllowed)
+    .filter(
+      (message) =>
+        message.body === null || (message.smHasAttachments && !message.smAttachmentHydratedV1)
+    )
+    .slice(
+      0,
+      Math.min(THREAD_HYDRATION_LIMIT, scope.hydrationBudget?.remaining ?? THREAD_HYDRATION_LIMIT)
+    );
+  if (!pending.length) return messages;
+
+  if (scope.hydrationBudget) scope.hydrationBudget.remaining -= pending.length;
+  Actions.fetchBodies(pending);
+  // Only hydrate this selected thread. Slow/offline messages stay explicitly
+  // pending; an empty attachment list is not proof that no attachment exists.
+  for (let attempt = 0; attempt < HYDRATION_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, HYDRATION_POLL_INTERVAL_MS));
+    const refreshed = await DatabaseStore.findAll<Message>(Message)
+      .where({ id: pending.map((message) => message.id) })
+      .include(Message.attributes.body)
+      .background();
+    const byId = new Map(refreshed.map((message) => [message.id, message]));
+    messages = messages.map((message) => byId.get(message.id) || message);
+    if (
+      refreshed.length === pending.length &&
+      refreshed.every(
+        (message) =>
+          message.body !== null && (!message.smHasAttachments || message.smAttachmentHydratedV1)
+      )
+    )
+      break;
+  }
+  return messages;
+}
 
 export function isMailboxReadTool(name: string): name is MailboxReadToolName {
   return (MAILBOX_READ_TOOL_NAMES as readonly string[]).includes(name);
@@ -66,7 +117,7 @@ function serializeAssistantThreadSummary(
 export async function callMailboxReadTool(
   name: MailboxReadToolName,
   args: Record<string, any>,
-  scope: { defaultAccountId?: string; allowAllAccounts?: boolean } = {}
+  scope: MailboxReadScope = {}
 ): Promise<string> {
   const requestedAccountId = args.accountId;
   const accountId = resolveMailboxToolAccountId(requestedAccountId, scope);
@@ -113,6 +164,11 @@ export async function callMailboxReadTool(
       const error = checkAccountAccess(accountId);
       if (error) throw new Error(error);
     }
+    const limit = Math.max(
+      1,
+      Math.min(Math.floor(Number(args.limit) || SEARCH_PAGE_SIZE), SEARCH_PAGE_SIZE)
+    );
+    const offset = Math.max(0, Math.floor(Number(args.offset) || 0));
     let query = DatabaseStore.findAll<Thread>(Thread);
     if (accountId) {
       query = query.where({ accountId });
@@ -127,13 +183,25 @@ export async function callMailboxReadTool(
     }
     const threads = await query
       .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
-      .offset(args.offset || 0)
-      .limit(Math.min(args.limit || 30, 30));
-    return json(
-      threads
-        .map((thread) => serializeAssistantThreadSummary(thread, { includeMessageCount: true }))
-        .filter(Boolean)
-    );
+      .background()
+      .offset(offset)
+      .limit(limit + 1);
+    return json({
+      source: 'local-cache',
+      coverage:
+        'All dates in the local cache, not a live server search. Uncached mail may be missing.',
+      accountId: accountId || null,
+      query: args.query,
+      nextOffset: threads.length > limit ? offset + limit : null,
+      threads: threads
+        .slice(0, limit)
+        .map((thread) =>
+          serializeAssistantThreadSummary(thread, {
+            includeMessageCount: true,
+          })
+        )
+        .filter(Boolean),
+    });
   }
 
   if (name === 'list_threads') {
@@ -158,10 +226,18 @@ export async function callMailboxReadTool(
   ) {
     throw new Error(`Thread '${args.threadId}' is outside the focused account`);
   }
-  const messages = await DatabaseStore.findAll<Message>(Message, { threadId: args.threadId })
+  let messages = await DatabaseStore.findAll<Message>(Message, { threadId: args.threadId })
     .include(Message.attributes.body)
-    .order(Message.attributes.date.ascending());
+    .background()
+    .order(Message.attributes.date.descending())
+    .limit(THREAD_MESSAGE_LIMIT + 1);
+  const messagesTruncated = messages.length > THREAD_MESSAGE_LIMIT;
+  messages = await hydrateThreadMessages(messages.slice(0, THREAD_MESSAGE_LIMIT).reverse(), scope);
   const detail = serializeThreadDetail(thread, messages);
   if (!detail) throw new Error(`Thread '${args.threadId}' not found`);
-  return json({ ...detail, summermailLink: mailAssistantThreadHref(thread.id) });
+  return json({
+    ...detail,
+    messagesTruncated,
+    summermailLink: mailAssistantThreadHref(thread.id),
+  });
 }

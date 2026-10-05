@@ -29,6 +29,7 @@ export function serializeThreadSummary(
     starred: thread.starred,
     lastMessageReceivedTimestamp: thread.lastMessageReceivedTimestamp,
     participantCount: thread.participants?.length || 0,
+    attachmentCount: thread.attachmentCount,
     accountId: thread.accountId,
     categories: (thread.categories || []).map(serializeCategory),
   };
@@ -51,6 +52,16 @@ export function serializeMessageDetail(message: Message): Record<string, any> | 
     subject: message.subject,
     date: message.date,
     body: message.body,
+    attachments: (message.files || []).map((file) => ({
+      filename: file.displayName(),
+      contentType: file.contentType,
+      size: file.size,
+      inline: !!file.contentId,
+    })),
+    attachmentMetadataStatus:
+      message.body === null || (message.smHasAttachments && !message.smAttachmentHydratedV1)
+        ? 'pending'
+        : 'loaded',
     snippet: message.snippet,
     unread: message.unread,
     starred: message.starred,

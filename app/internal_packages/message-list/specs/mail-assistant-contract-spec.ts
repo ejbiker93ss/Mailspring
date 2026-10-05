@@ -37,6 +37,9 @@ describe('MailAssistantContract', () => {
     expect(prompt).toContain('user must review and confirm');
     expect(prompt).toContain('Preserve aliases');
     expect(prompt).toContain('<mail_context>');
+    expect(prompt).toContain('continue using nextOffset');
+    expect(prompt).toContain('pending means not loaded yet');
+    expect(prompt).toContain('not the live server');
   });
 
   it('pins tool-requested mailbox reads to the focused account by default', () => {
