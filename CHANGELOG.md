@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.86 (10/5/2026)
+
+- Decode entity-escaped complete HTML documents returned by SmarterMail so email bodies render as HTML instead of literal markup.
+
 ## 1.23.85 (10/5/2026)
 
 - Recover original HTML image sources when SmarterMail returns blank spacer images, with bounded repair of affected cached messages when reopened.
