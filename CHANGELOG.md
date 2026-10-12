@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.87 (10/12/2026)
+
+- Decode escaped HTML from recovered SmarterMail MIME bodies before caching, so messages and previews display correctly.
+- Repair affected cached messages when opened, with a retry cooldown and SmarterMail API account scoping.
+
 ## 1.23.86 (10/5/2026)
 
 - Decode entity-escaped complete HTML documents returned by SmarterMail so email bodies render as HTML instead of literal markup.

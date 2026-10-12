@@ -1,6 +1,7 @@
 import SummerMailStore from 'summermail-store';
 import * as Actions from '../actions';
 import { Message } from '../models/message';
+import { AccountStore } from './account-store';
 import { Thread } from '../models/thread';
 import DatabaseStore from './database-store';
 import { TaskFactory } from '../tasks/task-factory';
@@ -14,6 +15,7 @@ import { DatabaseChangeRecord } from './database-change-record';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
 const SmarterMailImageRepairCooldownSeconds = 15 * 60;
+const SmarterMailHtmlRepairCooldownSeconds = 15 * 60;
 
 class _MessageStore extends SummerMailStore {
   FolderNamesHiddenByDefault = FolderNamesHiddenByDefault;
@@ -381,6 +383,7 @@ class _MessageStore extends SummerMailStore {
     const missing = items.filter(
       (i) =>
         i.body === null ||
+        this._needsSmarterMailHtmlRepair(i) ||
         (i.smHasAttachments && !i.smAttachmentHydratedV1) ||
         // SmarterMail's server-side image blocking can poison display HTML
         // with spacer sources. Repair only opened messages, at most once per
@@ -398,6 +401,25 @@ class _MessageStore extends SummerMailStore {
     if (missing.length > 0) {
       return Actions.fetchBodies(missing);
     }
+  }
+
+  _needsSmarterMailHtmlRepair(message: Message) {
+    const account = AccountStore.accountForId(message.accountId);
+    if (
+      account?.provider !== 'smartermail' ||
+      !account.settings?.smartermail_server ||
+      (message.smHtmlRepairAttempt || 0) >= Date.now() / 1000 - SmarterMailHtmlRepairCooldownSeconds
+    ) {
+      return false;
+    }
+
+    // Cached raw MIME can retain a fully escaped HTML document even when
+    // plaintext is false. Re-fetch it through native normalization on open.
+    const body = (message.body || '').trim();
+    return (
+      /^&lt;(?:!doctype html\b|html\b|body\b)/i.test(body) ||
+      (message.plaintext && /^<(?:!doctype html\b|html\b|head\b|body\b)/i.test(body))
+    );
   }
 
   _fetchExpandedAttachments(items: Message[]) {

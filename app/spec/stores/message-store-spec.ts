@@ -8,6 +8,7 @@ import { MessageStore } from '../../src/flux/stores/message-store';
 import DatabaseStore from '../../src/flux/stores/database-store';
 import { ChangeUnreadTask } from '../../src/flux/tasks/change-unread-task';
 import * as Actions from '../../src/flux/actions';
+import { AccountStore } from '../../src/flux/stores/account-store';
 
 const testThread = new Thread({ id: '123', accountId: TEST_ACCOUNT_ID });
 const testMessage1 = new Message({
@@ -33,6 +34,62 @@ const testMessage3 = new Message({
 });
 
 describe('MessageStore', function () {
+  describe('repairing SmarterMail HTML source bodies', function () {
+    beforeEach(function () {
+      spyOn(Actions, 'fetchBodies');
+      spyOn(AccountStore, 'accountForId').andReturn({
+        provider: 'smartermail',
+        settings: { smartermail_server: 'https://example.invalid' },
+      });
+    });
+
+    it('refetches escaped documents even when already marked as HTML', function () {
+      const escaped = new Message({
+        id: 'escaped',
+        plaintext: false,
+        body: '&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body&gt;Offer&lt;/body&gt;&lt;/html&gt;',
+      });
+      const bare = new Message({ id: 'bare', plaintext: true, body: '<html>Offer</html>' });
+      const healthy = new Message({ id: 'healthy', plaintext: false, body: '<html>Offer</html>' });
+      const literal = new Message({
+        id: 'literal',
+        plaintext: true,
+        body: 'Use &lt;html&gt; here.',
+      });
+
+      MessageStore._fetchMissingBodies([escaped, bare, healthy, literal]);
+
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped, bare]);
+    });
+
+    it('bounds failed repair retries and retries after the cooldown', function () {
+      const escaped = new Message({
+        id: 'escaped',
+        body: '&lt;html&gt;Offer&lt;/html&gt;',
+        smHtmlRepairAttempt: Date.now() / 1000,
+      });
+      MessageStore._fetchMissingBodies([escaped]);
+      expect(Actions.fetchBodies).not.toHaveBeenCalled();
+
+      escaped.smHtmlRepairAttempt -= 16 * 60;
+      MessageStore._fetchMissingBodies([escaped]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped]);
+    });
+
+    it('leaves other providers and SmarterMail IMAP accounts alone', function () {
+      const escaped = new Message({ id: 'escaped', body: '&lt;html&gt;Offer&lt;/html&gt;' });
+      for (const account of [
+        { provider: 'imap', settings: {} },
+        { provider: 'smartermail', settings: {} },
+        null,
+      ]) {
+        (AccountStore.accountForId as jasmine.Spy).andReturn(account);
+        MessageStore._fetchMissingBodies([escaped]);
+      }
+      expect(Actions.fetchBodies).not.toHaveBeenCalled();
+    });
+  });
+
   describe('repairing SmarterMail blocked-image bodies', function () {
     const blockedBody = '<html><img src="https://mail.example.com/interface/img/s.png"></html>';
 
