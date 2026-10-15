@@ -111,6 +111,7 @@ class _MessageStore extends SummerMailStore {
     this.listenTo(FocusedContentStore, this._onFocusChanged);
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     this.listenTo(Actions.toggleMessageIdExpanded, this._onToggleMessageIdExpanded);
+    this.listenTo(Actions.expandMessageIds, this._onExpandMessageIds);
     this.listenTo(Actions.focusMessageInThread, this._onFocusMessageInThread);
     this.listenTo(Actions.toggleAllMessagesExpanded, this._onToggleAllMessagesExpanded);
     this.listenTo(Actions.showAllMessagesExpanded, this._onShowAllMessagesExpanded);
@@ -260,7 +261,7 @@ class _MessageStore extends SummerMailStore {
 
   _onToggleAllMessagesExpanded() {
     if (this.hasCollapsedItems()) {
-      this._items.forEach((i) => this._expandItem(i));
+      this._expandItems(this._items);
     } else {
       // Do not collapse the latest message, i.e. the last one
       this._items.slice(0, -1).forEach((i) => this._collapseItem(i));
@@ -270,13 +271,14 @@ class _MessageStore extends SummerMailStore {
 
   _onShowAllMessagesExpanded() {
     this._showingHiddenItems = true;
-    this._items.forEach((item) => this._expandItem(item));
+    this._expandItems(this._items);
     this.trigger();
   }
 
   _onToggleHiddenMessages() {
     this._showingHiddenItems = !this._showingHiddenItems;
     this._expandItemsToDefault();
+    this._fetchMissingBodies(this._items.filter((item) => this._itemsExpanded[item.id]));
     this._fetchExpandedAttachments(this._items);
     this.trigger();
   }
@@ -291,6 +293,16 @@ class _MessageStore extends SummerMailStore {
       this._expandItem(item);
     }
 
+    this.trigger();
+  }
+
+  _onExpandMessageIds(ids: string[]) {
+    const requested = new Set(ids);
+    const items = this._items.filter(
+      (item) => requested.has(item.id) && !this._itemsExpanded[item.id]
+    );
+    if (items.length === 0) return;
+    this._expandItems(items);
     this.trigger();
   }
 
@@ -328,8 +340,15 @@ class _MessageStore extends SummerMailStore {
   }
 
   _expandItem(item: Message) {
-    this._itemsExpanded[item.id] = 'explicit';
-    this._fetchExpandedAttachments([item]);
+    this._expandItems([item]);
+  }
+
+  _expandItems(items: Message[]) {
+    for (const item of items) {
+      this._itemsExpanded[item.id] = 'explicit';
+    }
+    this._fetchMissingBodies(items);
+    this._fetchExpandedAttachments(items);
   }
 
   _collapseItem(item: Message) {
@@ -359,7 +378,9 @@ class _MessageStore extends SummerMailStore {
       this._revealFocusedMessage();
 
       if (this._itemsLoading) {
-        this._fetchMissingBodies(this._items);
+        // Collapsed history needs only its metadata. Fetch its full bodies and
+        // run provider repairs when those messages are actually expanded.
+        this._fetchMissingBodies(this._items.filter((item) => this._itemsExpanded[item.id]));
       }
 
       // Download the attachments on expanded messages.
@@ -433,7 +454,7 @@ class _MessageStore extends SummerMailStore {
   _expandItemsToDefault() {
     const visibleItems = this.items();
     if (WorkspaceStore.rootSheet() === WorkspaceStore.Sheet.Conversation) {
-      visibleItems.forEach((item) => this._expandItem(item));
+      visibleItems.forEach((item) => (this._itemsExpanded[item.id] = 'explicit'));
       return;
     }
     let lastDraftIdx = -1;

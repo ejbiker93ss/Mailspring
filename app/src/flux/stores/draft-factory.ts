@@ -334,14 +334,32 @@ class DraftFactory {
       return null;
     }
 
+    DraftStore = DraftStore || require('./draft-store').default;
+    const isReplyDraft = (other: Message) =>
+      other &&
+      other.draft === true &&
+      other.accountId === message.accountId &&
+      other.threadId === message.threadId &&
+      ((message.id && other.replyToMessageId === message.id) ||
+        (message.headerMessageId && other.replyToHeaderMessageId === message.headerMessageId));
+
+    // A session exists before mailsync's database delta reaches MessageStore.
+    // Reuse it directly, including edits that have not been committed yet.
+    const activeDrafts = Object.values(DraftStore._draftSessions)
+      .map((session) => session.draft())
+      .filter(isReplyDraft);
+    const activeDraft =
+      behavior === 'prefer-existing'
+        ? activeDrafts.pop()
+        : activeDrafts.find((draft) => draft.pristine);
+    if (activeDraft) return activeDraft;
+
     const messages =
       message.threadId === MessageStore.threadId()
         ? MessageStore.items()
         : await DatabaseStore.findAll<Message>(Message, { threadId: message.threadId });
 
-    const candidateDrafts = messages.filter(
-      (other) => other.replyToHeaderMessageId === message.headerMessageId && other.draft === true
-    );
+    const candidateDrafts = messages.filter(isReplyDraft);
 
     if (candidateDrafts.length === 0) {
       return null;
@@ -350,7 +368,6 @@ class DraftFactory {
       return candidateDrafts.pop();
     }
     if (behavior === 'prefer-existing-if-pristine') {
-      DraftStore = DraftStore || require('./draft-store').default;
       const sessions = await Promise.all(
         candidateDrafts.map((candidateDraft) =>
           DraftStore.sessionForClientId(candidateDraft.headerMessageId)

@@ -628,11 +628,7 @@ class MessageList extends React.Component<Record<string, unknown>, MessageListSt
 
   _expandMinifiedBundle = (bundle: MinifiedBundle) => {
     this.setState({ minified: false });
-    bundle.messages.forEach((message) => {
-      if (!this.state.messagesExpandedState[message.id]) {
-        Actions.toggleMessageIdExpanded(message.id);
-      }
-    });
+    Actions.expandMessageIds(bundle.messages.map((message) => message.id));
   };
 
   render() {

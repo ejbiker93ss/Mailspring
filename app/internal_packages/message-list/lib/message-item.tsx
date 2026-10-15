@@ -16,6 +16,7 @@ import MessageItemBody from './message-item-body';
 import MessageTimestamp from './message-timestamp';
 import MessageControls from './message-controls';
 import SendProgressIndicator from './send-progress-indicator';
+import { messageRenderPropsEqual } from './message-render-props-equal';
 
 interface MessageItemProps {
   thread: Thread;
@@ -61,7 +62,9 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
   }
 
   shouldComponentUpdate(nextProps: MessageItemProps, nextState: MessageItemState) {
-    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state);
+    return (
+      !messageRenderPropsEqual(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state)
+    );
   }
 
   componentWillUnmount() {

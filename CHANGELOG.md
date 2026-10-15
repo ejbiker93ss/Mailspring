@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.88 (10/15/2026)
+
+- Prevent repeated Reply clicks from creating duplicate composers while a reply is opening.
+- Speed up long conversations by loading expanded message bodies, batching expansion, and avoiding repeated thread comparisons.
+
 ## 1.23.87 (10/12/2026)
 
 - Decode escaped HTML from recovered SmarterMail MIME bodies before caching, so messages and previews display correctly.

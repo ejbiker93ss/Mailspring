@@ -50,6 +50,7 @@ Section: Drafts
 class DraftStore extends SummerMailStore {
   _draftSessions: { [headerMessageId: string]: DraftEditingSession } = {};
   _draftsSending: { [headerMessageId: string]: DraftSendState | boolean } = {};
+  _pendingReplies = new Map<string, Promise<{ headerMessageId: string; draft: Message }>>();
 
   constructor() {
     super();
@@ -270,10 +271,34 @@ class DraftStore extends SummerMailStore {
     type: ReplyType;
     behavior: ReplyBehavior;
   }) => {
-    const resolved = await this._modelifyContext({ thread, threadId, message, messageId });
-    if (!resolved.message || !resolved.thread) return;
-    const draft = await DraftFactory.createOrUpdateDraftForReply({ ...resolved, type, behavior });
-    return this._finalizeAndPersistNewMessage(draft, { popout });
+    const key = JSON.stringify([
+      thread?.accountId || message?.accountId,
+      thread?.id || threadId,
+      message?.id || messageId,
+      type,
+      behavior,
+      !!popout,
+    ]);
+    const pending = this._pendingReplies.get(key);
+    if (pending) return pending;
+
+    // Keep the operation shared until the local save finishes, when the new
+    // draft can finally be discovered by the conversation's message list.
+    const operation = (async () => {
+      const resolved = await this._modelifyContext({ thread, threadId, message, messageId });
+      if (!resolved.message || !resolved.thread) return;
+      const draft = await DraftFactory.createOrUpdateDraftForReply({ ...resolved, type, behavior });
+      return this._finalizeAndPersistNewMessage(draft, {
+        popout,
+        prepareNewDraft: !this._draftSessions[draft.headerMessageId],
+      });
+    })();
+    this._pendingReplies.set(key, operation);
+    try {
+      return await operation;
+    } finally {
+      this._pendingReplies.delete(key);
+    }
   };
 
   _onQuoteSelection = async ({
@@ -481,7 +506,9 @@ class DraftStore extends SummerMailStore {
 
     // Optimistically create a draft session and hand it the draft so that it
     // doesn't need to do a query for it a second from now when the composer wants it.
-    this._createSession(draft.headerMessageId, draft);
+    if (!this._draftSessions[draft.headerMessageId]) {
+      this._createSession(draft.headerMessageId, draft);
+    }
 
     const task = new SyncbackDraftTask({ draft });
     Actions.queueTask(task);

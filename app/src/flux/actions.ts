@@ -293,6 +293,9 @@ export const ensureCategoryIsFocused = create('ensureCategoryIsFocused', ActionS
   */
 export const toggleMessageIdExpanded = create('toggleMessageIdExpanded', ActionScopeWindow);
 
+// Expand a group without toggling existing expanded messages or emitting per-row updates.
+export const expandMessageIds = create('expandMessageIds', ActionScopeWindow);
+
 // Used by search results to reveal the message that made a conversation match.
 export const focusMessageInThread = create('focusMessageInThread', ActionScopeWindow);
 
