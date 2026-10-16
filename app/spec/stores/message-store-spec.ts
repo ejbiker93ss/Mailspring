@@ -34,7 +34,7 @@ const testMessage3 = new Message({
 });
 
 describe('MessageStore', function () {
-  describe('repairing SmarterMail HTML source bodies', function () {
+  describe('repairing SmarterMail malformed bodies', function () {
     beforeEach(function () {
       spyOn(Actions, 'fetchBodies');
       spyOn(AccountStore, 'accountForId').andReturn({
@@ -76,15 +76,30 @@ describe('MessageStore', function () {
       expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped]);
     });
 
+    it('repairs bare hexadecimal MIME boundaries and bounds failed retries', function () {
+      const boundary = new Message({ id: 'boundary', body: '0000000000009ba7be065df4973d--' });
+      const legacy = new Message({ id: 'legacy', body: '_006_example_boundary--' });
+      const coolingDown = new Message({
+        id: 'cooldown',
+        body: boundary.body,
+        smHtmlRepairAttempt: Date.now() / 1000,
+      });
+      const literal = new Message({ id: 'literal', body: 'See 0000000000009ba7be065df4973d--' });
+
+      MessageStore._fetchMissingBodies([boundary, legacy, coolingDown, literal]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([boundary, legacy]);
+    });
+
     it('leaves other providers and SmarterMail IMAP accounts alone', function () {
       const escaped = new Message({ id: 'escaped', body: '&lt;html&gt;Offer&lt;/html&gt;' });
+      const boundary = new Message({ id: 'boundary', body: '0000000000009ba7be065df4973d--' });
       for (const account of [
         { provider: 'imap', settings: {} },
         { provider: 'smartermail', settings: {} },
         null,
       ]) {
         (AccountStore.accountForId as jasmine.Spy).andReturn(account);
-        MessageStore._fetchMissingBodies([escaped]);
+        MessageStore._fetchMissingBodies([escaped, boundary]);
       }
       expect(Actions.fetchBodies).not.toHaveBeenCalled();
     });

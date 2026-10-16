@@ -34,7 +34,12 @@ function load(file, dependencies) {
   return context.exports;
 }
 
-function setup() {
+function setup(
+  account = {
+    provider: 'smartermail',
+    settings: { smartermail_server: 'https://example.invalid' },
+  }
+) {
   const counts = { triggers: 0, fetched: [], files: [], queries: 0 };
   const actions = {
     fetchBodies: (messages) => counts.fetched.push(...messages),
@@ -82,10 +87,7 @@ function setup() {
     './workspace-store': { default: workspace },
     './account-store': {
       AccountStore: {
-        accountForId: () => ({
-          provider: 'smartermail',
-          settings: { smartermail_server: 'https://example.invalid' },
-        }),
+        accountForId: () => account,
       },
     },
   }).MessageStore;
@@ -219,6 +221,50 @@ async function main() {
       conversation.counts.fetched.map((message) => message.id),
       ['unread', 'history', 'latest']
     );
+  }
+
+  if (!baseline) {
+    const f = setup();
+    const boundary = new f.Message({
+      id: 'hex-boundary',
+      body: '0000000000009ba7be065df4973d--',
+      files: [],
+    });
+    const coolingDown = new f.Message({
+      id: 'boundary-cooldown',
+      body: boundary.body,
+      smHtmlRepairAttempt: Date.now() / 1000,
+      files: [],
+    });
+    const healthy = new f.Message({ id: 'healthy', body: 'A normal reply --', files: [] });
+    f.rows([boundary, coolingDown, healthy]);
+    await f.store._fetchFromCache();
+    assert.equal(f.counts.fetched.length, 0, 'Collapsed boundary repair must wait until opened');
+    f.store._onExpandMessageIds(['hex-boundary', 'boundary-cooldown']);
+    assert.deepEqual(
+      f.counts.fetched.map((message) => message.id),
+      ['hex-boundary']
+    );
+    f.counts.fetched = [];
+    coolingDown.smHtmlRepairAttempt -= 16 * 60;
+    f.store._fetchMissingBodies([coolingDown, healthy]);
+    assert.deepEqual(
+      f.counts.fetched.map((message) => message.id),
+      ['boundary-cooldown']
+    );
+    for (const account of [
+      null,
+      { provider: 'imap', settings: {} },
+      { provider: 'smartermail', settings: {} },
+    ]) {
+      const other = setup(account);
+      other.store._fetchMissingBodies([boundary]);
+      assert.equal(
+        other.counts.fetched.length,
+        0,
+        'Boundary repair requires a SmarterMail API account'
+      );
+    }
   }
 
   if (!baseline) {

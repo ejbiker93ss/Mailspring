@@ -15,7 +15,7 @@ import { DatabaseChangeRecord } from './database-change-record';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
 const SmarterMailImageRepairCooldownSeconds = 15 * 60;
-const SmarterMailHtmlRepairCooldownSeconds = 15 * 60;
+const SmarterMailBodyRepairCooldownSeconds = 15 * 60;
 
 class _MessageStore extends SummerMailStore {
   FolderNamesHiddenByDefault = FolderNamesHiddenByDefault;
@@ -404,7 +404,7 @@ class _MessageStore extends SummerMailStore {
     const missing = items.filter(
       (i) =>
         i.body === null ||
-        this._needsSmarterMailHtmlRepair(i) ||
+        this._needsSmarterMailBodyRepair(i) ||
         (i.smHasAttachments && !i.smAttachmentHydratedV1) ||
         // SmarterMail's server-side image blocking can poison display HTML
         // with spacer sources. Repair only opened messages, at most once per
@@ -413,33 +413,32 @@ class _MessageStore extends SummerMailStore {
           Date.now() / 1000 - SmarterMailImageRepairCooldownSeconds &&
           /<img\b[^>]*\bsrc\s*=\s*["'](?:https?:\/\/[^/"']+)?\/interface\/img\/s\.png(?:\?[^"']*)?["']/i.test(
             i.body || ''
-          )) ||
-        // A malformed SmarterMail response can be only its final MIME
-        // delimiter. Do not keep displaying a poisoned cached body: opening
-        // it asks native sync for the raw MIME fallback.
-        /^[_-][A-Za-z0-9_+=./-]{10,}--$/.test((i.body || '').trim())
+          ))
     );
     if (missing.length > 0) {
       return Actions.fetchBodies(missing);
     }
   }
 
-  _needsSmarterMailHtmlRepair(message: Message) {
+  _needsSmarterMailBodyRepair(message: Message) {
     const account = AccountStore.accountForId(message.accountId);
     if (
       account?.provider !== 'smartermail' ||
       !account.settings?.smartermail_server ||
-      (message.smHtmlRepairAttempt || 0) >= Date.now() / 1000 - SmarterMailHtmlRepairCooldownSeconds
+      (message.smHtmlRepairAttempt || 0) >= Date.now() / 1000 - SmarterMailBodyRepairCooldownSeconds
     ) {
       return false;
     }
 
-    // Cached raw MIME can retain a fully escaped HTML document even when
-    // plaintext is false. Re-fetch it through native normalization on open.
+    // Repair escaped HTML and lone MIME delimiters through native recovery.
+    // Its existing attempt timestamp bounds both kinds of malformed bodies.
     const body = (message.body || '').trim();
     return (
       /^&lt;(?:!doctype html\b|html\b|body\b)/i.test(body) ||
-      (message.plaintext && /^<(?:!doctype html\b|html\b|head\b|body\b)/i.test(body))
+      (message.plaintext && /^<(?:!doctype html\b|html\b|head\b|body\b)/i.test(body)) ||
+      /^[_-][A-Za-z0-9_+=./-]{10,}--$/.test(body) ||
+      /^=-[A-Za-z0-9_+=./-]{8,}--$/.test(body) ||
+      /^[a-f0-9]{24,70}--$/i.test(body)
     );
   }
 

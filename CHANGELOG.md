@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.89 (10/16/2026)
+
+- Recover messages whose SmarterMail body contains only a hexadecimal MIME boundary, allowing the original body and reply headers to restore the conversation.
+- Repair affected cached bodies when opened, with bounded retries and SmarterMail API account scoping.
+
 ## 1.23.88 (10/15/2026)
 
 - Prevent repeated Reply clicks from creating duplicate composers while a reply is opening.
