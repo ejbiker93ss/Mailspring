@@ -1,5 +1,7 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
+import { dismissAppContextMenu, showAppContextMenu } from '../../src/components/app-context-menu';
 const EventedIFrame = require('../../src/components/evented-iframe').EventedIFrame;
 
 describe('EventedIFrame', () =>
@@ -76,10 +78,90 @@ describe('EventedIFrame', () =>
 
     it('disallows malicious uris', function () {
       const hrefs = ['file://usr/bin/bad'];
-      for (let href of Array.from(hrefs)) {
+      for (const href of hrefs) {
         this.frame._onIFrameClick(this.fakeEvent(href));
         expect(this.preventDefaultSpy).toHaveBeenCalled();
         expect(this.openLinkSpy).not.toHaveBeenCalled();
       }
     });
   }));
+
+describe('EventedIFrame selection menu dismissal', function () {
+  beforeEach(function () {
+    this.container = document.createElement('div');
+    document.body.appendChild(this.container);
+    this.frame = ReactDOM.render(
+      <EventedIFrame src="about:blank" onQuoteSelection={() => {}} />,
+      this.container
+    );
+    this.dismissed = jasmine.createSpy('dismissed');
+    this.frame._selectionMenuOpen = true;
+    showAppContextMenu(
+      [{ label: 'Quote', click: () => {} }],
+      { x: 10, y: 10 },
+      {
+        onDismiss: () => {
+          this.frame._selectionMenuOpen = false;
+          this.dismissed();
+        },
+      }
+    );
+  });
+
+  afterEach(function () {
+    dismissAppContextMenu();
+    ReactDOM.unmountComponentAtNode(this.container);
+    this.container.remove();
+  });
+
+  it('dismisses on a left press in the message and still forwards the press', function () {
+    const node = ReactDOM.findDOMNode(this.frame) as HTMLIFrameElement;
+    const pressed = jasmine.createSpy('pressed');
+    node.addEventListener('mousedown', pressed);
+    this.frame._onIFrameMouseEvent(new MouseEvent('mousedown', { button: 0 }));
+
+    expect(this.dismissed.calls.length).toBe(1);
+    expect(this.frame._selectionMenuOpen).toBe(false);
+    expect(document.querySelector('.app-context-menu-root')).toBe(null);
+    expect(pressed.calls.length).toBe(1);
+  });
+
+  it('keeps the menu available while the pointer moves toward an action', function () {
+    this.frame._onIFrameMouseEvent(new MouseEvent('mousemove'));
+
+    expect(this.dismissed).not.toHaveBeenCalled();
+    expect(this.frame._selectionMenuOpen).toBe(true);
+    expect(document.querySelectorAll('.app-context-menu-root').length).toBe(1);
+  });
+
+  it('clears the old selection so the release does not reopen the menu', function () {
+    const node = ReactDOM.findDOMNode(this.frame) as HTMLIFrameElement;
+    node.contentDocument.body.textContent = 'Selected email text';
+    const range = node.contentDocument.createRange();
+    range.selectNodeContents(node.contentDocument.body);
+    const selection = node.contentWindow.getSelection();
+    selection.addRange(range);
+
+    this.frame._onIFrameMouseEvent(new MouseEvent('mousedown', { button: 0 }));
+    this.frame._onIFrameMouseEvent(new MouseEvent('mouseup', { button: 0 }));
+
+    expect(selection.toString()).toBe('');
+    expect(document.querySelector('.app-context-menu-root')).toBe(null);
+  });
+
+  it('dismisses an outside press even when its handler stops propagation', function () {
+    this.container.addEventListener('mousedown', (event) => event.stopPropagation());
+    this.container.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+    expect(this.dismissed.calls.length).toBe(1);
+    expect(document.querySelector('.app-context-menu-root')).toBe(null);
+  });
+
+  it('orders the selection actions alphabetically', function () {
+    const labels = this.frame
+      ._selectionMenuItems('Email text', '<p>Email text</p>')
+      .map((item) => item.label);
+
+    expect(labels).toEqual(['Copy', 'Copy as Plain Text', 'Copy Quote', 'Quote']);
+  });
+});

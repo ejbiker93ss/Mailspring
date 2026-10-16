@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.90 (10/16/2026)
+
+- Keep readable SmarterMail API bodies and conversation references when original-image MIME recovery returns a broken body.
+- Restore affected messages and conversation grouping without resetting the mail cache.
+- Dismiss the text-selection menu when clicking outside it and sort Copy and Quote actions alphabetically.
+
 ## 1.23.89 (10/16/2026)
 
 - Recover messages whose SmarterMail body contains only a hexadecimal MIME boundary, allowing the original body and reply headers to restore the conversation.

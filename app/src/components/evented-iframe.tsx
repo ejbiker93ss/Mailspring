@@ -273,7 +273,18 @@ export class EventedIFrame extends React.Component<
       return;
     }
 
+    // The selection menu is rendered in the parent document, while message
+    // content lives in this iframe. A subsequent click in the message does
+    // not reach the parent menu backdrop, so dismiss it here before forwarding
+    // the click to the normal message interaction path.
     const node = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
+    if (event.type === 'mousedown' && this._selectionMenuOpen) {
+      dismissAppContextMenu();
+      // The menu takes focus while leaving the iframe's selection intact.
+      // Clear that stale selection so this click's mouseup cannot reopen it.
+      node.contentWindow?.getSelection()?.removeAllRanges();
+    }
+
     const nodeRect = node.getBoundingClientRect();
 
     if (event.type === 'mouseup' && this._showSelectionQuoteActions(node, nodeRect)) {
@@ -314,34 +325,9 @@ export class EventedIFrame extends React.Component<
 
     const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
     const selectedHTML = this._selectionHTML(node, selection.getRangeAt(0));
-    const quoteHTML = buildSelectionQuoteHTML(selectedText, this.props.selectionQuoteAuthor);
-    const quoteText = buildSelectionQuotePlainText(selectedText, this.props.selectionQuoteAuthor);
-    const { clipboard } = require('@electron/remote');
-
     this._selectionMenuOpen = true;
     showAppContextMenu(
-      [
-        {
-          label: localized('Quote'),
-          click: () => this.props.onQuoteSelection(selectedText),
-        },
-        {
-          label: localized('Copy'),
-          confirmation: localized('Copied'),
-          click: () => clipboard.write({ text: selectedText, html: selectedHTML }),
-        },
-        {
-          label: localized('Copy as Plain Text'),
-          confirmation: localized('Copied'),
-          click: () => clipboard.writeText(selectedText),
-        },
-        { type: 'separator' },
-        {
-          label: localized('Copy Quote'),
-          confirmation: localized('Quote copied'),
-          click: () => clipboard.write({ text: quoteText, html: quoteHTML }),
-        },
-      ],
+      this._selectionMenuItems(selectedText, selectedHTML),
       {
         x: nodeRect.left + rangeRect.left + rangeRect.width / 2 - 66,
         y: nodeRect.top + rangeRect.bottom + 6,
@@ -354,6 +340,33 @@ export class EventedIFrame extends React.Component<
       }
     );
     return true;
+  }
+
+  _selectionMenuItems(selectedText: string, selectedHTML: string) {
+    const quoteHTML = buildSelectionQuoteHTML(selectedText, this.props.selectionQuoteAuthor);
+    const quoteText = buildSelectionQuotePlainText(selectedText, this.props.selectionQuoteAuthor);
+    const { clipboard } = require('@electron/remote');
+    return [
+      {
+        label: localized('Quote'),
+        click: () => this.props.onQuoteSelection(selectedText),
+      },
+      {
+        label: localized('Copy'),
+        confirmation: localized('Copied'),
+        click: () => clipboard.write({ text: selectedText, html: selectedHTML }),
+      },
+      {
+        label: localized('Copy as Plain Text'),
+        confirmation: localized('Copied'),
+        click: () => clipboard.writeText(selectedText),
+      },
+      {
+        label: localized('Copy Quote'),
+        confirmation: localized('Quote copied'),
+        click: () => clipboard.write({ text: quoteText, html: quoteHTML }),
+      },
+    ].sort((a, b) => a.label.localeCompare(b.label));
   }
 
   _selectionHTML(node: HTMLIFrameElement, range: Range) {
@@ -538,41 +551,9 @@ export class EventedIFrame extends React.Component<
         textPreview = text;
       }
       if (selectedText && this.props.onQuoteSelection) {
-        const quoteHTML = buildSelectionQuoteHTML(selectedText, this.props.selectionQuoteAuthor);
-        const quoteText = buildSelectionQuotePlainText(
-          selectedText,
-          this.props.selectionQuoteAuthor
-        );
-        menu.append(
-          new MenuItem({
-            label: localized('Quote'),
-            click: () => this.props.onQuoteSelection(selectedText),
-          })
-        );
-        menu.append(
-          new MenuItem({
-            label: localized('Copy'),
-            click() {
-              clipboard.write({ text: selectedText, html: selectedHTML });
-            },
-          })
-        );
-        menu.append(
-          new MenuItem({
-            label: localized('Copy as Plain Text'),
-            click() {
-              clipboard.writeText(selectedText);
-            },
-          })
-        );
-        menu.append(
-          new MenuItem({
-            label: localized('Copy Quote'),
-            click() {
-              clipboard.write({ text: quoteText, html: quoteHTML });
-            },
-          })
-        );
+        for (const { label, click } of this._selectionMenuItems(selectedText, selectedHTML)) {
+          menu.append(new MenuItem({ label, click }));
+        }
         menu.append(new MenuItem({ type: 'separator' }));
       }
       if (!selectedText) {

@@ -31,6 +31,7 @@ class AppContextMenu extends React.Component<AppContextMenuProps, AppContextMenu
   }
 
   componentDidMount() {
+    document.addEventListener('mousedown', this._onDocumentMouseDown, true);
     window.addEventListener('blur', this.props.onDismiss);
     window.addEventListener('resize', this.props.onDismiss);
     window.requestAnimationFrame(() => {
@@ -46,10 +47,15 @@ class AppContextMenu extends React.Component<AppContextMenuProps, AppContextMenu
   }
 
   componentWillUnmount() {
+    document.removeEventListener('mousedown', this._onDocumentMouseDown, true);
     window.removeEventListener('blur', this.props.onDismiss);
     window.removeEventListener('resize', this.props.onDismiss);
     window.clearTimeout(this.confirmationTimeout);
   }
+
+  _onDocumentMouseDown = (event: MouseEvent) => {
+    if (!this.menuElement?.contains(event.target as Node)) this.props.onDismiss();
+  };
 
   _select = (item: AppContextMenuItem) => {
     if ('type' in item) return;
