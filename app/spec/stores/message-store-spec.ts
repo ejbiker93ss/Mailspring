@@ -90,6 +90,25 @@ describe('MessageStore', function () {
       expect(Actions.fetchBodies).toHaveBeenCalledWith([boundary, legacy]);
     });
 
+    it('repairs cached equals-padded numeric boundaries after the cooldown', function () {
+      const boundary = new Message({
+        id: 'numeric',
+        body: '===============2440510202301742514==--',
+      });
+      const recent = new Message({
+        id: 'recent',
+        body: boundary.body,
+        smHtmlRepairAttempt: Date.now() / 1000,
+      });
+      const literal = new Message({ id: 'literal', body: `See ${boundary.body}` });
+      MessageStore._fetchMissingBodies([boundary, recent, literal]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([boundary]);
+
+      recent.smHtmlRepairAttempt -= 16 * 60;
+      MessageStore._fetchMissingBodies([recent]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([recent]);
+    });
+
     it('leaves other providers and SmarterMail IMAP accounts alone', function () {
       const escaped = new Message({ id: 'escaped', body: '&lt;html&gt;Offer&lt;/html&gt;' });
       const boundary = new Message({ id: 'boundary', body: '0000000000009ba7be065df4973d--' });

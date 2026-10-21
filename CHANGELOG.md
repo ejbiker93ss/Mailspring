@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.91 (10/21/2026)
+
+- Recover SmarterMail messages that display an equals-padded numeric MIME boundary instead of their readable body.
+- Repair affected cached messages when opened while preserving retry limits and conversation references.
+
 ## 1.23.90 (10/16/2026)
 
 - Keep readable SmarterMail API bodies and conversation references when original-image MIME recovery returns a broken body.

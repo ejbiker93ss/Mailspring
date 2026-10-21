@@ -269,6 +269,47 @@ async function main() {
 
   if (!baseline) {
     const f = setup();
+    const numeric = new f.Message({
+      id: 'numeric-boundary',
+      body: '===============2440510202301742514==--',
+      files: [],
+    });
+    const recent = new f.Message({
+      id: 'numeric-recent',
+      body: numeric.body,
+      smHtmlRepairAttempt: Date.now() / 1000,
+      files: [],
+    });
+    const literal = new f.Message({
+      id: 'numeric-literal',
+      body: `See ${numeric.body}`,
+      files: [],
+    });
+    f.store._fetchMissingBodies([numeric, recent, literal]);
+    assert.deepEqual(
+      f.counts.fetched.map((m) => m.id),
+      ['numeric-boundary']
+    );
+    f.counts.fetched = [];
+    recent.smHtmlRepairAttempt -= 16 * 60;
+    f.store._fetchMissingBodies([recent]);
+    assert.deepEqual(
+      f.counts.fetched.map((m) => m.id),
+      ['numeric-recent']
+    );
+    for (const account of [
+      null,
+      { provider: 'imap', settings: {} },
+      { provider: 'smartermail', settings: {} },
+    ]) {
+      const other = setup(account);
+      other.store._fetchMissingBodies([numeric]);
+      assert.equal(other.counts.fetched.length, 0);
+    }
+  }
+
+  if (!baseline) {
+    const f = setup();
     const escaped = new f.Message({
       id: 'escaped',
       body: '&lt;html&gt;Offer&lt;/html&gt;',

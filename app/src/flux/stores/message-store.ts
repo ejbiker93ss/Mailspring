@@ -438,6 +438,7 @@ class _MessageStore extends SummerMailStore {
       (message.plaintext && /^<(?:!doctype html\b|html\b|head\b|body\b)/i.test(body)) ||
       /^[_-][A-Za-z0-9_+=./-]{10,}--$/.test(body) ||
       /^=-[A-Za-z0-9_+=./-]{8,}--$/.test(body) ||
+      /^={3,}\d{10,}=+--$/.test(body) ||
       /^[a-f0-9]{24,70}--$/i.test(body)
     );
   }
