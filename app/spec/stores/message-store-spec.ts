@@ -49,6 +49,11 @@ describe('MessageStore', function () {
         plaintext: false,
         body: '&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body&gt;Offer&lt;/body&gt;&lt;/html&gt;',
       });
+      const escapedFragment = new Message({
+        id: 'escaped-fragment',
+        plaintext: false,
+        body: '&lt;div dir="auto"&gt;&lt;span&gt;Thank you&lt;/span&gt;&lt;/div&gt;',
+      });
       const bare = new Message({ id: 'bare', plaintext: true, body: '<html>Offer</html>' });
       const healthy = new Message({ id: 'healthy', plaintext: false, body: '<html>Offer</html>' });
       const literal = new Message({
@@ -57,9 +62,9 @@ describe('MessageStore', function () {
         body: 'Use &lt;html&gt; here.',
       });
 
-      MessageStore._fetchMissingBodies([escaped, bare, healthy, literal]);
+      MessageStore._fetchMissingBodies([escaped, escapedFragment, bare, healthy, literal]);
 
-      expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped, bare]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped, escapedFragment, bare]);
     });
 
     it('bounds failed repair retries and retries after the cooldown', function () {

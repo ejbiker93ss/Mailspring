@@ -269,6 +269,14 @@ async function main() {
 
   if (!baseline) {
     const f = setup();
+    const escapedFragment = new f.Message({
+      id: 'escaped-fragment',
+      body: '&lt;div&gt;Thank you&lt;/div&gt;',
+      files: [],
+    });
+    f.store._fetchMissingBodies([escapedFragment]);
+    assert.deepEqual(f.counts.fetched.map((message) => message.id), ['escaped-fragment']);
+    f.counts.fetched = [];
     const numeric = new f.Message({
       id: 'numeric-boundary',
       body: '===============2440510202301742514==--',

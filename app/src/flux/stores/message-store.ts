@@ -435,6 +435,7 @@ class _MessageStore extends SummerMailStore {
     const body = (message.body || '').trim();
     return (
       /^&lt;(?:!doctype html\b|html\b|body\b)/i.test(body) ||
+      /^&lt;([a-z][a-z0-9]*)\b[\s\S]*&lt;\/\1&gt;/i.test(body) ||
       (message.plaintext && /^<(?:!doctype html\b|html\b|head\b|body\b)/i.test(body)) ||
       /^[_-][A-Za-z0-9_+=./-]{10,}--$/.test(body) ||
       /^=-[A-Za-z0-9_+=./-]{8,}--$/.test(body) ||

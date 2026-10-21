@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.92 (10/21/2026)
+
+- Render SmarterMail messages whose saved HTML fragment was entity-escaped, and refetch affected cached messages when opened.
+
 ## 1.23.91 (10/21/2026)
 
 - Recover SmarterMail messages that display an equals-padded numeric MIME boundary instead of their readable body.
