@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.93 (10/21/2026)
+
+- Close discarded reply composers immediately while deletion runs in the background, prevent late saves from reopening them, and restore drafts if local deletion fails.
+
 ## 1.23.92 (10/21/2026)
 
 - Render SmarterMail messages whose saved HTML fragment was entity-escaped, and refetch affected cached messages when opened.

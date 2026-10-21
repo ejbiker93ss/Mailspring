@@ -119,6 +119,26 @@ function setup(
 }
 
 async function main() {
+  {
+    const f = setup();
+    const message = new f.Message({ id: 'parent', threadId: 'thread', body: 'Original', files: [] });
+    const draft = new f.Message({ id: 'discarded', threadId: 'thread', draft: true, body: 'Reply', files: [] });
+    f.rows([message, draft]);
+    await f.store._fetchFromCache();
+    const lateRead = f.store._fetchFromCache();
+    assert.equal(f.store.dismissDraft(draft.id), true);
+    assert.deepEqual(Array.from(f.store.items(), (item) => item.id), ['parent']);
+    assert.equal(f.store.dismissDraft(draft.id), false, 'Duplicate trash clicks are idempotent');
+    await lateRead;
+    assert.deepEqual(Array.from(f.store.items(), (item) => item.id), ['parent'], 'An older cache read cannot reopen the draft');
+    f.store._onDataChanged({ objectClass: 'Message', type: 'persist', objects: [draft] });
+    assert.deepEqual(Array.from(f.store.items(), (item) => item.id), ['parent'], 'A late save cannot reopen the draft');
+    f.store._showingHiddenItems = true;
+    assert.deepEqual(Array.from(f.store.items(), (item) => item.id), ['parent']);
+    await f.store.restoreDraft(draft.id);
+    assert.deepEqual(Array.from(f.store.items(), (item) => item.id), ['parent', 'discarded'], 'Local deletion failure restores the draft');
+    console.log('PASS: draft discard dismisses immediately, suppresses late reads/saves and permits restoration after failure.');
+  }
   const f = setup();
   const messages = Array.from(
     { length: 500 },

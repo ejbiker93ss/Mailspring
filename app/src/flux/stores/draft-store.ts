@@ -626,6 +626,7 @@ class DraftStore extends SummerMailStore {
     if (session) {
       this._doneWithSession(session);
     }
+    if (id && !MessageStore.dismissDraft(id)) return;
 
     // Stop any pending tasks related to the draft
     TaskQueue.queue().forEach((task) => {
@@ -639,26 +640,22 @@ class DraftStore extends SummerMailStore {
 
     // Queue the task to destroy the draft
     if (id) {
-      Actions.queueTask(new DestroyDraftTask({ accountId, messageIds: [id] }));
+      const task = new DestroyDraftTask({ accountId, messageIds: [id] });
+      Actions.queueTask(task);
+      TaskQueue.waitForPerformLocal(task)
+        .then((completed) => {
+          // The task's normal error UI explains the failure; restore the draft
+          // if local deletion failed so its contents remain available.
+          if (completed.error || completed.status === 'cancelled') {
+            return MessageStore.restoreDraft(id);
+          }
+        })
+        .catch((error) => {
+          AppEnv.reportError(error);
+          AppEnv.showErrorDialog(localized('Could not delete the draft.'));
+        });
     } else {
       console.warn('Tried to delete a draft that had no ID assigned yet.');
-    }
-
-    // In Playwright E2E tests, emit a synthetic unpersist so MessageStore
-    // removes the draft from its items and the inline composer disappears.
-    // Only do this on the first destroy call (when the session existed) to
-    // avoid a race where a duplicate destroy triggers _fetchFromCache and
-    // overwrites items that include a newly created draft.
-    if (process.env.PLAYWRIGHT && id && session) {
-      const draft = new Message({ id, accountId, headerMessageId, draft: true } as any);
-      DatabaseStore.trigger(
-        new DatabaseChangeRecord({
-          type: 'unpersist',
-          objectClass: Message.name,
-          objects: [draft],
-          objectsRawJSON: [],
-        })
-      );
     }
 
     if (AppEnv.isComposerWindow()) {

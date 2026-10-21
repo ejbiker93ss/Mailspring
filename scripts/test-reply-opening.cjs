@@ -18,10 +18,23 @@ function deferred() {
 function fixture() {
   const tasks = [];
   const saves = [];
+  const discarded = new Set();
+  const restored = [];
   let preparations = 0;
   let databaseReads = 0;
   const storeModule = {};
-  const messageStore = { threadId: () => 'thread', items: () => [] };
+  const messageStore = {
+    threadId: () => 'thread', items: () => [],
+    dismissDraft(id) {
+      if (discarded.has(id)) return false;
+      discarded.add(id);
+      return true;
+    },
+    restoreDraft(id) {
+      discarded.delete(id);
+      restored.push(id);
+    },
+  };
   class Store {
     listenTo() {}
   }
@@ -32,10 +45,14 @@ function fixture() {
   }
   class Session {
     constructor(id, draft) {
+      this.headerMessageId = id;
       this.value = draft;
     }
     draft() {
       return this.value;
+    }
+    teardown() {
+      this.destroyed = true;
     }
   }
   const dependencies = {
@@ -45,6 +62,10 @@ function fixture() {
     './send-actions-store': { SendActionsStore: {} },
     './message-store': { MessageStore: messageStore },
     '../models/message': { Message },
+    '../tasks/destroy-draft-task': {
+      DestroyDraftTask: class { constructor(fields) { Object.assign(this, fields); } },
+    },
+    '../tasks/send-draft-task': { SendDraftTask: class {} },
     '../tasks/syncback-draft-task': {
       SyncbackDraftTask: class {
         constructor({ draft }) {
@@ -54,6 +75,7 @@ function fixture() {
     },
     './task-queue': {
       default: {
+        queue: () => [],
         waitForPerformLocal() {
           const save = deferred();
           saves.push(save);
@@ -95,7 +117,7 @@ function fixture() {
       console,
       process: { env: {} },
       setInterval() {},
-      AppEnv: { isMainWindow: () => false, onBeforeUnload() {} },
+      AppEnv: { isMainWindow: () => false, isComposerWindow: () => false, onBeforeUnload() {} },
       require: (name) => dependencies[name] || {},
     };
     vm.runInNewContext(code, context, { filename: file });
@@ -138,6 +160,8 @@ function fixture() {
     messageStore,
     tasks,
     saves,
+    discarded,
+    restored,
     created: () => created,
     preparations: () => preparations,
     databaseReads: () => databaseReads,
@@ -150,6 +174,26 @@ async function until(condition) {
 }
 
 (async () => {
+  for (const failed of [false, true]) {
+    const f = fixture();
+    const opening = f.store._onComposeReply(f.context);
+    await until(() => f.saves.length === 1);
+    f.saves[0].resolve();
+    const { draft, headerMessageId } = await opening;
+    const session = f.store._draftSessions[headerMessageId];
+    f.store._onDestroyDraft(draft);
+    assert.equal(session.destroyed, true, 'Stop autosaving before unmounting the composer');
+    assert.equal(f.store._draftSessions[headerMessageId], undefined);
+    assert.ok(f.discarded.has(draft.id), 'Dismiss without waiting for local deletion');
+    assert.equal(f.tasks.length, 2, 'Queue one create and one delete');
+    f.store._onDestroyDraft(draft);
+    assert.equal(f.tasks.length, 2, 'Repeated trash clicks must not duplicate deletion');
+    f.saves[1].resolve({ status: 'complete', error: failed ? { message: 'No trash folder' } : null });
+    await until(() => failed ? f.restored.length === 1 : f.store._pendingReplies.size === 0);
+    await Promise.resolve();
+    assert.equal(f.discarded.has(draft.id), !failed);
+    assert.equal(f.restored.length, failed ? 1 : 0, 'A failed local deletion restores access');
+  }
   {
     const f = fixture();
     const resolution = deferred();

@@ -29,6 +29,9 @@ class _MessageStore extends SummerMailStore {
   _onFocusChangedTimer?: NodeJS.Timeout;
   _searchFocus?: { threadId: string; messageId: string; requestId: number };
   _searchFocusRequestId = 0;
+  // Keep successful discards suppressed for this window's lifetime: an older
+  // cache read or draft-save notification may arrive after the delete completes.
+  _discardedDraftIds = new Set<string>();
 
   constructor() {
     super();
@@ -39,15 +42,30 @@ class _MessageStore extends SummerMailStore {
   //########## PUBLIC #####################################################
 
   items() {
-    if (this._showingHiddenItems) return this._items;
+    const items = this._items.filter((item) => !this._discardedDraftIds.has(item.id));
+    if (this._showingHiddenItems) return items;
 
     const viewing = FocusedPerspectiveStore.current().categoriesSharedRole();
     const viewingHiddenCategory = FolderNamesHiddenByDefault.includes(viewing);
 
-    return this._items.filter((item) => {
+    return items.filter((item) => {
       const inHidden = item.folder ? FolderNamesHiddenByDefault.includes(item.folder.role) : false;
       return viewingHiddenCategory ? inHidden || item.draft : !inHidden;
     });
+  }
+
+  dismissDraft(id: string) {
+    if (this._discardedDraftIds.has(id)) return false;
+    this._discardedDraftIds.add(id);
+    this._items = this._items.filter((item) => item.id !== id);
+    delete this._itemsExpanded[id];
+    this.trigger();
+    return true;
+  }
+
+  restoreDraft(id: string) {
+    this._discardedDraftIds.delete(id);
+    return this._fetchFromCache();
   }
 
   threadId() {
@@ -137,7 +155,9 @@ class _MessageStore extends SummerMailStore {
         const itemIndex = this._items.findIndex((msg) => msg.id === item.id);
 
         if (change.type === 'persist' && itemIndex === -1) {
-          this._items = [...this._items, item].filter((m) => !m.isHidden());
+          this._items = [...this._items, item].filter(
+            (m) => !m.isHidden() && !this._discardedDraftIds.has(m.id)
+          );
           this._items = this._sortItemsForDisplay(this._items);
           this._expandItemsToDefault();
           this.trigger();
@@ -370,7 +390,7 @@ class _MessageStore extends SummerMailStore {
       // loading items for. Necessary because this takes a while.
       if (loadedThreadId !== this.threadId()) return;
 
-      this._items = items.filter((m) => !m.isHidden());
+      this._items = items.filter((m) => !m.isHidden() && !this._discardedDraftIds.has(m.id));
       this._items = this._sortItemsForDisplay(this._items);
 
       this._expandItemsToDefault();
