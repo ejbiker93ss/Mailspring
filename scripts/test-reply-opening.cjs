@@ -20,6 +20,7 @@ function fixture() {
   const saves = [];
   const discarded = new Set();
   const restored = [];
+  const errors = [];
   let preparations = 0;
   let databaseReads = 0;
   const storeModule = {};
@@ -62,6 +63,7 @@ function fixture() {
     './send-actions-store': { SendActionsStore: {} },
     './message-store': { MessageStore: messageStore },
     '../models/message': { Message },
+    '../../intl': { localized: (text) => text },
     '../tasks/destroy-draft-task': {
       DestroyDraftTask: class { constructor(fields) { Object.assign(this, fields); } },
     },
@@ -117,7 +119,11 @@ function fixture() {
       console,
       process: { env: {} },
       setInterval() {},
-      AppEnv: { isMainWindow: () => false, isComposerWindow: () => false, onBeforeUnload() {} },
+      AppEnv: {
+        isMainWindow: () => false, isComposerWindow: () => false, onBeforeUnload() {},
+        showErrorDialog: (message) => errors.push(message),
+        reportError: (error) => { throw error; },
+      },
       require: (name) => dependencies[name] || {},
     };
     vm.runInNewContext(code, context, { filename: file });
@@ -162,6 +168,7 @@ function fixture() {
     saves,
     discarded,
     restored,
+    errors,
     created: () => created,
     preparations: () => preparations,
     databaseReads: () => databaseReads,
@@ -193,6 +200,7 @@ async function until(condition) {
     await Promise.resolve();
     assert.equal(f.discarded.has(draft.id), !failed);
     assert.equal(f.restored.length, failed ? 1 : 0, 'A failed local deletion restores access');
+    assert.equal(f.errors.length, failed ? 1 : 0, 'A failed deletion must explain why the draft returned');
   }
   {
     const f = fixture();

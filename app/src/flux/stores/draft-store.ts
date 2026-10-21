@@ -643,11 +643,14 @@ class DraftStore extends SummerMailStore {
       const task = new DestroyDraftTask({ accountId, messageIds: [id] });
       Actions.queueTask(task);
       TaskQueue.waitForPerformLocal(task)
-        .then((completed) => {
-          // The task's normal error UI explains the failure; restore the draft
-          // if local deletion failed so its contents remain available.
+        .then(async (completed) => {
+          // Local failure leaves the original row intact. Make it accessible
+          // again instead of leaving the failed discard hidden.
           if (completed.error || completed.status === 'cancelled') {
-            return MessageStore.restoreDraft(id);
+            await MessageStore.restoreDraft(id);
+            if (completed.error) {
+              AppEnv.showErrorDialog(localized('Could not delete the draft.'));
+            }
           }
         })
         .catch((error) => {
