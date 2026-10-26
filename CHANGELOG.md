@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.94 (10/26/2026)
+
+- Publish a new Windows build containing the recent reply, long-conversation, message-body recovery, selection-menu, and immediate draft-discard fixes.
+
 ## 1.23.93 (10/21/2026)
 
 - Close discarded reply composers immediately while deletion runs in the background, prevent late saves from reopening them, and restore drafts if local deletion fails.
