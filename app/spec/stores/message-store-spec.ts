@@ -95,6 +95,20 @@ describe('MessageStore', function () {
       expect(Actions.fetchBodies).toHaveBeenCalledWith([boundary, legacy]);
     });
 
+    it('repairs numbered MIME boundaries without refetching literal content', function () {
+      const body = 'b1_714a42de12769362a3cd95f6c67c147e--';
+      const boundary = new Message({ id: 'numbered', body });
+      const recent = new Message({ id: 'recent', body, smHtmlRepairAttempt: Date.now() / 1000 });
+      const literal = new Message({ id: 'literal', body: 'See ' + body });
+      const healthy = new Message({ id: 'healthy', body: '<p>' + body + '</p>' });
+      MessageStore._fetchMissingBodies([boundary, recent, literal, healthy]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([boundary]);
+
+      recent.smHtmlRepairAttempt -= 16 * 60;
+      MessageStore._fetchMissingBodies([recent]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([recent]);
+    });
+
     it('repairs cached equals-padded numeric boundaries after the cooldown', function () {
       const boundary = new Message({
         id: 'numeric',

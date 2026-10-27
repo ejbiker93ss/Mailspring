@@ -121,6 +121,40 @@ function setup(
 async function main() {
   {
     const f = setup();
+    const token = 'b1_714a42de12769362a3cd95f6c67c147e--';
+    const boundary = new f.Message({ id: 'numbered-boundary', body: token, files: [] });
+    const recent = new f.Message({ id: 'recent', body: token, files: [], smHtmlRepairAttempt: Date.now() / 1000 });
+    const healthy = [
+      'See ' + token,
+      '<p>' + token + '</p>',
+      'b1_short--',
+      'b1_714a42de12769362a3cd95f6c67c147z--',
+      token.slice(0, -2),
+    ].map((body, i) => new f.Message({ id: 'healthy-' + i, body, files: [] }));
+    f.store._fetchMissingBodies([boundary, recent, ...healthy]);
+    assert.deepEqual(f.counts.fetched.map(m => m.id), ['numbered-boundary']);
+    f.counts.fetched = [];
+    recent.smHtmlRepairAttempt -= 16 * 60;
+    f.store._fetchMissingBodies([recent]);
+    assert.deepEqual(f.counts.fetched.map(m => m.id), ['recent']);
+    for (const body of [token.replace('b1_', 'b2_'), token.replace('b1_', 'b3_'), token.replace(/a/g, 'A')]) {
+      assert.equal(f.store._needsSmarterMailBodyRepair(new f.Message({ body })), true);
+    }
+    for (const account of [null, { provider: 'imap', settings: {} }, { provider: 'smartermail', settings: {} }]) {
+      const other = setup(account);
+      other.store._fetchMissingBodies([boundary]);
+      assert.equal(other.counts.fetched.length, 0, 'Numbered boundary repair requires a SmarterMail API account');
+    }
+    f.rows([boundary, ...healthy]);
+    f.counts.fetched = [];
+    await f.store._fetchFromCache();
+    assert.equal(f.counts.fetched.length, 0, 'Collapsed boundary repair waits until opened');
+    f.store._onExpandMessageIds(['numbered-boundary']);
+    assert.deepEqual(f.counts.fetched.map(m => m.id), ['numbered-boundary']);
+    console.log('PASS: screenshot boundary is repaired on open with bounded retries and provider isolation; literal content is preserved.');
+  }
+  {
+    const f = setup();
     const message = new f.Message({ id: 'parent', threadId: 'thread', body: 'Original', files: [] });
     const draft = new f.Message({ id: 'discarded', threadId: 'thread', draft: true, body: 'Reply', files: [] });
     f.rows([message, draft]);

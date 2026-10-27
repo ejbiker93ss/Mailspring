@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.96 (10/27/2026)
+
+- Recover SmarterMail messages that display a numbered MIME boundary instead of their body, and retry affected cached messages when opened.
+
 ## 1.23.95 (10/27/2026)
 
 - Add mail search sorting by date, sender, subject, and message size, plus size filters.
