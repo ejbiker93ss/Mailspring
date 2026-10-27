@@ -7,7 +7,12 @@ import {
   ComponentRegistry,
   MutableQuerySubscription,
 } from 'summermail-exports';
-import { compileFTSMatchQuery } from '../../../src/services/search/search-query-backend-local';
+import LocalSearchQueryBackend, {
+  compileFTSMatchQuery,
+  hasAttachmentSearchTerms,
+} from '../../../src/services/search/search-query-backend-local';
+import { MailSortField, threadSortSQL } from '../../../src/services/mail-sort';
+import { queryWithThreadListOptions } from '../../thread-list/lib/thread-list-query-options';
 import {
   FromQueryExpression,
   QueryExpression,
@@ -88,11 +93,17 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searching = false;
   _resultCount: number | null = null;
   _matchingMessageIds = new Map<string, string>();
+  _options: { sortField?: MailSortField; sortAscending?: boolean; unreadOnly?: boolean };
 
-  constructor(searchQuery: string, accountIds: string[]) {
+  constructor(
+    searchQuery: string,
+    accountIds: string[],
+    options: SearchQuerySubscription['_options'] = {}
+  ) {
     super(null, { emitResultSet: true });
     this._searchQuery = searchQuery;
     this._accountIds = accountIds;
+    this._options = options;
 
     _.defer(() => this.performSearch());
   }
@@ -109,6 +120,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
 
   async performLocalSearch() {
     let dbQuery = DatabaseStore.findAll<Thread>(Thread);
+    if (this._options?.unreadOnly) dbQuery = dbQuery.where({ unread: true });
     if (this._accountIds.length === 1) {
       dbQuery = dbQuery.where({ accountId: this._accountIds[0] });
     } else if (this._accountIds.length > 1) {
@@ -152,6 +164,15 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
       .limit(1000);
 
+    if (this._options?.sortField && this._options.sortField !== 'relevance') {
+      dbQuery = queryWithThreadListOptions(dbQuery, {
+        isSent: false,
+        sortField: this._options.sortField,
+        sortAscending: !!this._options.sortAscending,
+        unreadOnly: false,
+      });
+    }
+
     this.replaceQuery(dbQuery);
   }
 
@@ -159,6 +180,9 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     const ftsQuery = compileFTSMatchQuery(parsedQuery);
     if (!ftsQuery) {
       return null;
+    }
+    if (hasAttachmentSearchTerms(parsedQuery)) {
+      return this._rankedAttachmentSearchResults(parsedQuery, ftsQuery);
     }
 
     const operator = addressOperator(parsedQuery);
@@ -183,7 +207,8 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
           operator
         )} ORDER BY matchedMessage.date DESC LIMIT 1)`
       : 'NULL';
-    const fromAndWhere = `FROM \`ThreadSearch\` JOIN \`Thread\` ON \`Thread\`.id = \`ThreadSearch\`.content_id WHERE \`ThreadSearch\` MATCH ? ${accountSQL} ${strictMessageSQL}`;
+    const unreadSQL = this._options?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
+    const fromAndWhere = `FROM \`ThreadSearch\` JOIN \`Thread\` ON \`Thread\`.id = \`ThreadSearch\`.content_id WHERE \`ThreadSearch\` MATCH ? ${accountSQL} ${strictMessageSQL} ${unreadSQL}`;
 
     const rankValues = [
       ...(operator ? addressValues(operator) : []),
@@ -204,9 +229,13 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     // A fielded participant search is a mailbox lookup, not a relevance search.
     // Match Outlook's expected behavior by showing the newest matching thread first.
     // Generic text searches still use relevance bands, with recency inside each band.
-    const orderSQL = operator
+    const relevanceOrderSQL = operator
       ? '`Thread`.lastMessageReceivedTimestamp DESC, exactMatches DESC, relevanceBand ASC, relevance ASC'
       : 'relevanceBand ASC, `Thread`.lastMessageReceivedTimestamp DESC, relevance ASC';
+    const orderSQL =
+      this._options?.sortField && this._options.sortField !== 'relevance'
+        ? threadSortSQL(this._options.sortField, !!this._options.sortAscending)
+        : relevanceOrderSQL;
     const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, ${bm25SQL} AS relevance, ${relevanceBandSQL} AS relevanceBand, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY ${orderSQL} LIMIT 1000`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
 
@@ -225,6 +254,43 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
 
   matchingMessageIdForThread(threadId: string) {
     return this._matchingMessageIds.get(threadId) || null;
+  }
+
+  async _rankedAttachmentSearchResults(
+    parsedQuery: QueryExpression,
+    ftsQuery: string
+  ): Promise<RankedSearchResult> {
+    const where = new LocalSearchQueryBackend('Thread').compile(parsedQuery);
+    const accountSQL = this._accountIds.length
+      ? `AND \`Thread\`.accountId IN (${this._accountIds.map(() => '?').join(', ')})`
+      : '';
+    const unreadSQL = this._options?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
+    const fromAndWhere = `FROM \`Thread\` WHERE ${where} ${accountSQL} ${unreadSQL}`;
+    const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
+    // Keep BM25 on its own FTS cursor. The non-flattened subquery computes mail
+    // scores once; attachment-only and cross-source matches receive a neutral score.
+    const rankedMail = `LEFT JOIN (
+      SELECT content_id, bm25(ThreadSearch, 12, 6, 8, 1, 3, 0) AS relevance
+      FROM ThreadSearch WHERE ThreadSearch MATCH ? LIMIT -1 OFFSET 0
+    ) mailRank ON mailRank.content_id = \`Thread\`.id`;
+    const relevance = 'COALESCE(mailRank.relevance, 0)';
+    const order =
+      this._options?.sortField && this._options.sortField !== 'relevance'
+        ? threadSortSQL(this._options.sortField, !!this._options.sortAscending)
+        : 'relevanceBand ASC, `Thread`.lastMessageReceivedTimestamp DESC, relevance ASC';
+    const rankSQL = `SELECT \`Thread\`.id, NULL AS matchingMessageId,
+      ${relevance} AS relevance, CAST(${relevance} / ${RELEVANCE_BAND_WIDTH} AS INTEGER) AS relevanceBand
+      FROM \`Thread\` ${rankedMail} WHERE ${where} ${accountSQL} ${unreadSQL}
+      ORDER BY ${order} LIMIT 1000`;
+    const [rows, counts] = await Promise.all([
+      (DatabaseStore as any)._query(rankSQL, [ftsQuery, ...this._accountIds], true),
+      (DatabaseStore as any)._query(countSQL, this._accountIds, true),
+    ]);
+    return {
+      ids: rows.map((row) => row.id),
+      total: Number(counts[0]?.count || 0),
+      matchingMessageIds: new Map(),
+    };
   }
 
   _createResultAndTrigger() {

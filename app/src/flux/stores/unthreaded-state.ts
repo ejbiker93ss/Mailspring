@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck -- Ported legacy plugin module; compiled by the first-party TypeScript pipeline.
 import SummerMailStore from 'summermail-store';
+import { MAIL_SORT_FIELDS } from '../../services/mail-sort';
 
 class UnthreadedState extends SummerMailStore {
   constructor() {
@@ -8,6 +9,7 @@ class UnthreadedState extends SummerMailStore {
     this._enabled = this._loadEnabled();
     this._layout = this._loadLayout();
     this._sortAscending = this._loadBoolean('summermail-unthreaded:sort-ascending', false);
+    this._sortField = this._loadSortField();
     this._unreadOnly = this._loadBoolean('summermail-unthreaded:unread-only', false);
     this._selected = null;
   }
@@ -20,6 +22,35 @@ class UnthreadedState extends SummerMailStore {
       return fallback;
     }
   }
+
+  _loadSortField() {
+    try {
+      const value = window.localStorage.getItem('summermail-unthreaded:sort-field');
+      return MAIL_SORT_FIELDS.includes(value) ? value : 'relevance';
+    } catch (err) {
+      return 'relevance';
+    }
+  }
+
+  sortField() {
+    return this._sortField;
+  }
+
+  setSortField = (field) => {
+    if (!MAIL_SORT_FIELDS.includes(field)) return;
+    this._sortField = field;
+    this._sortAscending = field === 'from' || field === 'subject';
+    try {
+      window.localStorage.setItem('summermail-unthreaded:sort-field', field);
+      window.localStorage.setItem(
+        'summermail-unthreaded:sort-ascending',
+        String(this._sortAscending)
+      );
+    } catch (err) {
+      // Sorting still works when renderer storage is unavailable.
+    }
+    this.trigger();
+  };
 
   _loadEnabled() {
     try {
@@ -64,8 +95,10 @@ class UnthreadedState extends SummerMailStore {
   }
 
   toggleSort = () => {
+    if (this._sortField === 'relevance') this._sortField = 'date';
     this._sortAscending = !this._sortAscending;
     try {
+      window.localStorage.setItem('summermail-unthreaded:sort-field', this._sortField);
       window.localStorage.setItem(
         'summermail-unthreaded:sort-ascending',
         String(this._sortAscending)

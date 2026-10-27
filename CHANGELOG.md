@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.95 (10/27/2026)
+
+- Add mail search sorting by date, sender, subject, and message size, plus size filters.
+- Search downloaded PDF, Word, spreadsheet, and text attachment contents through a persistent background index with bounded processing and OCR deferred.
+
 ## 1.23.94 (10/26/2026)
 
 - Publish a new Windows build containing the recent reply, long-conversation, message-body recovery, selection-menu, and immediate draft-discard fixes.

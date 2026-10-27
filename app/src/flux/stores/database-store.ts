@@ -55,6 +55,7 @@ function handleUnrecoverableDatabaseError(
 async function openDatabase(dbPath: string) {
   try {
     const db = new Sqlite3(dbPath, { readonly: true, timeout: 10000 }) as Sqlite3.Database;
+    require('../../services/attachment-search/index-db').attachIndex(db, dbPath);
 
     // https://www.sqlite.org/wal.html
     // WAL provides more concurrency as readers do not block writers and a writer

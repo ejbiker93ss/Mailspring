@@ -5,11 +5,13 @@ describe('ThreadListStore toolbar options', () => {
   let originalEnabled = false;
   let originalSortAscending = false;
   let originalUnreadOnly = false;
+  let originalSortField = 'relevance';
 
   beforeEach(() => {
     originalEnabled = UnthreadedState.enabled();
     originalSortAscending = UnthreadedState.sortAscending();
     originalUnreadOnly = UnthreadedState.unreadOnly();
+    originalSortField = UnthreadedState.sortField();
 
     (UnthreadedState as any)._enabled = false;
     (UnthreadedState as any)._sortAscending = false;
@@ -22,6 +24,7 @@ describe('ThreadListStore toolbar options', () => {
     (UnthreadedState as any)._enabled = originalEnabled;
     (UnthreadedState as any)._sortAscending = originalSortAscending;
     (UnthreadedState as any)._unreadOnly = originalUnreadOnly;
+    (UnthreadedState as any)._sortField = originalSortField;
     (ThreadListStore as any)._viewOptions = (ThreadListStore as any)._getViewOptions();
   });
 

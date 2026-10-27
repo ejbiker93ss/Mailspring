@@ -14,6 +14,7 @@ import {
   DateQueryExpression,
   InQueryExpression,
   HasAttachmentQueryExpression,
+  SizeQueryExpression,
   QueryExpression,
 } from './search-query-ast';
 
@@ -75,6 +76,9 @@ const reserved = [
   'since',
   'after',
   'not',
+  'size',
+  'larger',
+  'smaller',
 ];
 
 const mightBeReserved = (text: string) => {
@@ -305,6 +309,19 @@ const parseSimpleQuery = (text: string): [QueryExpression, string] => {
     const afterColon = consumeExpectedToken(afterTok, ':');
     const [txt, afterTxt] = parseText(afterColon);
     return [new InQueryExpression(txt), afterTxt];
+  }
+
+  if (['SIZE', 'LARGER', 'SMALLER'].includes(tok.s.toUpperCase())) {
+    const afterColon = consumeExpectedToken(afterTok, ':');
+    const [txt, afterTxt] = parseText(afterColon);
+    const match = /^(\d+(?:\.\d+)?)([KMGT]?)(?:B)?$/i.exec(txt.token.s);
+    if (!match) throw new Error('Expected a size in bytes, K, M, or G');
+    const bytes =
+      Number(match[1]) * Math.pow(1024, ['', 'K', 'M', 'G', 'T'].indexOf(match[2].toUpperCase()));
+    if (!Number.isSafeInteger(bytes) || bytes < 0) throw new Error('Invalid message size');
+    const comparison =
+      tok.s.toUpperCase() === 'SMALLER' ? '<' : tok.s.toUpperCase() === 'SIZE' ? '>=' : '>';
+    return [new SizeQueryExpression(bytes, comparison), afterTxt];
   }
 
   const [txt, afterTxt] = parseText(text);

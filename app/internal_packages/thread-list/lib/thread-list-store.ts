@@ -21,6 +21,7 @@ class ThreadListStore extends SummerMailStore {
   _viewOptions: {
     unthreadedEnabled: boolean;
     sortAscending: boolean;
+    sortField: string;
     unreadOnly: boolean;
   };
 
@@ -39,6 +40,7 @@ class ThreadListStore extends SummerMailStore {
   _getViewOptions = () => ({
     unthreadedEnabled: UnthreadedState.enabled(),
     sortAscending: UnthreadedState.sortAscending(),
+    sortField: UnthreadedState.sortField(),
     unreadOnly: UnthreadedState.unreadOnly(),
   });
 
@@ -56,9 +58,10 @@ class ThreadListStore extends SummerMailStore {
       return subscription;
     }
 
-    const query = queryWithThreadListOptions(sourceQuery, {
+    const query = queryWithThreadListOptions<Thread[]>(sourceQuery, {
       isSent: FocusedPerspectiveStore.current().isSent(),
       sortAscending: UnthreadedState.sortAscending(),
+      sortField: UnthreadedState.sortField(),
       unreadOnly: UnthreadedState.unreadOnly(),
     });
 
@@ -106,6 +109,7 @@ class ThreadListStore extends SummerMailStore {
     if (
       next.unthreadedEnabled === previous.unthreadedEnabled &&
       next.sortAscending === previous.sortAscending &&
+      next.sortField === previous.sortField &&
       next.unreadOnly === previous.unreadOnly
     ) {
       return;

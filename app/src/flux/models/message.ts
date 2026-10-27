@@ -114,6 +114,8 @@ export class Message extends ModelWithMetadata {
       modelKey: 'smHasAttachments',
     }),
 
+    size: Attributes.Number({ modelKey: 'size' }),
+
     smAttachmentHydratedV1: Attributes.Boolean({
       modelKey: 'smAttachmentHydratedV1',
     }),
@@ -218,6 +220,7 @@ export class Message extends ModelWithMetadata {
   public replyTo: Contact[];
   public files: File[];
   public smHasAttachments: boolean;
+  public size: number;
   public smAttachmentHydratedV1: boolean;
   public smImageRepairAttempt: number;
   public smHtmlRepairAttempt: number;

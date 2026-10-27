@@ -11,6 +11,7 @@ function getDatabase(dbpath) {
 
   try {
     dbs[dbpath] = new Sqlite3(dbpath, { readonly: true, timeout: 10000 });
+    require('../../services/attachment-search/index-db').attachIndex(dbs[dbpath], dbpath);
   } catch (err) {
     return Promise.reject(err);
   }

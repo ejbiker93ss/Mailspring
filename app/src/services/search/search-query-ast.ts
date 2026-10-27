@@ -53,6 +53,9 @@ export class SearchQueryExpressionVisitor {
   visitHasAttachment(node: QueryExpression) {
     throw new Error(`Abstract function not implemented!: ${node}`);
   }
+  visitSize(node: SizeQueryExpression) {
+    throw new Error(`Abstract function not implemented!: ${node}`);
+  }
 }
 
 export class QueryExpression {
@@ -418,6 +421,31 @@ export class HasAttachmentQueryExpression extends QueryExpression {
 
   equals(other: QueryExpression) {
     return other instanceof HasAttachmentQueryExpression;
+  }
+}
+
+export class SizeQueryExpression extends QueryExpression {
+  constructor(
+    public bytes: number,
+    public comparison: '>' | '<' | '>='
+  ) {
+    super();
+  }
+
+  accept(visitor: SearchQueryExpressionVisitor) {
+    visitor.visitSize(this);
+  }
+
+  _computeIsMatchCompatible() {
+    return false;
+  }
+
+  equals(other: QueryExpression) {
+    return (
+      other instanceof SizeQueryExpression &&
+      other.bytes === this.bytes &&
+      other.comparison === this.comparison
+    );
   }
 }
 

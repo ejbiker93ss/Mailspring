@@ -9,8 +9,11 @@ import {
   HasAttachmentQueryExpression,
   MatchQueryExpression,
   QueryExpression,
+  SizeQueryExpression,
+  GenericQueryExpression,
 } from './search-query-ast';
 import { DateUtils } from 'summermail-exports';
+import { messageSizeSQL } from '../mail-sort';
 
 /*
  * This class visits a match-compatible subtree and condenses it into a single
@@ -109,12 +112,22 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
 class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   private _matchVisitor = new MatchQueryExpressionVisitor();
 
+  constructor(private _includeAttachments = false) {
+    super();
+  }
+
+  _canCondense(node: QueryExpression) {
+    return (
+      node.isMatchCompatible() && (!this._includeAttachments || !hasAttachmentSearchTerms(node))
+    );
+  }
+
   visit(root: QueryExpression) {
     return this.visitAndGetResult(root);
   }
 
   visitAnd(node) {
-    if (node.isMatchCompatible()) {
+    if (this._canCondense(node)) {
       this._result = this._matchVisitor.visit(node);
       return;
     }
@@ -125,7 +138,7 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   }
 
   visitOr(node) {
-    if (node.isMatchCompatible()) {
+    if (this._canCondense(node)) {
       this._result = this._matchVisitor.visit(node);
       return;
     }
@@ -136,7 +149,7 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   }
 
   visitNot(node) {
-    if (node.isMatchCompatible()) {
+    if (this._canCondense(node)) {
       this._result = this._matchVisitor.visit(node);
       return;
     }
@@ -162,7 +175,7 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   }
 
   visitGeneric(node) {
-    this._result = this._matchVisitor.visit(node);
+    this._result = this._includeAttachments ? node : this._matchVisitor.visit(node);
   }
 
   visitText(node) {
@@ -188,11 +201,27 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   visitHasAttachment(/* node */) {
     this._result = new HasAttachmentQueryExpression();
   }
+
+  visitSize(node: SizeQueryExpression) {
+    this._result = new SizeQueryExpression(node.bytes, node.comparison);
+  }
 }
 
 export function compileFTSMatchQuery(ast: QueryExpression): string | null {
   const intermediateAST = new MatchCompatibleQueryCondenser().visit(ast);
   return intermediateAST instanceof MatchQueryExpression ? intermediateAST.rawQuery : null;
+}
+
+export function hasAttachmentSearchTerms(ast: QueryExpression): boolean {
+  if (ast instanceof GenericQueryExpression) return true;
+  if (
+    ast instanceof AndQueryExpression ||
+    ast instanceof OrQueryExpression ||
+    ast instanceof NotQueryExpression
+  ) {
+    return hasAttachmentSearchTerms(ast.e1) || hasAttachmentSearchTerms(ast.e2);
+  }
+  return false;
 }
 
 /*
@@ -247,7 +276,21 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitGeneric(node) {
-    throw new Error(`Unreachable: ${node}`);
+    const rawPhrase = `"${node.text.token.s.replace(/"/g, '""')}"*`;
+    const phrase = rawPhrase.replace(/'/g, "''");
+    this.visitMatch(new MatchQueryExpression(`(${rawPhrase})`));
+    const mailMatch = this._result;
+    // Join live message ownership and the current MIME part list. Cached text
+    // can never resurrect a removed attachment or an old conversation ID.
+    const attachmentMatch = `\`Thread\`.id IN (
+      SELECT attachmentMessage.threadId FROM attachmentSearch.AttachmentText
+      JOIN Message attachmentMessage ON attachmentMessage.id = AttachmentText.messageId
+        AND attachmentMessage.accountId = AttachmentText.accountId
+      WHERE AttachmentText MATCH '${phrase}'
+        AND EXISTS (SELECT 1 FROM json_each(attachmentMessage.data, '$.files') attachmentFile
+          WHERE json_extract(attachmentFile.value, '$.id') = AttachmentText.fileId)
+    )`;
+    this._result = `(${mailMatch} OR (${attachmentMatch}))`;
   }
 
   visitText(node) {
@@ -293,6 +336,14 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
     this._result = `(\`${this._className}\`.\`lastMessageReceivedTimestamp\` ${comparator} ${ts})`;
   }
 
+  visitSize(node: SizeQueryExpression) {
+    if (this._className === 'Thread') {
+      this._result = `EXISTS (SELECT 1 FROM \`Message\` sizeMessage WHERE sizeMessage.threadId = \`Thread\`.id AND ${messageSizeSQL('sizeMessage')} ${node.comparison} ${node.bytes})`;
+    } else {
+      this._result = `(${messageSizeSQL(`\`${this._className}\``)} ${node.comparison} ${node.bytes})`;
+    }
+  }
+
   visitMatch(node) {
     const searchTable = `${this._className}Search`;
 
@@ -311,7 +362,7 @@ export default class LocalSearchQueryBackend {
   }
 
   compile(ast: QueryExpression) {
-    const condenser = new MatchCompatibleQueryCondenser();
+    const condenser = new MatchCompatibleQueryCondenser(this._modelClassName === 'Thread');
     const intermediateAST = condenser.visit(ast);
 
     const codegen = new StructuredSearchQueryVisitor(`${this._modelClassName}`);

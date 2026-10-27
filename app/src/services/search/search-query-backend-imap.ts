@@ -13,12 +13,16 @@ import {
   StarredStatusQueryExpression,
   QueryExpression,
   SearchQueryExpressionVisitor,
+  SizeQueryExpression,
 } from './search-query-ast';
 import { Folder } from '../../flux/models/folder';
 
 const TOP = 'top';
 
 class IMAPSearchQueryFolderFinderVisitor extends SearchQueryExpressionVisitor {
+  visitSize() {
+    this._result = TOP;
+  }
   visit(root: QueryExpression) {
     const result = this.visitAndGetResult(root);
     if (result === TOP) {
@@ -94,6 +98,12 @@ class IMAPSearchQueryFolderFinderVisitor extends SearchQueryExpressionVisitor {
 }
 
 class IMAPSearchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
+  visitSize(node: SizeQueryExpression) {
+    this._result =
+      node.comparison === '<'
+        ? ['SMALLER', node.bytes]
+        : ['LARGER', node.comparison === '>=' ? Math.max(0, node.bytes - 1) : node.bytes];
+  }
   _folder: Folder;
 
   constructor(folder: Folder) {

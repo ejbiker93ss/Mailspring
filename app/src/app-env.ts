@@ -148,6 +148,7 @@ export default class AppEnvConstructor {
     }
 
     this.bootComplete = true;
+    require('./services/attachment-search').startAttachmentSearch();
   }
 
   fixStaleWin32LaunchOnSystemStart() {

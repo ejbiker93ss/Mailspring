@@ -31,6 +31,7 @@ import * as ThreadListColumns from './thread-list-columns';
 import ThreadListScrollTooltip from './thread-list-scroll-tooltip';
 import ThreadListStore from './thread-list-store';
 import ThreadListContextMenu from './thread-list-context-menu';
+import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 import { threadAriaLabel } from './thread-list-aria-utils';
 import {
   CollapsedDateSections,
@@ -231,7 +232,11 @@ class ThreadList extends React.Component<
 
   _dateSectionForThread = (thread: Thread) => {
     const perspective = FocusedPerspectiveStore.current();
-    if (!shouldShowDateSections(perspective as any)) return null;
+    if (
+      !shouldShowDateSections(perspective as any) ||
+      !['date', 'relevance'].includes(UnthreadedState.sortField())
+    )
+      return null;
     const timestamp = perspective.isSent()
       ? thread.lastMessageSentTimestamp
       : thread.lastMessageReceivedTimestamp;

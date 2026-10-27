@@ -13,8 +13,32 @@ import {
 // - whitespace
 // - end of string
 // - a colon, optional space, and optional word
+const searchTokens = [
+  'in',
+  'is',
+  'since',
+  'subject',
+  'body',
+  'from',
+  'to',
+  'has',
+  'before',
+  'after',
+  'size',
+  'larger',
+  'smaller',
+];
+const tokenPrefixes = [
+  ...new Set(
+    searchTokens.flatMap((token) =>
+      Array.from({ length: token.length }, (_, index) => token.slice(0, index + 1))
+    )
+  ),
+]
+  .sort((a, b) => b.length - a.length)
+  .join('|');
 export const TokenAndTermRegexp = () =>
-  /(^|\s)(i[ns]?|s[iu]?[nb]?[cj]?e?c?t?|bo?d?y?|fr?o?m?|to?|ha?s?|be?f?o?r?e?|af?t?e?r?)(?::? ?$|: ?("[^"]*"?|[^\s]+))/gi;
+  new RegExp(`(^|\\s)(${tokenPrefixes})(?::? ?$|: ?("[^"]*"?|[^\\s]+))`, 'gi');
 
 export const LearnMoreURL = process.env.SUMMERMAIL_HELP_URL || '';
 
@@ -31,8 +55,8 @@ export const getThreadSuggestions = async (term: string, accountIds: string[]) =
     .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
     .limit(10);
 
-  if (Array.isArray(accountIds) && accountIds.length === 1) {
-    dbQuery = dbQuery.where({ accountId: accountIds[0] });
+  if (Array.isArray(accountIds) && accountIds.length > 0) {
+    dbQuery = dbQuery.where(Thread.attributes.accountId.in(accountIds));
   }
 
   return dbQuery.background().then((results) => results);
@@ -46,7 +70,7 @@ export const getContactSuggestions = async (term: string, accountIds: string[]) 
 
   contacts.forEach((c) => results.push(c.email, c.name));
 
-  return [...new Set(results)].filter((r) => r.toLowerCase().startsWith(term));
+  return [...new Set(results)].filter((r) => r.toLowerCase().startsWith(term.toLowerCase()));
 };
 
 export const getCategorySuggestions = async (term: string, accountIds: string[]) =>
@@ -123,12 +147,13 @@ export const TokenSuggestions = [
     description: localized('text in the message body'),
     termSuggestions: [],
   },
-  // {
-  //   token: 'has',
-  //   term: '',
-  //   description: 'attachment',
-  //   termSuggestions: ['attachment'],
-  // },
+  ...['larger', 'smaller', 'size'].map((token) => ({
+    token,
+    hidden: false,
+    term: '',
+    description: localized('message size, e.g. 10M'),
+    termSuggestions: ['1M', '5M', '10M', '25M'],
+  })),
 ];
 
 export const TokenSuggestionsForEmpty = TokenSuggestions.filter((t) => !t.hidden);

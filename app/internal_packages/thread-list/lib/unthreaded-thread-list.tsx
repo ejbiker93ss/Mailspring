@@ -16,7 +16,8 @@ import { Spinner, ScrollRegion } from 'summermail-component-kit';
 import SummerMailStore from 'summermail-store';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
-import { filterAndSortVisibleItems } from './unthreaded-list-ordering';
+import { compareMessageItems, filterAndSortVisibleItems } from './unthreaded-list-ordering';
+import { queryWithThreadListOptions } from './thread-list-query-options';
 import {
   DATE_SECTION_ORDER,
   dateSectionFor,
@@ -94,6 +95,8 @@ class VisibleMessagesStore extends SummerMailStore {
     return filterAndSortVisibleItems(this._items, {
       unreadOnly: UnthreadedState.unreadOnly(),
       sortAscending: UnthreadedState.sortAscending(),
+      sortField: UnthreadedState.sortField(),
+      isSearch: !!FocusedPerspectiveStore.current().searchQuery,
     });
   }
 
@@ -122,6 +125,7 @@ class VisibleMessagesStore extends SummerMailStore {
     enabled: UnthreadedState.enabled(),
     layout: UnthreadedState.layout(),
     sortAscending: UnthreadedState.sortAscending(),
+    sortField: UnthreadedState.sortField(),
     unreadOnly: UnthreadedState.unreadOnly(),
   });
 
@@ -132,21 +136,15 @@ class VisibleMessagesStore extends SummerMailStore {
       next.enabled === previous.enabled &&
       next.layout === previous.layout &&
       next.sortAscending === previous.sortAscending &&
+      next.sortField === previous.sortField &&
       next.unreadOnly === previous.unreadOnly
     ) {
       return;
     }
     this._unthreadedQueryState = next;
-
-    if (next.enabled !== previous.enabled || next.layout !== previous.layout) {
-      this._reload();
-      return;
-    }
-
-    // Sorting and unread filtering are local operations. Emit a data-source
-    // change with a newly derived array so the list redraws immediately even
-    // though the underlying query result did not change.
-    this.trigger();
+    // Apply order before the loaded window so Size and Oldest can reach mail
+    // outside the newest 200 threads.
+    this._reload();
   };
 
   _shouldIncludeMessage(message) {
@@ -200,6 +198,17 @@ class VisibleMessagesStore extends SummerMailStore {
     this._loading = true;
     this.trigger();
 
+    const sourceQuery = threadSubscription.query();
+    if (sourceQuery && !FocusedPerspectiveStore.current().searchQuery) {
+      threadSubscription.replaceQuery(
+        queryWithThreadListOptions(sourceQuery, {
+          isSent: FocusedPerspectiveStore.current().isSent(),
+          sortField: UnthreadedState.sortField(),
+          sortAscending: UnthreadedState.sortAscending(),
+          unreadOnly: UnthreadedState.unreadOnly(),
+        })
+      );
+    }
     threadSubscription.replaceRange({ start: 0, end: 200 });
 
     this._subscription = Rx.Observable.fromNamedQuerySubscription(
@@ -220,6 +229,7 @@ class VisibleMessagesStore extends SummerMailStore {
       }
 
       const threadMap = {};
+      const threadRanks = new Map(threads.map((thread, index) => [thread.id, index]));
       threads.forEach((thread) => {
         threadMap[thread.id] = thread;
       });
@@ -231,6 +241,7 @@ class VisibleMessagesStore extends SummerMailStore {
           id: message.id,
           message,
           thread: threadMap[message.threadId],
+          searchRank: threadRanks.get(message.threadId),
         }))
         .filter((item) => !!item.thread);
 
@@ -283,6 +294,7 @@ export default class UnthreadedThreadList extends React.Component {
     enabled: UnthreadedState.enabled(),
     layout: UnthreadedState.layout(),
     sortAscending: UnthreadedState.sortAscending(),
+    sortField: UnthreadedState.sortField(),
     unreadOnly: UnthreadedState.unreadOnly(),
     visibleItems: visibleMessagesStore.visibleItems(),
     loading: visibleMessagesStore.loading(),
@@ -381,9 +393,17 @@ export default class UnthreadedThreadList extends React.Component {
       );
     });
 
-    const direction = this.state.sortAscending ? 1 : -1;
-    groups.sort(
-      (a, b) => direction * (new Date(a.latestDate).getTime() - new Date(b.latestDate).getTime())
+    const sortItem = (group) =>
+      this.state.sortField === 'size'
+        ? group.items.reduce((largest, item) =>
+            (item.message.size || 0) > (largest.message.size || 0) ? item : largest
+          )
+        : group.items[group.items.length - 1];
+    groups.sort((a, b) =>
+      compareMessageItems(sortItem(a), sortItem(b), {
+        ...this.state,
+        isSearch: !!FocusedPerspectiveStore.current().searchQuery,
+      })
     );
 
     return groups;
@@ -399,6 +419,12 @@ export default class UnthreadedThreadList extends React.Component {
   }
 
   _dateSections(entries, dateForEntry) {
+    if (
+      !['date', 'relevance'].includes(this.state.sortField) ||
+      FocusedPerspectiveStore.current().searchQuery
+    ) {
+      return [{ key: 'results', label: '', entries }];
+    }
     const buckets = {};
     entries.forEach((entry) => {
       const key = dateSectionFor(dateForEntry(entry));
@@ -420,6 +446,8 @@ export default class UnthreadedThreadList extends React.Component {
 
   _renderDateSections(sections, renderEntry) {
     return sections.map((section) => {
+      if (!section.label)
+        return section.entries.map((entry, index) => renderEntry(entry, index, section.entries));
       const collapsed = !!this.state.collapsedSections[section.key];
       return (
         <section className="unthreaded-date-section" key={section.key}>

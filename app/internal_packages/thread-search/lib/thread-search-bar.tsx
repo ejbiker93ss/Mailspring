@@ -48,6 +48,11 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   static displayName = 'ThreadSearchBar';
 
   _fieldEl: TokenizingContenteditable;
+  _suggestionRequest = 0;
+
+  componentWillUnmount() {
+    this._suggestionRequest++;
+  }
 
   constructor(props: ThreadSearchBarProps) {
     super(props);
@@ -92,6 +97,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   }
 
   async _generateSuggestionsForQuery(query: string) {
+    const request = ++this._suggestionRequest;
     let insertionIndex = this._fieldEl.insertionIndex();
 
     // Treat the initial query (eg: "in:starred AND ") as if it's
@@ -169,7 +175,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
 
     if (promises.length) {
       await Promise.all(promises);
-      this._setSuggestionState(suggestions);
+      if (request === this._suggestionRequest) this._setSuggestionState(suggestions);
     } else {
       this._setSuggestionState(suggestions);
     }

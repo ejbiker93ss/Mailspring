@@ -1,4 +1,5 @@
-import { React, localized } from 'summermail-exports';
+import { React, localized, FocusedPerspectiveStore } from 'summermail-exports';
+import { MailSortField } from '../../../src/services/mail-sort';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 
@@ -16,6 +17,8 @@ const ToolbarIcon = ({ name }) => {
 };
 
 interface ThreadListControlsState {
+  sortField: MailSortField;
+  isSearch: boolean;
   sortAscending: boolean;
   unreadOnly: boolean;
 }
@@ -27,6 +30,7 @@ export default class ThreadListControls extends React.Component<
   static displayName = 'ThreadListControls';
 
   _unlisten?: () => void;
+  _unlistenPerspective?: () => void;
 
   constructor(props) {
     super(props);
@@ -35,13 +39,19 @@ export default class ThreadListControls extends React.Component<
 
   componentDidMount() {
     this._unlisten = UnthreadedState.listen(() => this.setState(this._getState()));
+    this._unlistenPerspective = FocusedPerspectiveStore.listen(() =>
+      this.setState(this._getState())
+    );
   }
 
   componentWillUnmount() {
     if (this._unlisten) this._unlisten();
+    this._unlistenPerspective?.();
   }
 
   _getState = () => ({
+    sortField: UnthreadedState.sortField() as MailSortField,
+    isSearch: !!(FocusedPerspectiveStore.current() as any)?.searchQuery,
     sortAscending: UnthreadedState.sortAscending(),
     unreadOnly: UnthreadedState.unreadOnly(),
   });
@@ -50,10 +60,55 @@ export default class ThreadListControls extends React.Component<
     AppEnv.commands.dispatch('window:sync-mail-now');
   };
 
+  _sortField = (): MailSortField =>
+    this.state.sortField === 'relevance' && !this.state.isSearch ? 'date' : this.state.sortField;
+
+  _sortLabels = () => ({
+    relevance: localized('Relevance'),
+    date: localized('Date'),
+    size: localized('Size'),
+    from: localized('Sender'),
+    subject: localized('Subject'),
+  });
+
+  _openSortMenu = () => {
+    const { Menu } = require('@electron/remote');
+    const field = this._sortField();
+    const labels = this._sortLabels();
+    const fields: MailSortField[] = this.state.isSearch
+      ? ['relevance', 'date', 'size', 'from', 'subject']
+      : ['date', 'size', 'from', 'subject'];
+    const directionLabels =
+      field === 'size'
+        ? [localized('Smallest first'), localized('Largest first')]
+        : field === 'from' || field === 'subject'
+          ? [localized('A to Z'), localized('Z to A')]
+          : [localized('Oldest first'), localized('Newest first')];
+    Menu.buildFromTemplate([
+      ...fields.map((value) => ({
+        label: labels[value],
+        type: 'radio',
+        checked: field === value,
+        click: () => UnthreadedState.setSortField(value),
+      })),
+      { type: 'separator' },
+      ...[true, false].map((ascending, index) => ({
+        label: directionLabels[index],
+        type: 'radio',
+        enabled: field !== 'relevance',
+        checked: field !== 'relevance' && this.state.sortAscending === ascending,
+        click: () => {
+          if (UnthreadedState.sortAscending() !== ascending) UnthreadedState.toggleSort();
+          else if (UnthreadedState.sortField() === 'relevance')
+            UnthreadedState.setSortField('date');
+        },
+      })),
+    ]).popup({});
+  };
+
   render() {
-    const sortTitle = this.state.sortAscending
-      ? localized('Sort by Date (ascending)')
-      : localized('Sort by Date (descending)');
+    const field = this._sortField();
+    const sortTitle = localized('Sort by %@', this._sortLabels()[field]);
     const unreadTitle = this.state.unreadOnly
       ? localized('Show all messages')
       : localized('Show unread only');
@@ -66,12 +121,14 @@ export default class ThreadListControls extends React.Component<
       >
         <button
           type="button"
-          className="thread-list-control"
-          onClick={UnthreadedState.toggleSort}
+          className="thread-list-control thread-list-sort-control"
+          onClick={this._openSortMenu}
           title={sortTitle}
           aria-label={sortTitle}
+          aria-haspopup="menu"
         >
           <ToolbarIcon name="sort" />
+          <span>{this._sortLabels()[field]}</span>
         </button>
         <button
           type="button"

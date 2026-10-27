@@ -11,6 +11,7 @@ import {
   MailboxPerspective,
 } from 'summermail-exports';
 import SearchQuerySubscription from './search-query-subscription';
+import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 
 class SearchMailboxPerspective extends MailboxPerspective {
   searchQuery: string;
@@ -68,7 +69,11 @@ class SearchMailboxPerspective extends MailboxPerspective {
     // Search exactly what the user entered. Applying an implicit thread-level Trash / Spam
     // exclusion can hide valid Inbox messages when any other message in the conversation
     // is deleted or marked as spam.
-    return new SearchQuerySubscription(this.searchQuery.trim(), this.accountIds);
+    return new SearchQuerySubscription(this.searchQuery.trim(), this.accountIds, {
+      sortField: UnthreadedState.sortField(),
+      sortAscending: UnthreadedState.sortAscending(),
+      unreadOnly: UnthreadedState.unreadOnly(),
+    });
   }
 
   canReceiveThreadsFromAccountIds() {
