@@ -67,6 +67,21 @@ describe('MessageStore', function () {
       expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped, escapedFragment, bare]);
     });
 
+    it('refetches cached escaped HTML behind a UTF-8 marker', function () {
+      const escaped = new Message({
+        id: 'bom-escaped',
+        plaintext: false,
+        body: '\uFEFF&lt;!DOCTYPE html&gt;\r\n&lt;html&gt;&lt;body&gt;Invoice&lt;/body&gt;&lt;/html&gt;',
+      });
+      const healthy = new Message({
+        id: 'bom-html',
+        plaintext: false,
+        body: '\uFEFF<!DOCTYPE html><html><body>Invoice</body></html>',
+      });
+      MessageStore._fetchMissingBodies([escaped, healthy]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([escaped]);
+    });
+
     it('bounds failed repair retries and retries after the cooldown', function () {
       const escaped = new Message({
         id: 'escaped',

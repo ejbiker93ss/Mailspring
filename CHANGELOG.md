@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.98 (10/28/2026)
+
+- Decode SmarterMail HTML bodies that start with an invisible UTF-8 marker so affected messages and their previews display readable content instead of HTML source.
+
 ## 1.23.97 (10/27/2026)
 
 - Show the Sort by menu in every mail layout, including the vertical reading pane, with date, size, sender, subject, and search relevance choices.
