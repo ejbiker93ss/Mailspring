@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.97 (10/27/2026)
+
+- Show the Sort by menu in every mail layout, including the vertical reading pane, with date, size, sender, subject, and search relevance choices.
+- Keep the default account label synchronized with the full email address during SmarterMail setup instead of saving its first letter.
+
 ## 1.23.96 (10/27/2026)
 
 - Recover SmarterMail messages that display a numbered MIME boundary instead of their body, and retry affected cached messages when opened.

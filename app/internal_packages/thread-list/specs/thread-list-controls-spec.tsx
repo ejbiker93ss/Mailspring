@@ -51,6 +51,7 @@ describe('ThreadListControls', () => {
     expect(UnthreadedState.sortField()).toBe('size');
     expect(UnthreadedState.sortAscending()).toBe(false);
     expect(buttons[0].getAttribute('title')).toBe('Sort by Size');
+    expect(buttons[0].textContent).toBe('Sort by Size');
 
     ReactTestUtils.Simulate.click(buttons[1]);
     expect(UnthreadedState.unreadOnly()).toBe(true);

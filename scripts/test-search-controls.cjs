@@ -115,6 +115,25 @@ async function main() {
       const Controls = load(
         path.join(root, 'app/internal_packages/thread-list/lib/thread-list-controls.tsx')
       ).default;
+      // Load the real package activation with unrelated components replaced so
+      // registration omissions are caught, not just isolated button behavior.
+      const registrations = [];
+      const activationFile = path.join(root, 'app/internal_packages/thread-list/lib/main.ts');
+      const activation = { exports: {} };
+      const activationCode = ts.transpileModule(fs.readFileSync(activationFile, 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+      }).outputText;
+      new Function('require', 'module', 'exports', activationCode)((name) => {
+        if (name === 'summermail-exports') return {
+          ComponentRegistry: { register: (component, options) => registrations.push({ component, options }) },
+          WorkspaceStore: { Location: { ThreadList: { Toolbar: 'thread-toolbar' }, MessageList: { Toolbar: 'message-toolbar' } } },
+        };
+        if (name === './thread-list-controls') return { default: Controls };
+        if (name === './thread-permalink-handler') return { activate() {} };
+        return { default: function Placeholder() {} };
+      }, activation, activation.exports);
+      activation.exports.activate();
+      const controlModes = registrations.find((entry) => entry.component === Controls).options.modes;
       const SearchBar = load(
         path.join(root, 'app/internal_packages/thread-search/lib/thread-search-bar.tsx')
       ).ThreadSearchBar;
@@ -165,6 +184,8 @@ async function main() {
       const sizeToken = util.getCurrentTokenAndTerm('larger:10M', 10);
       state.setSortField('size');
       return {
+        controlModes,
+        sortButtonText: button.textContent,
         folderChoices,
         sizeDefault,
         sizeAscending,
@@ -174,6 +195,8 @@ async function main() {
         sizeToken,
       };
     }, root);
+    assert.deepEqual(result.controlModes, ['split', 'list', 'splitVertical']);
+    assert.equal(result.sortButtonText, 'Sort by Size');
     assert.deepEqual(result.folderChoices.slice(0, 4), ['Date', 'Size', 'Sender', 'Subject']);
     assert.equal(result.sizeDefault, false);
     assert.equal(result.sizeAscending, true);

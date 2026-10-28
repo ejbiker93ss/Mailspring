@@ -34,7 +34,7 @@ export function activate() {
 
   ComponentRegistry.register(ThreadListControls, {
     location: WorkspaceStore.Location.ThreadList.Toolbar,
-    modes: ['split', 'list'],
+    modes: ['split', 'list', 'splitVertical'],
   });
 
   ComponentRegistry.register(ThreadListVertical, {

@@ -128,7 +128,7 @@ export default class ThreadListControls extends React.Component<
           aria-haspopup="menu"
         >
           <ToolbarIcon name="sort" />
-          <span>{this._sortLabels()[field]}</span>
+          <span>{sortTitle}</span>
         </button>
         <button
           type="button"

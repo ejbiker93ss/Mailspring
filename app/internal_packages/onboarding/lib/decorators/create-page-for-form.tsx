@@ -88,6 +88,11 @@ const CreatePageForForm = (FormComponent: React.ComponentType<any> & Record<stri
       }
       if (event.target.id === 'emailAddress') {
         val = `${val}`.trim();
+        // Account.clone() fills a missing label from the current email address.
+        // Keep that default following typing instead of freezing the first letter.
+        if (!next.label || next.label === next.emailAddress) {
+          next.label = val;
+        }
       }
 
       if (event.target.id.includes('.')) {
