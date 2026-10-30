@@ -151,7 +151,7 @@ const Subscription = load(
 async function main() {
   const subscription = Object.create(Subscription.prototype);
   subscription._accountIds = ['a'];
-  subscription._options = { sortField: 'size', sortAscending: false, unreadOnly: true };
+  subscription._viewOptions = { sortField: 'size', sortAscending: false, unreadOnly: true };
   // Ensure explicit sorting happens before the 1,000-result cap.
   db.transaction(() => {
     for (let i = 0; i < 1005; i++) seed('filler-' + i, 100, 100 + i, 'report', 'filler');
@@ -162,12 +162,12 @@ async function main() {
   assert.equal(result.ids[0], 'old-large');
   assert.equal(result.ids.includes('other-account'), false);
   assert.equal(result.ids.includes('read'), false);
-  subscription._options = { sortField: 'date', sortAscending: true, unreadOnly: true };
+  subscription._viewOptions = { sortField: 'date', sortAscending: true, unreadOnly: true };
   assert.equal(
     (await subscription._rankedSearchResults(Parser.parse('report'))).ids[0],
     'old-large'
   );
-  subscription._options = { sortField: 'subject', sortAscending: true, unreadOnly: true };
+  subscription._viewOptions = { sortField: 'subject', sortAscending: true, unreadOnly: true };
   assert.equal(
     (await subscription._rankedSearchResults(Parser.parse('report'))).ids[0],
     'new-small'

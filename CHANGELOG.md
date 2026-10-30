@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.99 (10/30/2026)
+
+- Fix mail search getting stuck on a loading spinner: search results now reach the message list again.
+
 ## 1.23.98 (10/28/2026)
 
 - Decode SmarterMail HTML bodies that start with an invisible UTF-8 marker so affected messages and their previews display readable content instead of HTML source.

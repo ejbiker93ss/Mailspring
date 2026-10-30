@@ -1,8 +1,47 @@
 import { DatabaseStore, SearchQueryParser } from 'summermail-exports';
 import { SearchQuerySubscription } from '../lib/search-query-subscription';
 import { compileFTSMatchQuery } from '../../../src/services/search/search-query-backend-local';
+import ThreadListDataSource from '../../thread-list/lib/thread-list-data-source';
 
 describe('SearchQuerySubscription matching messages', () => {
+  it('delivers sorted search results to the thread list', () => {
+    const querySpy = (DatabaseStore as any)._query as jasmine.Spy;
+    querySpy.andCallFake((sql: string) => {
+      if (sql.startsWith('SELECT COUNT(*)')) return Promise.resolve([{ count: 1 }]);
+      if (sql.includes('relevanceBand')) return Promise.resolve([{ id: 'thread-1' }]);
+      if (sql.startsWith('SELECT `Thread`.`data`')) {
+        return Promise.resolve([
+          {
+            data: JSON.stringify({
+              __cls: 'Thread',
+              id: 'thread-1',
+              aid: 'account-1',
+              subject: 'Orders',
+            }),
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    const subscription = new SearchQuerySubscription('orders', ['account-1'], {
+      sortField: 'relevance',
+      sortAscending: false,
+      unreadOnly: false,
+    });
+    const source = new ThreadListDataSource(subscription);
+    source.setRetainedRange({ start: 0, end: 30 });
+
+    waitsFor(() => {
+      advanceClock(50);
+      return source.loaded();
+    }, 'search results in the thread list');
+    runs(() => {
+      expect(source.count()).toBe(1);
+      expect(source.get(0).subject).toBe('Orders');
+      source.cleanup();
+    });
+  });
+
   it('compiles body-only queries against the indexed body field', () => {
     const match = compileFTSMatchQuery(SearchQueryParser.parse('body:"amount due"'));
 

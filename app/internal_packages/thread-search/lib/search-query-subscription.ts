@@ -93,17 +93,19 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searching = false;
   _resultCount: number | null = null;
   _matchingMessageIds = new Map<string, string>();
-  _options: { sortField?: MailSortField; sortAscending?: boolean; unreadOnly?: boolean };
+  // QuerySubscription owns `_options` (emitResultSet); overwriting it makes the
+  // thread list receive a plain array instead of a QueryResultSet.
+  _viewOptions: { sortField?: MailSortField; sortAscending?: boolean; unreadOnly?: boolean };
 
   constructor(
     searchQuery: string,
     accountIds: string[],
-    options: SearchQuerySubscription['_options'] = {}
+    options: SearchQuerySubscription['_viewOptions'] = {}
   ) {
     super(null, { emitResultSet: true });
     this._searchQuery = searchQuery;
     this._accountIds = accountIds;
-    this._options = options;
+    this._viewOptions = options;
 
     _.defer(() => this.performSearch());
   }
@@ -120,7 +122,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
 
   async performLocalSearch() {
     let dbQuery = DatabaseStore.findAll<Thread>(Thread);
-    if (this._options?.unreadOnly) dbQuery = dbQuery.where({ unread: true });
+    if (this._viewOptions?.unreadOnly) dbQuery = dbQuery.where({ unread: true });
     if (this._accountIds.length === 1) {
       dbQuery = dbQuery.where({ accountId: this._accountIds[0] });
     } else if (this._accountIds.length > 1) {
@@ -164,11 +166,11 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
       .limit(1000);
 
-    if (this._options?.sortField && this._options.sortField !== 'relevance') {
+    if (this._viewOptions?.sortField && this._viewOptions.sortField !== 'relevance') {
       dbQuery = queryWithThreadListOptions(dbQuery, {
         isSent: false,
-        sortField: this._options.sortField,
-        sortAscending: !!this._options.sortAscending,
+        sortField: this._viewOptions.sortField,
+        sortAscending: !!this._viewOptions.sortAscending,
         unreadOnly: false,
       });
     }
@@ -207,7 +209,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
           operator
         )} ORDER BY matchedMessage.date DESC LIMIT 1)`
       : 'NULL';
-    const unreadSQL = this._options?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
+    const unreadSQL = this._viewOptions?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
     const fromAndWhere = `FROM \`ThreadSearch\` JOIN \`Thread\` ON \`Thread\`.id = \`ThreadSearch\`.content_id WHERE \`ThreadSearch\` MATCH ? ${accountSQL} ${strictMessageSQL} ${unreadSQL}`;
 
     const rankValues = [
@@ -233,8 +235,8 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
       ? '`Thread`.lastMessageReceivedTimestamp DESC, exactMatches DESC, relevanceBand ASC, relevance ASC'
       : 'relevanceBand ASC, `Thread`.lastMessageReceivedTimestamp DESC, relevance ASC';
     const orderSQL =
-      this._options?.sortField && this._options.sortField !== 'relevance'
-        ? threadSortSQL(this._options.sortField, !!this._options.sortAscending)
+      this._viewOptions?.sortField && this._viewOptions.sortField !== 'relevance'
+        ? threadSortSQL(this._viewOptions.sortField, !!this._viewOptions.sortAscending)
         : relevanceOrderSQL;
     const rankSQL = `SELECT \`ThreadSearch\`.content_id AS id, ${matchingMessageIdSQL} AS matchingMessageId, ${bm25SQL} AS relevance, ${relevanceBandSQL} AS relevanceBand, ${matchCountSQL} AS exactMatches ${fromAndWhere} ORDER BY ${orderSQL} LIMIT 1000`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
@@ -264,7 +266,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     const accountSQL = this._accountIds.length
       ? `AND \`Thread\`.accountId IN (${this._accountIds.map(() => '?').join(', ')})`
       : '';
-    const unreadSQL = this._options?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
+    const unreadSQL = this._viewOptions?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
     const fromAndWhere = `FROM \`Thread\` WHERE ${where} ${accountSQL} ${unreadSQL}`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
     // Keep BM25 on its own FTS cursor. The non-flattened subquery computes mail
@@ -275,8 +277,8 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     ) mailRank ON mailRank.content_id = \`Thread\`.id`;
     const relevance = 'COALESCE(mailRank.relevance, 0)';
     const order =
-      this._options?.sortField && this._options.sortField !== 'relevance'
-        ? threadSortSQL(this._options.sortField, !!this._options.sortAscending)
+      this._viewOptions?.sortField && this._viewOptions.sortField !== 'relevance'
+        ? threadSortSQL(this._viewOptions.sortField, !!this._viewOptions.sortAscending)
         : 'relevanceBand ASC, `Thread`.lastMessageReceivedTimestamp DESC, relevance ASC';
     const rankSQL = `SELECT \`Thread\`.id, NULL AS matchingMessageId,
       ${relevance} AS relevance, CAST(${relevance} / ${RELEVANCE_BAND_WIDTH} AS INTEGER) AS relevanceBand
