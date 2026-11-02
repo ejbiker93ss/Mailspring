@@ -1,4 +1,6 @@
+import { Actions, FocusedContentStore, Thread, WorkspaceStore } from 'summermail-exports';
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
+import RecentlyReadStore from '../../../src/flux/stores/recently-read-store';
 import ThreadListStore from '../lib/thread-list-store';
 
 describe('ThreadListStore toolbar options', () => {
@@ -50,5 +52,47 @@ describe('ThreadListStore toolbar options', () => {
 
     expect(result).toBe(subscription);
     expect(subscription.replaceQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe('ThreadListStore focus when a thread leaves an unread-only list', () => {
+  const resultSet = (threads: Thread[]) => ({
+    offsetOfId: (id: string) => threads.findIndex((t) => t.id === id),
+    modelAtOffset: (i: number) => threads[i],
+    count: () => threads.length,
+    query: () => ({ matchers: () => [Thread.attributes.unread.equal(true)] }),
+  });
+  const opened = new Thread({ id: 'opened', unread: false });
+  const next = new Thread({ id: 'next', unread: true });
+  let originalIds = [];
+
+  beforeEach(() => {
+    originalIds = RecentlyReadStore.ids;
+    spyOn(WorkspaceStore, 'layoutMode').andReturn('split');
+    spyOn(FocusedContentStore, 'focused').andReturn(opened);
+    spyOn(FocusedContentStore, 'keyboardCursor').andReturn(null);
+    spyOn(Actions, 'setFocus');
+  });
+
+  afterEach(() => {
+    RecentlyReadStore.ids = originalIds;
+  });
+
+  const removeOpenedThread = () =>
+    (ThreadListStore as any)._onDataChanged({
+      previous: resultSet([new Thread({ id: 'opened', unread: true }), next]),
+      next: resultSet([next]),
+    });
+
+  it('keeps focus on a thread that left the list because it was just read', () => {
+    RecentlyReadStore.ids = ['opened'];
+    removeOpenedThread();
+    expect(Actions.setFocus).not.toHaveBeenCalled();
+  });
+
+  it('still advances focus when a thread leaves the list for another reason', () => {
+    RecentlyReadStore.ids = [];
+    removeOpenedThread();
+    expect(Actions.setFocus).toHaveBeenCalledWith({ collection: 'thread', item: next });
   });
 });

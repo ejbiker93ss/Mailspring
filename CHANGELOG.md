@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.100 (11/2/2026)
+
+- Stop "Show unread only" from marking a chain of emails as read: opening an email no longer moves focus to the next unread email when the opened one leaves the list.
+
 ## 1.23.99 (10/30/2026)
 
 - Fix mail search getting stuck on a loading spinner: search results now reach the message list again.

@@ -14,6 +14,7 @@ import { ListTabular, ListDataSource } from 'summermail-component-kit';
 import ThreadListDataSource from './thread-list-data-source';
 import { queryWithThreadListOptions } from './thread-list-query-options';
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
+import RecentlyReadStore from '../../../src/flux/stores/recently-read-store';
 
 class ThreadListStore extends SummerMailStore {
   _dataSource?: ListDataSource;
@@ -171,7 +172,12 @@ class ThreadListStore extends SummerMailStore {
         }
       };
 
-      if (viewModeAutofocuses && focused && notInSet(focused)) {
+      // A thread that left an unread-only list because opening it marked it
+      // read must not hand focus to the next unread thread: that thread would
+      // be marked read too, cascading through the whole list.
+      const leftBecauseRead = (model: Thread) => RecentlyReadStore.ids.includes(model.id);
+
+      if (viewModeAutofocuses && focused && notInSet(focused) && !leftBecauseRead(focused)) {
         Actions.setFocus({ collection: 'thread', item: nextItemFromIndex(focusedIndex) });
       }
 
