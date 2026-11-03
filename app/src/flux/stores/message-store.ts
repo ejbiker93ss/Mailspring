@@ -32,6 +32,8 @@ class _MessageStore extends SummerMailStore {
   // Keep successful discards suppressed for this window's lifetime: an older
   // cache read or draft-save notification may arrive after the delete completes.
   _discardedDraftIds = new Set<string>();
+  // Messages already refetched this session to recover attachment names.
+  _attachmentNameRepairIds = new Set<string>();
 
   constructor() {
     super();
@@ -425,6 +427,7 @@ class _MessageStore extends SummerMailStore {
       (i) =>
         i.body === null ||
         this._needsSmarterMailBodyRepair(i) ||
+        this._needsAttachmentNameRepair(i) ||
         (i.smHasAttachments && !i.smAttachmentHydratedV1) ||
         // SmarterMail's server-side image blocking can poison display HTML
         // with spacer sources. Repair only opened messages, at most once per
@@ -438,6 +441,19 @@ class _MessageStore extends SummerMailStore {
     if (missing.length > 0) {
       return Actions.fetchBodies(missing);
     }
+  }
+
+  // Bodies cached before RFC 2231 name decoding stored long attachment names
+  // as "Unnamed Attachment". Refetch an opened message once per session so the
+  // sync engine can re-read the name; truly unnamed parts are not retried.
+  _needsAttachmentNameRepair(message: Message) {
+    if (this._attachmentNameRepairIds.has(message.id)) return false;
+    const unnamed = (message.files || []).some(
+      (file) => !file.contentId && (!file.filename || file.filename === 'Unnamed Attachment')
+    );
+    if (!unnamed) return false;
+    this._attachmentNameRepairIds.add(message.id);
+    return true;
   }
 
   _needsSmarterMailBodyRepair(message: Message) {

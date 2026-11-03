@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.101 (11/3/2026)
+
+- Show the real name of attachments with long or non-English filenames instead of "Unnamed Attachment", so files like Excel workbooks open in the right app. Affected messages are re-read once when opened.
+
 ## 1.23.100 (11/2/2026)
 
 - Stop "Show unread only" from marking a chain of emails as read: opening an email no longer moves focus to the next unread email when the opened one leaves the list.

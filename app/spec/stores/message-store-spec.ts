@@ -2,6 +2,7 @@ import { Thread } from '../../src/flux/models/thread';
 import { Folder } from '../../src/flux/models/folder';
 import { Label } from '../../src/flux/models/label';
 import { Message } from '../../src/flux/models/message';
+import { File } from '../../src/flux/models/file';
 import FocusedContentStore from '../../src/flux/stores/focused-content-store';
 import FocusedPerspectiveStore from '../../src/flux/stores/focused-perspective-store';
 import { MessageStore } from '../../src/flux/stores/message-store';
@@ -154,6 +155,44 @@ describe('MessageStore', function () {
         (AccountStore.accountForId as jasmine.Spy).andReturn(account);
         MessageStore._fetchMissingBodies([escaped, boundary]);
       }
+      expect(Actions.fetchBodies).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('recovering attachment names', function () {
+    beforeEach(function () {
+      spyOn(Actions, 'fetchBodies');
+      MessageStore._attachmentNameRepairIds = new Set<string>();
+    });
+
+    it('refetches an unnamed attachment once per session', function () {
+      const unnamed = new Message({
+        id: 'unnamed-attachment',
+        body: '<p>Hi</p>',
+        files: [
+          new File({
+            id: 'f1',
+            filename: 'Unnamed Attachment',
+            contentType: 'application/octet-stream',
+          }),
+        ],
+      });
+      const named = new Message({
+        id: 'named-attachment',
+        body: '<p>Hi</p>',
+        files: [new File({ id: 'f2', filename: 'report.xlsx' })],
+      });
+      const inlineImage = new Message({
+        id: 'inline-image',
+        body: '<p>Hi</p>',
+        files: [new File({ id: 'f3', filename: '', contentId: 'image001' })],
+      });
+
+      MessageStore._fetchMissingBodies([unnamed, named, inlineImage]);
+      expect(Actions.fetchBodies).toHaveBeenCalledWith([unnamed]);
+
+      (Actions.fetchBodies as unknown as jasmine.Spy).reset();
+      MessageStore._fetchMissingBodies([unnamed]);
       expect(Actions.fetchBodies).not.toHaveBeenCalled();
     });
   });
