@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.102 (11/4/2026)
+
+- Support the Mailspring Avatars plugin: sender avatars now appear in the default message list, including messages inside expanded conversations, and the narrow conversation list shows one avatar per row.
+
 ## 1.23.101 (11/3/2026)
 
 - Show the real name of attachments with long or non-English filenames instead of "Unnamed Attachment", so files like Excel workbooks open in the right app. Affected messages are re-read once when opened.

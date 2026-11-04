@@ -446,6 +446,11 @@ body.platform-win32 {
 }
 
 .thread-list-narrow {
+  // The Avatars plugin also renders a larger icon through the mail-label slot.
+  .list-item:has(.thread-injected-mail-labels .thread-avatar) .thread-injected-icons .thread-avatar {
+    display: none !important;
+  }
+
   .icons-column {
     display: flex;
     flex-direction: column;

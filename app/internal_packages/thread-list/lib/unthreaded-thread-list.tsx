@@ -5,6 +5,7 @@ import {
   Rx,
   Utils,
   Actions,
+  ComponentRegistry,
   DatabaseStore,
   FocusedPerspectiveStore,
   CategoryStore,
@@ -14,6 +15,7 @@ import {
 } from 'summermail-exports';
 import { Spinner, ScrollRegion } from 'summermail-component-kit';
 import SummerMailStore from 'summermail-store';
+import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary';
 
 import UnthreadedState from '../../../src/flux/stores/unthreaded-state';
 import { compareMessageItems, filterAndSortVisibleItems } from './unthreaded-list-ordering';
@@ -279,6 +281,7 @@ export default class UnthreadedThreadList extends React.Component {
     this._unsubscribers = [
       visibleMessagesStore.listen(this._onChange),
       UnthreadedState.listen(this._onChange),
+      ComponentRegistry.listen(() => this.setState({ SenderAvatar: this._senderAvatar() })),
     ];
   }
 
@@ -287,10 +290,15 @@ export default class UnthreadedThreadList extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state);
+    return (
+      nextState.SenderAvatar !== this.state.SenderAvatar ||
+      !Utils.isEqualReact(nextProps, this.props) ||
+      !Utils.isEqualReact(nextState, this.state)
+    );
   }
 
   _getState = () => ({
+    SenderAvatar: this._senderAvatar(),
     enabled: UnthreadedState.enabled(),
     layout: UnthreadedState.layout(),
     sortAscending: UnthreadedState.sortAscending(),
@@ -303,6 +311,11 @@ export default class UnthreadedThreadList extends React.Component {
     collapsedSections:
       this.state && this.state.collapsedSections ? this.state.collapsedSections : {},
   });
+
+  _senderAvatar() {
+    // The Mailspring Avatars plugin exposes a thread icon, even for a single sender.
+    return ComponentRegistry.findComponentByName('SmallAvatar');
+  }
 
   _onChange = () => {
     this.setState(this._getState(), () => {
@@ -495,6 +508,7 @@ export default class UnthreadedThreadList extends React.Component {
     const selected = selectedId === item.message.id;
     const inTrash = this._isInTrash(item);
     const from = item.message.from && item.message.from[0];
+    const { SenderAvatar } = this.state;
     const fromName = from ? from.displayName({ compact: true }) : '';
     const subject = item.message.subject || '(No Subject)';
     const date = item.message.date ? new Date(item.message.date).toLocaleString() : '';
@@ -545,6 +559,13 @@ export default class UnthreadedThreadList extends React.Component {
           this._onSelect(item);
         }}
       >
+        {SenderAvatar && from ? (
+          <div className="unthreaded-row-avatar" aria-hidden="true">
+            <InjectedComponentErrorBoundary>
+              <SenderAvatar thread={{ participants: [from] }} />
+            </InjectedComponentErrorBoundary>
+          </div>
+        ) : null}
         <div className="unthreaded-row-top">
           <div className={`unthreaded-from ${inTrash ? 'trashed' : ''}`}>{fromName}</div>
           <div className={`unthreaded-row-meta ${inTrash ? 'trashed' : ''}`}>
