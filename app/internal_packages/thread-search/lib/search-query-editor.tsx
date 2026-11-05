@@ -55,6 +55,18 @@ export default class SearchQueryEditor extends Component<
     this._rememberCursor();
   };
 
+  focusEnd = () => {
+    const input = this.editor.querySelector<HTMLInputElement>('.search-query-text:last-child');
+    input?.focus();
+    input?.setSelectionRange(input.value.length, input.value.length);
+    this._rememberCursor();
+  };
+
+  isAppending = () => {
+    const input = this.editor.querySelector<HTMLInputElement>('.search-query-text:last-child');
+    return input === document.activeElement && !input.value.trim();
+  };
+
   blur = () => {
     if (this.editor.contains(document.activeElement))
       (document.activeElement as HTMLElement).blur();
@@ -77,6 +89,12 @@ export default class SearchQueryEditor extends Component<
   };
 
   private _replace = (part: SearchQueryPart, text: string, cursor: number, focusValue = false) => {
+    // A pill's trailing editor starts empty, but the query parser still needs
+    // whitespace between the existing filter and the next typed term.
+    if (!part.token && !part.text.trim() && part.start > 0 && text && !/^\s/.test(text)) {
+      text = ` ${text}`;
+      cursor++;
+    }
     const value = replaceSearchQueryPart(this.state.value, part, text);
     this.cursor = cursor;
     const convertsToPill = !part.token && searchQueryParts(text).some((p) => p.token);
@@ -101,7 +119,8 @@ export default class SearchQueryEditor extends Component<
   };
 
   private _input = (part: SearchQueryPart, index: number) => {
-    const value = part.token ? part.term : part.text;
+    const appendInput = !part.token && part.end === this.state.value.length;
+    const value = part.token ? part.term : appendInput && !part.text.trim() ? '' : part.text;
     const quoted = part.token && part.text.includes('"');
     const start = part.start + (part.token ? part.text.indexOf(':') + 1 + (quoted ? 1 : 0) : 0);
     return (
@@ -109,7 +128,13 @@ export default class SearchQueryEditor extends Component<
         key={index}
         className={part.token ? 'search-filter-value' : 'search-query-text'}
         value={value}
-        placeholder={!this.state.value ? this.props.placeholder : undefined}
+        placeholder={
+          !this.state.value
+            ? this.props.placeholder
+            : appendInput
+              ? localized('Add filter…')
+              : undefined
+        }
         role={!part.token && part.end === this.state.value.length ? this.props.role : undefined}
         aria-label={
           part.token ? localized('%@ filter value', part.token) : this.props['aria-label']

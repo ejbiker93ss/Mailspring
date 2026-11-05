@@ -245,7 +245,11 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
     assert.equal(await page.locator('.thread-search-bar').evaluate((el) => el.classList.contains('has-query')), true);
     assert.ok((await page.locator('.thread-search-bar').boundingBox()).width > compactWidth,
       'submitted query keeps the wider search field');
-    await plain.fill(' subject:report');
+    const firstPill = await page.locator('.search-filter-pill').boundingBox();
+    await page.mouse.click(firstPill.x + firstPill.width + 20, firstPill.y + firstPill.height / 2);
+    await page.keyboard.type('subject:report');
+    assert.equal(await page.evaluate(() => window.searchPillTest.harness.query), 'to:"Alice Morgan" subject:report',
+      'clicking after a pill appends a separate filter without requiring a leading space');
     assert.equal(await page.locator('.search-filter-pill').count(), 2);
     await page.getByRole('button', { name: 'Remove to filter', exact: true }).click();
     assert.equal(await page.locator('.search-filter-pill').count(), 1);
@@ -266,6 +270,30 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     assert.match(await page.evaluate(() => window.searchPillTest.harness.submitted),
       /from:"alice@example.com" subject:roadmap/);
+    await page.evaluate(() => window.searchPillTest.setQuery('from:rod.cf'));
+    const searchBox = await page.locator('.thread-search-bar').boundingBox();
+    await page.mouse.click(searchBox.x + searchBox.width - 3, searchBox.y + searchBox.height - 2);
+    assert.equal(await plain.evaluate((input) => input === document.activeElement), true,
+      'empty search-bar background focuses the append input');
+    const subjectChoice = page.locator('.suggestion').filter({ hasText: /^subject:/ }).first();
+    await subjectChoice.waitFor({ state: 'visible' });
+    const subjectBox = await subjectChoice.boundingBox();
+    await page.mouse.click(subjectBox.x + subjectBox.width / 2, subjectBox.y + subjectBox.height / 2);
+    await page.keyboard.type('Meeting notes');
+    assert.equal(await page.evaluate(() => window.searchPillTest.harness.query),
+      'from:rod.cf subject:"Meeting notes"');
+    await page.locator('.search-filter-value').first().fill('Rod C F');
+    await plain.click();
+    await page.keyboard.type('to:charlene@example.com');
+    assert.equal(await page.locator('.search-filter-pill').count(), 3);
+    assert.equal(await page.evaluate(() => window.searchPillTest.harness.query),
+      'from:"Rod C F" subject:"Meeting notes" to:charlene@example.com',
+      'adding another filter preserves existing editable values and spaces');
+    await page.evaluate(() => window.searchPillTest.setQuery('from:rod.cf '));
+    await page.getByPlaceholder('Add filter…').click();
+    await page.keyboard.type('subject:report');
+    assert.equal(await page.evaluate(() => window.searchPillTest.harness.query),
+      'from:rod.cf subject:report', 'completed suggestions retain a visible, working add-filter input');
     await page.evaluate(() => window.searchPillTest.setQuery('from:emo.k@msseggs.com subject:"Bump the Meeting" to:charlene@example.com after:2026-10-01 has:attachment '));
     await page.locator('.search-filter-value').first().blur();
     const assertLayout = async () => {
@@ -321,7 +349,7 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
         await page.screenshot({ path: path.join(root, '.tmp', `search-controls-${theme}.png`) });
     }
     console.log(
-      'PASS: editable/removable filter pills, autocomplete, query preservation, expansion beyond narrow columns, five-filter wrapping, result-count placement, window resizing, compact reset, and light/dark styles.'
+      'PASS: click-and-type filter addition without leading spaces, background focus, multiword values, editable/removable pills, autocomplete, narrow-column wrapping, resize, result counts, and light/dark styles.'
     );
   } finally {
     await app.close();

@@ -1,5 +1,11 @@
 # SummerMail Changelog
 
+## 1.23.105 (11/5/2026)
+
+- Make the empty search-bar area focus a visible Add filter entry; automatically separate newly typed filters from existing pills.
+- Show filter-type suggestions in the add-filter entry and append the chosen filter without replacing existing filters.
+- Preserve spaces within editable filter values and keep editor focus stable while suggestions update.
+
 ## 1.23.104 (11/5/2026)
 
 - Expand active searches beyond the message-list column, with room reserved for toolbar controls and automatic resizing with the window.

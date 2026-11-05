@@ -48,6 +48,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   static displayName = 'ThreadSearchBar';
 
   _fieldEl: SearchQueryEditor;
+  _setFieldRef = (el: SearchQueryEditor) => (this._fieldEl = el);
   _suggestionRequest = 0;
   _queryRegion: HTMLDivElement;
   _resizeObserver?: ResizeObserver;
@@ -121,6 +122,10 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
 
   async _generateSuggestionsForQuery(query: string) {
     const request = ++this._suggestionRequest;
+    if (this._fieldEl.isAppending()) {
+      this._setSuggestionState(TokenSuggestionsForEmpty);
+      return;
+    }
     let insertionIndex = this._fieldEl.insertionIndex();
 
     // Treat the initial query (eg: "in:starred AND ") as if it's
@@ -270,7 +275,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     // If the user has the cursor inside an existing token, replace it. If the query ends
     // in a space, append a new token. Otherwise replace the whole string.
     let { index, length } = getCurrentTokenAndTerm(query, this._fieldEl.insertionIndex());
-    if (index === -1 && query.endsWith(' ')) {
+    if (this._fieldEl.isAppending() || (index === -1 && query.endsWith(' '))) {
       index = query.length;
       length = 0;
     }
@@ -370,6 +375,16 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
         role="combobox"
         aria-expanded={suggestionsVisible}
         aria-haspopup="listbox"
+        onMouseDown={(event: React.MouseEvent) => {
+          if (
+            (event.target as HTMLElement).closest(
+              'input, select, button, .search-accessory, .suggestions'
+            )
+          )
+            return;
+          event.preventDefault();
+          this._fieldEl.focusEnd();
+        }}
         globalHandlers={{
           'core:focus-search': () => {
             // If the user is in list mode, we need to clear the selection because the
@@ -398,7 +413,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
         )}
         <div className="thread-search-query-region" ref={(el) => (this._queryRegion = el)}>
           <SearchQueryEditor
-            ref={(el) => (this._fieldEl = el)}
+            ref={this._setFieldRef}
             value={query}
             placeholder={this._placeholder()}
             onKeyDown={this._onKeyDown}
