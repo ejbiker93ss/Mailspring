@@ -292,15 +292,76 @@ button.btn,
   gap: 6px;
 }
 
-// Give an active search the full message-list width. The toolbar actions
-// remain in their normal order, just beyond the field in the reading pane.
+// Active queries can extend over the reading pane, rather than staying
+// constrained to the narrow message-list column.
 .toolbar-ThreadList:has(.thread-search-bar:is(.is-focused, .has-query)) {
   z-index: 20;
 }
 
 .toolbar-ThreadList .thread-search-bar:is(.is-focused, .has-query) {
-  flex: 0 0 100%;
+  flex: 0 0 var(--search-expanded-width, 100%);
   max-width: none;
+}
+
+.toolbar-ThreadList:has(.thread-search-bar:is(.is-focused, .has-query)) .item-container {
+  align-items: flex-start;
+}
+
+.thread-search-bar.has-query {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr) 21px;
+  column-gap: 4px;
+  height: auto;
+  min-height: 32px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  align-items: start;
+
+  .search-accessory.search {
+    grid-column: 1;
+    grid-row: 1;
+    margin-top: 4px;
+  }
+  .search-accessory.clear {
+    grid-column: 3;
+    grid-row: 1;
+    margin-top: 1px;
+  }
+  .thread-search-query-region {
+    grid-column: 2;
+    grid-row: 1;
+    height: auto;
+  }
+  .search-query-editor {
+    height: auto;
+    flex-wrap: wrap;
+    max-height: ~"min(240px, 40vh)";
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .search-filter-pill {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .search-filter-value {
+    flex: 1 1 auto;
+    min-width: 3ch;
+  }
+  .search-filter-pill select {
+    flex: 0 0 auto;
+  }
+  .search-query-text {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .thread-search-result-count {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    padding-left: 0;
+    line-height: 18px;
+  }
 }
 
 .thread-list,

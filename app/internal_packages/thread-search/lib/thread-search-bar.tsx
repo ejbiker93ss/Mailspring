@@ -49,9 +49,32 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
 
   _fieldEl: SearchQueryEditor;
   _suggestionRequest = 0;
+  _queryRegion: HTMLDivElement;
+  _resizeObserver?: ResizeObserver;
+
+  componentDidMount() {
+    this._resizeObserver = new ResizeObserver(this._updateExpandedWidth);
+    this._resizeObserver.observe(document.documentElement);
+    const toolbar = this._queryRegion.closest('.toolbar-ThreadList');
+    if (toolbar) this._resizeObserver.observe(toolbar);
+    this._updateExpandedWidth();
+  }
+
+  _updateExpandedWidth = () => {
+    const bar = this._queryRegion.parentElement;
+    const toolbar = bar.closest('.toolbar-ThreadList');
+    if (!toolbar) return;
+    const controls = toolbar.querySelector('.thread-list-controls');
+    const available = window.innerWidth - bar.getBoundingClientRect().left;
+    // Leave room for the list controls, view selector, and toolbar gaps.
+    const controlsWidth = (controls?.getBoundingClientRect().width || 0) + 64;
+    const width = Math.min(840, Math.max(88, available - controlsWidth));
+    bar.style.setProperty('--search-expanded-width', `${width}px`);
+  };
 
   componentWillUnmount() {
     this._suggestionRequest++;
+    this._resizeObserver?.disconnect();
   }
 
   constructor(props: ThreadSearchBarProps) {
@@ -373,7 +396,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
             onClick={() => this._fieldEl.focus()}
           />
         )}
-        <div className="thread-search-query-region">
+        <div className="thread-search-query-region" ref={(el) => (this._queryRegion = el)}>
           <SearchQueryEditor
             ref={(el) => (this._fieldEl = el)}
             value={query}

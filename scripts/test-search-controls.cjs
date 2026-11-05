@@ -22,7 +22,8 @@ async function main() {
 @import '${path.join(root, 'app/internal_packages/thread-search/styles/thread-search-bar.less').replace(/\\/g, '/')}';
 @import '${path.join(root, 'app/static/style/modern-ui.less').replace(/\\/g, '/')}';
 body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI', sans-serif; }
-main.toolbar-ThreadList { width: 520px; }
+main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
+.item-container { align-items: center; }
 `, { paths: [
       path.join(root, 'app/internal_packages', theme, 'styles'),
       path.join(root, 'app/static/style'), path.join(root, 'app/static/style/base'),
@@ -52,7 +53,7 @@ main.toolbar-ThreadList { width: 520px; }
           this.listeners.forEach((fn) => fn());
         }
       }
-      const RetinaImg = () => null;
+      const RetinaImg = ({ className, onClick, onMouseDown }) => React.createElement('span', { className, onClick, onMouseDown });
       RetinaImg.Mode = {};
       const exportsStub = {
         React,
@@ -131,10 +132,9 @@ main.toolbar-ThreadList { width: 520px; }
       const SearchBar = load(
         path.join(root, 'app/internal_packages/thread-search/lib/thread-search-bar.tsx')
       ).ThreadSearchBar;
-      document.body.innerHTML = '<main class="toolbar-ThreadList"><div id="search"></div><div id="controls"></div></main>';
+      document.body.innerHTML = '<main class="toolbar-ThreadList"><div class="item-container" style="display:flex;position:relative;height:34px;width:100%"><div id="search"></div><div id="controls"></div></div></main>';
       document.querySelector('#search').style.cssText = 'display:contents';
       document.body.style.margin = '24px';
-      document.querySelector('main').style.cssText = 'display:flex;align-items:center;gap:8px';
       ReactDOM.render(React.createElement(Controls), document.querySelector('#controls'));
       const button = document.querySelector('[aria-haspopup="menu"]');
       button.click();
@@ -201,7 +201,7 @@ main.toolbar-ThreadList { width: 520px; }
       search._fieldEl.insertionIndex = insertionIndex;
       const harness = { query: '', submitted: '' };
       const renderSearch = () => ReactDOM.render(React.createElement(SearchBar, {
-        query: harness.query, isSearching: false, resultCount: null,
+        query: harness.query, isSearching: false, resultCount: 3444,
         perspective: exportsStub.FocusedPerspectiveStore.current(),
       }), document.querySelector('#search'));
       exportsStub.Actions.searchQueryChanged = (query) => { harness.query = query; renderSearch(); };
@@ -266,6 +266,38 @@ main.toolbar-ThreadList { width: 520px; }
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     assert.match(await page.evaluate(() => window.searchPillTest.harness.submitted),
       /from:"alice@example.com" subject:roadmap/);
+    await page.evaluate(() => window.searchPillTest.setQuery('from:emo.k@msseggs.com subject:"Bump the Meeting" to:charlene@example.com after:2026-10-01 has:attachment '));
+    await page.locator('.search-filter-value').first().blur();
+    const assertLayout = async () => {
+      const layout = await page.evaluate(() => {
+        const bar = document.querySelector('.thread-search-bar');
+        const rect = bar.getBoundingClientRect();
+        const pills = [...bar.querySelectorAll('.search-filter-pill')];
+        const editor = bar.querySelector('.search-query-editor');
+        return {
+          width: rect.width, right: rect.right, top: rect.top, viewport: innerWidth,
+          rows: new Set(pills.map((pill) => Math.round(pill.getBoundingClientRect().top))).size,
+          hiddenPill: pills.some((pill) => pill.scrollWidth > pill.clientWidth + 1),
+          horizontalScroll: editor.scrollWidth > editor.clientWidth + 1,
+          clippedValue: [...bar.querySelectorAll('.search-filter-value')].some((input) => input.scrollWidth > input.clientWidth + 1),
+          removeButtonsVisible: [...bar.querySelectorAll('.search-filter-remove')].every((button) => {
+            const r = button.getBoundingClientRect(); return r.left >= rect.left && r.right <= rect.right && r.bottom <= rect.bottom;
+          }),
+          controlsRight: document.querySelector('.thread-list-controls').getBoundingClientRect().right,
+          countBelowPills: bar.querySelector('.thread-search-result-count').getBoundingClientRect().top >= editor.getBoundingClientRect().bottom,
+        };
+      });
+      assert.ok(layout.width > 340, 'query expands beyond the narrow message-list column');
+      assert.ok(layout.top >= 0, 'expanded search starts at the toolbar instead of centering offscreen');
+      assert.ok(layout.rows > 1, 'additional pills wrap onto visible rows');
+      assert.equal(layout.hiddenPill || layout.horizontalScroll || layout.clippedValue, false, JSON.stringify(layout));
+      assert.ok(layout.removeButtonsVisible && layout.countBelowPills, JSON.stringify(layout));
+      assert.ok(layout.right < layout.viewport && layout.controlsRight <= layout.viewport, JSON.stringify(layout));
+    };
+    await assertLayout();
+    await page.setViewportSize({ width: 776, height: 480 });
+    await page.waitForFunction(() => document.querySelector('.thread-list-controls').getBoundingClientRect().right <= innerWidth);
+    await assertLayout();
     for (const theme of ['ui-light', 'ui-dark']) {
       const css = await compileTheme(theme);
       await page.evaluate((css) => {
@@ -289,7 +321,7 @@ main.toolbar-ThreadList { width: 520px; }
         await page.screenshot({ path: path.join(root, '.tmp', `search-controls-${theme}.png`) });
     }
     console.log(
-      'PASS: editable/removable filter pills, type switching, autocomplete, boolean-query preservation, expansion after submit, compact reset, sort controls, and light/dark styles.'
+      'PASS: editable/removable filter pills, autocomplete, query preservation, expansion beyond narrow columns, five-filter wrapping, result-count placement, window resizing, compact reset, and light/dark styles.'
     );
   } finally {
     await app.close();

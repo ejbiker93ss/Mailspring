@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.104 (11/5/2026)
+
+- Expand active searches beyond the message-list column, with room reserved for toolbar controls and automatic resizing with the window.
+- Wrap additional search filters onto visible rows and place the result count below the query so email addresses and remove buttons remain readable.
+
 ## 1.23.103 (11/5/2026)
 
 - Turn search filters into editable pills with changeable types and individual remove buttons; keep the search bar expanded while a query exists.
