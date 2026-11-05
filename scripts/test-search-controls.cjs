@@ -18,12 +18,14 @@ async function main() {
     const less = require(path.join(root, 'app/node_modules/less'));
     const compileTheme = async (theme) => (await less.render(`
 @import '${path.join(root, 'app/internal_packages', theme, 'styles/ui-variables.less').replace(/\\/g, '/')}';
+@import '${path.join(root, 'app/static/style/workspace.less').replace(/\\/g, '/')}';
 @import '${path.join(root, 'app/internal_packages/thread-list/styles/unthreaded.less').replace(/\\/g, '/')}';
 @import '${path.join(root, 'app/internal_packages/thread-search/styles/thread-search-bar.less').replace(/\\/g, '/')}';
 @import '${path.join(root, 'app/static/style/modern-ui.less').replace(/\\/g, '/')}';
 body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI', sans-serif; }
-main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
+.toolbar-ThreadList { width: 340px; left: 192px; }
 .item-container { align-items: center; }
+.test-message { height: 78px; padding: 8px; margin: 0 4px 4px; border: 1px solid @border-color-divider; border-radius: 10px; box-sizing: border-box; }
 `, { paths: [
       path.join(root, 'app/internal_packages', theme, 'styles'),
       path.join(root, 'app/static/style'), path.join(root, 'app/static/style/base'),
@@ -132,9 +134,10 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
       const SearchBar = load(
         path.join(root, 'app/internal_packages/thread-search/lib/thread-search-bar.tsx')
       ).ThreadSearchBar;
-      document.body.innerHTML = '<main class="toolbar-ThreadList"><div class="item-container" style="display:flex;position:relative;height:34px;width:100%"><div id="search"></div><div id="controls"></div></div></main>';
+      document.body.className = 'platform-win32 window-type-default';
+      document.body.innerHTML = '<div class="layout-mode-test" style="position:relative;display:flex;flex-direction:column;height:100%"><div class="app-tab-bar">Mail</div><header class="sheet-toolbar"><div class="sheet-toolbar-container" data-id="Threads" style="position:absolute;width:100%;height:100%"><main class="toolbar-ThreadList" data-column="1" style="position:absolute;top:0;display:block"><div class="item-container" style="display:flex;position:relative;height:34px;width:100%"><div id="search"></div><div id="controls"></div></div></main></div></header><section style="position:relative;flex:1"><div class="sheet" data-id="Threads" style="position:absolute;width:100%;height:100%"><aside class="column-RootSidebar" style="position:absolute;left:0;width:192px;height:100%">Folders</aside><section class="column-ThreadList" style="position:absolute;left:192px;width:340px;height:100%;overflow:auto"><article class="test-message">First email<p>First subject and preview</p></article><article class="test-message">Second email<p>Second subject and preview</p></article></section><section class="column-MessageList" style="position:absolute;left:532px;right:0;height:100%"><div class="test-detail">Message preview</div></section></div></section></div>';
       document.querySelector('#search').style.cssText = 'display:contents';
-      document.body.style.margin = '24px';
+      document.body.style.margin = '0';
       ReactDOM.render(React.createElement(Controls), document.querySelector('#controls'));
       const button = document.querySelector('[aria-haspopup="menu"]');
       button.click();
@@ -242,6 +245,7 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
     assert.equal(await page.evaluate(() => window.searchPillTest.harness.query), 'to:"Alice Morgan"');
     await page.locator('.search-filter-value').press('Enter');
     assert.equal(await page.evaluate(() => window.searchPillTest.harness.submitted), 'to:"Alice Morgan"');
+    await page.waitForFunction(() => document.querySelector('.test-message').getBoundingClientRect().top >= document.querySelector('.thread-search-bar').getBoundingClientRect().bottom);
     assert.equal(await page.locator('.thread-search-bar').evaluate((el) => el.classList.contains('has-query')), true);
     assert.ok((await page.locator('.thread-search-bar').boundingBox()).width > compactWidth,
       'submitted query keeps the wider search field');
@@ -259,6 +263,7 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
     await plain.blur();
     assert.equal((await page.locator('.thread-search-bar').boundingBox()).width, compactWidth,
       'clearing search restores the compact field');
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.column-ThreadList')).paddingTop === '34px');
     await plain.fill('from:');
     await page.locator('.search-filter-value').press('Backspace');
     assert.equal(await page.locator('.search-filter-pill').count(), 0);
@@ -295,8 +300,9 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
     assert.equal(await page.evaluate(() => window.searchPillTest.harness.query),
       'from:rod.cf subject:report', 'completed suggestions retain a visible, working add-filter input');
     await page.evaluate(() => window.searchPillTest.setQuery('from:emo.k@msseggs.com subject:"Bump the Meeting" to:charlene@example.com after:2026-10-01 has:attachment '));
-    await page.locator('.search-filter-value').first().blur();
+    await page.locator('.column-RootSidebar').click({ position: { x: 24, y: 50 } });
     const assertLayout = async () => {
+      await page.waitForFunction(() => document.querySelector('.test-message').getBoundingClientRect().top >= document.querySelector('.thread-search-bar').getBoundingClientRect().bottom);
       const layout = await page.evaluate(() => {
         const bar = document.querySelector('.thread-search-bar');
         const rect = bar.getBoundingClientRect();
@@ -313,9 +319,16 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
           }),
           controlsRight: document.querySelector('.thread-list-controls').getBoundingClientRect().right,
           countBelowPills: bar.querySelector('.thread-search-result-count').getBoundingClientRect().top >= editor.getBoundingClientRect().bottom,
+          firstEmailTop: document.querySelector('.test-message').getBoundingClientRect().top,
+          searchBottom: rect.bottom,
+          detailTop: document.querySelector('.test-detail').getBoundingClientRect().top,
+          sidebarTop: document.querySelector('.column-RootSidebar').getBoundingClientRect().top,
         };
       });
       assert.ok(layout.width > 340, 'query expands beyond the narrow message-list column');
+      assert.ok(layout.firstEmailTop >= layout.searchBottom, 'expanded search must not cover the first email: ' + JSON.stringify(layout));
+      assert.ok(layout.detailTop >= layout.searchBottom, 'reading pane reserves the same search height');
+      assert.equal(layout.sidebarTop, 40, 'search expansion does not move the folder sidebar');
       assert.ok(layout.top >= 0, 'expanded search starts at the toolbar instead of centering offscreen');
       assert.ok(layout.rows > 1, 'additional pills wrap onto visible rows');
       assert.equal(layout.hiddenPill || layout.horizontalScroll || layout.clippedValue, false, JSON.stringify(layout));
@@ -348,8 +361,12 @@ main.toolbar-ThreadList { width: 340px; margin-left: 168px; }
       if (process.env.SEARCH_SCREENSHOTS)
         await page.screenshot({ path: path.join(root, '.tmp', `search-controls-${theme}.png`) });
     }
+    assert.equal(await page.evaluate((root) => {
+      window.require(root + '/app/node_modules/react-dom').unmountComponentAtNode(document.querySelector('#search'));
+      return document.querySelector('.layout-mode-test').style.getPropertyValue('--mail-search-toolbar-height');
+    }, root), '', 'unmounting search releases its reserved height');
     console.log(
-      'PASS: click-and-type filter addition without leading spaces, background focus, multiword values, editable/removable pills, autocomplete, narrow-column wrapping, resize, result counts, and light/dark styles.'
+      'PASS: email rows and reading pane stay below wrapped search, sidebar stays fixed, clearing/unmount restore spacing, click-and-type filters, autocomplete, narrow-window resize, and light/dark styles.'
     );
   } finally {
     await app.close();

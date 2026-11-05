@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.106 (11/5/2026)
+
+- Reserve the expanded search field's actual height above the message list and reading pane so search pills no longer cover the first email.
+- Update the reserved space as filters wrap or the window resizes; restore normal spacing when search clears or unmounts, while keeping the folder sidebar in place.
+
 ## 1.23.105 (11/5/2026)
 
 - Make the empty search-bar area focus a visible Add filter entry; automatically separate newly typed filters from existing pills.

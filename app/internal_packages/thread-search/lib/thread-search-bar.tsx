@@ -22,6 +22,8 @@ import {
   wrapInQuotes,
 } from './search-bar-util';
 
+const MAIL_TOOLBAR_HEIGHT = 34;
+
 interface ThreadSearchBarProps {
   query: string;
   isSearching: boolean;
@@ -52,16 +54,20 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   _suggestionRequest = 0;
   _queryRegion: HTMLDivElement;
   _resizeObserver?: ResizeObserver;
+  _layoutRoot?: HTMLElement;
 
   componentDidMount() {
-    this._resizeObserver = new ResizeObserver(this._updateExpandedWidth);
+    const bar = this._queryRegion.parentElement;
+    this._layoutRoot = bar.closest('.sheet-toolbar')?.parentElement;
+    this._resizeObserver = new ResizeObserver(this._updateSearchLayout);
+    this._resizeObserver.observe(bar);
     this._resizeObserver.observe(document.documentElement);
     const toolbar = this._queryRegion.closest('.toolbar-ThreadList');
     if (toolbar) this._resizeObserver.observe(toolbar);
-    this._updateExpandedWidth();
+    this._updateSearchLayout();
   }
 
-  _updateExpandedWidth = () => {
+  _updateSearchLayout = () => {
     const bar = this._queryRegion.parentElement;
     const toolbar = bar.closest('.toolbar-ThreadList');
     if (!toolbar) return;
@@ -71,11 +77,19 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     const controlsWidth = (controls?.getBoundingClientRect().width || 0) + 64;
     const width = Math.min(840, Math.max(88, available - controlsWidth));
     bar.style.setProperty('--search-expanded-width', `${width}px`);
+    // Reserve the wrapped field's height in the mail columns. Suggestions are
+    // absolutely positioned and remain a popup rather than moving the list.
+    const height = Math.max(
+      MAIL_TOOLBAR_HEIGHT,
+      Math.ceil(bar.getBoundingClientRect().bottom - toolbar.getBoundingClientRect().top + 1)
+    );
+    this._layoutRoot?.style.setProperty('--mail-search-toolbar-height', `${height}px`);
   };
 
   componentWillUnmount() {
     this._suggestionRequest++;
     this._resizeObserver?.disconnect();
+    this._layoutRoot?.style.removeProperty('--mail-search-toolbar-height');
   }
 
   constructor(props: ThreadSearchBarProps) {
