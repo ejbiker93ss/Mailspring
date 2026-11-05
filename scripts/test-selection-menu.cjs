@@ -115,6 +115,8 @@ app.whenReady().then(()=>{const window=new BrowserWindow({show:false,webPreferen
       outside.addEventListener('mousedown', (event) => event.stopPropagation());
       outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       const outsideCloses = !visible();
+      frame._onIFrameMouseEvent(new MouseEvent('mouseup', { button: 0 }));
+      const outsideReleaseStaysClosed = !visible() && selection.toString() === '';
       open();
       document
         .querySelector('.app-context-menu .item')
@@ -132,27 +134,49 @@ app.whenReady().then(()=>{const window=new BrowserWindow({show:false,webPreferen
       );
       quote.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       const quoteWorks = quoted.join() === 'Selected email text' && !visible();
+      window.selectionMenuTest = { open, visible };
+      const style = document.createElement('style');
+      style.textContent = (await window.require(path.join(root, 'app/node_modules/less')).render(
+        fs.readFileSync(path.join(root, 'app/static/style/components/app-context-menu.less'), 'utf8')
+          .replace("@import 'ui-variables';", ''),
+        { globalVars: { 'background-secondary': '#fff', 'border-color-divider': '#ddd',
+          black: '#000', 'text-color': '#222', 'font-size-base': '14px',
+          'color-success': '#080', 'font-weight-semi-bold': '600' } }
+      )).css;
+      document.head.append(style);
       open();
-      ReactDOM.unmountComponentAtNode(container);
-      const unmountCloses = !visible();
-      menu.dismissAppContextMenu();
+      window.selectionMenuTest.unmount = () => {
+        ReactDOM.unmountComponentAtNode(container);
+        return !visible();
+      };
       return {
         labels,
         keptOnMove,
         stayedDismissed,
         freshSelectionOpens,
         outsideCloses,
+        outsideReleaseStaysClosed,
         copyWorks,
         confirmationVisible,
         confirmationCloses,
         quoteWorks,
-        unmountCloses,
       };
     }, root);
     assert.deepEqual(results.labels, ['Copy', 'Copy as Plain Text', 'Copy Quote', 'Quote']);
     for (const [name, result] of Object.entries(results)) {
       if (name !== 'labels') assert.equal(result, true, name);
     }
+    // Use Chromium input and hit testing, including mouseup falling through the
+    // removed backdrop into the email iframe.
+    for (const point of [{ x: 280, y: 140 }, { x: 500, y: 300 }]) {
+      await page.evaluate(() => window.selectionMenuTest.open());
+      await page.mouse.click(point.x, point.y);
+      assert.equal(await page.evaluate(() => window.selectionMenuTest.visible()), false,
+        'physical outside click keeps menu closed');
+    }
+    await page.evaluate(() => window.selectionMenuTest.open());
+    assert.equal(await page.evaluate(() => window.selectionMenuTest.unmount()), true,
+      'unmount closes menu');
     console.log(
       'PASS selection menu: alphabetical actions, iframe and outside dismissal, fresh selection, copy confirmation, quote, unmount'
     );

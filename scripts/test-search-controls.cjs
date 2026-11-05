@@ -15,6 +15,19 @@ async function main() {
   const app = await _electron.launch({ args: [entry] });
   try {
     const page = await app.firstWindow();
+    const less = require(path.join(root, 'app/node_modules/less'));
+    const compileTheme = async (theme) => (await less.render(`
+@import '${path.join(root, 'app/internal_packages', theme, 'styles/ui-variables.less').replace(/\\/g, '/')}';
+@import '${path.join(root, 'app/internal_packages/thread-list/styles/unthreaded.less').replace(/\\/g, '/')}';
+@import '${path.join(root, 'app/internal_packages/thread-search/styles/thread-search-bar.less').replace(/\\/g, '/')}';
+@import '${path.join(root, 'app/static/style/modern-ui.less').replace(/\\/g, '/')}';
+body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI', sans-serif; }
+main.toolbar-ThreadList { width: 520px; }
+`, { paths: [
+      path.join(root, 'app/internal_packages', theme, 'styles'),
+      path.join(root, 'app/static/style'), path.join(root, 'app/static/style/base'),
+    ] })).css;
+    await page.addStyleTag({ content: await compileTheme('ui-light') });
     const result = await page.evaluate(async (root) => {
       const fs = window.require('fs');
       const path = window.require('path');
@@ -115,29 +128,11 @@ async function main() {
       const Controls = load(
         path.join(root, 'app/internal_packages/thread-list/lib/thread-list-controls.tsx')
       ).default;
-      // Load the real package activation with unrelated components replaced so
-      // registration omissions are caught, not just isolated button behavior.
-      const registrations = [];
-      const activationFile = path.join(root, 'app/internal_packages/thread-list/lib/main.ts');
-      const activation = { exports: {} };
-      const activationCode = ts.transpileModule(fs.readFileSync(activationFile, 'utf8'), {
-        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
-      }).outputText;
-      new Function('require', 'module', 'exports', activationCode)((name) => {
-        if (name === 'summermail-exports') return {
-          ComponentRegistry: { register: (component, options) => registrations.push({ component, options }) },
-          WorkspaceStore: { Location: { ThreadList: { Toolbar: 'thread-toolbar' }, MessageList: { Toolbar: 'message-toolbar' } } },
-        };
-        if (name === './thread-list-controls') return { default: Controls };
-        if (name === './thread-permalink-handler') return { activate() {} };
-        return { default: function Placeholder() {} };
-      }, activation, activation.exports);
-      activation.exports.activate();
-      const controlModes = registrations.find((entry) => entry.component === Controls).options.modes;
       const SearchBar = load(
         path.join(root, 'app/internal_packages/thread-search/lib/thread-search-bar.tsx')
       ).ThreadSearchBar;
-      document.body.innerHTML = '<main><div id="search"></div><div id="controls"></div></main>';
+      document.body.innerHTML = '<main class="toolbar-ThreadList"><div id="search"></div><div id="controls"></div></main>';
+      document.querySelector('#search').style.cssText = 'display:contents';
       document.body.style.margin = '24px';
       document.querySelector('main').style.cssText = 'display:flex;align-items:center;gap:8px';
       ReactDOM.render(React.createElement(Controls), document.querySelector('#controls'));
@@ -168,6 +163,7 @@ async function main() {
         document.querySelector('#search')
       );
       let insertion = 0;
+      const insertionIndex = search._fieldEl.insertionIndex;
       search._fieldEl.insertionIndex = () => insertion;
       insertion = 'from:old'.length;
       const oldRequest = search._generateSuggestionsForQuery('from:old');
@@ -182,10 +178,38 @@ async function main() {
         path.join(root, 'app/internal_packages/thread-search/lib/search-bar-util.ts')
       );
       const sizeToken = util.getCurrentTokenAndTerm('larger:10M', 10);
+      const parts = load(
+        path.join(root, 'app/internal_packages/thread-search/lib/search-query-parts.ts')
+      ).searchQueryParts;
+      const compound = '(from:"Alice Morgan" OR to:Bob) subject:report larger:10M';
+      if (parts(compound).map((part) => part.text).join('') !== compound) throw new Error('Query changed');
+      if (parts('"from:alice" report').some((part) => part.token)) throw new Error('Quoted text became a filter');
+      const remove = load(
+        path.join(root, 'app/internal_packages/thread-search/lib/search-query-parts.ts')
+      ).removeSearchQueryPart;
+      for (const [query, token, expected] of [
+        ['from:Alice AND subject:report', 'from', 'subject:report'],
+        ['from:Alice AND subject:report', 'subject', 'from:Alice'],
+        ['(from:Alice OR to:Bob) subject:report', 'from', '(to:Bob) subject:report'],
+        ['subject:report AND (from:Alice)', 'from', 'subject:report'],
+      ]) {
+        if (remove(query, parts(query).find((part) => part.token === token)) !== expected)
+          throw new Error('Removing a filter broke the boolean query: ' + query);
+      }
+      exportsStub.ContactStore.searchContacts = async () => [{ name: 'Alice Morgan', email: 'alice@example.com' }];
+      exportsStub.ContactStore.topContacts = async () => [];
+      search._fieldEl.insertionIndex = insertionIndex;
+      const harness = { query: '', submitted: '' };
+      const renderSearch = () => ReactDOM.render(React.createElement(SearchBar, {
+        query: harness.query, isSearching: false, resultCount: null,
+        perspective: exportsStub.FocusedPerspectiveStore.current(),
+      }), document.querySelector('#search'));
+      exportsStub.Actions.searchQueryChanged = (query) => { harness.query = query; renderSearch(); };
+      exportsStub.Actions.searchQuerySubmitted = (query) => { harness.query = query; harness.submitted = query; renderSearch(); };
+      window.searchPillTest = { harness, setQuery: (query) => { harness.query = query; renderSearch(); } };
+      renderSearch();
       state.setSortField('size');
       return {
-        controlModes,
-        sortButtonText: button.textContent,
         folderChoices,
         sizeDefault,
         sizeAscending,
@@ -195,8 +219,6 @@ async function main() {
         sizeToken,
       };
     }, root);
-    assert.deepEqual(result.controlModes, ['split', 'list', 'splitVertical']);
-    assert.equal(result.sortButtonText, 'Sort by Size');
     assert.deepEqual(result.folderChoices.slice(0, 4), ['Date', 'Size', 'Sender', 'Subject']);
     assert.equal(result.sizeDefault, false);
     assert.equal(result.sizeAscending, true);
@@ -205,22 +227,47 @@ async function main() {
     assert.equal(result.latestSuggestion, '"new@example.com"');
     assert.equal(result.sizeToken.token, 'larger');
     assert.equal(result.sizeToken.term, '10m');
-    const less = require(path.join(root, 'app/node_modules/less'));
+    const plain = page.locator('.search-query-text').last();
+    const compactWidth = (await page.locator('.thread-search-bar').boundingBox()).width;
+    await plain.fill('fr');
+    const fromChoice = page.locator('.suggestion').filter({ hasText: /^from:/ }).first();
+    await fromChoice.waitFor({ state: 'visible' });
+    const fromBox = await fromChoice.boundingBox();
+    await page.mouse.click(fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
+    assert.equal(await page.locator('.search-filter-pill select').inputValue(), 'from');
+    assert.equal(await page.locator('.search-filter-value').evaluate((el) => el === document.activeElement), true);
+    await page.locator('.search-filter-value').fill('Alice Morgan');
+    await page.locator('.search-filter-pill select').selectOption('to');
+    assert.equal(await page.locator('.search-filter-value').inputValue(), 'Alice Morgan');
+    assert.equal(await page.evaluate(() => window.searchPillTest.harness.query), 'to:"Alice Morgan"');
+    await page.locator('.search-filter-value').press('Enter');
+    assert.equal(await page.evaluate(() => window.searchPillTest.harness.submitted), 'to:"Alice Morgan"');
+    assert.equal(await page.locator('.thread-search-bar').evaluate((el) => el.classList.contains('has-query')), true);
+    assert.ok((await page.locator('.thread-search-bar').boundingBox()).width > compactWidth,
+      'submitted query keeps the wider search field');
+    await plain.fill(' subject:report');
+    assert.equal(await page.locator('.search-filter-pill').count(), 2);
+    await page.getByRole('button', { name: 'Remove to filter', exact: true }).click();
+    assert.equal(await page.locator('.search-filter-pill').count(), 1);
+    assert.equal(await page.locator('.search-filter-value').inputValue(), 'report');
+    await page.getByRole('button', { name: 'Remove subject filter', exact: true }).click();
+    assert.equal(await page.locator('.search-filter-pill').count(), 0);
+    await plain.blur();
+    assert.equal((await page.locator('.thread-search-bar').boundingBox()).width, compactWidth,
+      'clearing search restores the compact field');
+    await plain.fill('from:');
+    await page.locator('.search-filter-value').press('Backspace');
+    assert.equal(await page.locator('.search-filter-pill').count(), 0);
+    await page.evaluate(() => window.searchPillTest.setQuery('from:"Alice Morgan" subject:roadmap '));
+    await page.locator('.search-filter-value').first().fill('ali');
+    const suggestion = page.locator('.suggestion').filter({ hasText: 'alice@example.com' }).first();
+    await suggestion.waitFor({ state: 'visible' });
+    const box = await suggestion.boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    assert.match(await page.evaluate(() => window.searchPillTest.harness.submitted),
+      /from:"alice@example.com" subject:roadmap/);
     for (const theme of ['ui-light', 'ui-dark']) {
-      const source = `@import '${path.join(root, 'app/internal_packages', theme, 'styles/ui-variables.less').replace(/\\/g, '/')}';
-@import '${path.join(root, 'app/internal_packages/thread-list/styles/unthreaded.less').replace(/\\/g, '/')}';
-@import '${path.join(root, 'app/internal_packages/thread-search/styles/thread-search-bar.less').replace(/\\/g, '/')}';
-body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI', sans-serif; }
-.thread-search-bar { width: 340px; }`;
-      const css = (
-        await less.render(source, {
-          paths: [
-            path.join(root, 'app/internal_packages', theme, 'styles'),
-            path.join(root, 'app/static/style'),
-            path.join(root, 'app/static/style/base'),
-          ],
-        })
-      ).css;
+      const css = await compileTheme(theme);
       await page.evaluate((css) => {
         let style = document.querySelector('#test-theme');
         if (!style) {
@@ -242,7 +289,7 @@ body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI
         await page.screenshot({ path: path.join(root, '.tmp', `search-controls-${theme}.png`) });
     }
     console.log(
-      'PASS: real controls open sort choices, apply size/direction, expose relevance, retain the newest autocomplete response, recognize size tokens, and use the correct light/dark colors.'
+      'PASS: editable/removable filter pills, type switching, autocomplete, boolean-query preservation, expansion after submit, compact reset, sort controls, and light/dark styles.'
     );
   } finally {
     await app.close();

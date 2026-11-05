@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.103 (11/5/2026)
+
+- Turn search filters into editable pills with changeable types and individual remove buttons; keep the search bar expanded while a query exists.
+- Give newer emails more weight in relevance searches while preserving explicit sort choices.
+- Use an icon-only sort button to save toolbar space.
+- Dismiss the selection flyout when clicking outside it without reopening on mouse release.
+
 ## 1.23.102 (11/4/2026)
 
 - Support the Mailspring Avatars plugin: sender avatars now appear in the default message list, including messages inside expanded conversations, and the narrow conversation list shows one avatar per row.

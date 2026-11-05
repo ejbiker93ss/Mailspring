@@ -172,9 +172,30 @@ async function main() {
     (await subscription._rankedSearchResults(Parser.parse('report'))).ids[0],
     'new-small'
   );
+  // Use a sparse term in a realistic-sized corpus so BM25 separates strong
+  // subject matches from incidental body mentions into different bands.
+  const now = Math.floor(Date.now() / 1000);
+  const day = 86400;
+  seed('archive-subject', 100, now - 730 * day, 'orchid', 'archive');
+  seed('recent-subject', 100, now - day, 'orchid', 'recent');
+  seed('newest-body', 100, now, 'Planning update', 'newest');
+  db.prepare("UPDATE ThreadSearch SET body='orchid' WHERE content_id='newest-body'").run();
+  subscription._viewOptions = {};
+  const byRelevance = await subscription._rankedSearchResults(Parser.parse('orchid'));
+  assert.equal(byRelevance.ids[0], 'recent-subject', 'a strong recent match stays above a weaker new one');
+  assert.ok(byRelevance.ids.indexOf('newest-body') < byRelevance.ids.indexOf('archive-subject'),
+    'a recent body mention beats a years-old subject match');
+  assert.deepEqual(
+    Array.from((await subscription._rankedSearchResults(Parser.parse('subject:orchid'))).ids),
+    ['recent-subject', 'archive-subject'],
+    'fielded text searches also favor recent matches'
+  );
+  subscription._viewOptions = { sortField: 'date', sortAscending: true };
+  assert.equal((await subscription._rankedSearchResults(Parser.parse('orchid'))).ids[0],
+    'archive-subject', 'explicit oldest-first sorting still wins');
   db.close();
   console.log(
-    'PASS: size filters, unknown sizes, all sort fields, relevance preservation, account/unread scopes, and sorting before the result cap.'
+    'PASS: size filters, unknown sizes, explicit sorting, recency-weighted relevance, account/unread scopes, and sorting before the result cap.'
   );
 }
 main().catch((error) => {

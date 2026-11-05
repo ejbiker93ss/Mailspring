@@ -121,14 +121,13 @@ export default class ThreadListControls extends React.Component<
       >
         <button
           type="button"
-          className="thread-list-control thread-list-sort-control"
+          className="thread-list-control"
           onClick={this._openSortMenu}
           title={sortTitle}
           aria-label={sortTitle}
           aria-haspopup="menu"
         >
           <ToolbarIcon name="sort" />
-          <span>{sortTitle}</span>
         </button>
         <button
           type="button"

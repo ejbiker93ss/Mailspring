@@ -281,25 +281,11 @@ button.btn,
   max-width: 320px;
 
   .thread-search-query-region,
-  .tokenizing-contenteditable {
+  .search-query-editor {
     height: 100%;
     min-width: 0;
   }
 
-  .tokenizing-contenteditable {
-    overflow-x: auto;
-    overflow-y: clip;
-
-    .layer {
-      align-items: center;
-      box-sizing: border-box;
-      display: flex;
-      height: 100%;
-      line-height: 20px;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-  }
 }
 
 .toolbar-ThreadList .item-container {
@@ -308,11 +294,11 @@ button.btn,
 
 // Give an active search the full message-list width. The toolbar actions
 // remain in their normal order, just beyond the field in the reading pane.
-.toolbar-ThreadList:has(.thread-search-bar.is-focused) {
+.toolbar-ThreadList:has(.thread-search-bar:is(.is-focused, .has-query)) {
   z-index: 20;
 }
 
-.toolbar-ThreadList .thread-search-bar.is-focused {
+.toolbar-ThreadList .thread-search-bar:is(.is-focused, .has-query) {
   flex: 0 0 100%;
   max-width: none;
 }

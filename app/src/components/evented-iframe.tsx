@@ -325,7 +325,6 @@ export class EventedIFrame extends React.Component<
 
     const rangeRect = selection.getRangeAt(0).getBoundingClientRect();
     const selectedHTML = this._selectionHTML(node, selection.getRangeAt(0));
-    this._selectionMenuOpen = true;
     showAppContextMenu(
       this._selectionMenuItems(selectedText, selectedHTML),
       {
@@ -336,9 +335,13 @@ export class EventedIFrame extends React.Component<
         compact: true,
         onDismiss: () => {
           this._selectionMenuOpen = false;
+          // An outside press removes the backdrop before mouseup. Clear the
+          // selection so that release cannot immediately open the menu again.
+          node.contentWindow?.getSelection()?.removeAllRanges();
         },
       }
     );
+    this._selectionMenuOpen = true;
     return true;
   }
 

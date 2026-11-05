@@ -9,7 +9,7 @@ import {
   AccountStore,
 } from 'summermail-exports';
 import SearchStore from './search-store';
-import TokenizingContenteditable from './tokenizing-contenteditable';
+import SearchQueryEditor from './search-query-editor';
 
 import {
   LearnMoreURL,
@@ -47,7 +47,7 @@ interface ThreadSearchBarState {
 export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarState> {
   static displayName = 'ThreadSearchBar';
 
-  _fieldEl: TokenizingContenteditable;
+  _fieldEl: SearchQueryEditor;
   _suggestionRequest = 0;
 
   componentWillUnmount() {
@@ -189,11 +189,6 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     }
   };
 
-  _onQuerySummaryMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    this._fieldEl.focus();
-  };
-
   _onBlur = (e: React.FocusEvent) => {
     this.setState({ focused: false });
     if (this.props.query === this._initialQueryForPerspective()) {
@@ -245,7 +240,7 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   };
 
   _onChooseSuggestion = (suggestion: ThreadSearchSuggestion) => {
-    const { query } = this.props;
+    const query = this._fieldEl.value();
 
     let nextQuery = null;
 
@@ -338,18 +333,17 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   };
 
   render() {
-    const { query, isSearching, resultCount, perspective } = this.props;
+    const { query, isSearching, resultCount } = this.props;
     const { suggestions, selectedIdx } = this.state;
 
     const showPlaceholder = !this.state.focused && !query;
-    const showX = this.state.focused || !!(perspective as any).searchQuery;
-    const showQuerySummary = !this.state.focused && !!query;
+    const showX = this.state.focused || !!query;
 
     const suggestionsVisible = this.state.suggestions.length > 0 && this.state.focused;
 
     return (
       <KeyCommandsRegion
-        className={`thread-search-bar ${showPlaceholder ? 'placeholder' : ''} ${this.state.focused ? 'is-focused' : ''}`}
+        className={`thread-search-bar ${showPlaceholder ? 'placeholder' : ''} ${this.state.focused ? 'is-focused' : ''} ${query ? 'has-query' : ''}`}
         role="combobox"
         aria-expanded={suggestionsVisible}
         aria-haspopup="listbox"
@@ -379,28 +373,20 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
             onClick={() => this._fieldEl.focus()}
           />
         )}
-        <div className={`thread-search-query-region ${showQuerySummary ? 'showing-summary' : ''}`}>
-          <TokenizingContenteditable
+        <div className="thread-search-query-region">
+          <SearchQueryEditor
             ref={(el) => (this._fieldEl = el)}
-            value={showPlaceholder ? this._placeholder() : query}
+            value={query}
+            placeholder={this._placeholder()}
             onKeyDown={this._onKeyDown}
             onFocus={this._onFocus}
             onBlur={this._onBlur}
             onChange={this._onSearchQueryChanged}
+            onSelectionChange={() => this._generateSuggestionsForQuery(this._fieldEl.value())}
             aria-label={this._placeholder()}
             role="searchbox"
             aria-autocomplete="list"
           />
-          {showQuerySummary ? (
-            <div
-              className="thread-search-query-summary"
-              title={query}
-              aria-hidden="true"
-              onMouseDown={this._onQuerySummaryMouseDown}
-            >
-              <span className="thread-search-query-summary-text">{query}</span>
-            </div>
-          ) : null}
         </div>
         {query && !isSearching && resultCount !== null ? (
           <span className="thread-search-result-count">

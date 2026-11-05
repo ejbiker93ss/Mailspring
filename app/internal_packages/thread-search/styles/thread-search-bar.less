@@ -28,34 +28,6 @@
     border-radius: 0;
     box-shadow: 0 0 0 2px darken(@input-border-color, 20%);
   }
-  &.placeholder {
-    .tokenizing-contenteditable {
-      // Placeholder text is informational, not editable content. Let it
-      // contract with the toolbar instead of creating a horizontal scroll
-      // range that hard-clips the mailbox name in narrow columns.
-      overflow-x: hidden;
-
-      .layer {
-        min-width: 0;
-        width: 100%;
-      }
-
-      .layer-tokens > span {
-        display: block;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-
-    .tokenizing-contenteditable .layer-tokens {
-      // Keep the account-aware placeholder readable in automatic themes.
-      // The legacy very-subtle color is translucent and can nearly disappear
-      // when automatic mode resolves to a light surface.
-      color: mix(@text-color, @input-bg, 68%);
-    }
-  }
   .search-accessory {
     flex: 0 0 auto;
     width: 15px;
@@ -123,33 +95,115 @@
     min-width: 0;
     overflow: hidden;
     position: relative;
+  }
 
-    &.showing-summary .tokenizing-contenteditable {
-      opacity: 0;
+  .search-query-editor {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    input {
+      appearance: none;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: @text-color;
+      font: inherit;
+      line-height: 20px;
+      height: 22px;
+      min-width: 1ch;
+      field-sizing: content;
+      padding: 0 2px;
+      outline: none;
+      flex: 0 0 auto;
+    }
+
+    .search-query-text:last-child {
+      flex: 1 0 24px;
+      min-width: 24px;
+    }
+
+    input::placeholder {
+      color: mix(@text-color, @input-bg, 68%);
     }
   }
 
-  .thread-search-query-summary {
+  .search-filter-pill {
+    display: inline-flex;
     align-items: center;
-    bottom: 0;
-    color: @text-color;
-    cursor: text;
-    display: flex;
-    left: 0;
-    line-height: 24px;
-    padding: 0 @padding-xs-horizontal;
-    position: absolute;
-    right: 0;
-    top: 0;
-    z-index: 3;
+    flex: 0 0 auto;
+    height: 24px;
+    border: 1px solid fade(@text-color, 22%);
+    border-radius: 12px;
+    background: fade(@text-color, 5%);
+    overflow: hidden;
+
+    &:focus-within {
+      border-color: @accent-primary;
+    }
+
+    select {
+      font: inherit;
+      color: @token-color;
+      background: fade(@text-color, 6%);
+      border: 0;
+      border-right: 1px solid fade(@text-color, 15%);
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0 3px 0 7px;
+      height: 100%;
+      cursor: pointer;
+      max-width: 90px;
+    }
+
+    option {
+      color: @text-color;
+      background: @input-bg;
+    }
+
+    .search-filter-value {
+      min-width: 3ch;
+      padding: 0 5px;
+      box-sizing: content-box;
+    }
   }
 
-  .thread-search-query-summary-text {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .search-filter-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: @text-color-subtle;
+    border: 0;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    padding: 3px;
+    margin-right: 2px;
+    flex: 0 0 auto;
+
+    &:hover {
+      color: @text-color;
+      background: fade(@text-color, 10%);
+    }
+
+    svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+  }
+
+  .search-filter-remove:focus-visible,
+  .search-filter-pill select:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: -2px;
   }
 
   .thread-search-result-count {
@@ -158,51 +212,5 @@
     font-size: @font-size-smaller;
     padding-left: @padding-xs-horizontal;
     white-space: nowrap;
-  }
-
-  .tokenizing-contenteditable {
-    height: 100%;
-    min-width: 0;
-    position: relative;
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-    width: 100%;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-    .layer {
-      top: 0;
-      left: 0;
-      bottom: 0;
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      height: 100%;
-      min-width: 100%;
-      position: absolute;
-      line-height: 24px;
-      padding-left: @padding-xs-horizontal;
-      padding-right: @padding-xs-horizontal;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-
-    .layer-tokens {
-      color: @text-color;
-      user-select: none;
-      pointer-events: none;
-      z-index: 2;
-      .layer-token {
-        color: @token-color;
-        line-height: 1.1em;
-      }
-    }
-    .layer-text {
-      z-index: 1;
-      caret-color: @text-color;
-      color: transparent;
-    }
   }
 }

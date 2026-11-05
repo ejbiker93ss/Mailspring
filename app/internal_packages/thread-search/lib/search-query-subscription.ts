@@ -31,10 +31,16 @@ type AddressOperator = {
   exactEmail: boolean;
 };
 
-// FTS5's BM25 scores are negative (more negative is a stronger match). Use broad
-// bands so recency decides among reasonably comparable matches. A materially
-// stronger match can still move into a better band and outrank a newer weak one.
 const RELEVANCE_BAND_WIDTH = 4;
+const RELEVANCE_HALF_WEIGHT_AGE_SECONDS = 30 * 24 * 60 * 60;
+
+function recencyWeightedBandSQL(relevance: string) {
+  // BM25 is negative: dividing by age weakens old matches toward zero.
+  // Broad bands then favor the newest email among comparable matches.
+  const ageSQL =
+    "MAX(0, CAST(strftime('%s', 'now') AS REAL) - COALESCE(`Thread`.lastMessageReceivedTimestamp, 0))";
+  return `CAST((${relevance} / (1.0 + ${ageSQL} / ${RELEVANCE_HALF_WEIGHT_AGE_SECONDS})) / ${RELEVANCE_BAND_WIDTH} AS INTEGER)`;
+}
 
 class RankedIdSortOrder {
   attr = Thread.attributes.lastMessageReceivedTimestamp;
@@ -93,8 +99,6 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searching = false;
   _resultCount: number | null = null;
   _matchingMessageIds = new Map<string, string>();
-  // QuerySubscription owns `_options` (emitResultSet); overwriting it makes the
-  // thread list receive a plain array instead of a QueryResultSet.
   _viewOptions: { sortField?: MailSortField; sortAscending?: boolean; unreadOnly?: boolean };
 
   constructor(
@@ -227,7 +231,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     // ThreadSearch columns are subject, to, from, body, categories, and content_id.
     // Favor intent-bearing metadata over incidental body text; content_id is unindexed.
     const bm25SQL = 'bm25(`ThreadSearch`, 12, 6, 8, 1, 3, 0)';
-    const relevanceBandSQL = `CAST(${bm25SQL} / ${RELEVANCE_BAND_WIDTH} AS INTEGER)`;
+    const relevanceBandSQL = recencyWeightedBandSQL(bm25SQL);
     // A fielded participant search is a mailbox lookup, not a relevance search.
     // Match Outlook's expected behavior by showing the newest matching thread first.
     // Generic text searches still use relevance bands, with recency inside each band.
@@ -281,7 +285,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
         ? threadSortSQL(this._viewOptions.sortField, !!this._viewOptions.sortAscending)
         : 'relevanceBand ASC, `Thread`.lastMessageReceivedTimestamp DESC, relevance ASC';
     const rankSQL = `SELECT \`Thread\`.id, NULL AS matchingMessageId,
-      ${relevance} AS relevance, CAST(${relevance} / ${RELEVANCE_BAND_WIDTH} AS INTEGER) AS relevanceBand
+      ${relevance} AS relevance, ${recencyWeightedBandSQL(relevance)} AS relevanceBand
       FROM \`Thread\` ${rankedMail} WHERE ${where} ${accountSQL} ${unreadSQL}
       ORDER BY ${order} LIMIT 1000`;
     const [rows, counts] = await Promise.all([
