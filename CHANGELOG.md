@@ -1,5 +1,10 @@
 # SummerMail Changelog
 
+## 1.23.108 (11/11/2026)
+
+- Fix SmarterMail replies and forwards sent immediately after archiving or moving the original. SummerMail checks the destination folder for the original before sending, without waiting for the next sync.
+- When a forward already contains the quoted message and attachments, it can still send if the original cannot be verified.
+
 ## 1.23.107 (11/11/2026)
 
 - Fix SmarterMail sends with duplicate attachment filenames. SummerMail gives each duplicate a numbered name and keeps every attachment.
