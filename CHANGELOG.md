@@ -1,5 +1,9 @@
 # SummerMail Changelog
 
+## 1.23.107 (11/11/2026)
+
+- Fix SmarterMail sends with duplicate attachment filenames. SummerMail gives each duplicate a numbered name and keeps every attachment.
+
 ## 1.23.106 (11/5/2026)
 
 - Reserve the expanded search field's actual height above the message list and reading pane so search pills no longer cover the first email.
