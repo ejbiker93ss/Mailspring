@@ -12,6 +12,7 @@ import {
   FocusedPerspectiveStore,
 } from 'summermail-exports';
 
+import { MailActionIcon } from '../../../src/components/mail-action-icon';
 import ThreadListStore from './thread-list-store';
 
 export class ArchiveButton extends React.Component<{ items: Thread[] }> {
@@ -46,11 +47,7 @@ export class ArchiveButton extends React.Component<{ items: Thread[] }> {
           aria-label={localized('Archive')}
           onClick={this._onArchive}
         >
-          <RetinaImg
-            name="toolbar-archive.png"
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="archive" />
         </button>
       </BindGlobalCommands>
     );
@@ -89,11 +86,7 @@ export class TrashButton extends React.Component<{ items: Thread[] }> {
           aria-label={localized('Move to Trash')}
           onClick={this._onRemove}
         >
-          <RetinaImg
-            name="toolbar-trash.png"
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="trash" />
         </button>
       </BindGlobalCommands>
     );
@@ -236,11 +229,7 @@ export class MarkAsSpamButton extends React.Component<{ items: Thread[] }> {
             aria-label={localized('Not Spam')}
             onClick={this._onNotSpam}
           >
-            <RetinaImg
-              name="toolbar-not-spam.png"
-              mode={RetinaImg.Mode.ContentIsMask}
-              aria-hidden="true"
-            />
+            <MailActionIcon name="not-spam" />
           </button>
         </BindGlobalCommands>
       );
@@ -262,11 +251,7 @@ export class MarkAsSpamButton extends React.Component<{ items: Thread[] }> {
           aria-label={localized('Mark as Spam')}
           onClick={this._onMarkAsSpam}
         >
-          <RetinaImg
-            name="toolbar-spam.png"
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="spam" />
         </button>
       </BindGlobalCommands>
     );
@@ -293,7 +278,6 @@ export class ToggleStarredButton extends React.Component<{ items: Thread[] }> {
   render() {
     const postClickStarredState = this.props.items.every((t) => t.starred === false);
     const title = postClickStarredState ? localized('Star') : localized('Unstar');
-    const imageName = postClickStarredState ? 'toolbar-star.png' : 'toolbar-star-selected.png';
 
     return (
       <BindGlobalCommands commands={{ 'core:star-item': () => this._onStar() }}>
@@ -304,7 +288,7 @@ export class ToggleStarredButton extends React.Component<{ items: Thread[] }> {
           aria-label={title}
           onClick={this._onStar}
         >
-          <RetinaImg name={imageName} mode={RetinaImg.Mode.ContentIsMask} aria-hidden="true" />
+          <MailActionIcon name="star" filled={!postClickStarredState} />
         </button>
       </BindGlobalCommands>
     );
@@ -353,11 +337,7 @@ export class ToggleUnreadButton extends React.Component<{ items: Thread[] }> {
           aria-label={label}
           onClick={this._onClick}
         >
-          <RetinaImg
-            name={`toolbar-markas${key}.png`}
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name={key} />
         </button>
       </BindGlobalCommands>
     );
@@ -464,9 +444,7 @@ export const ReplyButtons = ({ items }: { items: Thread[] }) => {
         title={localized('Reply')}
         onClick={reply}
       >
-        <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="M9 17 4 12l5-5M20 18v-2a4 4 0 0 0-4-4H4" />
-        </svg>
+        <MailActionIcon name="reply" />
         <span>{localized('Reply')}</span>
       </button>
       <button
@@ -476,9 +454,7 @@ export const ReplyButtons = ({ items }: { items: Thread[] }) => {
         aria-label={localized('Forward')}
         onClick={forward}
       >
-        <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="m15 17 5-5-5-5M4 18v-2a4 4 0 0 1 4-4h12" />
-        </svg>
+        <MailActionIcon name="forward" />
       </button>
     </RovingTabIndexToolbar>
   );

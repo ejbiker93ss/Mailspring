@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.110 (11/17/2026)
+
+- Set timeouts on SmarterMail API requests, prioritize queued sends, and refresh expired sessions during attachment uploads. If delivery cannot be confirmed, keep the draft editable and prompt the sender to check Sent before retrying.
+- Align the undo-send countdown and sending spinner with the sender avatar slot.
+- Restore the horizontal workspace tabs and Mail compose shortcut with the current theme styling.
+- Refresh the mail action icons and calendar sidebar, including date selection, Day and Agenda views, and the timeline.
+
 ## 1.23.109 (11/17/2026)
 
 - Add recent searches, autocomplete suggestions, and natural-language filters for common mail searches.

@@ -209,6 +209,12 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     applicationMenu.menu.popup({});
   };
 
+  _composeNewMessage = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    Actions.composeNewBlankDraft();
+  };
+
   _onHomeTabKeyDown = (event: React.KeyboardEvent, id: HomeTabId) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
@@ -242,65 +248,52 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     return 0;
   };
 
-  // Workspaces live in a vertical rail so the title bar only carries the
-  // conversations the user has opened as tabs.
-  _renderRail() {
-    return (
-      <nav className="app-rail" role="tablist" aria-label={localized('Workspaces')}>
-        {HOME_TABS.filter(({ id }) => this.state.rootSheets.includes(id)).map(({ id, label }) => {
-          const unreadCount = this._unreadCountFor(id);
-          return (
-            <div
-              key={id}
-              role="tab"
-              tabIndex={0}
-              aria-selected={this.state.activeId === id}
-              aria-label={localized(label)}
-              title={localized(label)}
-              className={`app-rail-item app-rail-${id.toLowerCase()} ${
-                this.state.activeId === id ? 'active' : ''
-              }`}
-              onClick={() => this._activateHome(id)}
-              onKeyDown={(event) => this._onHomeTabKeyDown(event, id)}
-            >
-              <AppTabIcon id={id} />
-              {unreadCount > 0 ? (
-                <span
-                  className="app-tab-unread-count"
-                  aria-label={localized(`%@ unread chats`, unreadCount)}
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              ) : null}
-            </div>
-          );
-        })}
-        <div className="app-rail-spacer" />
-        <button
-          type="button"
-          className="app-rail-item app-rail-preferences"
-          aria-label={localized('Preferences')}
-          title={localized('Preferences')}
-          onClick={() => Actions.openPreferences()}
+  _renderHomeTabs() {
+    return HOME_TABS.filter(({ id }) => this.state.rootSheets.includes(id)).map(({ id, label }) => {
+      const unreadCount = this._unreadCountFor(id);
+      return (
+        <div
+          key={id}
+          role="tab"
+          tabIndex={0}
+          aria-selected={this.state.activeId === id}
+          title={localized(label)}
+          className={`app-tab app-tab-${id.toLowerCase()} ${
+            this.state.activeId === id ? 'active' : ''
+          }`}
+          onClick={() => this._activateHome(id)}
+          onKeyDown={(event) => this._onHomeTabKeyDown(event, id)}
         >
-          <svg className="app-tab-icon" aria-hidden="true" viewBox="0 0 24 24">
-            <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M2 14h4M10 8h4M18 16h4" />
-          </svg>
-        </button>
-      </nav>
-    );
+          <AppTabIcon id={id} />
+          <span className="app-tab-title">{localized(label)}</span>
+          {unreadCount > 0 ? (
+            <span
+              className="app-tab-unread-count"
+              aria-label={localized(`%@ unread chats`, unreadCount)}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : null}
+          {id === 'Threads' ? (
+            <button
+              type="button"
+              className="app-tab-compose"
+              title={localized('Compose new message')}
+              aria-label={localized('Compose new message')}
+              onClick={this._composeNewMessage}
+            >
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="M13 19H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2v5" />
+                <path d="m3 6 8.5 6L20 6M19 14v8m-4-4h8" />
+              </svg>
+            </button>
+          ) : null}
+        </div>
+      );
+    });
   }
 
   render() {
-    return (
-      <>
-        {this._renderRail()}
-        {this._renderTitleBar()}
-      </>
-    );
-  }
-
-  _renderTitleBar() {
     return (
       <header
         ref={this.titleBar}
@@ -325,6 +318,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
         </button>
 
         <div className="app-tabs" role="tablist" aria-label={localized('Open workspaces')}>
+          {this._renderHomeTabs()}
           {this.state.conversations.map((tab) => (
             <div
               key={tab.id}

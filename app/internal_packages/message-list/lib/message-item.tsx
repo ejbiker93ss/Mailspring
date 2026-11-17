@@ -181,7 +181,7 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
   }
 
   _renderHeader() {
-    const { message, thread, messages, pending } = this.props;
+    const { message, thread, messages, pending, sendState } = this.props;
 
     return (
       <header
@@ -193,14 +193,15 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
           matching={{ role: 'MessageHeader' }}
           exposedProps={{ message: message, thread: thread, messages: messages }}
         />
-        <div className="pending-send-status">
-          {this.props.sendState && <SendProgressIndicator sendState={this.props.sendState} />}
-        </div>
-        {message.from[0] && (
+        {pending && sendState ? (
+          <div className="pending-send-status">
+            <SendProgressIndicator sendState={sendState} />
+          </div>
+        ) : message.from[0] ? (
           <div className="message-header-avatar">
             <SenderInitials contact={message.from[0]} />
           </div>
-        )}
+        ) : null}
         <div className="message-header-right">
           <MessageTimestamp
             className="message-time"

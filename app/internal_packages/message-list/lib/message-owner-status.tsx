@@ -9,7 +9,7 @@ import {
   CategoryStore,
   ChangeFolderTask,
 } from 'summermail-exports';
-import { RetinaImg } from 'summermail-component-kit';
+import { MailActionIcon } from '../../../src/components/mail-action-icon';
 
 export default class MessageOwnerStatus extends React.Component {
   static displayName = 'MessageOwnerStatus';
@@ -202,7 +202,7 @@ export default class MessageOwnerStatus extends React.Component {
           title={inTrash ? 'Message is already in Trash' : 'Move this message to Trash'}
           type="button"
         >
-          <RetinaImg name="toolbar-trash.png" mode={RetinaImg.Mode.ContentIsMask} />
+          <MailActionIcon name="trash" />
         </button>
       </span>
     );

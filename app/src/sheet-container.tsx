@@ -199,7 +199,7 @@ export default class SheetContainer extends React.Component<
     return (
       <Flexbox
         direction="column"
-        className={`layout-mode-${this.state.mode}${hasAppTabs ? ' has-app-rail' : ''}`}
+        className={`layout-mode-${this.state.mode}`}
         style={{ overflow: 'hidden' }}
       >
         {hasAppTabs ? <AppTabs /> : null}

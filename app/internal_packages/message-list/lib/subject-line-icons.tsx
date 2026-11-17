@@ -1,5 +1,5 @@
 import React from 'react';
-import { RetinaImg } from 'summermail-component-kit';
+import { MailActionIcon } from '../../../src/components/mail-action-icon';
 import { localized } from 'summermail-exports';
 
 const EMAIL_RENDER_MODE_KEY = 'core.reading.emailRenderMode';
@@ -50,7 +50,6 @@ class EmailRenderModeToggle extends React.Component<Record<string, never>, { mod
     const title = isDark
       ? localized('Switch email view to light mode')
       : localized('Switch email view to dark mode');
-    const imageName = isDark ? 'toolbar-bulb-on.png' : 'toolbar-bulb-off.png';
 
     return (
       <div
@@ -66,12 +65,7 @@ class EmailRenderModeToggle extends React.Component<Record<string, never>, { mod
           }
         }}
       >
-        <RetinaImg
-          name={imageName}
-          mode={RetinaImg.Mode.ContentIsMask}
-          style={{ width: 16, height: 16 }}
-          aria-hidden="true"
-        />
+        <MailActionIcon name={isDark ? 'sun' : 'moon'} />
       </div>
     );
   }
@@ -96,11 +90,7 @@ export const SubjectLineIcons: React.FunctionComponent<SubjectLineIconsProps> = 
           }
         }}
       >
-        <RetinaImg
-          name={props.hasCollapsedItems ? 'expand.png' : 'collapse.png'}
-          mode={RetinaImg.Mode.ContentIsMask}
-          aria-hidden="true"
-        />
+        <MailActionIcon name={props.hasCollapsedItems ? 'expand' : 'collapse'} />
       </div>
     )}
     <div
@@ -116,7 +106,7 @@ export const SubjectLineIcons: React.FunctionComponent<SubjectLineIconsProps> = 
         }
       }}
     >
-      <RetinaImg name="print.png" mode={RetinaImg.Mode.ContentIsMask} aria-hidden="true" />
+      <MailActionIcon name="print" />
     </div>
     <EmailRenderModeToggle />
     {AppEnv.isThreadWindow() ? (
@@ -133,7 +123,7 @@ export const SubjectLineIcons: React.FunctionComponent<SubjectLineIconsProps> = 
           }
         }}
       >
-        <RetinaImg name="thread-popin.png" mode={RetinaImg.Mode.ContentIsMask} aria-hidden="true" />
+        <MailActionIcon name="pop-in" />
       </div>
     ) : (
       <div
@@ -149,11 +139,7 @@ export const SubjectLineIcons: React.FunctionComponent<SubjectLineIconsProps> = 
           }
         }}
       >
-        <RetinaImg
-          name="thread-popout.png"
-          mode={RetinaImg.Mode.ContentIsMask}
-          aria-hidden="true"
-        />
+        <MailActionIcon name="pop-out" />
       </div>
     )}
   </div>

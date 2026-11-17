@@ -227,17 +227,31 @@ body.platform-win32 {
   }
   .message-icons-wrap {
     flex-shrink: 0;
-    cursor: pointer;
     user-select: none;
     margin-left: auto;
     display: flex;
     align-items: center;
+    gap: 2px;
 
-    img {
-      background: @text-color-subtle;
-    }
-    div + div {
-      margin-left: @padding-small-horizontal;
+    > [role='button'] {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--fm-radius-sm, 7px);
+      color: @text-color-subtle;
+      cursor: pointer;
+
+      &:hover,
+      &:focus-visible {
+        background: @list-hover-bg;
+        color: @text-color;
+      }
+
+      &:focus-visible {
+        outline: 2px solid @accent-primary;
+        outline-offset: -2px;
+      }
     }
   }
 
@@ -525,31 +539,22 @@ body.platform-win32 {
     padding-bottom: 0;
     padding-top: 19px;
 
-    // Sender and recipient lines flow beside the avatar.
-    .message-header-avatar {
+    // Send progress takes the avatar's slot while the message is pending.
+    .message-header-avatar,
+    .pending-send-status {
       float: left;
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
       margin: -1px 10px 0 0;
       line-height: 0;
     }
 
-    &.pending {
-      .message-actions-wrap {
-        width: 0;
-        opacity: 0;
-        position: absolute;
-      }
-      .pending-send-status {
-        opacity: 1;
-      }
-    }
-
-    .pending-send-status {
-      position: absolute;
-      top: 12px;
-      left: -10px;
-      transition: opacity 140ms cubic-bezier(0.16, 1, 0.3, 1);
-      pointer-events: none;
+    &.pending .message-actions-wrap {
+      width: 0;
       opacity: 0;
+      position: absolute;
     }
 
     .send-progress-indicator {
@@ -615,10 +620,6 @@ body.platform-win32 {
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .pending-send-status {
-        transition-duration: 0ms;
-      }
-
       .send-progress-indicator .send-progress-spinner-arc {
         animation: none;
         stroke-dasharray: 14 43;
@@ -648,8 +649,15 @@ body.platform-win32 {
     }
 
     .message-actions-ellipsis {
-      display: block;
+      display: grid;
+      place-items: center;
       float: left;
+    }
+
+    .message-action-menu-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .message-actions {
@@ -918,16 +926,9 @@ body.platform-win32 {
 //////////////////////////
 // message-participants //
 //////////////////////////
-.pending {
-  .message-participants {
-    padding-left: 27px;
-  }
-}
 .message-participants {
   z-index: 1;
   display: flex;
-  transition: padding-left 150ms;
-  transition-timing-function: ease-in-out;
 
   &.collapsed:hover {
     cursor: default;
@@ -1042,8 +1043,7 @@ body.platform-win32 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #message-list .message-item-wrap,
-  .message-participants {
+  #message-list .message-item-wrap {
     transition: none;
   }
 }

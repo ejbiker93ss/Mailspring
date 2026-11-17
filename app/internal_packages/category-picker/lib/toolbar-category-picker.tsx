@@ -9,6 +9,7 @@ import {
 } from 'summermail-exports';
 import { RetinaImg, KeyCommandsRegion, RovingTabIndexToolbar } from 'summermail-component-kit';
 
+import { MailActionIcon } from '../../../src/components/mail-action-icon';
 import MovePickerPopover from './move-picker-popover';
 import LabelPickerPopover from './label-picker-popover';
 
@@ -67,11 +68,7 @@ const MovePicker: React.FC<{ items: Thread[] }> & { containerRequired?: boolean 
           onClick={onOpenMovePopover}
           className={'btn btn-toolbar btn-category-picker'}
         >
-          <RetinaImg
-            name={'toolbar-movetofolder.png'}
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="move-folder" />
         </button>
         {account.usesLabels() && (
           <button

@@ -181,6 +181,11 @@ export class SendDraftTask extends Task {
         emails,
         LocalizedErrorStrings[smtpError]
       );
+    } else if (key === 'smartermail-send-unconfirmed') {
+      errorMessage = localized('SummerMail could not confirm that SmarterMail sent this message.');
+      errorDetail = localized(
+        'Check your Sent folder before trying again to avoid sending it twice.'
+      );
     } else if (key === 'send-failed') {
       errorMessage = localized(
         `Sorry, SummerMail was unable to deliver this message: %@`,
