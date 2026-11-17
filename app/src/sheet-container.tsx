@@ -186,6 +186,7 @@ export default class SheetContainer extends React.Component<
       return <div />;
     }
 
+    const hasAppTabs = process.platform === 'win32' && AppEnv.isMainWindow();
     const sheetComponents = this.state.stack.map((sheet, index) => (
       <Sheet
         data={sheet}
@@ -198,10 +199,10 @@ export default class SheetContainer extends React.Component<
     return (
       <Flexbox
         direction="column"
-        className={`layout-mode-${this.state.mode}`}
+        className={`layout-mode-${this.state.mode}${hasAppTabs ? ' has-app-rail' : ''}`}
         style={{ overflow: 'hidden' }}
       >
-        {process.platform === 'win32' && AppEnv.isMainWindow() ? <AppTabs /> : null}
+        {hasAppTabs ? <AppTabs /> : null}
         {this._toolbarContainerElement()}
 
         <div style={{ order: 1, zIndex: 2 }}>

@@ -3,6 +3,7 @@
 
 // Search operators must remain legible on both light and dark theme inputs.
 @token-color: color-mix(in srgb, @accent-primary 55%, @text-color 45%);
+@selected-tint: color-mix(in srgb, @accent-primary 20%, @input-bg);
 
 .thread-search-bar {
   position: relative;
@@ -57,17 +58,19 @@
       0 4px 7px @standard-shadow-color;
 
     padding-top: @padding-small-vertical;
+    max-height: ~'min(70vh, 560px)';
+    overflow-y: auto;
 
     .suggestion {
       color: mix(@text-color, @input-bg, 82%);
       padding: @padding-small-vertical @padding-small-horizontal;
 
+      // A tint keeps text readable with any system accent; a solid accent
+      // fill needs an ink color that depends on how dark the accent is.
       &.selected {
-        background-color: @accent-primary;
-        color: @text-color-inverse;
-        .suggestion-token {
-          color: @text-color-inverse;
-        }
+        background-color: @selected-tint;
+        color: @text-color;
+        box-shadow: inset 3px 0 0 @accent-primary;
       }
       &:hover:not(.selected) {
         background-color: fade(@black, 3%);
@@ -75,6 +78,179 @@
       .suggestion-token {
         color: @token-color;
         font-weight: 500;
+      }
+    }
+
+    .suggestion {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 22px;
+      cursor: default;
+    }
+
+    .suggestion-main {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .suggestion-title,
+    .suggestion-detail {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .suggestion-title {
+      flex: 0 1 auto;
+      mark {
+        background: transparent;
+        color: inherit;
+        font-weight: 600;
+      }
+    }
+
+    .suggestion-detail {
+      flex: 1 1 0;
+      min-width: 0;
+      color: @text-color-very-subtle;
+      font-size: @font-size-small;
+    }
+
+    .suggestion-section {
+      padding: @padding-small-vertical @padding-small-horizontal 2px;
+      color: @text-color-very-subtle;
+      font-size: @font-size-smaller;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .suggestion-smart {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .suggestion-smart-text {
+      font-weight: 500;
+      margin-right: 2px;
+    }
+
+    .suggestion-chip {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 10px;
+      border: 1px solid var(--fm-border, fade(@text-color, 18%));
+      background: var(--fm-accent-soft, fade(@text-color, 6%));
+      font-size: @font-size-small;
+      white-space: nowrap;
+    }
+
+    .suggestion-hint {
+      flex: 0 0 auto;
+      font: inherit;
+      font-size: @font-size-smaller;
+      padding: 0 5px;
+      border-radius: var(--fm-radius-sm, 4px);
+      border: 1px solid currentColor;
+      opacity: 0.7;
+    }
+
+    .suggestion-forget {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      margin-left: auto;
+      width: 18px;
+      height: 18px;
+      padding: 3px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: inherit;
+      opacity: 0;
+
+      svg {
+        width: 10px;
+        height: 10px;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        fill: none;
+      }
+      &:hover {
+        background: fade(@text-color, 12%);
+      }
+    }
+
+    .suggestion:hover .suggestion-forget,
+    .suggestion.selected .suggestion-forget,
+    .suggestion-forget:focus-visible {
+      opacity: 0.8;
+    }
+
+    .suggestion.selected {
+      .suggestion-detail,
+      .suggestion-section {
+        color: inherit;
+        opacity: 0.8;
+      }
+      .suggestion-chip {
+        background: @input-bg;
+      }
+    }
+
+    .search-refinements {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 2px @padding-small-horizontal @padding-small-vertical;
+      border-bottom: 1px solid @border-color-divider;
+      margin-bottom: 2px;
+    }
+
+    .search-refinements-label {
+      color: @text-color-very-subtle;
+      font-size: @font-size-smaller;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-right: 2px;
+    }
+
+    .search-refinement {
+      height: 24px;
+      line-height: 22px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--fm-border, fade(@text-color, 20%));
+      background: transparent;
+      color: @text-color;
+      font: inherit;
+      font-size: @font-size-small;
+      cursor: pointer;
+
+      &:hover {
+        background: fade(@text-color, 7%);
+      }
+      &.active {
+        background: @selected-tint;
+        border-color: @accent-primary;
+        font-weight: 500;
+      }
+      &:focus-visible {
+        outline: 2px solid @accent-primary;
+        outline-offset: 1px;
       }
     }
 

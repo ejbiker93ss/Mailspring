@@ -1,5 +1,12 @@
 # SummerMail Changelog
 
+## 1.23.109 (11/17/2026)
+
+- Add recent searches, autocomplete suggestions, and natural-language filters for common mail searches.
+- Add All, Unread, and Starred mail filters and controls for account rows in grouped folders.
+- Refresh the mail layout, sender initials, and light and dark theme styling.
+- Improve contact vCard parsing.
+
 ## 1.23.108 (11/11/2026)
 
 - Fix SmarterMail replies and forwards sent immediately after archiving or moving the original. SummerMail checks the destination folder for the original before sending, without waiting for the next sync.

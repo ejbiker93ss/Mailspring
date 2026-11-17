@@ -396,6 +396,12 @@ class SidebarSection {
     const standardNames = ['inbox', 'important', 'sent', ['archive', 'all'], 'spam', 'trash'];
     const items = [];
 
+    // Grouped folders can list each account beneath them. People who mostly
+    // work from the combined views can limit that to Inbox or turn it off.
+    const accountRows = AppEnv.config.get('core.workspace.sidebarAccountRows') || 'all';
+    const showsAccountRows = (role?: string) =>
+      accountRows === 'all' || (accountRows === 'inbox' && role === 'inbox');
+
     for (const nameOrNames of standardNames) {
       const names = Array.isArray(nameOrNames) ? nameOrNames : [nameOrNames];
       const categories = CategoryStore.getCategoriesWithRoles(accounts, ...names);
@@ -405,7 +411,7 @@ class SidebarSection {
 
       children = [];
       // eslint-disable-next-line
-      accounts.forEach((acc) => {
+      (showsAccountRows(names[0]) ? accounts : []).forEach((acc) => {
         const cat = _.first(
           (names as string[])
             .map((name) => CategoryStore.getCategoryByRole(acc, name))
@@ -426,14 +432,15 @@ class SidebarSection {
 
     const accountIds = accounts.map((a) => a.id);
 
+    const rowAccounts = showsAccountRows() ? accounts : [];
     const starredItem = SidebarItem.forStarred(accountIds, {
-      children: accounts.map((acc) => SidebarItem.forStarred([acc.id], { name: acc.label })),
+      children: rowAccounts.map((acc) => SidebarItem.forStarred([acc.id], { name: acc.label })),
     });
     const unreadItem = SidebarItem.forUnread(accountIds, {
-      children: accounts.map((acc) => SidebarItem.forUnread([acc.id], { name: acc.label })),
+      children: rowAccounts.map((acc) => SidebarItem.forUnread([acc.id], { name: acc.label })),
     });
     const draftsItem = SidebarItem.forDrafts(accountIds, {
-      children: accounts.map((acc) => SidebarItem.forDrafts([acc.id], { name: acc.label })),
+      children: rowAccounts.map((acc) => SidebarItem.forDrafts([acc.id], { name: acc.label })),
     });
 
     // Order correctly: Inbox, Unread, Starred, rest... , Drafts
@@ -447,7 +454,7 @@ class SidebarSection {
         const item = SidebarItem.forPerspective(id, perspective, {
           name,
           iconName,
-          children: accounts.map((acc) => {
+          children: rowAccounts.map((acc) => {
             const subItem = ext.sidebarItem([acc.id]);
             return SidebarItem.forPerspective(subItem.id + `-${acc.id}`, subItem.perspective, {
               name: acc.label,

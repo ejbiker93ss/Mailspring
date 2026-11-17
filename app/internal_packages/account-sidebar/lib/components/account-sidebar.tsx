@@ -1,5 +1,5 @@
 import React from 'react';
-import { localized, Utils, DOMUtils, Account, AccountStore } from 'summermail-exports';
+import { localized, Utils, DOMUtils, Account, AccountStore, Actions } from 'summermail-exports';
 import { OutlineView, ScrollRegion, Flexbox } from 'summermail-component-kit';
 import AccountSwitcher from './account-switcher';
 import SidebarStore from '../sidebar-store';
@@ -67,6 +67,19 @@ export default class AccountSidebar extends React.Component<
 
     return (
       <Flexbox direction="column" style={{ order: 0, flexShrink: 1, flex: 1 }}>
+        <div className="account-sidebar-compose">
+          <button
+            type="button"
+            className="account-sidebar-compose-button"
+            onClick={() => Actions.composeNewBlankDraft()}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+            <span>{localized('New Message')}</span>
+          </button>
+        </div>
         <ScrollRegion className="account-sidebar" style={{ order: 2 }}>
           <AccountSwitcher accounts={accounts} sidebarAccountIds={sidebarAccountIds} />
           <nav className="account-sidebar-sections" aria-label={localized('Mailboxes')}>

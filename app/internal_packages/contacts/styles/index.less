@@ -306,7 +306,7 @@
     width: 36px;
     height: 36px;
     padding: 0;
-    border-radius: 10px;
+    border-radius: 50%;
     box-shadow: none;
 
     .profile-photo,
@@ -314,12 +314,16 @@
     .profile-photo .default-profile-image {
       width: 36px;
       height: 36px;
-      border-radius: 10px;
+      border-radius: 50%;
     }
 
+    // Flat circles, matching the sender initials used in the mail lists.
     .profile-photo .default-profile-image {
       line-height: 36px;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: @font-weight-semi-bold;
+      background-image: none;
+      box-shadow: none;
     }
   }
 }

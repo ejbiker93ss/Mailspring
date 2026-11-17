@@ -443,6 +443,49 @@ class ThreadArrowButton extends React.Component<
   }
 }
 
+// Reply and Forward lead the toolbar for a single conversation, so the most
+// common response does not depend on scrolling to the last message.
+export const ReplyButtons = ({ items }: { items: Thread[] }) => {
+  if (items.length !== 1) return null;
+  const [thread] = items;
+  const reply = () =>
+    Actions.composeReply({ thread, type: 'reply', behavior: 'prefer-existing-if-pristine' });
+  const forward = () => Actions.composeForward({ thread });
+
+  return (
+    <RovingTabIndexToolbar
+      label={localized('Reply Actions')}
+      className="button-group toolbar-reply-actions"
+      style={{ order: -111 } as React.CSSProperties}
+    >
+      <button
+        tabIndex={-1}
+        className="btn btn-toolbar toolbar-reply"
+        title={localized('Reply')}
+        onClick={reply}
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M9 17 4 12l5-5M20 18v-2a4 4 0 0 0-4-4H4" />
+        </svg>
+        <span>{localized('Reply')}</span>
+      </button>
+      <button
+        tabIndex={-1}
+        className="btn btn-toolbar toolbar-forward"
+        title={localized('Forward')}
+        aria-label={localized('Forward')}
+        onClick={forward}
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="m15 17 5-5-5-5M4 18v-2a4 4 0 0 1 4-4h12" />
+        </svg>
+      </button>
+    </RovingTabIndexToolbar>
+  );
+};
+ReplyButtons.displayName = 'ReplyButtons';
+(ReplyButtons as any).containerRequired = false;
+
 export const FlagButtons = (props: { items: Thread[] }) => (
   <RovingTabIndexToolbar
     label={localized('Flag Actions')}

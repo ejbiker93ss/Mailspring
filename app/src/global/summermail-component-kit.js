@@ -61,6 +61,7 @@ const lazyLoadFrom = (prop, path) => {
 
 lazyLoad('Menu', 'menu');
 lazyLoad('ContactProfilePhoto', 'contact-profile-photo');
+lazyLoad('SenderInitials', 'sender-initials');
 lazyLoad('DropZone', 'drop-zone');
 lazyLoad('Spinner', 'spinner');
 lazyLoad('Switch', 'switch');

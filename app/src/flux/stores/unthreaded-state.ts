@@ -3,6 +3,9 @@
 import SummerMailStore from 'summermail-store';
 import { MAIL_SORT_FIELDS } from '../../services/mail-sort';
 
+// One quick filter applies to the mail list at a time.
+export const MAIL_QUICK_FILTERS = ['all', 'unread', 'starred'];
+
 class UnthreadedState extends SummerMailStore {
   constructor() {
     super();
@@ -10,8 +13,19 @@ class UnthreadedState extends SummerMailStore {
     this._layout = this._loadLayout();
     this._sortAscending = this._loadBoolean('summermail-unthreaded:sort-ascending', false);
     this._sortField = this._loadSortField();
-    this._unreadOnly = this._loadBoolean('summermail-unthreaded:unread-only', false);
+    this._quickFilter = this._loadQuickFilter();
     this._selected = null;
+  }
+
+  // Older profiles only stored the unread toggle, so fall back to it.
+  _loadQuickFilter() {
+    try {
+      const value = window.localStorage.getItem('summermail-unthreaded:quick-filter');
+      if (MAIL_QUICK_FILTERS.includes(value)) return value;
+    } catch (err) {
+      // Fall through to the legacy unread flag.
+    }
+    return this._loadBoolean('summermail-unthreaded:unread-only', false) ? 'unread' : 'all';
   }
 
   _loadBoolean(key, fallback) {
@@ -90,8 +104,16 @@ class UnthreadedState extends SummerMailStore {
     return this._sortAscending;
   }
 
+  quickFilter() {
+    return this._quickFilter;
+  }
+
   unreadOnly() {
-    return this._unreadOnly;
+    return this._quickFilter === 'unread';
+  }
+
+  starredOnly() {
+    return this._quickFilter === 'starred';
   }
 
   toggleSort = () => {
@@ -109,14 +131,20 @@ class UnthreadedState extends SummerMailStore {
     this.trigger();
   };
 
-  toggleUnreadOnly = () => {
-    this._unreadOnly = !this._unreadOnly;
+  setQuickFilter = (filter) => {
+    if (!MAIL_QUICK_FILTERS.includes(filter) || filter === this._quickFilter) return;
+    this._quickFilter = filter;
     try {
-      window.localStorage.setItem('summermail-unthreaded:unread-only', String(this._unreadOnly));
+      window.localStorage.setItem('summermail-unthreaded:quick-filter', filter);
+      window.localStorage.setItem('summermail-unthreaded:unread-only', String(filter === 'unread'));
     } catch (err) {
       // localStorage may be unavailable in restricted renderer contexts.
     }
     this.trigger();
+  };
+
+  toggleUnreadOnly = () => {
+    this.setQuickFilter(this._quickFilter === 'unread' ? 'all' : 'unread');
   };
 
   setEnabled = (enabled) => {

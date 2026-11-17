@@ -12,7 +12,7 @@
   &:hover,
   &:focus-visible,
   &[aria-pressed='true'] {
-    color: @accent-primary;
+    color: @accent-text;
   }
 
   &:focus-visible {
@@ -93,7 +93,7 @@
       }
 
       svg {
-        color: @accent-primary;
+        color: @accent-text;
       }
     }
 
@@ -198,13 +198,13 @@
         }
 
         &.cur-day {
-          color: @text-color-inverse;
+          color: @accent-on-fill;
           background: @accent-primary;
           font-weight: @font-weight-semi-bold;
         }
 
         &.today:not(.cur-day) {
-          color: @accent-primary;
+          color: @accent-text;
           box-shadow: inset 0 0 0 1px @accent-primary;
         }
       }
@@ -227,7 +227,7 @@
       }
 
       &.active {
-        color: @accent-primary;
+        color: @accent-text;
 
         &:after {
           content: '';
@@ -405,10 +405,23 @@
     }
   }
 
+  // An empty day keeps its timeline; the note is a small chip near the top so
+  // it does not sit across the hour lines in the middle of the grid.
   .compact-day-empty {
     position: sticky;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 12px;
+    flex-direction: row;
+    width: fit-content;
+    margin: 0 auto;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, @background-secondary 80%, @text-color 6%);
+    font-size: @font-size-small;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 
   .compact-calendar-empty {
@@ -894,7 +907,7 @@
 
       &.active {
         background-color: rgb(from @accent-primary r g b / 15%);
-        color: @accent-primary;
+        color: @accent-text;
       }
 
       img {

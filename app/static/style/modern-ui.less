@@ -240,7 +240,7 @@ button.btn,
 
     &.selected {
       background: var(--fm-accent-soft);
-      color: @accent-primary;
+      color: @accent-text;
       font-weight: @font-weight-semi-bold;
     }
 
@@ -420,9 +420,15 @@ button.btn,
   }
 }
 
-// Modern cards for the standard narrow / threaded inbox. This is the list
+// Flat rows for the standard narrow / threaded inbox. This is the list
 // rendered in the normal three-pane mail layout (separate from the optional
-// individual-message view styled by unthreaded.less).
+// individual-message view styled by unthreaded.less). Rows stay unpainted so
+// only hover and selection draw a surface; the transparent border keeps the
+// row box identical to the selected state.
+@thread-row-hover-bg: color-mix(in srgb, @text-color 6%, transparent);
+@thread-row-selected-bg: color-mix(in srgb, @accent-primary 14%, @background-primary);
+@thread-row-selected-border: color-mix(in srgb, @accent-primary 45%, transparent);
+
 summermail-workspace .thread-list.thread-list-narrow {
   .list-rows {
     background: @background-primary;
@@ -436,31 +442,26 @@ summermail-workspace .thread-list.thread-list-narrow {
     margin: 1px 2px;
     padding: 4px 7px 4px 6px;
     overflow: hidden;
-    border: 1px solid fade(@text-color, 9%) !important;
+    border: 1px solid transparent !important;
     border-radius: 12px;
-    background: color-mix(in srgb, @background-secondary 58%, @background-primary 42%);
-    box-shadow: 0 1px 2px fade(#000, 7%);
+    background: transparent;
+    box-shadow: none;
     color: @text-color;
     transition:
       background 120ms ease,
-      border-color 120ms ease,
-      box-shadow 120ms ease,
-      transform 120ms ease;
+      border-color 120ms ease;
   }
 
   .list-item:hover:not(.selected):not(.focused) {
-    border-color: color-mix(in srgb, @accent-primary 34%, transparent) !important;
-    background: color-mix(in srgb, @background-secondary 72%, @background-primary 28%);
-    box-shadow: 0 5px 14px fade(#000, 13%);
-    transform: translateY(-1px);
+    background: @thread-row-hover-bg;
   }
 
   .list-item.selected,
   .list-item.focused,
   .list-item.selected.focused {
-    border-color: color-mix(in srgb, @accent-primary 52%, transparent) !important;
-    background: color-mix(in srgb, @background-secondary 76%, @accent-primary 24%);
-    box-shadow: 0 3px 12px fade(#000, 12%);
+    border-color: @thread-row-selected-border !important;
+    background: @thread-row-selected-bg;
+    box-shadow: none;
     color: @text-color;
   }
 
@@ -618,7 +619,7 @@ summermail-workspace .thread-list.thread-list-narrow {
   }
 
   .thread-list-narrow-actions button.active {
-    color: @accent-primary;
+    color: @accent-text;
   }
 
   .thread-list-narrow-actions button:focus-visible {
@@ -644,7 +645,7 @@ summermail-workspace .thread-list.thread-list-narrow {
 
 // Reading pane
 .message-list {
-  background: color-mix(in srgb, @background-secondary 45%, @background-primary 55%);
+  background: color-mix(in srgb, @background-secondary 22%, @background-primary 78%);
 
   .message-item-wrap {
     border: 0;
@@ -688,8 +689,10 @@ summermail-workspace .thread-list.thread-list-narrow {
   overflow: hidden;
 }
 
+// The reply box sits apart from the last message, so it is its own rounded
+// surface rather than the squared-off foot of the card above it.
 #message-list.message-list .footer-reply-area-wrap {
-  border-radius: 0 0 var(--fm-radius-lg) var(--fm-radius-lg) !important;
+  border-radius: var(--fm-radius-lg) !important;
   overflow: hidden;
 }
 
@@ -738,7 +741,7 @@ summermail-workspace .thread-list.thread-list-narrow {
 
     &.selected {
       background: var(--fm-accent-soft);
-      color: @accent-primary;
+      color: @accent-text;
       font-weight: @font-weight-semi-bold;
     }
   }
@@ -821,7 +824,7 @@ summermail-workspace .thread-list.thread-list-narrow {
   .contact-group-memberships .group-membership {
     background: var(--fm-accent-soft);
     border-radius: 999px;
-    color: @accent-primary;
+    color: @accent-text;
   }
 
   .contact-attributes .contact-attributes-section {
@@ -830,7 +833,7 @@ summermail-workspace .thread-list.thread-list-narrow {
   }
 
   .contact-attribute a {
-    color: @accent-primary;
+    color: @accent-text;
 
     &:focus-visible {
       border-radius: 3px;
@@ -956,7 +959,7 @@ summermail-workspace .thread-list.thread-list-narrow {
       &.active {
         background: var(--fm-accent-soft);
         box-shadow: none;
-        color: @accent-primary;
+        color: @accent-text;
         font-weight: @font-weight-semi-bold;
       }
 

@@ -3,7 +3,7 @@
 .nylas-editable-list {
   .items-wrapper .selected.editing,
   &:focus .items-wrapper .selected {
-    color: @component-active-bg;
+    color: @accent-on-fill;
     background-color: @component-active-color;
   }
 
@@ -15,9 +15,11 @@
     height: 90px;
     font-size: 0.9em;
 
+    // An unfocused selection stays readable in every theme: a soft accent
+    // wash under the normal text color.
     .selected {
-      background-color: hsl(from @component-active-color h 0% l / 70%);
-      color: @component-active-bg;
+      background-color: color-mix(in srgb, @accent-primary 18%, transparent);
+      color: @text-color;
     }
 
     .insertion-point {

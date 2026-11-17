@@ -4,6 +4,7 @@ import ThreadList from './thread-list';
 import UnthreadedThreadList from './unthreaded-thread-list';
 import UnthreadedToolbarToggle from './unthreaded-toolbar-toggle';
 import ThreadListControls from './thread-list-controls';
+import ThreadListFilterChips from './thread-list-filter-chips';
 import ThreadListToolbar from './thread-list-toolbar';
 import ThreadListVertical from './thread-list-vertical';
 import ThreadListEmptyFolderBar from './thread-list-empty-folder-bar';
@@ -11,11 +12,22 @@ import MessageListToolbar from './message-list-toolbar';
 import SelectedItemsStack from './selected-items-stack';
 import * as ThreadPermalinkHandler from './thread-permalink-handler';
 
-import { UpButton, DownButton, MoveButtons, FlagButtons } from './thread-toolbar-buttons';
+import {
+  UpButton,
+  DownButton,
+  MoveButtons,
+  FlagButtons,
+  ReplyButtons,
+} from './thread-toolbar-buttons';
 
 export function activate() {
   ThreadPermalinkHandler.activate();
   UnthreadedThreadList.CoreComponent = ThreadList;
+
+  ComponentRegistry.register(ThreadListFilterChips, {
+    location: WorkspaceStore.Location.ThreadList,
+    modes: ['split', 'list', 'splitVertical'],
+  });
 
   ComponentRegistry.register(ThreadListEmptyFolderBar, {
     location: WorkspaceStore.Location.ThreadList,
@@ -67,6 +79,10 @@ export function activate() {
     modes: ['list'],
   });
 
+  ComponentRegistry.register(ReplyButtons, {
+    role: 'ThreadActionsToolbarButton',
+  });
+
   ComponentRegistry.register(MoveButtons, {
     role: 'ThreadActionsToolbarButton',
   });
@@ -80,9 +96,11 @@ export function deactivate() {
   ComponentRegistry.unregister(UnthreadedThreadList);
   ComponentRegistry.unregister(UnthreadedToolbarToggle);
   ComponentRegistry.unregister(ThreadListControls);
+  ComponentRegistry.unregister(ThreadListFilterChips);
   ComponentRegistry.unregister(SelectedItemsStack);
   ComponentRegistry.unregister(ThreadListToolbar);
   ComponentRegistry.unregister(MessageListToolbar);
+  ComponentRegistry.unregister(ReplyButtons);
   ComponentRegistry.unregister(MoveButtons);
   ComponentRegistry.unregister(FlagButtons);
   ComponentRegistry.unregister(UpButton);

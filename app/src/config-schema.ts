@@ -80,6 +80,17 @@ export default {
             enumLabels: [localized('Group by folder'), localized('Group by account')],
             title: localized('Sidebar organization'),
           },
+          sidebarAccountRows: {
+            type: 'string',
+            default: 'all',
+            enum: ['all', 'inbox', 'none'],
+            enumLabels: [
+              localized('Under every folder'),
+              localized('Under Inbox only'),
+              localized('Never'),
+            ],
+            title: localized('Show each account under grouped folders'),
+          },
           sidebarAccountOrder: {
             type: 'array',
             default: [],

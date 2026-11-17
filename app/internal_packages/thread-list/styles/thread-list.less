@@ -590,12 +590,11 @@ body.is-blurred {
     max-width: 100%;
     gap: 6px;
     min-height: 26px;
-    padding: 0 10px;
-    border: 1px solid fade(@text-color, 10%);
+    padding: 0 8px;
+    border: 1px solid transparent;
     border-radius: 8px;
-    background: mix(@background-secondary, @background-primary, 70%);
-    color: fade(@text-color, 72%);
-    box-shadow: 0 1px 2px fade(#000, 7%);
+    background: transparent;
+    color: @text-color-very-subtle;
     cursor: pointer;
     font-size: 11px;
     font-weight: 700;
@@ -604,8 +603,8 @@ body.is-blurred {
     text-transform: uppercase;
 
     &:hover {
-      background: mix(@background-secondary, @background-primary, 82%);
-      color: fade(@text-color, 90%);
+      background: fade(@text-color, 8%);
+      color: @text-color;
     }
 
     &:focus-visible {
@@ -625,8 +624,96 @@ body.is-blurred {
     }
 
     .list-tabular-section-count {
-      color: fade(@text-color, 72%);
+      color: @text-color-very-subtle;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
+  }
+}
+
+// Reply leads the conversation toolbar as a labelled button; Forward sits
+// beside it as an icon. Both inherit the toolbar's own button treatment.
+.sheet-toolbar .toolbar-reply-actions {
+  .btn.btn-toolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    svg {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
+  .toolbar-reply {
+    padding-right: 12px;
+    font-weight: @font-weight-medium;
+  }
+}
+
+// A narrow reading pane cannot fit a labelled Reply plus every action, so the
+// label drops and buttons tighten before anything spills past the pane.
+.sheet-toolbar .toolbar-MessageList {
+  container-type: inline-size;
+  container-name: message-toolbar;
+}
+
+@container message-toolbar (max-width: 580px) {
+  .sheet-toolbar .message-toolbar-items .btn.btn-toolbar {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .sheet-toolbar .toolbar-reply-actions .toolbar-reply span {
+    display: none;
+  }
+}
+
+// Quick filters sit above the list as a single row of chips.
+.thread-list-filter-chips {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 8px 12px 2px;
+  background: @background-primary;
+}
+
+.thread-list-filter-chip {
+  appearance: none;
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--fm-border, @border-color-divider);
+  border-radius: 999px;
+  background: transparent;
+  color: @text-color-subtle;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease,
+    border-color 100ms ease;
+
+  &:hover {
+    background: fade(@text-color, 6%);
+    color: @text-color;
+  }
+
+  &:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: 1px;
+  }
+
+  &.active {
+    border-color: color-mix(in srgb, @accent-primary 45%, transparent);
+    background: color-mix(in srgb, @accent-primary 16%, transparent);
+    color: @accent-text;
+    font-weight: @font-weight-semi-bold;
   }
 }

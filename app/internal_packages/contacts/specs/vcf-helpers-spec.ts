@@ -377,6 +377,11 @@ describe('parseName', function () {
     expect(result.displayName).toBe('John Smith');
   });
 
+  it('leaves missing name parts out of displayName', () => {
+    expect(parseName({ _data: 'Smith' }).displayName).toBe('Smith');
+    expect(parseName(null).displayName).toBe('');
+  });
+
   it('handles a name with only family and given name', () => {
     const result = parseName({ _data: 'Doe;Jane' });
     expect(result.familyName).toBe('Doe');

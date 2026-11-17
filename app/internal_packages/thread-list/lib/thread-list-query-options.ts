@@ -24,11 +24,12 @@ export interface ThreadListQueryOptions {
   sortAscending: boolean;
   sortField?: MailSortField;
   unreadOnly: boolean;
+  starredOnly?: boolean;
 }
 
 export function queryWithThreadListOptions<T extends Thread | Thread[]>(
   source: ModelQuery<T>,
-  { isSent, sortAscending, unreadOnly, sortField = 'date' }: ThreadListQueryOptions
+  { isSent, sortAscending, unreadOnly, starredOnly, sortField = 'date' }: ThreadListQueryOptions
 ) {
   const dateAttribute = isSent
     ? Thread.attributes.lastMessageSentTimestamp
@@ -42,6 +43,9 @@ export function queryWithThreadListOptions<T extends Thread | Thread[]>(
 
   if (unreadOnly) {
     query.where(Thread.attributes.unread.equal(true));
+  }
+  if (starredOnly) {
+    query.where(Thread.attributes.starred.equal(true));
   }
 
   return query;

@@ -73,6 +73,7 @@ class SearchMailboxPerspective extends MailboxPerspective {
       sortField: UnthreadedState.sortField(),
       sortAscending: UnthreadedState.sortAscending(),
       unreadOnly: UnthreadedState.unreadOnly(),
+      starredOnly: UnthreadedState.starredOnly(),
     });
   }
 

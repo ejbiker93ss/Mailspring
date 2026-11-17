@@ -218,7 +218,9 @@ body.platform-win32 {
     flex-shrink: 0;
   }
   .message-subject {
-    font-size: @font-size-large;
+    font-size: @font-size-h3;
+    font-weight: @font-weight-semi-bold;
+    letter-spacing: -0.01em;
     color: @text-color;
     margin-right: @spacing-standard;
     overflow-wrap: anywhere;
@@ -268,7 +270,7 @@ body.platform-win32 {
 
     &.has-summary {
       background: color-mix(in srgb, @accent-primary 12%, transparent);
-      color: @accent-primary;
+      color: @accent-text;
     }
 
     &:disabled {
@@ -502,7 +504,7 @@ body.platform-win32 {
     }
 
     &:hover .num-messages {
-      color: @accent-primary;
+      color: @accent-text;
       border-color: color-mix(in srgb, @accent-primary 45%, var(--fm-border));
       background: color-mix(in srgb, @accent-primary 9%, var(--fm-surface-raised));
     }
@@ -522,6 +524,13 @@ body.platform-win32 {
     font-size: @font-size-small;
     padding-bottom: 0;
     padding-top: 19px;
+
+    // Sender and recipient lines flow beside the avatar.
+    .message-header-avatar {
+      float: left;
+      margin: -1px 10px 0 0;
+      line-height: 0;
+    }
 
     &.pending {
       .message-actions-wrap {

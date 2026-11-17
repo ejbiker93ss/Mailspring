@@ -9,7 +9,12 @@ import {
   MessageStore,
   DraftStore,
 } from 'summermail-exports';
-import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'summermail-component-kit';
+import {
+  RetinaImg,
+  InjectedComponentSet,
+  InjectedComponent,
+  SenderInitials,
+} from 'summermail-component-kit';
 
 import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
@@ -191,6 +196,11 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
         <div className="pending-send-status">
           {this.props.sendState && <SendProgressIndicator sendState={this.props.sendState} />}
         </div>
+        {message.from[0] && (
+          <div className="message-header-avatar">
+            <SenderInitials contact={message.from[0]} />
+          </div>
+        )}
         <div className="message-header-right">
           <MessageTimestamp
             className="message-time"

@@ -120,7 +120,7 @@
 
         &.active {
           background: color-mix(in srgb, @accent-primary 13%, transparent);
-          color: @accent-primary;
+          color: @accent-text;
           box-shadow: none;
           font-weight: @font-weight-semi-bold;
         }
@@ -245,7 +245,7 @@
       }
       .appearance-mode.active {
         border: 1px solid @component-active-color;
-        color: @component-active-color;
+        color: @accent-text;
         img {
           background-color: @component-active-color;
         }
@@ -369,7 +369,7 @@
       &.editing {
         .values {
           background: @input-bg;
-          color: @component-active-color;
+          color: @accent-text;
 
           border-radius: @border-radius-base;
           outline: 1px solid @input-border-color;

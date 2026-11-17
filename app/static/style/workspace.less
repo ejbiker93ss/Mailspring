@@ -179,7 +179,7 @@ summermail-workspace {
 }
 
 .app-tab.active .app-tab-icon {
-  color: @accent-primary;
+  color: @accent-text;
   opacity: 1;
 }
 
@@ -907,6 +907,12 @@ body.platform-win32.window-type-default {
     pointer-events: none;
   }
 
+  // Floated toolbars ignore the container's rail padding, so start them
+  // after the rail to stay aligned with the columns beneath.
+  .has-app-rail > .sheet-toolbar:has(.sheet-toolbar-container[data-id='Threads']) {
+    left: @app-rail-width;
+  }
+
   // The toolbar is floated over the sheet so the folder sidebar can begin
   // directly below the app tabs. Keep the shared container transparent or it
   // paints an empty strip over (and clips) the first sidebar rows.
@@ -987,4 +993,106 @@ body.platform-win32 {
   summermail-workspace {
     font-family: system-ui;
   }
+}
+
+// Workspace rail: the vertical switcher between Mail, Calendar, Contacts and
+// the other root workspaces. It sits beside every sheet, below the title bar,
+// so the container reserves its width and the title bar spans back over it.
+@app-rail-width: 52px;
+
+.has-app-rail {
+  box-sizing: border-box;
+  padding-left: @app-rail-width;
+
+  > .app-tab-bar {
+    margin-left: -@app-rail-width;
+  }
+}
+
+.app-rail {
+  position: absolute;
+  top: 40px;
+  bottom: 0;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  width: @app-rail-width;
+  padding: 10px 0;
+  border-right: 1px solid @border-color-divider;
+  background: darken(@background-primary, 3%);
+  user-select: none;
+}
+
+.app-rail-item {
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: @text-color-subtle;
+  cursor: pointer;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
+
+  &:hover {
+    background: fade(@text-color, 7%);
+    color: @text-color;
+  }
+
+  &:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: 1px;
+  }
+
+  &.active {
+    background: color-mix(in srgb, @accent-primary 16%, transparent);
+    color: @accent-text;
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: -7px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: @accent-primary;
+    }
+
+    .app-tab-icon {
+      opacity: 1;
+    }
+  }
+
+  .app-tab-icon {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .app-tab-unread-count {
+    position: absolute;
+    top: -3px;
+    right: -4px;
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    line-height: 16px;
+  }
+}
+
+.app-rail-spacer {
+  flex: 1;
 }

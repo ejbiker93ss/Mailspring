@@ -17,7 +17,7 @@ describe('ThreadListStore toolbar options', () => {
 
     (UnthreadedState as any)._enabled = false;
     (UnthreadedState as any)._sortAscending = false;
-    (UnthreadedState as any)._unreadOnly = false;
+    (UnthreadedState as any)._quickFilter = 'all';
     (ThreadListStore as any)._viewOptions = (ThreadListStore as any)._getViewOptions();
     spyOn(ThreadListStore, 'createListDataSource');
   });
@@ -25,7 +25,7 @@ describe('ThreadListStore toolbar options', () => {
   afterEach(() => {
     (UnthreadedState as any)._enabled = originalEnabled;
     (UnthreadedState as any)._sortAscending = originalSortAscending;
-    (UnthreadedState as any)._unreadOnly = originalUnreadOnly;
+    (UnthreadedState as any)._quickFilter = originalUnreadOnly ? 'unread' : 'all';
     (UnthreadedState as any)._sortField = originalSortField;
     (ThreadListStore as any)._viewOptions = (ThreadListStore as any)._getViewOptions();
   });

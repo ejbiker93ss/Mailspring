@@ -99,7 +99,12 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   _searching = false;
   _resultCount: number | null = null;
   _matchingMessageIds = new Map<string, string>();
-  _viewOptions: { sortField?: MailSortField; sortAscending?: boolean; unreadOnly?: boolean };
+  _viewOptions: {
+    sortField?: MailSortField;
+    sortAscending?: boolean;
+    unreadOnly?: boolean;
+    starredOnly?: boolean;
+  };
 
   constructor(
     searchQuery: string,
@@ -118,6 +123,12 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     // TODO
   };
 
+  _quickFilterSQL() {
+    if (this._viewOptions?.unreadOnly) return 'AND `Thread`.unread > 0';
+    if (this._viewOptions?.starredOnly) return 'AND `Thread`.starred > 0';
+    return '';
+  }
+
   performSearch() {
     this._searching = true;
     this.performLocalSearch();
@@ -127,6 +138,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
   async performLocalSearch() {
     let dbQuery = DatabaseStore.findAll<Thread>(Thread);
     if (this._viewOptions?.unreadOnly) dbQuery = dbQuery.where({ unread: true });
+    if (this._viewOptions?.starredOnly) dbQuery = dbQuery.where({ starred: true });
     if (this._accountIds.length === 1) {
       dbQuery = dbQuery.where({ accountId: this._accountIds[0] });
     } else if (this._accountIds.length > 1) {
@@ -213,7 +225,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
           operator
         )} ORDER BY matchedMessage.date DESC LIMIT 1)`
       : 'NULL';
-    const unreadSQL = this._viewOptions?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
+    const unreadSQL = this._quickFilterSQL();
     const fromAndWhere = `FROM \`ThreadSearch\` JOIN \`Thread\` ON \`Thread\`.id = \`ThreadSearch\`.content_id WHERE \`ThreadSearch\` MATCH ? ${accountSQL} ${strictMessageSQL} ${unreadSQL}`;
 
     const rankValues = [
@@ -270,7 +282,7 @@ export class SearchQuerySubscription extends MutableQuerySubscription<Thread> {
     const accountSQL = this._accountIds.length
       ? `AND \`Thread\`.accountId IN (${this._accountIds.map(() => '?').join(', ')})`
       : '';
-    const unreadSQL = this._viewOptions?.unreadOnly ? 'AND `Thread`.unread > 0' : '';
+    const unreadSQL = this._quickFilterSQL();
     const fromAndWhere = `FROM \`Thread\` WHERE ${where} ${accountSQL} ${unreadSQL}`;
     const countSQL = `SELECT COUNT(*) AS count ${fromAndWhere}`;
     // Keep BM25 on its own FTS cursor. The non-flattened subquery computes mail

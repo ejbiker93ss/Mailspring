@@ -2,6 +2,7 @@ import { MailSortField } from '../../../src/services/mail-sort';
 
 export interface DateOrderedMessageItem {
   searchRank?: number;
+  thread?: { starred?: boolean };
   message: {
     id?: string;
     date: Date | string | number;
@@ -14,6 +15,7 @@ export interface DateOrderedMessageItem {
 
 interface ListOrderOptions {
   unreadOnly: boolean;
+  starredOnly?: boolean;
   sortAscending: boolean;
   sortField?: MailSortField;
   isSearch?: boolean;
@@ -52,6 +54,9 @@ export function filterAndSortVisibleItems<T extends DateOrderedMessageItem>(
   items: T[],
   options: ListOrderOptions
 ): T[] {
-  const visible = options.unreadOnly ? items.filter((item) => item.message.unread) : items.slice();
+  const visible = items.filter(
+    (item) =>
+      (!options.unreadOnly || item.message.unread) && (!options.starredOnly || item.thread?.starred)
+  );
   return visible.sort((a, b) => compareMessageItems(a, b, options));
 }

@@ -184,6 +184,79 @@ class AppearanceModeSwitch extends React.Component<
   }
 }
 
+class SidebarAccountRowsPicker extends React.Component<{ config: ConfigLike }, { value: string }> {
+  static displayName = 'SidebarAccountRowsPicker';
+
+  kp = 'core.workspace.sidebarAccountRows';
+
+  constructor(props) {
+    super(props);
+    this.state = { value: props.config.get(this.kp) || 'all' };
+  }
+
+  componentDidUpdate(prevProps: { config: ConfigLike }) {
+    if (prevProps.config !== this.props.config) {
+      this.setState({ value: this.props.config.get(this.kp) || 'all' });
+    }
+  }
+
+  onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    this.setState({ value });
+    this.props.config.set(this.kp, value);
+  };
+
+  render() {
+    const options = [
+      {
+        value: 'all',
+        label: localized('Show each account under every grouped folder'),
+        note: localized(
+          'Inbox, Unread, Starred, Sent, and the others each expand to one row per account.'
+        ),
+      },
+      {
+        value: 'inbox',
+        label: localized('Show each account under Inbox only'),
+        note: localized('Other grouped folders become single combined rows.'),
+      },
+      {
+        value: 'none',
+        label: localized('Only show combined folders'),
+        note: localized('Add an account folder to Favorites to keep it one click away.'),
+      },
+    ];
+
+    return (
+      <div className="sidebar-organization-picker">
+        <div className="sidebar-arrangement-preference">
+          <div>
+            <strong>{localized('Accounts under grouped folders')}</strong>
+            <span className="platform-note">
+              {localized('Applies when matching folders are grouped across accounts.')}
+            </span>
+          </div>
+        </div>
+        {options.map((option) => (
+          <label key={option.value} className="sidebar-organization-option">
+            <input
+              type="radio"
+              name="sidebarAccountRows"
+              value={option.value}
+              checked={this.state.value === option.value}
+              onChange={this.onChange}
+            />
+            <span>
+              <strong>{option.label}</strong>
+              <span className="platform-note">{option.note}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    );
+  }
+}
+
 class SidebarOrganizationPicker extends React.Component<{ config: ConfigLike }, { value: string }> {
   static displayName = 'SidebarOrganizationPicker';
 
@@ -429,6 +502,7 @@ class PreferencesAppearance extends React.Component<{ config: ConfigLike; config
         <section>
           <h6>{localized('Mail Sidebar')}</h6>
           <SidebarOrganizationPicker config={this.props.config} />
+          <SidebarAccountRowsPicker config={this.props.config} />
         </section>
         <section>
           <h6 style={{ marginTop: 10 }}>{localized('Theme and Style')}</h6>
