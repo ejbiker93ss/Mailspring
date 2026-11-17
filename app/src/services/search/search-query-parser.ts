@@ -17,6 +17,7 @@ import {
   SizeQueryExpression,
   QueryExpression,
 } from './search-query-ast';
+import { isAttachmentSearchType } from './attachment-search-types';
 
 const nextStringToken = (text: string): [SearchQueryToken, string] => {
   if (text[0] !== '"') {
@@ -232,8 +233,11 @@ const parseHasQuery = (text: string): [QueryExpression, string] => {
   if (tok === null) {
     return null;
   }
-  const tokText = tok.s.toUpperCase();
-  switch (tokText) {
+  const attachmentType = tok.s.toLowerCase();
+  if (isAttachmentSearchType(attachmentType)) {
+    return [new HasAttachmentQueryExpression(attachmentType), afterTok];
+  }
+  switch (tok.s.toUpperCase()) {
     case 'ATTACHMENT':
     case 'ATTACHMENTS': {
       return [new HasAttachmentQueryExpression(), afterTok];

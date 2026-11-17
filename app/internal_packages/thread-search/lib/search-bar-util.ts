@@ -6,6 +6,7 @@ import {
   Thread,
   ContactStore,
 } from 'summermail-exports';
+import { attachmentSearchTypes } from '../../../src/services/search/attachment-search-types';
 
 // start of string or preceding whitespace
 // a known token
@@ -132,8 +133,8 @@ export const TokenSuggestions = [
   {
     token: 'has',
     term: '',
-    description: 'attachment',
-    termSuggestions: ['attachment'],
+    description: localized('attachment or file type'),
+    termSuggestions: ['attachment', ...Object.keys(attachmentSearchTypes)],
   },
   {
     token: 'subject',

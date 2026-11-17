@@ -301,6 +301,7 @@ button.btn,
 .toolbar-ThreadList .thread-search-bar:is(.is-focused, .has-query) {
   flex: 0 0 var(--search-expanded-width, 100%);
   max-width: none;
+  margin-inline-end: 4px;
 }
 
 .toolbar-ThreadList:has(.thread-search-bar:is(.is-focused, .has-query)) .item-container {
@@ -310,7 +311,7 @@ button.btn,
 .thread-search-bar.has-query {
   display: grid;
   grid-template-columns: 15px minmax(0, 1fr) 21px;
-  column-gap: 4px;
+  gap: 0 6px;
   height: auto;
   min-height: 32px;
   padding-top: 3px;

@@ -8,6 +8,7 @@ import {
   SubjectQueryExpression,
   BodyQueryExpression,
   GenericQueryExpression,
+  HasAttachmentQueryExpression,
   TextQueryExpression,
   UnreadStatusQueryExpression,
   StarredStatusQueryExpression,
@@ -188,7 +189,8 @@ class IMAPSearchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
     this._result = text === this._folder.name ? 'ALL' : '!ALL';
   }
 
-  visitHasAttachment(/* node */) {
+  visitHasAttachment(node: HasAttachmentQueryExpression) {
+    if (node.attachmentType) throw new Error('Attachment type search requires local file metadata');
     this._result = [
       'OR',
       ['HEADER', 'Content-Type', 'multipart/mixed'],

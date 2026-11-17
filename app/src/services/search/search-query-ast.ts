@@ -1,3 +1,5 @@
+import type { AttachmentSearchType } from './attachment-search-types';
+
 export class SearchQueryExpressionVisitor {
   _result = null;
 
@@ -411,6 +413,10 @@ export class InQueryExpression extends QueryExpression {
 }
 
 export class HasAttachmentQueryExpression extends QueryExpression {
+  constructor(public attachmentType?: AttachmentSearchType) {
+    super();
+  }
+
   accept(visitor: SearchQueryExpressionVisitor) {
     visitor.visitHasAttachment(this);
   }
@@ -420,7 +426,9 @@ export class HasAttachmentQueryExpression extends QueryExpression {
   }
 
   equals(other: QueryExpression) {
-    return other instanceof HasAttachmentQueryExpression;
+    return (
+      other instanceof HasAttachmentQueryExpression && this.attachmentType === other.attachmentType
+    );
   }
 }
 

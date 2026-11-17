@@ -14,6 +14,7 @@ import {
 } from './search-query-ast';
 import { DateUtils } from 'summermail-exports';
 import { messageSizeSQL } from '../mail-sort';
+import { attachmentSearchTypes } from './attachment-search-types';
 
 /*
  * This class visits a match-compatible subtree and condenses it into a single
@@ -198,8 +199,8 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
     this._result = new StarredStatusQueryExpression(node.status);
   }
 
-  visitHasAttachment(/* node */) {
-    this._result = new HasAttachmentQueryExpression();
+  visitHasAttachment(node: HasAttachmentQueryExpression) {
+    this._result = node;
   }
 
   visitSize(node: SizeQueryExpression) {
@@ -309,8 +310,26 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
     this._result = `(\`${this._className}\`.\`starred\` ${node.status ? '>' : '='} 0)`;
   }
 
-  visitHasAttachment(/* node */) {
+  visitHasAttachment(node: HasAttachmentQueryExpression) {
     const data = `\`${this._className}\`.\`data\``;
+    if (node.attachmentType) {
+      const { extensions, mimeTypes } = attachmentSearchTypes[node.attachmentType];
+      const filename = "lower(json_extract(attachmentFile.value, '$.filename'))";
+      const contentType = "lower(json_extract(attachmentFile.value, '$.contentType'))";
+      const mime = `trim(substr(${contentType}, 1, instr(${contentType} || ';', ';') - 1))`;
+      const matches = extensions.map((extension) => `${filename} LIKE '%.${extension}'`);
+      if (mimeTypes.length)
+        matches.push(`${mime} IN (${mimeTypes.map((type) => `'${type}'`).join(', ')})`);
+      if (node.attachmentType === 'image') matches.push(`${mime} LIKE 'image/%'`);
+      const from =
+        this._className === 'Thread'
+          ? "Message attachmentMessage, json_each(attachmentMessage.data, '$.files') attachmentFile"
+          : `json_each(${data}, '$.files') attachmentFile`;
+      const threadScope =
+        this._className === 'Thread' ? 'attachmentMessage.threadId = `Thread`.id AND ' : '';
+      this._result = `EXISTS (SELECT 1 FROM ${from} WHERE ${threadScope}(${matches.join(' OR ')}))`;
+      return;
+    }
     const metadataHasAttachment = (messageData: string) =>
       `(COALESCE(json_extract(${messageData}, '$.smHasAttachments'), 0) = 1 OR COALESCE(json_array_length(${messageData}, '$.files'), 0) > 0)`;
     if (this._className === 'Thread') {

@@ -231,10 +231,36 @@ body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI
     assert.equal(result.sizeToken.token, 'larger');
     assert.equal(result.sizeToken.term, '10m');
     const plain = page.locator('.search-query-text').last();
+    const searchField = page.locator('.thread-search-bar');
+    const assertSearchBoundary = async () => {
+      const boundary = await searchField.evaluate((field) => {
+        const style = getComputedStyle(field);
+        const fieldRect = field.getBoundingClientRect();
+        const controls = document.querySelector('.thread-list-controls').getBoundingClientRect();
+        const popup = field.querySelector('.suggestions')?.getBoundingClientRect();
+        return {
+          border: style.borderTopWidth,
+          borderColor: style.borderTopColor,
+          background: style.backgroundColor,
+          focusRing: style.boxShadow,
+          controlsGap: controls.left - fieldRect.right,
+          popupGap: popup ? popup.top - fieldRect.bottom : null,
+        };
+      });
+      assert.ok(parseFloat(boundary.border) > 0, JSON.stringify(boundary));
+      assert.notEqual(boundary.borderColor, boundary.background);
+      assert.ok(boundary.controlsGap >= 6, JSON.stringify(boundary));
+      if (boundary.popupGap !== null) {
+        assert.ok(boundary.popupGap >= 4, JSON.stringify(boundary));
+        assert.match(boundary.focusRing, /inset/);
+      }
+    };
+    await assertSearchBoundary();
     const compactWidth = (await page.locator('.thread-search-bar').boundingBox()).width;
     await plain.fill('fr');
     const fromChoice = page.locator('.suggestion').filter({ hasText: /^from:/ }).first();
     await fromChoice.waitFor({ state: 'visible' });
+    await assertSearchBoundary();
     const fromBox = await fromChoice.boundingBox();
     await page.mouse.click(fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
     assert.equal(await page.locator('.search-filter-pill select').inputValue(), 'from');
@@ -282,8 +308,7 @@ body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI
       'empty search-bar background focuses the append input');
     const subjectChoice = page.locator('.suggestion').filter({ hasText: /^subject:/ }).first();
     await subjectChoice.waitFor({ state: 'visible' });
-    const subjectBox = await subjectChoice.boundingBox();
-    await page.mouse.click(subjectBox.x + subjectBox.width / 2, subjectBox.y + subjectBox.height / 2);
+    await subjectChoice.click();
     await page.keyboard.type('Meeting notes');
     assert.equal(await page.evaluate(() => window.searchPillTest.harness.query),
       'from:rod.cf subject:"Meeting notes"');
@@ -358,6 +383,7 @@ body { background: @background-primary; color: @text-color; font: 14px 'Segoe UI
         },
         theme === 'ui-dark' ? 'rgba(238, 241, 255, 0.78)' : 'rgba(23, 26, 47, 0.78)'
       );
+      await assertSearchBoundary();
       if (process.env.SEARCH_SCREENSHOTS)
         await page.screenshot({ path: path.join(root, '.tmp', `search-controls-${theme}.png`) });
     }

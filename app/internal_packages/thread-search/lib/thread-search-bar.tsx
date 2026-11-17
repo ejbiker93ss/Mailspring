@@ -10,19 +10,28 @@ import {
 } from 'summermail-exports';
 import SearchStore from './search-store';
 import SearchQueryEditor from './search-query-editor';
+import { SearchSuggestionsPopover } from './search-suggestions-popover';
+import {
+  ThreadSearchSuggestion,
+  emptyQuerySuggestions,
+  freeTextSuggestions,
+  operatorSuggestions,
+} from './search-suggestions';
+import { SearchRefinement, toggleRefinement } from './search-refinements';
+import { rememberSearch, forgetSearch } from './recent-searches';
+import { interpretNaturalLanguageQuery } from './natural-language-query';
 
 import {
-  LearnMoreURL,
   TokenSuggestions,
   TokenSuggestionsForEmpty,
   TokenAndTermRegexp,
   getCurrentTokenAndTerm,
-  getContactSuggestions,
-  getThreadSuggestions,
   wrapInQuotes,
 } from './search-bar-util';
 
 const MAIL_TOOLBAR_HEIGHT = 34;
+const MAX_EXPANDED_SEARCH_WIDTH = 720;
+const SIDE_PANEL_SELECTOR = '.column-CalendarSidebar, .toolbar-CalendarSidebar';
 
 interface ThreadSearchBarProps {
   query: string;
@@ -31,19 +40,14 @@ interface ThreadSearchBarProps {
   perspective: MailboxPerspective;
 }
 
-type ThreadSearchSuggestion = {
-  token?: string | null;
-  term: string;
-  description: string;
-  termSuggestions?: string[] | ((term: string, accountIds: string[]) => Promise<any>);
-  thread?: any;
-};
-
 interface ThreadSearchBarState {
   suggestions: ThreadSearchSuggestion[];
   focused: boolean;
   selected?: ThreadSearchSuggestion;
   selectedIdx: number;
+  // The free text being typed, used to highlight matches in suggestions.
+  highlight: string;
+  showRefinements: boolean;
 }
 
 export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearchBarState> {
@@ -72,10 +76,10 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     const toolbar = bar.closest('.toolbar-ThreadList');
     if (!toolbar) return;
     const controls = toolbar.querySelector('.thread-list-controls');
-    const available = window.innerWidth - bar.getBoundingClientRect().left;
+    const available = this._expansionRightEdge() - bar.getBoundingClientRect().left;
     // Leave room for the list controls, view selector, and toolbar gaps.
     const controlsWidth = (controls?.getBoundingClientRect().width || 0) + 64;
-    const width = Math.min(840, Math.max(88, available - controlsWidth));
+    const width = Math.min(MAX_EXPANDED_SEARCH_WIDTH, Math.max(88, available - controlsWidth));
     bar.style.setProperty('--search-expanded-width', `${width}px`);
     // Reserve the wrapped field's height in the mail columns. Suggestions are
     // absolutely positioned and remain a popup rather than moving the list.
@@ -86,6 +90,18 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     this._layoutRoot?.style.setProperty('--mail-search-toolbar-height', `${height}px`);
   };
 
+  // The expanded field may cover the reading pane, but not a docked side
+  // panel such as the calendar sidebar, or the list controls land on top of it.
+  _expansionRightEdge() {
+    const panels = Array.from(
+      this._layoutRoot?.querySelectorAll<HTMLElement>(SIDE_PANEL_SELECTOR) || []
+    );
+    return panels
+      .map((panel) => panel.getBoundingClientRect())
+      .filter((rect) => rect.width > 0)
+      .reduce((edge, rect) => Math.min(edge, rect.left), window.innerWidth);
+  }
+
   componentWillUnmount() {
     this._suggestionRequest++;
     this._resizeObserver?.disconnect();
@@ -95,10 +111,12 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   constructor(props: ThreadSearchBarProps) {
     super(props);
     this.state = {
-      suggestions: TokenSuggestionsForEmpty,
+      suggestions: emptyQuerySuggestions(),
       focused: false,
       selected: null,
       selectedIdx: -1,
+      highlight: '',
+      showRefinements: false,
     };
   }
 
@@ -134,93 +152,84 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     }
   }
 
+  // Treat the initial query (eg: "in:starred AND ") as if it's not there, so
+  // the user sees the empty string case at first, etc.
+  _perspectivePrefix(query: string) {
+    const initialQuery = this._initialQueryForPerspective();
+    return initialQuery && query.startsWith(initialQuery) ? initialQuery : '';
+  }
+
+  _withoutPrefix(query: string) {
+    return query.substr(this._perspectivePrefix(query).length);
+  }
+
+  _smartQueryFor(query: string) {
+    const prefix = this._perspectivePrefix(query);
+    const smart = interpretNaturalLanguageQuery(query.substr(prefix.length));
+    return smart ? `${prefix}${smart.query} ` : query;
+  }
+
   async _generateSuggestionsForQuery(query: string) {
     const request = ++this._suggestionRequest;
-    if (this._fieldEl.isAppending()) {
-      this._setSuggestionState(TokenSuggestionsForEmpty);
-      return;
-    }
     let insertionIndex = this._fieldEl.insertionIndex();
 
-    // Treat the initial query (eg: "in:starred AND ") as if it's
-    // not there, so the user sees the empty string case at first, etc.
-    const initialQuery = this._initialQueryForPerspective();
-    if (query.startsWith(initialQuery)) {
-      query = query.substr(initialQuery.length);
-      insertionIndex -= initialQuery.length;
+    const prefix = this._perspectivePrefix(query);
+    query = query.substr(prefix.length);
+    insertionIndex -= prefix.length;
+    const hasQuery = query.trim().length > 0;
+
+    if (this._fieldEl.isAppending()) {
+      this._setSuggestionState(operatorSuggestions(TokenSuggestionsForEmpty), {
+        showRefinements: hasQuery,
+      });
+      return;
     }
 
     const { token, term } = getCurrentTokenAndTerm(query, insertionIndex);
-    const accountIds = this.props.perspective.accountIds;
-
-    const promises = [];
-    let suggestions = [];
-
     if (token) {
-      // show token autocompletion options ala Stripe Dashboard
-      suggestions = TokenSuggestions.filter((s) => s.token.startsWith(token));
-
-      if (suggestions.length && suggestions[0].token === token) {
-        const { termSuggestions } = suggestions[0];
-        const textToSuggestion = (term: string) => ({
-          term: wrapInQuotes(term),
-          description: term.includes(' ') ? wrapInQuotes(term) : term,
-          token,
-        });
-
-        if (termSuggestions instanceof Function) {
-          suggestions = [];
-          promises.push(
-            termSuggestions(term, accountIds).then((results) => {
-              suggestions.push(...results.map(textToSuggestion));
-            })
-          );
-        } else {
-          suggestions = termSuggestions
-            .filter((t) => !term || (t.startsWith(term) && t !== term))
-            .map(textToSuggestion);
-        }
-      }
-    } else if (query.length === 0) {
-      // show all token autocompletion options before the user starts typing
-      suggestions = TokenSuggestionsForEmpty;
-    } else if (query.length > 2 && TokenAndTermRegexp().test(query.trim()) === false) {
-      // show thread and contact suggestions ala Gmail
-      suggestions = [];
-      promises.push(
-        Promise.props({
-          subjects: getThreadSuggestions(query, accountIds).then((threads) =>
-            threads.map((t) => ({
-              token: null,
-              term: wrapInQuotes(t.subject),
-              description: t.subject,
-              thread: t,
-            }))
-          ),
-          contacts: getContactSuggestions(query, accountIds).then((results) =>
-            results.map((term) => ({ token: null, term: wrapInQuotes(term), description: term }))
-          ),
-        }).then(({ contacts, subjects }) => {
-          suggestions = [...contacts, ...subjects].sort((a, b) => {
-            let aM = a.description.toLowerCase().indexOf(query);
-            let bM = b.description.toLowerCase().indexOf(query);
-            if (aM === -1) aM = 10000;
-            if (bM === -1) bM = 10000;
-            return aM - bM;
-          });
-          if (suggestions.length > 10) {
-            suggestions.length = 10;
-          }
-        })
-      );
+      const values = await this._tokenSuggestions(token, term);
+      if (request === this._suggestionRequest) this._setSuggestionState(values);
+      return;
+    }
+    if (!hasQuery) {
+      this._setSuggestionState(emptyQuerySuggestions());
+      return;
     }
 
-    if (promises.length) {
-      await Promise.all(promises);
-      if (request === this._suggestionRequest) this._setSuggestionState(suggestions);
-    } else {
-      this._setSuggestionState(suggestions);
+    // Gmail-style people and message lookups only make sense for plain text;
+    // the smart reading also works alongside filters already in the query.
+    const includeLookups = query.length > 2 && TokenAndTermRegexp().test(query.trim()) === false;
+    const suggestions = await freeTextSuggestions(
+      query,
+      prefix,
+      this.props.perspective.accountIds,
+      { includeLookups }
+    );
+    if (request === this._suggestionRequest) {
+      this._setSuggestionState(suggestions, {
+        highlight: includeLookups ? query : '',
+        showRefinements: true,
+      });
     }
+  }
+
+  async _tokenSuggestions(token: string, term: string): Promise<ThreadSearchSuggestion[]> {
+    // show token autocompletion options ala Stripe Dashboard
+    const operators = TokenSuggestions.filter((s) => s.token.startsWith(token));
+    if (!operators.length || operators[0].token !== token) {
+      return operatorSuggestions(operators);
+    }
+    const { termSuggestions } = operators[0];
+    const values =
+      termSuggestions instanceof Function
+        ? await termSuggestions(term, this.props.perspective.accountIds)
+        : termSuggestions.filter((t) => !term || (t.startsWith(term) && t !== term));
+    return values.map((value: string) => ({
+      kind: 'value',
+      term: wrapInQuotes(value),
+      description: value.includes(' ') ? wrapInQuotes(value) : value,
+      token,
+    }));
   }
 
   _onFocus = (e: React.FocusEvent) => {
@@ -267,10 +276,30 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
       e.preventDefault();
       this._onClearSearchQuery(e);
     }
+    if (
+      key === 'Tab' &&
+      !e.shiftKey &&
+      (selected?.kind === 'operator' || selected?.kind === 'value')
+    ) {
+      // Tab completes the highlighted filter, as in a code editor.
+      e.preventDefault();
+      this._onChooseSuggestion(selected);
+      return;
+    }
+    if (key === 'Delete' && e.shiftKey && selected?.kind === 'recent') {
+      e.preventDefault();
+      this._onForgetSuggestion(selected);
+      return;
+    }
     if (key === 'Enter' || key === 'Return') {
       // return
       e.preventDefault();
-      if (selected) {
+      const value = this._fieldEl.value();
+      if (selected?.source !== undefined && selected.source !== this._withoutPrefix(value)) {
+        // Suggestions arrive asynchronously; when Enter beats them, apply the
+        // same reading to the text as it is now.
+        this._onSubmitSearchQuery(selected.kind === 'smart' ? this._smartQueryFor(value) : value);
+      } else if (selected) {
         this._onChooseSuggestion(selected);
       } else {
         // The connected query prop can still contain the previous value when
@@ -282,6 +311,14 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
   };
 
   _onChooseSuggestion = (suggestion: ThreadSearchSuggestion) => {
+    if (suggestion.thread && WorkspaceStore.layoutMode() !== 'list') {
+      Actions.setFocus({ collection: 'thread', item: suggestion.thread });
+    }
+    if (suggestion.query) {
+      this._onSubmitSearchQuery(suggestion.query);
+      return;
+    }
+
     const query = this._fieldEl.value();
 
     let nextQuery = null;
@@ -314,10 +351,19 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     } else {
       this._onSearchQueryChanged(nextQuery);
     }
+  };
 
-    if (suggestion.thread && WorkspaceStore.layoutMode() !== 'list') {
-      Actions.setFocus({ collection: 'thread', item: suggestion.thread });
-    }
+  _onForgetSuggestion = (suggestion: ThreadSearchSuggestion) => {
+    forgetSearch(suggestion.query);
+    this._setSuggestionState(this.state.suggestions.filter((s) => s !== suggestion));
+  };
+
+  // Refinements apply immediately and keep the popover open so several can be
+  // combined in a row.
+  _onRefine = (refinement: SearchRefinement) => {
+    const next = toggleRefinement(this._fieldEl.value(), refinement);
+    rememberSearch(next);
+    Actions.searchQuerySubmitted(next);
   };
 
   _onSearchQueryChanged = async (query: string) => {
@@ -330,21 +376,33 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
     }
   };
 
-  _setSuggestionState = (suggestions: ThreadSearchSuggestion[]) => {
+  _setSuggestionState = (
+    suggestions: ThreadSearchSuggestion[],
+    { highlight = '', showRefinements = false } = {}
+  ) => {
+    const { selected } = this.state;
     const sameItemIdx = suggestions.findIndex(
-      (s) => this.state.selected && s.description === this.state.selected.description
+      (s) => selected && s.kind === selected.kind && s.description === selected.description
     );
     const backupIdx = Math.max(-1, Math.min(this.state.selectedIdx, suggestions.length - 1));
-    const selectedIdx = sameItemIdx !== -1 ? sameItemIdx : backupIdx;
+    // A smart reading is preselected so Enter applies it; the literal search is
+    // one arrow press away.
+    const preferredIdx = suggestions[0]?.kind === 'smart' ? 0 : backupIdx;
+    const selectedIdx = sameItemIdx !== -1 ? sameItemIdx : preferredIdx;
 
     this.setState({
-      suggestions: suggestions,
-      selectedIdx: selectedIdx,
+      suggestions,
+      selectedIdx,
       selected: selectedIdx !== -1 ? suggestions[selectedIdx] : null,
+      highlight,
+      showRefinements,
     });
   };
 
   _onSubmitSearchQuery = (nextQuery: string) => {
+    if (nextQuery.trim() !== this._initialQueryForPerspective().trim()) {
+      rememberSearch(nextQuery);
+    }
     Actions.searchQuerySubmitted(nextQuery);
     this._fieldEl.blur();
   };
@@ -376,12 +434,12 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
 
   render() {
     const { query, isSearching, resultCount } = this.props;
-    const { suggestions, selectedIdx } = this.state;
+    const { suggestions, selectedIdx, highlight, showRefinements } = this.state;
 
     const showPlaceholder = !this.state.focused && !query;
     const showX = this.state.focused || !!query;
 
-    const suggestionsVisible = this.state.suggestions.length > 0 && this.state.focused;
+    const suggestionsVisible = this.state.focused && (suggestions.length > 0 || showRefinements);
 
     return (
       <KeyCommandsRegion
@@ -454,41 +512,17 @@ export class ThreadSearchBar extends Component<ThreadSearchBarProps, ThreadSearc
           />
         )}
         {suggestionsVisible && (
-          <div className="suggestions" role="listbox">
-            {suggestions.map((s, idx) => (
-              <div
-                onMouseDown={(e) => {
-                  this._onChooseSuggestion(s);
-                  e.preventDefault();
-                }}
-                className={`suggestion ${selectedIdx === idx ? 'selected' : ''}`}
-                role="option"
-                aria-selected={selectedIdx === idx}
-                key={idx}
-              >
-                {s.token && <span className="suggestion-token">{s.token}: </span>}
-                {s.description}
-              </div>
-            ))}
-            {suggestions === TokenSuggestionsForEmpty && (
-              <div className="footer">
-                {localized(
-                  'Pro tip: Combine search terms with AND and OR to create complex queries.'
-                )}{' '}
-                <a
-                  onMouseDown={(e) => {
-                    AppEnv.windowEventHandler.openLink({
-                      href: LearnMoreURL,
-                      metaKey: e.metaKey,
-                    });
-                    e.preventDefault();
-                  }}
-                >
-                  {localized('Learn more')} &gt;
-                </a>
-              </div>
-            )}
-          </div>
+          <SearchSuggestionsPopover
+            suggestions={suggestions}
+            selectedIdx={selectedIdx}
+            highlight={highlight}
+            query={query}
+            showRefinements={showRefinements}
+            showTips={!query.trim() || query === this._initialQueryForPerspective()}
+            onChoose={this._onChooseSuggestion}
+            onForget={this._onForgetSuggestion}
+            onRefine={this._onRefine}
+          />
         )}
       </KeyCommandsRegion>
     );
