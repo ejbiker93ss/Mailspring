@@ -249,28 +249,30 @@ export class CompactCalendarSidebar extends React.Component<
 
     return (
       <div className="compact-day-view">
-        <div className="compact-all-day-row">
-          <span>{localized('All-day')}</span>
-          <div>
-            {allDay.map((event) => {
-              const colors = calcEventColors(event.calendarId);
-              return (
-                <button
-                  key={event.id}
-                  type="button"
-                  style={{
-                    borderLeftColor: colors.band,
-                    backgroundColor: colors.background,
-                    color: colors.text,
-                  }}
-                  onClick={() => this.openCalendar(event)}
-                >
-                  {event.title}
-                </button>
-              );
-            })}
+        {allDay.length > 0 && (
+          <div className="compact-all-day-row">
+            <span>{localized('All-day')}</span>
+            <div>
+              {allDay.map((event) => {
+                const colors = calcEventColors(event.calendarId);
+                return (
+                  <button
+                    key={event.id}
+                    type="button"
+                    style={{
+                      borderLeftColor: colors.band,
+                      backgroundColor: colors.background,
+                      color: colors.text,
+                    }}
+                    onClick={() => this.openCalendar(event)}
+                  >
+                    {event.title}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
         <div className="compact-hours-scroll" ref={(node) => (this.hoursScroll = node)}>
           <div className="compact-hours" style={{ height: (endHour - startHour) * hourHeight }}>
             {Array.from({ length: endHour - startHour }, (_, index) => {
@@ -367,7 +369,13 @@ export class CompactCalendarSidebar extends React.Component<
           >
             <Icon name="chevron-right" />
           </button>
-          <button type="button" onClick={this.createEvent} aria-label={localized('New Event')}>
+          <button
+            type="button"
+            className="compact-new-event"
+            onClick={this.createEvent}
+            aria-label={localized('New Event')}
+            title={localized('New Event')}
+          >
             <Icon name="plus" />
           </button>
         </div>
@@ -377,12 +385,17 @@ export class CompactCalendarSidebar extends React.Component<
             className="compact-month-toggle"
             onClick={() => this.setState({ monthVisible: !monthVisible })}
             aria-label={localized('Toggle month')}
+            aria-expanded={monthVisible}
           >
             <Icon name="up" />
           </button>
           {monthVisible && <MiniMonthView value={selectedDate} onChange={this.selectDate} />}
         </div>
-        <div className="compact-calendar-tabs" role="tablist">
+        <div
+          className="compact-calendar-tabs"
+          role="tablist"
+          aria-label={localized('Calendar view')}
+        >
           <button
             type="button"
             role="tab"

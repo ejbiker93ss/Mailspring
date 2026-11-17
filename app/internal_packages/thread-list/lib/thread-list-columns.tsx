@@ -6,6 +6,7 @@ import {
   MailImportantIcon,
   InjectedComponent,
   InjectedComponentSet,
+  SenderInitials,
 } from 'summermail-component-kit';
 
 import {
@@ -16,12 +17,27 @@ import {
   Utils,
   DateUtils,
   Thread,
+  ComponentRegistry,
 } from 'summermail-exports';
 
 import { ThreadArchiveQuickAction, ThreadTrashQuickAction } from './thread-list-quick-actions';
 import ThreadListParticipants from './thread-list-participants';
 import ThreadListIcon from './thread-list-icon';
 import { ThreadWithMessagesMetadata } from './types';
+
+// An avatar plugin draws its own picture through the ThreadListIcon slot, so
+// the built-in initials only appear when no such plugin is installed.
+const NarrowSenderAvatar = ({ thread }: { thread: Thread }) => {
+  if (ComponentRegistry.findComponentByName('SmallAvatar')) return null;
+  const participants = thread.participants || [];
+  const sender = participants.find((contact) => !contact.isMe()) || participants[0];
+  if (!sender) return null;
+  return (
+    <div className="thread-list-narrow-avatar">
+      <SenderInitials contact={sender} />
+    </div>
+  );
+};
 
 // Get and format either last sent or last received timestamp depending on thread-list being viewed
 const ThreadListTimestamp = function ({ thread }: { thread: Thread }) {
@@ -287,6 +303,7 @@ const cNarrow = new ListTabular.Column({
     // until we revisit the UI to accommodate more icons
     return (
       <div className="thread-list-narrow-row-content">
+        <NarrowSenderAvatar thread={thread} />
         <div className="thread-info-column">
           <div className="participants-wrapper">
             <ThreadListParticipants thread={thread} />

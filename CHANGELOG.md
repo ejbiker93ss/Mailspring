@@ -1,5 +1,24 @@
 # SummerMail Changelog
 
+## 1.23.111 (11/17/2026) — Windows search preview
+
+- Search for mail using phrases like “from Dexter with an Excel file” or “invoices with PDFs attached.” Smart Search matches attachment types and keeps the option to search as typed.
+- Make the search field easier to distinguish from the toolbar, with a persistent outline, a visible focus state, and a separate suggestions panel.
+
+## 1.23.110 (11/17/2026)
+
+- Set timeouts on SmarterMail API requests, prioritize queued sends, and refresh expired sessions during attachment uploads. If delivery cannot be confirmed, keep the draft editable and prompt the sender to check Sent before retrying.
+- Align the undo-send countdown and sending spinner with the sender avatar slot.
+- Restore the horizontal workspace tabs and Mail compose shortcut with the current theme styling.
+- Refresh the mail action icons and calendar sidebar, including date selection, Day and Agenda views, and the timeline.
+
+## 1.23.109 (11/17/2026)
+
+- Add recent searches, autocomplete suggestions, and natural-language filters for common mail searches.
+- Add All, Unread, and Starred mail filters and controls for account rows in grouped folders.
+- Refresh the mail layout, sender initials, and light and dark theme styling.
+- Improve contact vCard parsing.
+
 ## 1.23.108 (11/11/2026)
 
 - Fix SmarterMail replies and forwards sent immediately after archiving or moving the original. SummerMail checks the destination folder for the original before sending, without waiting for the next sync.

@@ -1,0 +1,24 @@
+@import 'ui-variables';
+
+.sender-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  // The fill is a fixed mid-tone generated from the address, so the ink is a
+  // literal white; some dark themes redefine @white as a dark surface color.
+  color: #fff;
+  font-size: 12px;
+  font-weight: @font-weight-semi-bold;
+  line-height: 1;
+  user-select: none;
+}
+
+.thread-list-narrow-avatar {
+  align-self: center;
+  margin-right: 8px;
+  line-height: 0;
+}

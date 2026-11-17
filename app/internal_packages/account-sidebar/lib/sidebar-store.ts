@@ -88,6 +88,7 @@ class SidebarStore extends SummerMailStore {
       this._updateSections
     );
     AppEnv.config.onDidChange('core.workspace.sidebarOrganization', this._updateSections);
+    AppEnv.config.onDidChange('core.workspace.sidebarAccountRows', this._updateSections);
     AppEnv.config.onDidChange(FAVORITE_FOLDERS_CONFIG_KEY, this._updateSections);
     AppEnv.config.onDidChange(SMART_FOLDERS_CONFIG_KEY, this._updateSections);
     AppEnv.config.onDidChange(SIDEBAR_ACCOUNT_ORDER_CONFIG_KEY, this._updateSections);

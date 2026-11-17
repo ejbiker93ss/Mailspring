@@ -12,6 +12,7 @@ import {
   FocusedPerspectiveStore,
 } from 'summermail-exports';
 
+import { MailActionIcon } from '../../../src/components/mail-action-icon';
 import ThreadListStore from './thread-list-store';
 
 export class ArchiveButton extends React.Component<{ items: Thread[] }> {
@@ -46,11 +47,7 @@ export class ArchiveButton extends React.Component<{ items: Thread[] }> {
           aria-label={localized('Archive')}
           onClick={this._onArchive}
         >
-          <RetinaImg
-            name="toolbar-archive.png"
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="archive" />
         </button>
       </BindGlobalCommands>
     );
@@ -89,11 +86,7 @@ export class TrashButton extends React.Component<{ items: Thread[] }> {
           aria-label={localized('Move to Trash')}
           onClick={this._onRemove}
         >
-          <RetinaImg
-            name="toolbar-trash.png"
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="trash" />
         </button>
       </BindGlobalCommands>
     );
@@ -236,11 +229,7 @@ export class MarkAsSpamButton extends React.Component<{ items: Thread[] }> {
             aria-label={localized('Not Spam')}
             onClick={this._onNotSpam}
           >
-            <RetinaImg
-              name="toolbar-not-spam.png"
-              mode={RetinaImg.Mode.ContentIsMask}
-              aria-hidden="true"
-            />
+            <MailActionIcon name="not-spam" />
           </button>
         </BindGlobalCommands>
       );
@@ -262,11 +251,7 @@ export class MarkAsSpamButton extends React.Component<{ items: Thread[] }> {
           aria-label={localized('Mark as Spam')}
           onClick={this._onMarkAsSpam}
         >
-          <RetinaImg
-            name="toolbar-spam.png"
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="spam" />
         </button>
       </BindGlobalCommands>
     );
@@ -293,7 +278,6 @@ export class ToggleStarredButton extends React.Component<{ items: Thread[] }> {
   render() {
     const postClickStarredState = this.props.items.every((t) => t.starred === false);
     const title = postClickStarredState ? localized('Star') : localized('Unstar');
-    const imageName = postClickStarredState ? 'toolbar-star.png' : 'toolbar-star-selected.png';
 
     return (
       <BindGlobalCommands commands={{ 'core:star-item': () => this._onStar() }}>
@@ -304,7 +288,7 @@ export class ToggleStarredButton extends React.Component<{ items: Thread[] }> {
           aria-label={title}
           onClick={this._onStar}
         >
-          <RetinaImg name={imageName} mode={RetinaImg.Mode.ContentIsMask} aria-hidden="true" />
+          <MailActionIcon name="star" filled={!postClickStarredState} />
         </button>
       </BindGlobalCommands>
     );
@@ -353,11 +337,7 @@ export class ToggleUnreadButton extends React.Component<{ items: Thread[] }> {
           aria-label={label}
           onClick={this._onClick}
         >
-          <RetinaImg
-            name={`toolbar-markas${key}.png`}
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name={key} />
         </button>
       </BindGlobalCommands>
     );
@@ -442,6 +422,45 @@ class ThreadArrowButton extends React.Component<
     );
   }
 }
+
+// Reply and Forward lead the toolbar for a single conversation, so the most
+// common response does not depend on scrolling to the last message.
+export const ReplyButtons = ({ items }: { items: Thread[] }) => {
+  if (items.length !== 1) return null;
+  const [thread] = items;
+  const reply = () =>
+    Actions.composeReply({ thread, type: 'reply', behavior: 'prefer-existing-if-pristine' });
+  const forward = () => Actions.composeForward({ thread });
+
+  return (
+    <RovingTabIndexToolbar
+      label={localized('Reply Actions')}
+      className="button-group toolbar-reply-actions"
+      style={{ order: -111 } as React.CSSProperties}
+    >
+      <button
+        tabIndex={-1}
+        className="btn btn-toolbar toolbar-reply"
+        title={localized('Reply')}
+        onClick={reply}
+      >
+        <MailActionIcon name="reply" />
+        <span>{localized('Reply')}</span>
+      </button>
+      <button
+        tabIndex={-1}
+        className="btn btn-toolbar toolbar-forward"
+        title={localized('Forward')}
+        aria-label={localized('Forward')}
+        onClick={forward}
+      >
+        <MailActionIcon name="forward" />
+      </button>
+    </RovingTabIndexToolbar>
+  );
+};
+ReplyButtons.displayName = 'ReplyButtons';
+(ReplyButtons as any).containerRequired = false;
 
 export const FlagButtons = (props: { items: Thread[] }) => (
   <RovingTabIndexToolbar

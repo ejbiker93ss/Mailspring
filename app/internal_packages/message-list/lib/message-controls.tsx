@@ -10,7 +10,14 @@ import {
   Thread,
   Message,
 } from 'summermail-exports';
-import { RetinaImg, ButtonDropdown, Menu } from 'summermail-component-kit';
+import { ButtonDropdown, Menu } from 'summermail-component-kit';
+import { MailActionIcon, MailActionIconName } from '../../../src/components/mail-action-icon';
+
+interface MessageAction {
+  name: string;
+  icon: MailActionIconName;
+  select: () => void;
+}
 
 interface MessageControlsProps {
   thread: Thread;
@@ -20,31 +27,31 @@ interface MessageControlsProps {
 export default class MessageControls extends React.Component<MessageControlsProps> {
   static displayName = 'MessageControls';
 
-  _items() {
-    const reply = {
+  _items(): MessageAction[] {
+    const reply: MessageAction = {
       name: localized('Reply'),
-      image: 'ic-dropdown-reply.png',
+      icon: 'reply',
       select: this._onReply,
     };
-    const replyAll = {
+    const replyAll: MessageAction = {
       name: localized('Reply All'),
-      image: 'ic-dropdown-replyall.png',
+      icon: 'reply-all',
       select: this._onReplyAll,
     };
-    const forward = {
+    const forward: MessageAction = {
       name: localized('Forward'),
-      image: 'ic-dropdown-forward.png',
+      icon: 'forward',
       select: this._onForward,
     };
-    const sendAgain = {
+    const sendAgain: MessageAction = {
       name: localized('Send Again'),
-      image: 'ic-dropdown-forward.png',
+      icon: 'forward',
       select: this._onSendAgain,
     };
 
-    const showOriginal = {
+    const showOriginal: MessageAction = {
       name: localized('Show Original'),
-      image: 'ic-dropdown-whitespace.png',
+      icon: 'source',
       select: this._onShowOriginal,
     };
 
@@ -63,11 +70,11 @@ export default class MessageControls extends React.Component<MessageControlsProp
       : [reply, replyAll, ...secondaryActions];
   }
 
-  _dropdownMenu(items: Array<{ name: string; image: string; select: () => void }>) {
-    const itemContent = (item: { name: string; image: string; select: () => void }) => (
-      <span>
-        <RetinaImg name={item.image} mode={RetinaImg.Mode.ContentIsMask} />
-        &nbsp;&nbsp;{item.name}&nbsp;&nbsp;
+  _dropdownMenu(items: MessageAction[]) {
+    const itemContent = (item: MessageAction) => (
+      <span className="message-action-menu-item">
+        <MailActionIcon name={item.icon} />
+        <span>{item.name}</span>
       </span>
     );
 
@@ -217,7 +224,7 @@ export default class MessageControls extends React.Component<MessageControlsProp
     return (
       <div className="message-actions-wrap" onClick={(e) => e.stopPropagation()}>
         <ButtonDropdown
-          primaryItem={<RetinaImg name={items[0].image} mode={RetinaImg.Mode.ContentIsMask} />}
+          primaryItem={<MailActionIcon name={items[0].icon} />}
           primaryTitle={items[0].name}
           primaryClick={items[0].select}
           closeOnMenuClick
@@ -234,11 +241,7 @@ export default class MessageControls extends React.Component<MessageControlsProp
             }
           }}
         >
-          <RetinaImg
-            name={'message-actions-ellipsis.png'}
-            mode={RetinaImg.Mode.ContentIsMask}
-            aria-hidden="true"
-          />
+          <MailActionIcon name="more" />
         </div>
       </div>
     );

@@ -9,11 +9,13 @@
   pointer-events: none;
 
   .content {
-    height: 45px;
+    height: 42px;
     display: inline-block;
-    opacity: 0.9;
-    border-radius: @border-radius-base;
-    background: @gray-darker;
+    // An inverse surface: the theme's ink as the fill and its paper as the
+    // text, so the toast stands off the page in light and dark themes alike.
+    border-radius: var(--fm-radius, 10px);
+    background: color-mix(in srgb, @text-color 92%, @background-primary);
+    box-shadow: 0 8px 24px fade(#000, 28%);
     white-space: nowrap;
     cursor: default;
     pointer-events: initial;
@@ -38,10 +40,10 @@
     flex-shrink: 0;
     margin-right: 8px;
     white-space: nowrap;
-    background: fade(@black, 20%);
-    padding: 3px 8px;
-    border-radius: 4px;
-    border: 1px solid fade(@background-primary, 20%);
+    background: color-mix(in srgb, @background-primary 14%, transparent);
+    padding: 3px 10px;
+    border-radius: var(--fm-radius-sm, 7px);
+    border: 1px solid color-mix(in srgb, @background-primary 22%, transparent);
     cursor: pointer;
 
     img {
@@ -49,13 +51,11 @@
     }
 
     &:hover {
-      background: fade(@black, 30%);
-      border: 1px solid fade(@background-primary, 30%);
+      background: color-mix(in srgb, @background-primary 24%, transparent);
     }
 
     &:active {
-      background: fade(@black, 45%);
-      border: 1px solid fade(@background-primary, 40%);
+      background: color-mix(in srgb, @background-primary 34%, transparent);
     }
 
     .send-action-text,
@@ -63,12 +63,6 @@
       margin-left: 5px;
       color: @background-primary;
     }
-  }
-}
-
-body.platform-win32 {
-  .content {
-    border-radius: 0;
   }
 }
 

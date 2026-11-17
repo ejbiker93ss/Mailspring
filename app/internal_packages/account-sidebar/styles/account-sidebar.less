@@ -39,3 +39,56 @@
     transform: rotateX(180deg);
   }
 }
+
+// The primary authored action for mail. It stays pinned above the scrolling
+// folder list, and carries the brand spectrum where the theme defines one.
+.account-sidebar-compose {
+  order: 1;
+  flex: none;
+  padding: 10px 10px 6px;
+}
+
+.account-sidebar-compose-button {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sm-brand-spectrum, @accent-primary);
+  color: var(--sm-focus-contrast, @accent-on-fill);
+  font-size: @font-size-small;
+  font-weight: @font-weight-semi-bold;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  transition: filter 120ms ease;
+
+  &:hover {
+    filter: brightness(1.06) saturate(1.05);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid @accent-primary;
+    outline-offset: 2px;
+  }
+
+  svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}

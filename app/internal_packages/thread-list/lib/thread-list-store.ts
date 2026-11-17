@@ -24,6 +24,7 @@ class ThreadListStore extends SummerMailStore {
     sortAscending: boolean;
     sortField: string;
     unreadOnly: boolean;
+    starredOnly: boolean;
   };
 
   constructor() {
@@ -43,6 +44,7 @@ class ThreadListStore extends SummerMailStore {
     sortAscending: UnthreadedState.sortAscending(),
     sortField: UnthreadedState.sortField(),
     unreadOnly: UnthreadedState.unreadOnly(),
+    starredOnly: UnthreadedState.starredOnly(),
   });
 
   _applyViewOptions = (subscription) => {
@@ -64,6 +66,7 @@ class ThreadListStore extends SummerMailStore {
       sortAscending: UnthreadedState.sortAscending(),
       sortField: UnthreadedState.sortField(),
       unreadOnly: UnthreadedState.unreadOnly(),
+      starredOnly: UnthreadedState.starredOnly(),
     });
 
     (subscription as MutableQuerySubscription<Thread>).replaceQuery(query);
@@ -111,7 +114,8 @@ class ThreadListStore extends SummerMailStore {
       next.unthreadedEnabled === previous.unthreadedEnabled &&
       next.sortAscending === previous.sortAscending &&
       next.sortField === previous.sortField &&
-      next.unreadOnly === previous.unreadOnly
+      next.unreadOnly === previous.unreadOnly &&
+      next.starredOnly === previous.starredOnly
     ) {
       return;
     }
@@ -121,6 +125,7 @@ class ThreadListStore extends SummerMailStore {
       this.createListDataSource({
         preserveFocus:
           next.unreadOnly === previous.unreadOnly &&
+          next.starredOnly === previous.starredOnly &&
           next.unthreadedEnabled === previous.unthreadedEnabled,
       });
     }

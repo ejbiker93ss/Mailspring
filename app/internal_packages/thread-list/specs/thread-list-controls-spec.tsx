@@ -9,16 +9,16 @@ describe('ThreadListControls', () => {
   let controls = null;
   let root = null;
   let originalSortAscending = false;
-  let originalUnreadOnly = false;
+  let originalQuickFilter = UnthreadedState.quickFilter();
   let originalSortField = 'relevance';
 
   beforeEach(() => {
     originalSortAscending = UnthreadedState.sortAscending();
     originalSortField = UnthreadedState.sortField();
-    originalUnreadOnly = UnthreadedState.unreadOnly();
+    originalQuickFilter = UnthreadedState.quickFilter();
     (UnthreadedState as any)._sortAscending = false;
     (UnthreadedState as any)._sortField = 'date';
-    (UnthreadedState as any)._unreadOnly = false;
+    (UnthreadedState as any)._quickFilter = 'all';
 
     controls = ReactTestUtils.renderIntoDocument(<ThreadListControls />) as any;
     root = ReactDOM.findDOMNode(controls) as HTMLElement;
@@ -30,7 +30,7 @@ describe('ThreadListControls', () => {
     }
     (UnthreadedState as any)._sortAscending = originalSortAscending;
     (UnthreadedState as any)._sortField = originalSortField;
-    (UnthreadedState as any)._unreadOnly = originalUnreadOnly;
+    (UnthreadedState as any)._quickFilter = originalQuickFilter;
   });
 
   it('opens sort choices and applies size sorting and unread filtering', () => {
@@ -51,7 +51,7 @@ describe('ThreadListControls', () => {
     expect(UnthreadedState.sortField()).toBe('size');
     expect(UnthreadedState.sortAscending()).toBe(false);
     expect(buttons[0].getAttribute('title')).toBe('Sort by Size');
-    expect(buttons[0].textContent).toBe('Sort by Size');
+    expect(buttons[0].getAttribute('aria-label')).toBe('Sort by Size');
 
     ReactTestUtils.Simulate.click(buttons[1]);
     expect(UnthreadedState.unreadOnly()).toBe(true);

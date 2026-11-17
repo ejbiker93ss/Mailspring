@@ -2,6 +2,7 @@ export * from '../components/menu';
 export * from '../components/drop-zone';
 export * from '../components/spinner';
 export * from '../components/contact-profile-photo';
+export * from '../components/sender-initials';
 export const Switch: typeof import('../components/switch').default;
 export const FixedPopover: typeof import('../components/fixed-popover').default;
 export const DatePickerPopover: typeof import('../components/date-picker-popover').default;

@@ -122,7 +122,8 @@ export const parseName = (name: { _data: string } | null) => {
     familyName: parts[0] || '',
     honorificPrefix: parts[3] || '',
     honorificSuffix: parts[4] || '',
-    displayName: `${parts[3] || ''} ${parts[1]} ${parts[0]} ${parts[4] || ''}`.trim(),
+    // A card may carry only a family name, so skip the parts it leaves out.
+    displayName: [parts[3], parts[1], parts[0], parts[4]].filter(Boolean).join(' '),
   };
 };
 

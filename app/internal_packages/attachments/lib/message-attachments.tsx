@@ -4,6 +4,7 @@ import { pathToFileURL } from 'url';
 import React, { Component } from 'react';
 import { Actions, Utils, AttachmentStore, File } from 'summermail-exports';
 import { AttachmentItem, ImageAttachmentItem } from 'summermail-component-kit';
+import { MailActionIcon } from '../../../src/components/mail-action-icon';
 
 interface MessageAttachmentsProps {
   files: File[];
@@ -331,7 +332,7 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
               title="Rotate counterclockwise"
               type="button"
             >
-              ↶
+              <MailActionIcon name="rotate-left" />
             </button>
             <button
               aria-label="Rotate clockwise"
@@ -340,7 +341,7 @@ class MessageAttachments extends Component<MessageAttachmentsProps, MessageAttac
               title="Rotate clockwise"
               type="button"
             >
-              ↷
+              <MailActionIcon name="rotate-right" />
             </button>
             <button
               className="btn btn-small"

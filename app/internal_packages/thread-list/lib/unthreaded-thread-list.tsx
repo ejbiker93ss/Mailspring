@@ -11,9 +11,10 @@ import {
   CategoryStore,
   TaskFactory,
   CanvasUtils,
+  DateUtils,
   localized,
 } from 'summermail-exports';
-import { Spinner, ScrollRegion } from 'summermail-component-kit';
+import { Spinner, ScrollRegion, SenderInitials } from 'summermail-component-kit';
 import SummerMailStore from 'summermail-store';
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary';
 
@@ -96,6 +97,7 @@ class VisibleMessagesStore extends SummerMailStore {
   visibleItems() {
     return filterAndSortVisibleItems(this._items, {
       unreadOnly: UnthreadedState.unreadOnly(),
+      starredOnly: UnthreadedState.starredOnly(),
       sortAscending: UnthreadedState.sortAscending(),
       sortField: UnthreadedState.sortField(),
       isSearch: !!FocusedPerspectiveStore.current().searchQuery,
@@ -129,6 +131,7 @@ class VisibleMessagesStore extends SummerMailStore {
     sortAscending: UnthreadedState.sortAscending(),
     sortField: UnthreadedState.sortField(),
     unreadOnly: UnthreadedState.unreadOnly(),
+    starredOnly: UnthreadedState.starredOnly(),
   });
 
   _onUnthreadedStateChanged = () => {
@@ -139,7 +142,8 @@ class VisibleMessagesStore extends SummerMailStore {
       next.layout === previous.layout &&
       next.sortAscending === previous.sortAscending &&
       next.sortField === previous.sortField &&
-      next.unreadOnly === previous.unreadOnly
+      next.unreadOnly === previous.unreadOnly &&
+      next.starredOnly === previous.starredOnly
     ) {
       return;
     }
@@ -208,6 +212,7 @@ class VisibleMessagesStore extends SummerMailStore {
           sortField: UnthreadedState.sortField(),
           sortAscending: UnthreadedState.sortAscending(),
           unreadOnly: UnthreadedState.unreadOnly(),
+          starredOnly: UnthreadedState.starredOnly(),
         })
       );
     }
@@ -304,6 +309,7 @@ export default class UnthreadedThreadList extends React.Component {
     sortAscending: UnthreadedState.sortAscending(),
     sortField: UnthreadedState.sortField(),
     unreadOnly: UnthreadedState.unreadOnly(),
+    starredOnly: UnthreadedState.starredOnly(),
     visibleItems: visibleMessagesStore.visibleItems(),
     loading: visibleMessagesStore.loading(),
     selected: UnthreadedState.selected(),
@@ -311,6 +317,12 @@ export default class UnthreadedThreadList extends React.Component {
     collapsedSections:
       this.state && this.state.collapsedSections ? this.state.collapsedSections : {},
   });
+
+  _emptyListLabel() {
+    if (this.state.unreadOnly) return localized('No unread messages');
+    if (this.state.starredOnly) return localized('No starred messages');
+    return localized('No messages');
+  }
 
   _senderAvatar() {
     // The Mailspring Avatars plugin exposes a thread icon, even for a single sender.
@@ -511,7 +523,11 @@ export default class UnthreadedThreadList extends React.Component {
     const { SenderAvatar } = this.state;
     const fromName = from ? from.displayName({ compact: true }) : '';
     const subject = item.message.subject || '(No Subject)';
-    const date = item.message.date ? new Date(item.message.date).toLocaleString() : '';
+    // The row shows the same compact time as the threaded list; the full
+    // date and time stay available on hover.
+    const messageDate = item.message.date ? new Date(item.message.date) : null;
+    const date = messageDate ? DateUtils.shortTimeString(messageDate) : '';
+    const fullDate = messageDate ? messageDate.toLocaleString() : '';
     const canTrash =
       !inTrash && FocusedPerspectiveStore.current().canMoveThreadsTo([item.thread], 'trash');
 
@@ -559,17 +575,23 @@ export default class UnthreadedThreadList extends React.Component {
           this._onSelect(item);
         }}
       >
-        {SenderAvatar && from ? (
+        {from ? (
           <div className="unthreaded-row-avatar" aria-hidden="true">
-            <InjectedComponentErrorBoundary>
-              <SenderAvatar thread={{ participants: [from] }} />
-            </InjectedComponentErrorBoundary>
+            {SenderAvatar ? (
+              <InjectedComponentErrorBoundary>
+                <SenderAvatar thread={{ participants: [from] }} />
+              </InjectedComponentErrorBoundary>
+            ) : (
+              <SenderInitials contact={from} />
+            )}
           </div>
         ) : null}
         <div className="unthreaded-row-top">
           <div className={`unthreaded-from ${inTrash ? 'trashed' : ''}`}>{fromName}</div>
           <div className={`unthreaded-row-meta ${inTrash ? 'trashed' : ''}`}>
-            <div className="unthreaded-date">{date}</div>
+            <div className="unthreaded-date" title={fullDate}>
+              {date}
+            </div>
           </div>
         </div>
         <div className={`unthreaded-subject ${inTrash ? 'trashed' : ''}`}>{subject}</div>
@@ -691,9 +713,7 @@ export default class UnthreadedThreadList extends React.Component {
                 )
               : this._renderDateSections(groupedSections, (group) => this._renderGroup(group))}
             {!this.state.loading && visibleItems.length === 0 ? (
-              <div className="unthreaded-list-empty">
-                {this.state.unreadOnly ? localized('No unread messages') : localized('No messages')}
-              </div>
+              <div className="unthreaded-list-empty">{this._emptyListLabel()}</div>
             ) : null}
           </ScrollRegion>
         </div>

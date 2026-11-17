@@ -242,6 +242,57 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
     }
   };
 
+  _unreadCountFor = (id: HomeTabId) => {
+    if (id === 'Matrix') return this.state.matrixUnreadCount;
+    if (id === 'GroupMe') return this.state.groupMeUnreadCount;
+    return 0;
+  };
+
+  _renderHomeTabs() {
+    return HOME_TABS.filter(({ id }) => this.state.rootSheets.includes(id)).map(({ id, label }) => {
+      const unreadCount = this._unreadCountFor(id);
+      return (
+        <div
+          key={id}
+          role="tab"
+          tabIndex={0}
+          aria-selected={this.state.activeId === id}
+          title={localized(label)}
+          className={`app-tab app-tab-${id.toLowerCase()} ${
+            this.state.activeId === id ? 'active' : ''
+          }`}
+          onClick={() => this._activateHome(id)}
+          onKeyDown={(event) => this._onHomeTabKeyDown(event, id)}
+        >
+          <AppTabIcon id={id} />
+          <span className="app-tab-title">{localized(label)}</span>
+          {unreadCount > 0 ? (
+            <span
+              className="app-tab-unread-count"
+              aria-label={localized(`%@ unread chats`, unreadCount)}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : null}
+          {id === 'Threads' ? (
+            <button
+              type="button"
+              className="app-tab-compose"
+              title={localized('Compose new message')}
+              aria-label={localized('Compose new message')}
+              onClick={this._composeNewMessage}
+            >
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                <path d="M13 19H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2v5" />
+                <path d="m3 6 8.5 6L20 6M19 14v8m-4-4h8" />
+              </svg>
+            </button>
+          ) : null}
+        </div>
+      );
+    });
+  }
+
   render() {
     return (
       <header
@@ -267,53 +318,7 @@ export default class AppTabs extends React.Component<Record<string, never>, AppT
         </button>
 
         <div className="app-tabs" role="tablist" aria-label={localized('Open workspaces')}>
-          {HOME_TABS.filter(({ id }) => this.state.rootSheets.includes(id)).map(({ id, label }) => (
-            <div
-              key={id}
-              role="tab"
-              tabIndex={0}
-              aria-selected={this.state.activeId === id}
-              className={`app-tab app-tab-${id.toLowerCase()} ${
-                this.state.activeId === id ? 'active' : ''
-              }`}
-              onClick={() => this._activateHome(id)}
-              onKeyDown={(event) => this._onHomeTabKeyDown(event, id)}
-            >
-              <AppTabIcon id={id} />
-              <span className="app-tab-title">{localized(label)}</span>
-              {id === 'Matrix' && this.state.matrixUnreadCount > 0 ? (
-                <span
-                  className="app-tab-unread-count"
-                  aria-label={localized(`%@ unread chats`, this.state.matrixUnreadCount)}
-                >
-                  {this.state.matrixUnreadCount > 99 ? '99+' : this.state.matrixUnreadCount}
-                </span>
-              ) : null}
-              {id === 'GroupMe' && this.state.groupMeUnreadCount > 0 ? (
-                <span
-                  className="app-tab-unread-count"
-                  aria-label={localized(`%@ unread chats`, this.state.groupMeUnreadCount)}
-                >
-                  {this.state.groupMeUnreadCount > 99 ? '99+' : this.state.groupMeUnreadCount}
-                </span>
-              ) : null}
-              {id === 'Threads' ? (
-                <button
-                  type="button"
-                  className="app-tab-compose"
-                  title={localized('Compose new message')}
-                  aria-label={localized('Compose new message')}
-                  onClick={this._composeNewMessage}
-                >
-                  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-                    <path d="M13 19H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h15a2 2 0 0 1 2 2v5" />
-                    <path d="m3 6 8.5 6L20 6M19 14v8m-4-4h8" />
-                  </svg>
-                </button>
-              ) : null}
-            </div>
-          ))}
-
+          {this._renderHomeTabs()}
           {this.state.conversations.map((tab) => (
             <div
               key={tab.id}
